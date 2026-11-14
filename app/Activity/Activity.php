@@ -16,6 +16,7 @@ use App\Activity\Properties\Type;
 use App\Activity\Properties\UserAgent;
 use App\Activity\Properties\UserId;
 use App\Shared\Abstracts\AbstractUuid;
+use App\Shared\MorphMapKeyEnum;
 use Illuminate\Support\Collection;
 use Mom\Data\AbstractData;
 use Mom\Data\AbstractString;
@@ -196,7 +197,7 @@ final class Activity extends AbstractData
         return $this->subjectType;
     }
 
-    public function setSubjectType(SubjectType|AbstractString|string|null $subjectType): self
+    public function setSubjectType(SubjectType|MorphMapKeyEnum|string|null $subjectType): self
     {
         if ($subjectType instanceof SubjectType) {
             $this->subjectType = $subjectType;
@@ -204,8 +205,8 @@ final class Activity extends AbstractData
             return $this;
         }
 
-        if ($subjectType instanceof AbstractString) {
-            $this->subjectType = SubjectType::fromNullableString($subjectType->toNullableString());
+        if ($subjectType instanceof MorphMapKeyEnum) {
+            $this->subjectType = SubjectType::fromEnum($subjectType);
 
             return $this;
         }

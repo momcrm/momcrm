@@ -9,13 +9,13 @@ use App\Activity\Properties\SubjectId;
 use App\Activity\Properties\SubjectType;
 use App\Activity\Properties\TeamId;
 use App\Activity\Properties\UserId;
+use App\Shared\MorphMapKeyEnum;
 use Illuminate\Database\Eloquent\Builder;
 
 final readonly class PurgeAccountActivities
 {
     public function __construct(
         private string $userId,
-        private string $userMorphType,
     ) {}
 
     /**
@@ -29,14 +29,14 @@ final readonly class PurgeAccountActivities
                 ->where(UserId::getDatabaseTableColumnName(), $this->userId)
                 ->whereNull(TeamId::getDatabaseTableColumnName()))
             ->orWhere(fn (Builder $query) => $query
-                ->where(SubjectType::getDatabaseTableColumnName(), $this->userMorphType)
+                ->where(SubjectType::getDatabaseTableColumnName(), MorphMapKeyEnum::User->value)
                 ->where(SubjectId::getDatabaseTableColumnName(), $this->userId))
             ->delete();
     }
 
-    public static function fromUserId(string $userId, string $userMorphType): int
+    public static function fromUserId(string $userId): int
     {
-        return new self($userId, $userMorphType)->handle();
+        return new self($userId)->handle();
     }
 
     public function handle(): int

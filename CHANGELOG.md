@@ -29,6 +29,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- Every Eloquent model must have a morph alias, defined once in `App\Shared\MorphMapKeyEnum` and enforced with `Relation::enforceMorphMap()`; tests fail if a model is added without one or a stored alias is renamed.
 - All application tables (users, teams, team memberships, passkeys and the sessions user reference) use UUIDv7 primary and foreign keys. The framework's queue tables keep their own keys.
 - Tests for application code live beside it in `app/` (e.g. `UpdateTeamControllerTest.php` next to `UpdateTeamController.php`) and use Pest's functional style; `tests/` keeps the test bootstrap and Fortify flow tests.
 - Backend code is organised by domain (`app/User`, `app/Team`, `app/TeamUser`) with mom/data DTOs, single-action controllers and actions, replacing the starter kit's `app/Models`, `app/Http/Controllers/Settings`, `app/Http/Requests`, `app/Actions` and `app/Concerns`.

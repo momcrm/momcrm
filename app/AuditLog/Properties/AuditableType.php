@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\AuditLog\Properties;
 
-use Mom\Data\AbstractString;
+use App\Shared\Abstracts\AbstractMorphMapKeyEnum;
 
-final class AuditableType extends AbstractString
+final class AuditableType extends AbstractMorphMapKeyEnum
 {
     public static function getName(): string
     {

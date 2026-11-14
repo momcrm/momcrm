@@ -6,6 +6,7 @@ use App\Activity\Actions\RecordActivity;
 use App\Activity\ActivityEloquentModel;
 use App\Activity\ActivityTypeEnum;
 use App\AuditLog\AuditLogEloquentModel;
+use App\Shared\MorphMapKeyEnum;
 use App\Team\TeamEloquentModel;
 use App\TeamUser\Actions\CreateTeamUser;
 use App\User\UserEloquentModel;
@@ -61,6 +62,6 @@ it('removes the users account activity and audit rows but keeps team history', f
         ->assertSessionHasNoErrors();
 
     expect(ActivityEloquentModel::query()->whereNull('team_id')->exists())->toBeFalse()
-        ->and(AuditLogEloquentModel::query()->where('auditable_type', 'user')->where('auditable_id', $user->id)->exists())->toBeFalse()
+        ->and(AuditLogEloquentModel::query()->where('auditable_type', MorphMapKeyEnum::User->value)->where('auditable_id', $user->id)->exists())->toBeFalse()
         ->and(ActivityEloquentModel::query()->findOrFail($teamActivity->getId()->toString())->user_id)->toBeNull();
 });

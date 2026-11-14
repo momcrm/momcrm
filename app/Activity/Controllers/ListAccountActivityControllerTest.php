@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Activity\Actions\RecordActivity;
 use App\Activity\ActivityTypeEnum;
+use App\Shared\MorphMapKeyEnum;
 use App\User\UserEloquentModel;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -30,7 +31,7 @@ it('lists only the users own account activity and audit rows', function (): void
             ->where('activities.data.0.label', 'Signed in')
             ->where('activities.data.0.actor', $user->name)
             ->where('auditLogs.data', fn ($rows): bool => collect($rows)->every(
-                fn (array $row): bool => $row['subject'] === 'user',
+                fn (array $row): bool => $row['subject'] === MorphMapKeyEnum::User->value,
             )),
         );
 });

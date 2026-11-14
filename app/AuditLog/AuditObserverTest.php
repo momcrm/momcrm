@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\AuditLog\AuditEventEnum;
 use App\AuditLog\AuditLogEloquentModel;
+use App\Shared\MorphMapKeyEnum;
 use App\Team\TeamEloquentModel;
 use App\TeamUser\Actions\CreateTeamUser;
 use App\TeamUser\TeamUserEloquentModel;
@@ -31,7 +32,7 @@ function auditRowsFor(string $type, string $id): Collection
 it('records a created row with the new values and the team', function (): void {
     $team = TeamEloquentModel::factory()->create(['name' => 'Acme']);
 
-    $row = auditRowsFor('team', $team->id)->sole();
+    $row = auditRowsFor(MorphMapKeyEnum::Team->value, $team->id)->sole();
 
     expect($row->event)->toBe(AuditEventEnum::Created->value)
         ->and($row->team_id)->toBe($team->id)
@@ -45,7 +46,7 @@ it('records only the changed attributes on update', function (): void {
 
     $team->update(['name' => 'Acme Sales']);
 
-    $row = auditRowsFor('team', $team->id)->last();
+    $row = auditRowsFor(MorphMapKeyEnum::Team->value, $team->id)->last();
 
     expect($row->event)->toBe(AuditEventEnum::Updated->value)
         ->and($row->old_values)->toBe(['name' => 'Acme'])
@@ -55,7 +56,7 @@ it('records only the changed attributes on update', function (): void {
 it('never stores hidden attributes such as the password', function (): void {
     $user = UserEloquentModel::factory()->create();
 
-    $created = auditRowsFor('user', $user->id)->sole();
+    $created = auditRowsFor(MorphMapKeyEnum::User->value, $user->id)->sole();
 
     expect($created->team_id)->toBeNull()
         ->and($created->new_values)->toHaveKeys(['name', 'email'])
@@ -71,7 +72,7 @@ it('writes nothing when only hidden attributes change', function (string $attrib
         $user->forceFill([$attribute => Str::random(20)])->save();
     }
 
-    expect(auditRowsFor('user', $user->id))->toHaveCount(1);
+    expect(auditRowsFor(MorphMapKeyEnum::User->value, $user->id))->toHaveCount(1);
 })->with([
     'password' => 'password',
     'remember token' => 'remember_token',
@@ -84,7 +85,7 @@ it('records membership changes against the team', function (): void {
 
     TeamUserEloquentModel::query()->findOrFail($membership->getId()->toString())->delete();
 
-    $rows = auditRowsFor('team_user', $membership->getId()->toString());
+    $rows = auditRowsFor(MorphMapKeyEnum::TeamUser->value, $membership->getId()->toString());
 
     expect($rows->pluck('event')->all())->toBe([AuditEventEnum::Created->value, AuditEventEnum::Deleted->value])
         ->and($rows->pluck('team_id')->unique()->all())->toBe([$team->id])
@@ -97,7 +98,7 @@ it('records a deleted team without a team reference', function (): void {
     $team->delete();
 
     $row = AuditLogEloquentModel::query()
-        ->where('auditable_type', 'team')
+        ->where('auditable_type', MorphMapKeyEnum::Team->value)
         ->where('auditable_id', $team->id)
         ->where('event', AuditEventEnum::Deleted->value)
         ->sole();
@@ -115,7 +116,7 @@ it('captures the actor, request id and ip address of the request', function (): 
         ->patch(route('team.update'), ['name' => 'Renamed'])
         ->assertSessionHasNoErrors();
 
-    $row = auditRowsFor('team', $user->current_team_id)->last();
+    $row = auditRowsFor(MorphMapKeyEnum::Team->value, $user->current_team_id)->last();
 
     expect($row->user_id)->toBe($user->id)
         ->and($row->request_id)->toBe($requestId)

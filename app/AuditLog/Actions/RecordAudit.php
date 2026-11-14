@@ -8,6 +8,7 @@ use App\AuditLog\AuditEventEnum;
 use App\AuditLog\AuditLog;
 use App\AuditLog\AuditLogEloquentModel;
 use App\AuditLog\Contracts\Auditable;
+use App\Shared\MorphMapKeyEnum;
 use App\Shared\RequestContext;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
@@ -66,7 +67,7 @@ final readonly class RecordAudit
             AuditLog::new()
                 ->setTeamId($teamId)
                 ->setUserId(self::actorId())
-                ->setAuditableType($model->getMorphClass())
+                ->setAuditableType(MorphMapKeyEnum::fromModel($model))
                 ->setAuditableId($key)
                 ->setEvent($event)
                 ->setOldValues($oldValues)
