@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "0480bafcf88cd3c814de14cddb6fc958",
+    "content-hash": "af35d20b199edf0455ac73834dc268cd",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -2614,16 +2614,16 @@
         },
         {
             "name": "mom/data",
-            "version": "v6.2.0",
+            "version": "v6.2.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/momphp/data",
-                "reference": "0ff1c76792b5602cf3d3c5786c52be42daf24ed2"
+                "reference": "192e3375bcf9884712bf4decfefaea9133118c0b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/momphp/data/zipball/0ff1c76792b5602cf3d3c5786c52be42daf24ed2",
-                "reference": "0ff1c76792b5602cf3d3c5786c52be42daf24ed2",
+                "url": "https://api.github.com/repos/momphp/data/zipball/192e3375bcf9884712bf4decfefaea9133118c0b",
+                "reference": "192e3375bcf9884712bf4decfefaea9133118c0b",
                 "shasum": ""
             },
             "require": {
@@ -2662,7 +2662,7 @@
                 }
             ],
             "description": "A simple DTO package.",
-            "time": "2026-11-14T00:53:20+00:00"
+            "time": "2026-11-14T04:46:49+00:00"
         },
         {
             "name": "monolog/monolog",
