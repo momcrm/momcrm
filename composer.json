@@ -1,11 +1,13 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/react-starter-kit",
+    "name": "momcrm/momcrm",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
+    "description": "MomCRM — an open-source CRM built with Laravel and Inertia.",
     "keywords": [
+        "crm",
         "laravel",
-        "framework"
+        "inertia",
+        "react"
     ],
     "license": "MIT",
     "require": {
@@ -99,8 +101,7 @@
         "laravel": {
             "dont-discover": [],
             "installer": {
-                "post-create-project": [
-                ]
+                "post-create-project": []
             }
         }
     },
@@ -114,5 +115,6 @@
         }
     },
     "minimum-stability": "stable",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "homepage": "https://momcrm.app"
 }
