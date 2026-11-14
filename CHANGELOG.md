@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-11-14
+
 ### Added
 
 - Laravel 13 application with the Inertia React starter kit (React 19, TypeScript, Tailwind CSS and shadcn/ui).
@@ -19,4 +21,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Issue forms for bug reports and feature requests, and a pull request template.
 - Release workflow that publishes a GitHub release with notes from this changelog when a version tag is pushed.
 
-[Unreleased]: https://github.com/momcrm/momcrm/commits/main
+[Unreleased]: https://github.com/momcrm/momcrm/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/momcrm/momcrm/releases/tag/v0.1.0
