@@ -19,6 +19,12 @@ declare module '@inertiajs/core' {
                 myOpenTickets: number;
                 unreadNotifications: number;
                 projects: import('./crm').SidebarProject[];
+                groups: {
+                    id: string;
+                    name: string;
+                    color: import('./crm').ColorName;
+                    icon: string | null;
+                }[];
             } | null;
             gettingStarted?: GettingStarted | null;
             [key: string]: unknown;

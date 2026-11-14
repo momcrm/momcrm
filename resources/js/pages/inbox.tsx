@@ -74,7 +74,7 @@ export default function Inbox({
         <>
             <Head title="Inbox" />
 
-            <div className="flex h-[calc(100svh-46px)] min-h-0">
+            <div className="sticky top-[46px] flex h-[calc(100svh-46px)] min-h-0">
                 <aside className="flex w-full max-w-md shrink-0 flex-col border-r">
                     <div className="flex items-center gap-2 px-4 pt-4 pb-2">
                         <h1 className="text-lg font-semibold">Inbox</h1>

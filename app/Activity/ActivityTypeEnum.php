@@ -45,6 +45,22 @@ enum ActivityTypeEnum: string
     case TwoFactorEnabled = 'two_factor_enabled';
 
     /**
+     * The kinds of change that are work on tickets and projects, as shown in
+     * the workspace activity feed (sign-ins and account events are not).
+     *
+     * @return array<int, self>
+     */
+    public static function work(): array
+    {
+        return [
+            self::TicketOpened, self::TicketClosed, self::TicketReopened, self::TicketStatusChanged,
+            self::TicketAssigned, self::TicketCommented, self::TicketArchived, self::TicketRestored,
+            self::ProjectCreated, self::ProjectStatusChanged, self::ProjectArchived, self::ProjectRestored,
+            self::AttachmentAdded, self::CustomersImported,
+        ];
+    }
+
+    /**
      * A short, human-readable description for activity lists.
      */
     public function label(): string

@@ -172,3 +172,72 @@
         @apply bg-background text-foreground;
     }
 }
+
+/*
+ * Accent colours a person can pick in Settings → Appearance. The default
+ * (indigo) is the :root palette above.
+ */
+html[data-accent='blue'] {
+    --primary: #2f6fd1;
+    --sidebar-primary: #2f6fd1;
+    --ring: color-mix(in srgb, #2f6fd1 38%, transparent);
+}
+
+html.dark[data-accent='blue'] {
+    --primary: #74a6f0;
+    --sidebar-primary: #74a6f0;
+    --ring: color-mix(in srgb, #74a6f0 38%, transparent);
+}
+
+html[data-accent='teal'] {
+    --primary: #1e8580;
+    --sidebar-primary: #1e8580;
+    --ring: color-mix(in srgb, #1e8580 38%, transparent);
+}
+
+html.dark[data-accent='teal'] {
+    --primary: #5cc2bb;
+    --sidebar-primary: #5cc2bb;
+    --ring: color-mix(in srgb, #5cc2bb 38%, transparent);
+}
+
+html[data-accent='violet'] {
+    --primary: #7652c2;
+    --sidebar-primary: #7652c2;
+    --ring: color-mix(in srgb, #7652c2 38%, transparent);
+}
+
+html.dark[data-accent='violet'] {
+    --primary: #a98cf0;
+    --sidebar-primary: #a98cf0;
+    --ring: color-mix(in srgb, #a98cf0 38%, transparent);
+}
+
+html[data-accent='rose'] {
+    --primary: #bc4270;
+    --sidebar-primary: #bc4270;
+    --ring: color-mix(in srgb, #bc4270 38%, transparent);
+}
+
+html.dark[data-accent='rose'] {
+    --primary: #e985a8;
+    --sidebar-primary: #e985a8;
+    --ring: color-mix(in srgb, #e985a8 38%, transparent);
+}
+
+html[data-accent='green'] {
+    --primary: #25754b;
+    --sidebar-primary: #25754b;
+    --ring: color-mix(in srgb, #25754b 38%, transparent);
+}
+
+html.dark[data-accent='green'] {
+    --primary: #5cba86;
+    --sidebar-primary: #5cba86;
+    --ring: color-mix(in srgb, #5cba86 38%, transparent);
+}
+
+/* Compact density: everything sized in rem shrinks a little. */
+html[data-density='compact'] {
+    font-size: 15px;
+}

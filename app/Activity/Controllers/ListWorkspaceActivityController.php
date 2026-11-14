@@ -32,18 +32,11 @@ use Inertia\Response;
 final class ListWorkspaceActivityController
 {
     /**
-     * The kinds of change each filter shows.
+     * The kinds of change each filter shows; "all" is every kind of work.
      *
      * @var array<string, array<int, ActivityTypeEnum>>
      */
     private const array FILTERS = [
-        'all' => [
-            ActivityTypeEnum::TicketOpened, ActivityTypeEnum::TicketClosed, ActivityTypeEnum::TicketReopened,
-            ActivityTypeEnum::TicketStatusChanged, ActivityTypeEnum::TicketAssigned, ActivityTypeEnum::TicketCommented,
-            ActivityTypeEnum::TicketArchived, ActivityTypeEnum::TicketRestored, ActivityTypeEnum::ProjectCreated,
-            ActivityTypeEnum::ProjectStatusChanged, ActivityTypeEnum::ProjectArchived, ActivityTypeEnum::ProjectRestored,
-            ActivityTypeEnum::AttachmentAdded, ActivityTypeEnum::CustomersImported,
-        ],
         'status' => [ActivityTypeEnum::TicketClosed, ActivityTypeEnum::TicketReopened, ActivityTypeEnum::TicketStatusChanged],
         'comments' => [ActivityTypeEnum::TicketCommented],
         'projects' => [ActivityTypeEnum::ProjectCreated, ActivityTypeEnum::ProjectStatusChanged, ActivityTypeEnum::ProjectArchived, ActivityTypeEnum::ProjectRestored],
@@ -56,13 +49,14 @@ final class ListWorkspaceActivityController
         $user = $request->user();
         $teamId = (string) $user->current_team_id;
         $filter = array_key_exists((string) $request->query('filter'), self::FILTERS) ? (string) $request->query('filter') : 'all';
+        $types = $filter === 'all' ? ActivityTypeEnum::work() : self::FILTERS[$filter];
         $person = Str::isUuid((string) $request->query('person')) ? (string) $request->query('person') : null;
 
         return Inertia::render('activity', [
             'activities' => ActivityEloquentModel::query()
                 ->with(ActivityRelationship::Actor->value)
                 ->where(TeamId::getDatabaseTableColumnName(), $teamId)
-                ->whereIn(Type::getDatabaseTableColumnName(), array_map(fn (ActivityTypeEnum $type): string => $type->value, self::FILTERS[$filter]))
+                ->whereIn(Type::getDatabaseTableColumnName(), array_map(fn (ActivityTypeEnum $type): string => $type->value, $types))
                 ->when($person, fn (Builder $query, string $person) => $query->where(UserId::getDatabaseTableColumnName(), $person))
                 ->orderByDesc(CreatedAt::getDatabaseTableColumnName())
                 ->orderByDesc(Id::getDatabaseTableColumnName())
