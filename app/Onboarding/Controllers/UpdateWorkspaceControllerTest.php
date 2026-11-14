@@ -11,7 +11,7 @@ use App\User\UserEloquentModel;
 use function Pest\Laravel\actingAs;
 
 it('names the workspace and moves on to inviting the team', function (): void {
-    $user = UserEloquentModel::factory()->notOnboarded()->withPersonalTeam()->create(['name' => 'Jane Smith']);
+    $user = UserEloquentModel::factory()->notOnboarded()->withPersonalTeam()->create(['name' => 'Jane']);
 
     $response = actingAs($user)->put(route('onboarding.workspace.update'), ['name' => 'Acme IT']);
 
@@ -22,7 +22,7 @@ it('names the workspace and moves on to inviting the team', function (): void {
 });
 
 it('records no rename when the name is kept', function (): void {
-    $user = UserEloquentModel::factory()->notOnboarded()->withPersonalTeam()->create(['name' => 'Jane Smith']);
+    $user = UserEloquentModel::factory()->notOnboarded()->withPersonalTeam()->create(['name' => 'Jane']);
 
     actingAs($user)
         ->put(route('onboarding.workspace.update'), ['name' => "Jane's Team"])

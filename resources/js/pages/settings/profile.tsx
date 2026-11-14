@@ -47,7 +47,7 @@ export default function Profile({
                     {({ processing, errors }) => (
                         <>
                             <div className="grid gap-2">
-                                <Label htmlFor="name">Name</Label>
+                                <Label htmlFor="name">Preferred name</Label>
 
                                 <Input
                                     id="name"
@@ -56,7 +56,7 @@ export default function Profile({
                                     name="name"
                                     required
                                     autoComplete="name"
-                                    placeholder="Full name"
+                                    placeholder="What should we call you?"
                                 />
 
                                 <InputError

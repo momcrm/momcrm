@@ -33,6 +33,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Starting point: new workspaces can start with sample customers (removable in one click from a banner), import customers and contacts from a CSV, or start blank. The CSV import is also on the Customers page.
 - Dashboard: a getting-started checklist (add a customer, a contact, a ticket, invite a teammate, add a passkey) that ticks itself off and stays pinned in the sidebar with a progress ring until done or dismissed. Afterwards the dashboard shows open tickets, customers, unpaid invoices and your assigned tickets, plus a passkey suggestion for accounts without one.
 - Friendlier confirmation messages for saving your profile, changing your password, renaming and switching teams.
+- Sign-up asks "What should we call you?" and MomCRM uses that preferred name exactly as typed (greetings, emails, the default team name) instead of guessing a first name. It's editable as Preferred name in profile settings.
 - Structured logging: every request gets an `X-Request-Id`, and log lines carry the request, user and team ids. Logs default to daily-rotated JSON files.
 - Audit and activity retention (365 and 180 days by default, `AUDIT_LOG_RETENTION_DAYS` / `ACTIVITY_RETENTION_DAYS`), pruned daily by the scheduler.
 - Team-based tenancy: every user gets a personal team, can switch their current team from the sidebar, and owners can rename it under Settings → Team. Team-owned models are isolated with `CurrentTeamScope`.

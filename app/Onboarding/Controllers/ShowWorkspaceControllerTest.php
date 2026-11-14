@@ -8,7 +8,7 @@ use Inertia\Testing\AssertableInertia as Assert;
 use function Pest\Laravel\actingAs;
 
 it('shows the current team so it can be named', function (): void {
-    $user = UserEloquentModel::factory()->notOnboarded()->withPersonalTeam()->create(['name' => 'Jane Smith']);
+    $user = UserEloquentModel::factory()->notOnboarded()->withPersonalTeam()->create(['name' => 'Jane']);
 
     actingAs($user)
         ->get(route('onboarding.workspace'))

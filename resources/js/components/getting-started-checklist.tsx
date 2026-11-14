@@ -28,10 +28,10 @@ function DismissButton({ label }: { label: string }) {
  */
 export default function GettingStartedChecklist({
     gettingStarted,
-    firstName,
+    preferredName,
 }: {
     gettingStarted: GettingStarted;
-    firstName: string;
+    preferredName: string;
 }) {
     const { steps, completed, total } = gettingStarted;
     const allDone = completed === total;
@@ -56,7 +56,7 @@ export default function GettingStartedChecklist({
             <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="space-y-1">
                     <h2 className="text-lg font-semibold">
-                        Welcome to MomCRM, {firstName}
+                        Welcome to MomCRM, {preferredName}
                     </h2>
                     <p className="text-sm text-muted-foreground">
                         Your workspace is ready. A few quick steps and your team

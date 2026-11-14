@@ -34,7 +34,7 @@ final class ShowDashboardController
             ->map(fn (InvoiceEloquentModel $model): array => FindInvoice::listItem($model));
 
         return Inertia::render('dashboard', [
-            'firstName' => str($user->name)->before(' ')->toString(),
+            'preferredName' => $user->name,
             'stats' => [
                 'customers' => CustomerEloquentModel::query()->withoutGlobalScope(CurrentTeamScope::class)->where(CustomerTeamId::getDatabaseTableColumnName(), $teamId)->count(),
                 'open_tickets' => TicketEloquentModel::query()->withoutGlobalScope(CurrentTeamScope::class)

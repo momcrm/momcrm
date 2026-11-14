@@ -27,7 +27,9 @@ export default function Register({ passwordRules }: Props) {
                     <>
                         <div className="grid gap-6">
                             <div className="grid gap-2">
-                                <Label htmlFor="name">Your name</Label>
+                                <Label htmlFor="name">
+                                    What should we call you?
+                                </Label>
                                 <Input
                                     id="name"
                                     type="text"
@@ -36,8 +38,12 @@ export default function Register({ passwordRules }: Props) {
                                     tabIndex={1}
                                     autoComplete="name"
                                     name="name"
-                                    placeholder="Jane Smith"
+                                    placeholder="Jane"
                                 />
+                                <p className="text-xs text-muted-foreground">
+                                    A first name or nickname works. It's how
+                                    MomCRM and your team will see you.
+                                </p>
                                 <InputError
                                     message={errors.name}
                                     className="mt-2"

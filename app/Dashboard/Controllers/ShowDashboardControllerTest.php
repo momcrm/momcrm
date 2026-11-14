@@ -34,7 +34,7 @@ it("shows the team's numbers, the user's tickets and the checklist", function ()
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('dashboard')
-            ->where('firstName', 'Jane')
+            ->where('preferredName', 'Jane Smith')
             ->where('stats', [
                 'customers' => 1,
                 'open_tickets' => 2,

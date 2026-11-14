@@ -17,7 +17,7 @@ it('welcomes a user once they confirm their email address', function (): void {
         $mail = $notification->toMail($user);
 
         return $mail->subject === "You're in — here's where to start"
-            && $mail->greeting === 'Hi Jane,'
+            && $mail->greeting === 'Hi Jane Smith,'
             && $mail->actionUrl === route('dashboard');
     });
 });

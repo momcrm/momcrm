@@ -47,12 +47,12 @@ function StatCard({
 }
 
 export default function Dashboard({
-    firstName,
+    preferredName,
     stats,
     myTickets,
     hasSecurity,
 }: {
-    firstName: string;
+    preferredName: string;
     stats: Stats;
     myTickets: TicketListItem[];
     hasSecurity: boolean;
@@ -67,7 +67,7 @@ export default function Dashboard({
                 {gettingStarted ? (
                     <GettingStartedChecklist
                         gettingStarted={gettingStarted}
-                        firstName={firstName}
+                        preferredName={preferredName}
                     />
                 ) : (
                     !hasSecurity && <SecurityNudge />

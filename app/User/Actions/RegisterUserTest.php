@@ -29,7 +29,7 @@ it('gives a new user a personal team they own as their current team', function (
     expect($team->isNotNull())->toBeTrue()
         ->and(Str::isUuid($user->id))->toBeTrue()
         ->and(Str::isUuid($team->getId()->toString()))->toBeTrue()
-        ->and($team->getName()->toString())->toBe("Ada's Team")
+        ->and($team->getName()->toString())->toBe("Ada Lovelace's Team")
         ->and($team->getIsPersonal()->toBoolean())->toBeTrue()
         ->and($team->getOwnerId()->toString())->toBe($user->id)
         ->and(FindTeamUser::byTeamAndUser($team->getId()->toString(), $user->id)->getRole()->toEnum())

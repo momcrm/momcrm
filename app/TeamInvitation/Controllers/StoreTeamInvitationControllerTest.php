@@ -37,7 +37,7 @@ it('invites each address and emails them a link to join', function (): void {
     Notification::assertSentOnDemand(
         TeamInvitationNotification::class,
         fn (TeamInvitationNotification $notification, array $channels, AnonymousNotifiable $notifiable): bool => $notifiable->routes['mail'] === 'sam@acme.test'
-            && $notification->toMail($notifiable)->subject === "Jane Smith invited you to Jane's Team on MomCRM",
+            && $notification->toMail($notifiable)->subject === "Jane Smith invited you to Jane Smith's Team on MomCRM",
     );
     Notification::assertSentOnDemandTimes(TeamInvitationNotification::class, 2);
     expect(ActivityEloquentModel::query()->where('type', ActivityTypeEnum::InvitationSent->value)->count())->toBe(2);
