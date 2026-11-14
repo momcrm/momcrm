@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Onboarding\Actions\GetGettingStartedProgress;
 use App\Onboarding\Actions\RemoveSampleData;
 use App\Team\Actions\FindTeam;
 use App\Team\Team;
@@ -49,6 +50,9 @@ class HandleInertiaRequests extends Middleware
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'hasSampleData' => fn (): bool => $this->hasSampleData($request),
+            'gettingStarted' => fn (): ?array => $request->user() instanceof UserEloquentModel
+                ? GetGettingStartedProgress::forUser($request->user())
+                : null,
         ];
     }
 

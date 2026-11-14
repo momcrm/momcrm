@@ -1,5 +1,7 @@
 <?php
 
+use App\Dashboard\Controllers\ShowDashboardController;
+use App\Onboarding\Controllers\DismissGettingStartedController;
 use App\Onboarding\Middleware\EnsureOnboarded;
 use App\Team\Controllers\SwitchCurrentTeamController;
 use App\TeamInvitation\Controllers\AcceptTeamInvitationController;
@@ -14,7 +16,8 @@ Route::post('invitations/{token}/accept', AcceptTeamInvitationController::class)
     ->name('team-invitations.accept');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::inertia('dashboard', 'dashboard')->middleware(EnsureOnboarded::class)->name('dashboard');
+    Route::get('dashboard', ShowDashboardController::class)->middleware(EnsureOnboarded::class)->name('dashboard');
+    Route::post('getting-started/dismiss', DismissGettingStartedController::class)->name('getting-started.dismiss');
 
     Route::put('current-team', SwitchCurrentTeamController::class)->name('current-team.update');
 });

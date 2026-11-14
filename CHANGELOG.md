@@ -31,6 +31,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Tickets: open, assign, prioritise, close and reopen requests for a customer, numbered per team. Filter open, closed or all tickets and search by title or number. Opening, closing and reopening show in the team's activity.
 - Invoices: draft invoices with line items (fill a line from a customer's service), GST at 10% by default, totals in AUD, numbered INV-0001 per team. Mark them sent, paid or void; sent invoices past their due date show as overdue.
 - Starting point: new workspaces can start with sample customers (removable in one click from a banner), import customers and contacts from a CSV, or start blank. The CSV import is also on the Customers page.
+- Dashboard: a getting-started checklist (add a customer, a contact, a ticket, invite a teammate, add a passkey) that ticks itself off and stays pinned in the sidebar with a progress ring until done or dismissed. Afterwards the dashboard shows open tickets, customers, unpaid invoices and your assigned tickets, plus a passkey suggestion for accounts without one.
+- Friendlier confirmation messages for saving your profile, changing your password, renaming and switching teams.
 - Structured logging: every request gets an `X-Request-Id`, and log lines carry the request, user and team ids. Logs default to daily-rotated JSON files.
 - Audit and activity retention (365 and 180 days by default, `AUDIT_LOG_RETENTION_DAYS` / `ACTIVITY_RETENTION_DAYS`), pruned daily by the scheduler.
 - Team-based tenancy: every user gets a personal team, can switch their current team from the sidebar, and owners can rename it under Settings → Team. Team-owned models are isolated with `CurrentTeamScope`.

@@ -12,6 +12,7 @@ use App\Team\Exceptions\CouldNotSwitchCurrentTeam;
 use App\User\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
+use Inertia\Inertia;
 
 final class SwitchCurrentTeamFormRequest extends FormRequest
 {
@@ -46,6 +47,8 @@ final class SwitchCurrentTeamFormRequest extends FormRequest
             userId: $user->getId()->toString(),
             teamId: $team->getId()->toString(),
         );
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Now working in :team.', ['team' => $team->getName()->toString()])]);
 
         return back();
     }

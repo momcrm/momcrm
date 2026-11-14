@@ -1,4 +1,5 @@
 import type { Auth } from '@/types/auth';
+import type { GettingStarted } from '@/types/onboarding';
 
 declare module 'react' {
     interface InputHTMLAttributes<T> {
@@ -13,6 +14,7 @@ declare module '@inertiajs/core' {
             auth: Auth;
             sidebarOpen: boolean;
             hasSampleData?: boolean;
+            gettingStarted?: GettingStarted | null;
             [key: string]: unknown;
         };
     }

@@ -36,7 +36,7 @@ final class UpdatePasswordFormRequest extends FormRequest
 
         RecordActivity::for(type: ActivityTypeEnum::PasswordChanged, userId: $user->getId()->toString());
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Password updated.')]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __("Password changed. You're still signed in here.")]);
 
         return back();
     }

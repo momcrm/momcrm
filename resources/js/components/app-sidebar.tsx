@@ -9,6 +9,7 @@ import {
     Users,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
+import { GettingStartedNav } from '@/components/getting-started-nav';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -87,6 +88,7 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
+                <GettingStartedNav />
                 <NavMain items={mainNavItems} />
             </SidebarContent>
 
