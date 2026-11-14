@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Ticket\Actions;
 
 use App\Team\Scopes\CurrentTeamScope;
+use App\Ticket\Properties\ArchivedAt;
 use App\Ticket\Properties\AssigneeId;
 use App\Ticket\Properties\CustomerId;
 use App\Ticket\Properties\Id;
 use App\Ticket\Properties\Number;
+use App\Ticket\Properties\ProjectId;
 use App\Ticket\Properties\Status;
 use App\Ticket\Properties\TeamId;
 use App\Ticket\Properties\Title;
@@ -37,15 +39,17 @@ final class FindTicket
     }
 
     /**
-     * Tickets newest first, optionally only open or closed ones, matching a
-     * search on the title or the ticket number.
+     * Live (not archived) tickets newest first, optionally only open or closed
+     * ones, matching a search on the title or the ticket number.
      *
      * @return LengthAwarePaginator<int, TicketEloquentModel>
      */
-    public static function paginateForTeam(string $teamId, string $filter = self::FILTER_OPEN, ?string $search = null, ?string $customerId = null, int $perPage = 25, ?string $assigneeId = null): LengthAwarePaginator
+    public static function paginateForTeam(string $teamId, string $filter = self::FILTER_OPEN, ?string $search = null, ?string $customerId = null, int $perPage = 25, ?string $assigneeId = null, ?string $projectId = null): LengthAwarePaginator
     {
         return self::query($teamId)
-            ->with([TicketRelationship::Customer->value, TicketRelationship::Assignee->value])
+            ->with([TicketRelationship::Customer->value, TicketRelationship::Assignee->value, TicketRelationship::Project->value])
+            ->whereNull(ArchivedAt::getDatabaseTableColumnName())
+            ->when($projectId, fn (Builder $query, string $projectId) => $query->where(ProjectId::getDatabaseTableColumnName(), $projectId))
             ->when($filter === self::FILTER_OPEN, fn (Builder $query) => $query->whereIn(Status::getDatabaseTableColumnName(), TicketStatusEnum::openValues()))
             ->when($filter === self::FILTER_CLOSED, fn (Builder $query) => $query->where(Status::getDatabaseTableColumnName(), TicketStatusEnum::Closed->value))
             ->when($customerId, fn (Builder $query, string $customerId) => $query->where(CustomerId::getDatabaseTableColumnName(), $customerId))
@@ -64,6 +68,7 @@ final class FindTicket
     public static function countOpenForTeam(string $teamId, ?string $assigneeId = null): int
     {
         return self::query($teamId)
+            ->whereNull(ArchivedAt::getDatabaseTableColumnName())
             ->whereIn(Status::getDatabaseTableColumnName(), TicketStatusEnum::openValues())
             ->when($assigneeId, fn (Builder $query, string $assigneeId) => $query->where(AssigneeId::getDatabaseTableColumnName(), $assigneeId))
             ->count();

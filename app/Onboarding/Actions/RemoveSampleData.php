@@ -9,12 +9,18 @@ use App\Activity\ActivityTypeEnum;
 use App\Customer\CustomerEloquentModel;
 use App\Customer\Properties\IsSample;
 use App\Customer\Properties\TeamId;
+use App\Project\ProjectEloquentModel;
+use App\Project\Properties\IsSample as ProjectIsSample;
+use App\Project\Properties\TeamId as ProjectTeamId;
 use App\Team\Scopes\CurrentTeamScope;
+use App\Ticket\Properties\ProjectId as TicketProjectId;
+use App\Ticket\TicketEloquentModel;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Deletes a team's sample customers. Their contacts, locations, assets,
- * services, tickets and invoices go with them through cascading foreign keys,
+ * Deletes a team's sample projects (with their tickets) and sample customers.
+ * The customers' contacts, locations, assets, services, tickets and invoices
+ * go with them through cascading foreign keys,
  * which the audit trail does not see, so one activity entry records the removal.
  */
 final readonly class RemoveSampleData
@@ -33,6 +39,19 @@ final readonly class RemoveSampleData
                 ->where(IsSample::getDatabaseTableColumnName(), true)
                 ->get();
 
+            $projects = ProjectEloquentModel::query()
+                ->withoutGlobalScope(CurrentTeamScope::class)
+                ->where(ProjectTeamId::getDatabaseTableColumnName(), $this->teamId)
+                ->where(ProjectIsSample::getDatabaseTableColumnName(), true)
+                ->get();
+
+            TicketEloquentModel::query()
+                ->withoutGlobalScope(CurrentTeamScope::class)
+                ->whereIn(TicketProjectId::getDatabaseTableColumnName(), $projects->modelKeys())
+                ->get()
+                ->each(fn (TicketEloquentModel $ticket): ?bool => $ticket->delete());
+
+            $projects->each(fn (ProjectEloquentModel $project): ?bool => $project->delete());
             $customers->each(fn (CustomerEloquentModel $customer): ?bool => $customer->delete());
 
             if ($customers->isNotEmpty()) {

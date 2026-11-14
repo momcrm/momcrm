@@ -19,6 +19,6 @@ final class CustomerId extends AbstractUuid
      */
     public static function getValidationRulesForCreate(FormRequest $request): array
     {
-        return ['required', 'uuid'];
+        return ['required_without:'.ProjectId::getNameForValidation(), 'nullable', 'uuid'];
     }
 }

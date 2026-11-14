@@ -9,23 +9,36 @@ import CloseTicketController from '@/actions/App/Ticket/Controllers/CloseTicketC
 import ReopenTicketController from '@/actions/App/Ticket/Controllers/ReopenTicketController';
 import { show as showCustomer } from '@/routes/customers';
 import { edit, index, show } from '@/routes/tickets';
-import type { Contact, Customer, Location, Option, Ticket } from '@/types';
+import type {
+    Contact,
+    Customer,
+    Location,
+    Option,
+    Project,
+    Ticket,
+} from '@/types';
 
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
     dateStyle: 'medium',
     timeStyle: 'short',
 });
 
+const dayFormatter = new Intl.DateTimeFormat(undefined, {
+    dateStyle: 'medium',
+});
+
 export default function ShowTicket({
     ticket,
     customer,
+    project,
     contact,
     location,
     assigneeName,
     priorities,
 }: {
     ticket: Ticket;
-    customer: Customer;
+    customer: Customer | null;
+    project: Project | null;
     contact: Contact | null;
     location: Location | null;
     assigneeName: string | null;
@@ -44,15 +57,18 @@ export default function ShowTicket({
     const details = [
         {
             label: 'Customer',
-            value: (
+            value: customer ? (
                 <Link
                     href={showCustomer(customer.id)}
                     className="underline-offset-4 hover:underline"
                 >
                     {customer.name}
                 </Link>
+            ) : (
+                '—'
             ),
         },
+        ...(project ? [{ label: 'Project', value: project.name }] : []),
         {
             label: 'Contact',
             value: contact
@@ -68,6 +84,12 @@ export default function ShowTicket({
             value:
                 priorities.find((option) => option.value === ticket.priority)
                     ?.label ?? ticket.priority,
+        },
+        {
+            label: 'Due',
+            value: ticket.due_on
+                ? dayFormatter.format(new Date(`${ticket.due_on}T00:00:00`))
+                : '—',
         },
         {
             label: 'Opened',

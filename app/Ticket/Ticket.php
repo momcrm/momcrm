@@ -5,16 +5,23 @@ declare(strict_types=1);
 namespace App\Ticket;
 
 use App\Ticket\Factories\TicketFactory;
+use App\Ticket\Properties\ArchivedAt;
 use App\Ticket\Properties\AssigneeId;
 use App\Ticket\Properties\ClosedAt;
 use App\Ticket\Properties\ContactId;
 use App\Ticket\Properties\CreatedAt;
 use App\Ticket\Properties\CustomerId;
 use App\Ticket\Properties\Description;
+use App\Ticket\Properties\DueOn;
+use App\Ticket\Properties\EstimateMinutes;
 use App\Ticket\Properties\Id;
 use App\Ticket\Properties\LocationId;
 use App\Ticket\Properties\Number;
+use App\Ticket\Properties\ParentId;
+use App\Ticket\Properties\Position;
 use App\Ticket\Properties\Priority;
+use App\Ticket\Properties\ProjectId;
+use App\Ticket\Properties\StartsOn;
 use App\Ticket\Properties\Status;
 use App\Ticket\Properties\TeamId;
 use App\Ticket\Properties\Title;
@@ -28,16 +35,23 @@ use Mom\Data\AbstractValue;
 final class Ticket extends AbstractData
 {
     public function __construct(
+        public ArchivedAt $archivedAt,
         public AssigneeId $assigneeId,
         public ClosedAt $closedAt,
         public ContactId $contactId,
         public CreatedAt $createdAt,
         public CustomerId $customerId,
         public Description $description,
+        public DueOn $dueOn,
+        public EstimateMinutes $estimateMinutes,
         public Id $id,
         public LocationId $locationId,
         public Number $number,
+        public ParentId $parentId,
+        public Position $position,
         public Priority $priority,
+        public ProjectId $projectId,
+        public StartsOn $startsOn,
         public Status $status,
         public TeamId $teamId,
         public Title $title,
@@ -54,6 +68,11 @@ final class Ticket extends AbstractData
         return $this->getId();
     }
 
+    public function isArchived(): bool
+    {
+        return $this->getArchivedAt()->isNotNull();
+    }
+
     public function isOpen(): bool
     {
         return $this->getStatus()->toEnum()->isOpen();
@@ -62,7 +81,7 @@ final class Ticket extends AbstractData
     /**
      * The fields the ticket pages show.
      *
-     * @return array{id: string, number: int, title: string, description: ?string, status: string, priority: string, customer_id: string, contact_id: ?string, location_id: ?string, assignee_id: ?string, closed_at: ?string, created_at: ?string}
+     * @return array{id: string, number: int, title: string, description: ?string, status: string, priority: string, customer_id: ?string, project_id: ?string, parent_id: ?string, contact_id: ?string, location_id: ?string, assignee_id: ?string, starts_on: ?string, due_on: ?string, estimate_minutes: ?int, position: int, closed_at: ?string, archived_at: ?string, created_at: ?string}
      */
     public function toSummary(): array
     {
@@ -73,11 +92,18 @@ final class Ticket extends AbstractData
             'description' => $this->getDescription()->toNullableString(),
             'status' => $this->getStatus()->toString(),
             'priority' => $this->getPriority()->toString(),
-            'customer_id' => $this->getCustomerId()->toString(),
+            'customer_id' => $this->getCustomerId()->toNullableString(),
+            'project_id' => $this->getProjectId()->toNullableString(),
+            'parent_id' => $this->getParentId()->toNullableString(),
             'contact_id' => $this->getContactId()->toNullableString(),
             'location_id' => $this->getLocationId()->toNullableString(),
             'assignee_id' => $this->getAssigneeId()->toNullableString(),
+            'starts_on' => $this->getStartsOn()->toNullableCarbon()?->toDateString(),
+            'due_on' => $this->getDueOn()->toNullableCarbon()?->toDateString(),
+            'estimate_minutes' => $this->getEstimateMinutes()->toNullableInteger(),
+            'position' => $this->getPosition()->toInteger(),
             'closed_at' => $this->getClosedAt()->toNullableISOString(),
+            'archived_at' => $this->getArchivedAt()->toNullableISOString(),
             'created_at' => $this->getCreatedAt()->toNullableISOString(),
         ];
     }
@@ -234,5 +260,89 @@ final class Ticket extends AbstractData
     public function getUpdatedAt(): UpdatedAt
     {
         return $this->updatedAt;
+    }
+
+    public function getArchivedAt(): ArchivedAt
+    {
+        return $this->archivedAt;
+    }
+
+    public function setArchivedAt(mixed $archivedAt): self
+    {
+        $this->archivedAt = new ArchivedAt($archivedAt instanceof AbstractValue ? $archivedAt->toValue() : $archivedAt);
+
+        return $this;
+    }
+
+    public function getDueOn(): DueOn
+    {
+        return $this->dueOn;
+    }
+
+    public function setDueOn(mixed $dueOn): self
+    {
+        $this->dueOn = new DueOn($dueOn instanceof AbstractValue ? $dueOn->toValue() : $dueOn);
+
+        return $this;
+    }
+
+    public function getEstimateMinutes(): EstimateMinutes
+    {
+        return $this->estimateMinutes;
+    }
+
+    public function setEstimateMinutes(mixed $estimateMinutes): self
+    {
+        $this->estimateMinutes = new EstimateMinutes($estimateMinutes instanceof AbstractValue ? $estimateMinutes->toValue() : $estimateMinutes);
+
+        return $this;
+    }
+
+    public function getParentId(): ParentId
+    {
+        return $this->parentId;
+    }
+
+    public function setParentId(mixed $parentId): self
+    {
+        $this->parentId = new ParentId($parentId instanceof AbstractValue ? $parentId->toValue() : $parentId);
+
+        return $this;
+    }
+
+    public function getPosition(): Position
+    {
+        return $this->position;
+    }
+
+    public function setPosition(mixed $position): self
+    {
+        $this->position = new Position($position instanceof AbstractValue ? $position->toValue() : $position);
+
+        return $this;
+    }
+
+    public function getProjectId(): ProjectId
+    {
+        return $this->projectId;
+    }
+
+    public function setProjectId(mixed $projectId): self
+    {
+        $this->projectId = new ProjectId($projectId instanceof AbstractValue ? $projectId->toValue() : $projectId);
+
+        return $this;
+    }
+
+    public function getStartsOn(): StartsOn
+    {
+        return $this->startsOn;
+    }
+
+    public function setStartsOn(mixed $startsOn): self
+    {
+        $this->startsOn = new StartsOn($startsOn instanceof AbstractValue ? $startsOn->toValue() : $startsOn);
+
+        return $this;
     }
 }

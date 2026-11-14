@@ -85,17 +85,67 @@ export type Ticket = {
     description: string | null;
     status: TicketStatus;
     priority: TicketPriority;
-    customer_id: string;
+    customer_id: string | null;
+    project_id: string | null;
+    parent_id: string | null;
     contact_id: string | null;
     location_id: string | null;
     assignee_id: string | null;
+    starts_on: string | null;
+    due_on: string | null;
+    estimate_minutes: number | null;
+    position: number;
     closed_at: string | null;
+    archived_at: string | null;
     created_at: string | null;
 };
 
 export type TicketListItem = Ticket & {
     customer_name: string | null;
     assignee_name: string | null;
+    project_name: string | null;
+    project_color: ColorName | null;
+};
+
+export type ColorName =
+    | 'amber'
+    | 'blue'
+    | 'green'
+    | 'indigo'
+    | 'rose'
+    | 'slate'
+    | 'teal'
+    | 'violet';
+
+export type ProjectStatus =
+    | 'planning'
+    | 'in_progress'
+    | 'at_risk'
+    | 'on_hold'
+    | 'completed';
+
+export type Project = {
+    id: string;
+    number: number;
+    name: string;
+    description: string | null;
+    icon: string | null;
+    color: ColorName;
+    status: ProjectStatus;
+    visibility: 'open' | 'restricted';
+    customer_id: string | null;
+    lead_id: string | null;
+    group_id: string | null;
+    starts_on: string | null;
+    due_on: string | null;
+    archived_at: string | null;
+};
+
+export type ProjectOption = {
+    id: string;
+    name: string;
+    color: ColorName;
+    customer_id: string | null;
 };
 
 export type CustomerChildOption = {
@@ -109,6 +159,7 @@ export type TicketFormOptions = {
     contacts: CustomerChildOption[];
     locations: CustomerChildOption[];
     members: CustomerOption[];
+    projects: ProjectOption[];
     priorities: Option[];
     statuses: Option[];
 };

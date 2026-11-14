@@ -20,6 +20,7 @@ use App\Customer\Controllers\ShowCustomerController;
 use App\Customer\Controllers\ShowImportCustomersController;
 use App\Customer\Controllers\StoreCustomerController;
 use App\Customer\Controllers\UpdateCustomerController;
+use App\Favorite\Controllers\ToggleFavoriteController;
 use App\Invoice\Controllers\CreateInvoiceController;
 use App\Invoice\Controllers\EditInvoiceController;
 use App\Invoice\Controllers\ListInvoicesController;
@@ -41,11 +42,14 @@ use App\Service\Controllers\DeleteServiceController;
 use App\Service\Controllers\EditServiceController;
 use App\Service\Controllers\StoreServiceController;
 use App\Service\Controllers\UpdateServiceController;
+use App\Ticket\Controllers\ArchiveTicketController;
 use App\Ticket\Controllers\CloseTicketController;
 use App\Ticket\Controllers\CreateTicketController;
 use App\Ticket\Controllers\EditTicketController;
 use App\Ticket\Controllers\ListTicketsController;
+use App\Ticket\Controllers\MoveTicketController;
 use App\Ticket\Controllers\ReopenTicketController;
+use App\Ticket\Controllers\RestoreTicketController;
 use App\Ticket\Controllers\ShowTicketController;
 use App\Ticket\Controllers\StoreTicketController;
 use App\Ticket\Controllers\UpdateTicketController;
@@ -96,6 +100,11 @@ Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function 
     Route::put('tickets/{ticket}', UpdateTicketController::class)->whereUuid('ticket')->name('tickets.update');
     Route::post('tickets/{ticket}/close', CloseTicketController::class)->whereUuid('ticket')->name('tickets.close');
     Route::post('tickets/{ticket}/reopen', ReopenTicketController::class)->whereUuid('ticket')->name('tickets.reopen');
+    Route::put('tickets/{ticket}/move', MoveTicketController::class)->whereUuid('ticket')->name('tickets.move');
+    Route::post('tickets/{ticket}/archive', ArchiveTicketController::class)->whereUuid('ticket')->name('tickets.archive');
+    Route::post('tickets/{ticket}/restore', RestoreTicketController::class)->whereUuid('ticket')->name('tickets.restore');
+
+    Route::post('favorites', ToggleFavoriteController::class)->name('favorites.toggle');
 
     Route::get('invoices', ListInvoicesController::class)->name('invoices.index');
     Route::get('invoices/create', CreateInvoiceController::class)->name('invoices.create');

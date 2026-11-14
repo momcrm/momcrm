@@ -1,0 +1,40 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('labels', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->foreignUuid('team_id')->constrained('teams')->cascadeOnDelete();
+            $table->string('name', 50);
+            $table->string('color', 16)->default('indigo');
+            $table->timestamps();
+
+            $table->unique(['team_id', 'name']);
+        });
+
+        Schema::create('label_ticket', function (Blueprint $table) {
+            $table->foreignUuid('label_id')->constrained('labels')->cascadeOnDelete();
+            $table->foreignUuid('ticket_id')->constrained('tickets')->cascadeOnDelete();
+
+            $table->primary(['label_id', 'ticket_id']);
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('label_ticket');
+        Schema::dropIfExists('labels');
+    }
+};

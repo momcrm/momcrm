@@ -13,4 +13,8 @@ enum TicketRelationship: string
     case Assignee = 'assignee';
     case Contact = 'contact';
     case Customer = 'customer';
+    case Labels = 'labels';
+    case Parent = 'parent';
+    case Project = 'project';
+    case Subtasks = 'subtasks';
 }

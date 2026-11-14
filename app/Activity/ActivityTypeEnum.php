@@ -20,6 +20,9 @@ enum ActivityTypeEnum: string
     case PasswordChanged = 'password_changed';
     case PasswordReset = 'password_reset';
     case ProfileUpdated = 'profile_updated';
+    case ProjectArchived = 'project_archived';
+    case ProjectCreated = 'project_created';
+    case ProjectRestored = 'project_restored';
     case RecoveryCodesRegenerated = 'recovery_codes_regenerated';
     case Registered = 'registered';
     case SampleDataAdded = 'sample_data_added';
@@ -28,9 +31,11 @@ enum ActivityTypeEnum: string
     case SignedOut = 'signed_out';
     case TeamRenamed = 'team_renamed';
     case TeamSwitched = 'team_switched';
+    case TicketArchived = 'ticket_archived';
     case TicketClosed = 'ticket_closed';
     case TicketOpened = 'ticket_opened';
     case TicketReopened = 'ticket_reopened';
+    case TicketRestored = 'ticket_restored';
     case TwoFactorDisabled = 'two_factor_disabled';
     case TwoFactorEnabled = 'two_factor_enabled';
 
@@ -50,6 +55,9 @@ enum ActivityTypeEnum: string
             self::PasswordChanged => 'Changed password',
             self::PasswordReset => 'Reset password',
             self::ProfileUpdated => 'Updated profile',
+            self::ProjectArchived => 'Archived a project',
+            self::ProjectCreated => 'Created a project',
+            self::ProjectRestored => 'Restored a project',
             self::RecoveryCodesRegenerated => 'Regenerated recovery codes',
             self::Registered => 'Created account',
             self::SampleDataAdded => 'Added sample data',
@@ -58,9 +66,11 @@ enum ActivityTypeEnum: string
             self::SignedOut => 'Signed out',
             self::TeamRenamed => 'Renamed the team',
             self::TeamSwitched => 'Switched to this team',
+            self::TicketArchived => 'Archived a ticket',
             self::TicketClosed => 'Closed a ticket',
             self::TicketOpened => 'Opened a ticket',
             self::TicketReopened => 'Reopened a ticket',
+            self::TicketRestored => 'Restored a ticket',
             self::TwoFactorDisabled => 'Disabled two-factor authentication',
             self::TwoFactorEnabled => 'Enabled two-factor authentication',
         };

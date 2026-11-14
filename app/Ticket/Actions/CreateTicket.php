@@ -6,14 +6,22 @@ namespace App\Ticket\Actions;
 
 use App\Activity\Actions\RecordActivity;
 use App\Activity\ActivityTypeEnum;
+use App\Project\Actions\FindProject;
 use App\Shared\Actions\NextTeamNumber;
 use App\Shared\Table;
 use App\Ticket\Properties\Id;
+use App\Ticket\Properties\Position;
+use App\Ticket\Properties\Status;
+use App\Ticket\Properties\TeamId;
 use App\Ticket\Ticket;
 use App\Ticket\TicketEloquentModel;
 use App\Ticket\TicketStatusEnum;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Opens a ticket with the team's next number, at the bottom of its status
+ * column. A project ticket with no customer takes the project's customer.
+ */
 final readonly class CreateTicket
 {
     public function __construct(
@@ -32,7 +40,19 @@ final readonly class CreateTicket
                 $this->ticket->setStatus(TicketStatusEnum::New);
             }
 
-            $this->ticket->setNumber(NextTeamNumber::for(Table::Tickets, $this->ticket->getTeamId()->toString()));
+            $teamId = $this->ticket->getTeamId()->toString();
+
+            if ($this->ticket->getCustomerId()->isNull() && $this->ticket->getProjectId()->isNotNull()) {
+                $this->ticket->setCustomerId(
+                    FindProject::byIdForTeam($this->ticket->getProjectId()->toString(), $teamId)->getCustomerId(),
+                );
+            }
+
+            if ($this->ticket->getPosition()->isNull()) {
+                $this->ticket->setPosition(self::nextPosition($teamId, $this->ticket->getStatus()->toString()));
+            }
+
+            $this->ticket->setNumber(NextTeamNumber::for(Table::Tickets, $teamId));
 
             $model = TicketEloquentModel::query()->create($this->ticket->forDatabaseCreate());
 
@@ -46,6 +66,17 @@ final readonly class CreateTicket
 
             return Ticket::fromEloquentModel($model->refresh());
         });
+    }
+
+    private static function nextPosition(string $teamId, string $status): int
+    {
+        $highest = TicketEloquentModel::query()
+            ->withoutGlobalScopes()
+            ->where(TeamId::getDatabaseTableColumnName(), $teamId)
+            ->where(Status::getDatabaseTableColumnName(), $status)
+            ->max(Position::getDatabaseTableColumnName());
+
+        return is_numeric($highest) ? (int) $highest + 1 : 0;
     }
 
     public static function fromTicket(Ticket $ticket, ?string $openedById = null): Ticket

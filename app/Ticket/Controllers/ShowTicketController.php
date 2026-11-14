@@ -7,6 +7,7 @@ namespace App\Ticket\Controllers;
 use App\Contact\Actions\FindContact;
 use App\Customer\Actions\FindCustomer;
 use App\Location\Actions\FindLocation;
+use App\Project\Actions\FindProject;
 use App\Ticket\Actions\FindTicket;
 use App\Ticket\Exceptions\CouldNotFindTicket;
 use App\Ticket\TicketPriorityEnum;
@@ -32,10 +33,13 @@ final class ShowTicketController
 
         $contact = FindContact::byIdForTeam($found->getContactId()->toNullableString(), $teamId);
         $location = FindLocation::byIdForTeam($found->getLocationId()->toNullableString(), $teamId);
+        $customer = FindCustomer::byIdForTeam($found->getCustomerId()->toNullableString(), $teamId);
+        $project = FindProject::byIdForTeam($found->getProjectId()->toNullableString(), $teamId);
 
         return Inertia::render('tickets/show', [
             'ticket' => $found->toSummary(),
-            'customer' => FindCustomer::byIdForTeam($found->getCustomerId()->toString(), $teamId)->toSummary(),
+            'customer' => $customer->isNull() ? null : $customer->toSummary(),
+            'project' => $project->isNull() ? null : $project->toSummary(),
             'contact' => $contact->isNull() ? null : $contact->toSummary(),
             'location' => $location->isNull() ? null : $location->toSummary(),
             'assigneeName' => FindUser::byId($found->getAssigneeId()->toNullableString())->getName()->toNullableString(),
