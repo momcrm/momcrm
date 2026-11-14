@@ -61,7 +61,7 @@ final class ShowDashboardController
                 ->map(fn (ProjectEloquentModel $model): array => ListProjectsController::listItem($model, []))
                 ->values()
                 ->all(),
-            'activity' => WorkspaceNumbers::recentActivity($teamId),
+            'activity' => WorkspaceNumbers::recentActivity($teamId, $user->id),
             ...TicketDrawer::options($teamId),
             'drawer' => TicketDrawer::forRequest($request),
             'hasSecurity' => $user->two_factor_confirmed_at !== null || $user->passkeys()->exists(),

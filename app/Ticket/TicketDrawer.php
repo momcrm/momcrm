@@ -23,6 +23,7 @@ use App\Label\LabelEloquentModel;
 use App\Project\Actions\FindProject;
 use App\Project\ProjectEloquentModel;
 use App\Shared\MorphMapKeyEnum;
+use App\Team\Scopes\CurrentTeamScope;
 use App\TeamUser\Actions\FindTeamMembers;
 use App\Ticket\Properties\Number;
 use App\Ticket\Properties\TeamId;
@@ -64,7 +65,7 @@ final class TicketDrawer
     public static function forTicket(string $id, string $teamId, string $userId): ?array
     {
         $model = TicketEloquentModel::query()
-            ->withoutGlobalScopes()
+            ->withoutGlobalScope(CurrentTeamScope::class)
             ->where(TeamId::getDatabaseTableColumnName(), $teamId)
             ->with([
                 TicketRelationship::Customer->value,

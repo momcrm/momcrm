@@ -24,6 +24,7 @@ use App\Ticket\Properties\Number;
 use App\Ticket\Properties\ParentId;
 use App\Ticket\Properties\Position;
 use App\Ticket\Properties\ProjectId;
+use App\Ticket\Scopes\VisibleTicketScope;
 use App\User\UserEloquentModel;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
@@ -59,7 +60,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property CarbonImmutable|null $updated_at
  */
 #[ObservedBy(AuditObserver::class)]
-#[ScopedBy(CurrentTeamScope::class)]
+#[ScopedBy([CurrentTeamScope::class, VisibleTicketScope::class])]
 final class TicketEloquentModel extends Model implements Auditable
 {
     /** @use HasFactory<TicketFactory> */

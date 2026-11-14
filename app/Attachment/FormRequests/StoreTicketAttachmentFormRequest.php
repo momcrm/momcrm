@@ -6,6 +6,7 @@ namespace App\Attachment\FormRequests;
 
 use App\Attachment\Actions\CreateAttachment;
 use App\Attachment\AttachmentValidationRules;
+use App\Team\Scopes\CurrentTeamScope;
 use App\Ticket\Exceptions\CouldNotFindTicket;
 use App\Ticket\Properties\TeamId;
 use App\Ticket\TicketEloquentModel;
@@ -23,7 +24,7 @@ final class StoreTicketAttachmentFormRequest extends FormRequest
     public function authorize(): bool
     {
         $this->ticket = TicketEloquentModel::query()
-            ->withoutGlobalScopes()
+            ->withoutGlobalScope(CurrentTeamScope::class)
             ->where(TeamId::getDatabaseTableColumnName(), $this->user()?->current_team_id)
             ->find((string) $this->route('ticket'));
 

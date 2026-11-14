@@ -13,6 +13,7 @@ use App\Project\Actions\FindProject;
 use App\Project\Controllers\ListProjectsController;
 use App\Project\ProjectEloquentModel;
 use App\Shared\ColorEnum;
+use App\Team\Scopes\CurrentTeamScope;
 use App\TeamUser\Actions\FindTeamMembers;
 use App\Ticket\Controllers\ListTicketsController;
 use App\Ticket\Properties\ArchivedAt;
@@ -71,7 +72,7 @@ final class ShowGroupController
                 ->values(),
             'projects' => $projects->map(fn (ProjectEloquentModel $project): array => ListProjectsController::listItem($project, $favoriteProjectIds))->values(),
             'tickets' => TicketEloquentModel::query()
-                ->withoutGlobalScopes()
+                ->withoutGlobalScope(CurrentTeamScope::class)
                 ->with([TicketRelationship::Project->value, TicketRelationship::Assignee->value, TicketRelationship::Customer->value, TicketRelationship::Labels->value])
                 ->whereIn(ProjectId::getDatabaseTableColumnName(), $projects->modelKeys())
                 ->whereNull(ArchivedAt::getDatabaseTableColumnName())
