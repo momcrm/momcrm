@@ -1,6 +1,6 @@
 # Contributing to MomCRM
 
-Thanks for helping out!
+Thanks for helping out! Everyone taking part in MomCRM is expected to follow our [Code of Conduct](CODE_OF_CONDUCT.md).
 
 1. Fork the repo and create a branch from `main`.
 2. Follow the setup steps in the [README](README.md).
