@@ -28,6 +28,21 @@ export default function TicketForm({
     const [selectedCustomer, setSelectedCustomer] = useState(
         ticket?.customer_id ?? customerId ?? '',
     );
+    const [selectedProject, setSelectedProject] = useState(
+        ticket?.project_id ?? '',
+    );
+
+    const chooseProject = (projectId: string) => {
+        setSelectedProject(projectId);
+
+        const projectCustomer = options.projects.find(
+            (project) => project.id === projectId,
+        )?.customer_id;
+
+        if (projectCustomer && !selectedCustomer) {
+            setSelectedCustomer(projectCustomer);
+        }
+    };
 
     const contacts = options.contacts.filter(
         (contact) => contact.customer_id === selectedCustomer,
@@ -40,30 +55,63 @@ export default function TicketForm({
         <Form {...action} className="max-w-2xl space-y-6">
             {({ processing, errors }) => (
                 <>
-                    <FormField
-                        id="customer_id"
-                        label="Customer"
-                        error={errors.customer_id}
-                    >
-                        <NativeSelect
-                            id="customer_id"
-                            name="customer_id"
-                            value={selectedCustomer}
-                            onChange={(event) =>
-                                setSelectedCustomer(event.target.value)
-                            }
-                            required
+                    <div className="grid gap-6 sm:grid-cols-2">
+                        <FormField
+                            id="project_id"
+                            label="Project"
+                            error={errors.project_id}
                         >
-                            <option value="" disabled>
-                                Choose a customer
-                            </option>
-                            {options.customers.map((customer) => (
-                                <option key={customer.id} value={customer.id}>
-                                    {customer.name}
+                            <NativeSelect
+                                id="project_id"
+                                name="project_id"
+                                value={selectedProject}
+                                onChange={(event) =>
+                                    chooseProject(event.target.value)
+                                }
+                            >
+                                <option value="">No project</option>
+                                {options.projects.map((project) => (
+                                    <option key={project.id} value={project.id}>
+                                        {project.name}
+                                    </option>
+                                ))}
+                            </NativeSelect>
+                        </FormField>
+                        <FormField
+                            id="customer_id"
+                            label="Customer"
+                            hint={
+                                selectedProject
+                                    ? 'Optional for project tickets.'
+                                    : undefined
+                            }
+                            error={errors.customer_id}
+                        >
+                            <NativeSelect
+                                id="customer_id"
+                                name="customer_id"
+                                value={selectedCustomer}
+                                onChange={(event) =>
+                                    setSelectedCustomer(event.target.value)
+                                }
+                                required={!selectedProject}
+                            >
+                                <option value="" disabled={!selectedProject}>
+                                    {selectedProject
+                                        ? 'No customer'
+                                        : 'Choose a customer'}
                                 </option>
-                            ))}
-                        </NativeSelect>
-                    </FormField>
+                                {options.customers.map((customer) => (
+                                    <option
+                                        key={customer.id}
+                                        value={customer.id}
+                                    >
+                                        {customer.name}
+                                    </option>
+                                ))}
+                            </NativeSelect>
+                        </FormField>
+                    </div>
 
                     <FormField
                         id="title"
@@ -174,6 +222,30 @@ export default function TicketForm({
                                     </option>
                                 ))}
                             </NativeSelect>
+                        </FormField>
+                        <FormField
+                            id="starts_on"
+                            label="Start date"
+                            error={errors.starts_on}
+                        >
+                            <Input
+                                id="starts_on"
+                                name="starts_on"
+                                type="date"
+                                defaultValue={ticket?.starts_on ?? ''}
+                            />
+                        </FormField>
+                        <FormField
+                            id="due_on"
+                            label="Due date"
+                            error={errors.due_on}
+                        >
+                            <Input
+                                id="due_on"
+                                name="due_on"
+                                type="date"
+                                defaultValue={ticket?.due_on ?? ''}
+                            />
                         </FormField>
                         {ticket && (
                             <FormField

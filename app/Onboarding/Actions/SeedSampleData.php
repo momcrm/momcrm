@@ -14,18 +14,32 @@ use App\Contact\Contact;
 use App\Customer\Actions\CreateCustomer;
 use App\Customer\Customer;
 use App\Customer\CustomerStatusEnum;
+use App\Group\Actions\CreateGroup;
+use App\Group\Actions\FindGroup;
+use App\Group\Group;
 use App\Invoice\Actions\ChangeInvoiceStatus;
 use App\Invoice\Actions\CreateInvoice;
 use App\Invoice\Invoice;
 use App\Invoice\InvoiceStatusEnum;
+use App\Label\Actions\CreateLabel;
+use App\Label\Actions\FindLabel;
+use App\Label\Label;
 use App\Location\Actions\CreateLocation;
 use App\Location\Location;
+use App\Milestone\Actions\CreateMilestone;
+use App\Milestone\Milestone;
+use App\Project\Actions\CreateProject;
+use App\Project\Project;
+use App\Project\ProjectStatusEnum;
+use App\Project\ProjectVisibilityEnum;
 use App\Service\Actions\CreateService;
 use App\Service\Service;
 use App\Service\ServiceStatusEnum;
+use App\Shared\ColorEnum;
 use App\Ticket\Actions\CreateTicket;
-use App\Ticket\Actions\UpdateTicket;
+use App\Ticket\Actions\MoveTicket;
 use App\Ticket\Ticket;
+use App\Ticket\TicketEloquentModel;
 use App\Ticket\TicketPriorityEnum;
 use App\Ticket\TicketStatusEnum;
 use Carbon\CarbonImmutable;
@@ -33,14 +47,16 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Fills a team with a few example customers, with contacts, locations, assets,
- * services, tickets and an invoice, so a new user has something to click around.
+ * services, tickets and an invoice, plus projects with milestones, labels and
+ * a group, so a new user has something to click around.
  *
- * Every sample customer is marked as sample; removing them removes the rest.
+ * Sample customers and projects are marked as sample; removing them removes
+ * their tickets and the rest. Labels and the group stay, as team settings.
  */
 final readonly class SeedSampleData
 {
     /**
-     * @var array<int, array{name: string, email: string, phone: string, location: array{name: string, suburb: string, postcode: string}, contacts: array<int, array{first: string, last: string, position: string, email: string}>, assets: array<int, array{name: string, serial: string}>, service: array{name: string, quantity: int, cents: int}, tickets: array<int, array{title: string, status: TicketStatusEnum, priority: TicketPriorityEnum}>}>
+     * @var array<int, array{name: string, email: string, phone: string, location: array{name: string, suburb: string, postcode: string}, contacts: array<int, array{first: string, last: string, position: string, email: string}>, assets: array<int, array{name: string, serial: string}>, service: array{name: string, quantity: int, cents: int}, tickets: array<int, array{title: string, status: TicketStatusEnum, priority: TicketPriorityEnum, due?: int, labels?: array<int, string>, project?: string}>}>
      */
     private const array CUSTOMERS = [
         [
@@ -58,8 +74,8 @@ final readonly class SeedSampleData
             ],
             'service' => ['name' => 'Managed IT support', 'quantity' => 6, 'cents' => 4500],
             'tickets' => [
-                ['title' => 'Reception printer offline', 'status' => TicketStatusEnum::InProgress, 'priority' => TicketPriorityEnum::High],
-                ['title' => 'Laptop for new starter', 'status' => TicketStatusEnum::New, 'priority' => TicketPriorityEnum::Normal],
+                ['title' => 'Reception printer offline', 'status' => TicketStatusEnum::InProgress, 'priority' => TicketPriorityEnum::High, 'due' => -2, 'labels' => ['Hardware']],
+                ['title' => 'Laptop for new starter', 'status' => TicketStatusEnum::New, 'priority' => TicketPriorityEnum::Normal, 'due' => 5, 'labels' => ['Onboarding', 'Hardware'], 'project' => 'refit'],
             ],
         ],
         [
@@ -75,7 +91,7 @@ final readonly class SeedSampleData
             ],
             'service' => ['name' => 'Microsoft 365 Business Standard', 'quantity' => 12, 'cents' => 1890],
             'tickets' => [
-                ['title' => 'VPN drops every afternoon', 'status' => TicketStatusEnum::WaitingOnCustomer, 'priority' => TicketPriorityEnum::Urgent],
+                ['title' => 'VPN drops every afternoon', 'status' => TicketStatusEnum::WaitingOnCustomer, 'priority' => TicketPriorityEnum::Urgent, 'due' => 1, 'labels' => ['Network'], 'project' => 'vpn'],
             ],
         ],
         [
@@ -89,9 +105,80 @@ final readonly class SeedSampleData
             'assets' => [],
             'service' => ['name' => 'Cloud backup', 'quantity' => 1, 'cents' => 2500],
             'tickets' => [
-                ['title' => "Reset Lena's email password", 'status' => TicketStatusEnum::Closed, 'priority' => TicketPriorityEnum::Low],
+                ['title' => "Reset Lena's email password", 'status' => TicketStatusEnum::Closed, 'priority' => TicketPriorityEnum::Low, 'due' => -6],
             ],
         ],
+    ];
+
+    /**
+     * Sample projects, keyed so tickets can point at them. A project's customer
+     * is named; tickets listed here are internal (no customer).
+     *
+     * @var array<string, array{name: string, customer: ?string, status: ProjectStatusEnum, color: ColorEnum, icon: string, description: string, starts: int, due: int, milestones: array<int, array{name: string, due: int, done?: bool}>, tickets: array<int, array{title: string, status: TicketStatusEnum, priority: TicketPriorityEnum, due: int, labels: array<int, string>}>}>
+     */
+    private const array PROJECTS = [
+        'refit' => [
+            'name' => 'Harbour Dental office refit',
+            'customer' => 'Harbour Dental',
+            'status' => ProjectStatusEnum::InProgress,
+            'color' => ColorEnum::Teal,
+            'icon' => 'building',
+            'description' => 'New cabling, workstations and Wi-Fi for the Fremantle clinic.',
+            'starts' => -14,
+            'due' => 21,
+            'milestones' => [
+                ['name' => 'Cabling signed off', 'due' => -3, 'done' => true],
+                ['name' => 'Workstations live', 'due' => 18],
+            ],
+            'tickets' => [
+                ['title' => 'Run new cabling to surgery 2', 'status' => TicketStatusEnum::Closed, 'priority' => TicketPriorityEnum::Normal, 'due' => -4, 'labels' => ['Network']],
+                ['title' => 'Image six new workstations', 'status' => TicketStatusEnum::InProgress, 'priority' => TicketPriorityEnum::High, 'due' => 7, 'labels' => ['Hardware']],
+                ['title' => 'Survey Wi-Fi coverage', 'status' => TicketStatusEnum::New, 'priority' => TicketPriorityEnum::Normal, 'due' => 12, 'labels' => ['Network']],
+            ],
+        ],
+        'vpn' => [
+            'name' => 'Coastal Logistics VPN upgrade',
+            'customer' => 'Coastal Logistics',
+            'status' => ProjectStatusEnum::AtRisk,
+            'color' => ColorEnum::Amber,
+            'icon' => 'shield',
+            'description' => 'Replace the depot firewall and move remote staff to the new VPN.',
+            'starts' => -7,
+            'due' => 10,
+            'milestones' => [
+                ['name' => 'Firewall swapped', 'due' => 6],
+            ],
+            'tickets' => [
+                ['title' => 'Order replacement firewall', 'status' => TicketStatusEnum::WaitingOnSupplier, 'priority' => TicketPriorityEnum::High, 'due' => 3, 'labels' => ['Hardware']],
+            ],
+        ],
+        'docs' => [
+            'name' => 'Documentation overhaul',
+            'customer' => null,
+            'status' => ProjectStatusEnum::Planning,
+            'color' => ColorEnum::Violet,
+            'icon' => 'book',
+            'description' => 'Write down how we onboard customers and look after their systems.',
+            'starts' => 0,
+            'due' => 45,
+            'milestones' => [
+                ['name' => 'Runbooks drafted', 'due' => 30],
+            ],
+            'tickets' => [
+                ['title' => 'Write the customer onboarding runbook', 'status' => TicketStatusEnum::New, 'priority' => TicketPriorityEnum::Normal, 'due' => 14, 'labels' => ['Onboarding']],
+                ['title' => 'Audit the shared password vault', 'status' => TicketStatusEnum::New, 'priority' => TicketPriorityEnum::Low, 'due' => 28, 'labels' => []],
+            ],
+        ],
+    ];
+
+    /**
+     * @var array<string, ColorEnum>
+     */
+    private const array LABELS = [
+        'Billing' => ColorEnum::Violet,
+        'Hardware' => ColorEnum::Amber,
+        'Network' => ColorEnum::Blue,
+        'Onboarding' => ColorEnum::Green,
     ];
 
     public function __construct(
@@ -102,8 +189,41 @@ final readonly class SeedSampleData
     public function __invoke(): void
     {
         DB::transaction(function (): void {
+            $labels = $this->seedLabels();
+            $groupId = FindGroup::optionsForTeam($this->teamId)->firstWhere('name', 'Service desk')['id']
+                ?? CreateGroup::fromGroup(
+                    Group::new()->setTeamId($this->teamId)->setName('Service desk')->setColor(ColorEnum::Teal)->setIcon('headset'),
+                    leadId: $this->userId,
+                )->getId()->toString();
+
+            $customers = [];
+
             foreach (self::CUSTOMERS as $index => $sample) {
-                $this->seedCustomer($sample, sendsInvoice: $index === 0);
+                $customers[$sample['name']] = $this->seedCustomer($sample, sendsInvoice: $index === 0);
+            }
+
+            $projects = [];
+
+            foreach (self::PROJECTS as $key => $sample) {
+                $customerId = $sample['customer'] === null ? null : $customers[$sample['customer']]['customer'];
+                $projects[$key] = $this->seedProject($sample, $customerId, $groupId);
+            }
+
+            foreach (self::CUSTOMERS as $sample) {
+                foreach ($sample['tickets'] as $sampleTicket) {
+                    $this->seedTicket(
+                        $sampleTicket,
+                        projectId: isset($sampleTicket['project']) ? $projects[$sampleTicket['project']] : null,
+                        labels: $labels,
+                        customer: $customers[$sample['name']],
+                    );
+                }
+            }
+
+            foreach (self::PROJECTS as $key => $sample) {
+                foreach ($sample['tickets'] as $sampleTicket) {
+                    $this->seedTicket($sampleTicket, projectId: $projects[$key], labels: $labels);
+                }
             }
 
             RecordActivity::for(type: ActivityTypeEnum::SampleDataAdded, userId: $this->userId, teamId: $this->teamId);
@@ -126,9 +246,10 @@ final readonly class SeedSampleData
     }
 
     /**
-     * @param  array{name: string, email: string, phone: string, location: array{name: string, suburb: string, postcode: string}, contacts: array<int, array{first: string, last: string, position: string, email: string}>, assets: array<int, array{name: string, serial: string}>, service: array{name: string, quantity: int, cents: int}, tickets: array<int, array{title: string, status: TicketStatusEnum, priority: TicketPriorityEnum}>}  $sample
+     * @param  array{name: string, email: string, phone: string, location: array{name: string, suburb: string, postcode: string}, contacts: array<int, array{first: string, last: string, position: string, email: string}>, assets: array<int, array{name: string, serial: string}>, service: array{name: string, quantity: int, cents: int}, tickets: array<int, array{title: string, status: TicketStatusEnum, priority: TicketPriorityEnum, due?: int, labels?: array<int, string>, project?: string}>}  $sample
+     * @return array{customer: string, contact: string, location: string}
      */
-    private function seedCustomer(array $sample, bool $sendsInvoice): void
+    private function seedCustomer(array $sample, bool $sendsInvoice): array
     {
         $customer = CreateCustomer::fromCustomer(Customer::new()
             ->setTeamId($this->teamId)
@@ -182,21 +303,6 @@ final readonly class SeedSampleData
             ->setStartsOn(CarbonImmutable::today()->startOfMonth())
             ->setStatus(ServiceStatusEnum::Active));
 
-        foreach ($sample['tickets'] as $sampleTicket) {
-            $ticket = CreateTicket::fromTicket(Ticket::new()
-                ->setTeamId($this->teamId)
-                ->setCustomerId($customer->getId())
-                ->setContactId($contacts[0]->getId())
-                ->setLocationId($location->getId())
-                ->setAssigneeId($this->userId)
-                ->setTitle($sampleTicket['title'])
-                ->setPriority($sampleTicket['priority']), openedById: $this->userId);
-
-            if ($sampleTicket['status'] !== TicketStatusEnum::New) {
-                UpdateTicket::fromTicket($ticket->setStatus($sampleTicket['status']), updatedById: $this->userId);
-            }
-        }
-
         if ($sendsInvoice) {
             $invoice = CreateInvoice::fromInvoice(
                 Invoice::new()
@@ -214,6 +320,91 @@ final readonly class SeedSampleData
             );
 
             ChangeInvoiceStatus::to($invoice, InvoiceStatusEnum::Sent);
+        }
+
+        return [
+            'customer' => $customer->getId()->toString(),
+            'contact' => $contacts[0]->getId()->toString(),
+            'location' => $location->getId()->toString(),
+        ];
+    }
+
+    /**
+     * @return array<string, string> label ids by name
+     */
+    private function seedLabels(): array
+    {
+        $existing = FindLabel::optionsForTeam($this->teamId)->pluck('id', 'name')->all();
+
+        foreach (self::LABELS as $name => $color) {
+            $existing[$name] ??= CreateLabel::fromLabel(Label::new()->setTeamId($this->teamId)->setName($name)->setColor($color))
+                ->getId()
+                ->toString();
+        }
+
+        return $existing;
+    }
+
+    /**
+     * @param  array{name: string, customer: ?string, status: ProjectStatusEnum, color: ColorEnum, icon: string, description: string, starts: int, due: int, milestones: array<int, array{name: string, due: int, done?: bool}>, tickets: array<int, mixed>}  $sample
+     */
+    private function seedProject(array $sample, ?string $customerId, string $groupId): string
+    {
+        $today = CarbonImmutable::today();
+
+        $project = CreateProject::fromProject(Project::new()
+            ->setTeamId($this->teamId)
+            ->setCustomerId($customerId)
+            ->setGroupId($groupId)
+            ->setLeadId($this->userId)
+            ->setName($sample['name'])
+            ->setDescription($sample['description'])
+            ->setIcon($sample['icon'])
+            ->setColor($sample['color'])
+            ->setStatus($sample['status'])
+            ->setVisibility(ProjectVisibilityEnum::Open)
+            ->setStartsOn($today->addDays($sample['starts']))
+            ->setDueOn($today->addDays($sample['due']))
+            ->setIsSample(true), createdById: $this->userId);
+
+        foreach ($sample['milestones'] as $milestone) {
+            CreateMilestone::fromMilestone(Milestone::new()
+                ->setTeamId($this->teamId)
+                ->setProjectId($project->getId())
+                ->setName($milestone['name'])
+                ->setDueOn($today->addDays($milestone['due']))
+                ->setCompletedAt(($milestone['done'] ?? false) ? $today->addDays($milestone['due']) : null));
+        }
+
+        return $project->getId()->toString();
+    }
+
+    /**
+     * @param  array{title: string, status: TicketStatusEnum, priority: TicketPriorityEnum, due?: int, labels?: array<int, string>}  $sample
+     * @param  array<string, string>  $labels
+     * @param  array{customer: string, contact: string, location: string}|null  $customer
+     */
+    private function seedTicket(array $sample, ?string $projectId, array $labels, ?array $customer = null): void
+    {
+        $ticket = CreateTicket::fromTicket(Ticket::new()
+            ->setTeamId($this->teamId)
+            ->setCustomerId($customer['customer'] ?? null)
+            ->setContactId($customer['contact'] ?? null)
+            ->setLocationId($customer['location'] ?? null)
+            ->setProjectId($projectId)
+            ->setAssigneeId($this->userId)
+            ->setTitle($sample['title'])
+            ->setPriority($sample['priority'])
+            ->setDueOn(isset($sample['due']) ? CarbonImmutable::today()->addDays($sample['due']) : null), openedById: $this->userId);
+
+        TicketEloquentModel::query()
+            ->withoutGlobalScopes()
+            ->findOrFail($ticket->getId()->toString())
+            ->labels()
+            ->sync(array_map(fn (string $name): string => $labels[$name], $sample['labels'] ?? []));
+
+        if ($sample['status'] !== TicketStatusEnum::New) {
+            MoveTicket::to($ticket, $sample['status'], PHP_INT_MAX, movedById: $this->userId);
         }
     }
 }

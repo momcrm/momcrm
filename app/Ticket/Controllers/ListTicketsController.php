@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Ticket\Controllers;
 
 use App\Customer\CustomerEloquentModel;
+use App\Project\ProjectEloquentModel;
 use App\Ticket\Actions\FindTicket;
 use App\Ticket\Ticket;
 use App\Ticket\TicketEloquentModel;
@@ -31,7 +32,7 @@ final class ListTicketsController
     }
 
     /**
-     * A ticket with the names of its customer and assignee, for lists.
+     * A ticket with the names of its customer, assignee and project, for lists.
      *
      * @return array<string, mixed>
      */
@@ -39,11 +40,14 @@ final class ListTicketsController
     {
         $customer = $model->getRelationValue(TicketRelationship::Customer->value);
         $assignee = $model->getRelationValue(TicketRelationship::Assignee->value);
+        $project = $model->getRelationValue(TicketRelationship::Project->value);
 
         return [
             ...Ticket::fromEloquentModel($model)->toSummary(),
             'customer_name' => $customer instanceof CustomerEloquentModel ? $customer->name : null,
             'assignee_name' => $assignee instanceof UserEloquentModel ? $assignee->name : null,
+            'project_name' => $project instanceof ProjectEloquentModel ? $project->name : null,
+            'project_color' => $project instanceof ProjectEloquentModel ? $project->color : null,
         ];
     }
 }

@@ -10,8 +10,10 @@ use App\Customer\Actions\FindCustomer;
 use App\Customer\CustomerEloquentModel;
 use App\Invoice\Actions\FindInvoice;
 use App\Invoice\InvoiceEloquentModel;
+use App\Project\ProjectEloquentModel;
 use App\Ticket\Actions\FindTicket;
 use App\Ticket\TicketEloquentModel;
+use App\Ticket\TicketRelationship;
 use App\User\UserEloquentModel;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -83,10 +85,25 @@ final class SearchWorkspaceController
                 'number' => $ticket->number,
                 'title' => $ticket->title,
                 'status' => $ticket->status,
-                'subtitle' => $ticket->customer?->name,
+                'subtitle' => self::ticketSubtitle($ticket),
                 'url' => route('tickets.show', $ticket->id),
             ])
             ->values()
             ->all();
+    }
+
+    /**
+     * Who the ticket is for: its customer, or its project for internal work.
+     */
+    private static function ticketSubtitle(TicketEloquentModel $ticket): ?string
+    {
+        $customer = $ticket->getRelationValue(TicketRelationship::Customer->value);
+        $project = $ticket->getRelationValue(TicketRelationship::Project->value);
+
+        return match (true) {
+            $customer instanceof CustomerEloquentModel => $customer->name,
+            $project instanceof ProjectEloquentModel => $project->name,
+            default => null,
+        };
     }
 }

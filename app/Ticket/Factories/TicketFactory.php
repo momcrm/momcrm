@@ -6,14 +6,21 @@ namespace App\Ticket\Factories;
 
 use App\Customer\CustomerEloquentModel;
 use App\Team\TeamEloquentModel;
+use App\Ticket\Properties\ArchivedAt;
 use App\Ticket\Properties\AssigneeId;
 use App\Ticket\Properties\ClosedAt;
 use App\Ticket\Properties\ContactId;
 use App\Ticket\Properties\CustomerId;
 use App\Ticket\Properties\Description;
+use App\Ticket\Properties\DueOn;
+use App\Ticket\Properties\EstimateMinutes;
 use App\Ticket\Properties\LocationId;
 use App\Ticket\Properties\Number;
+use App\Ticket\Properties\ParentId;
+use App\Ticket\Properties\Position;
 use App\Ticket\Properties\Priority;
+use App\Ticket\Properties\ProjectId;
+use App\Ticket\Properties\StartsOn;
 use App\Ticket\Properties\Status;
 use App\Ticket\Properties\TeamId;
 use App\Ticket\Properties\Title;
@@ -46,6 +53,18 @@ final class TicketFactory extends Factory
             Status::getDatabaseTableColumnName() => TicketStatusEnum::New->value,
             Priority::getDatabaseTableColumnName() => TicketPriorityEnum::Normal->value,
             ClosedAt::getDatabaseTableColumnName() => null,
+            ProjectId::getDatabaseTableColumnName() => null,
+            ParentId::getDatabaseTableColumnName() => null,
+            StartsOn::getDatabaseTableColumnName() => null,
+            DueOn::getDatabaseTableColumnName() => null,
+            EstimateMinutes::getDatabaseTableColumnName() => null,
+            Position::getDatabaseTableColumnName() => 0,
+            ArchivedAt::getDatabaseTableColumnName() => null,
         ];
+    }
+
+    public function archived(): self
+    {
+        return $this->state([ArchivedAt::getDatabaseTableColumnName() => now()]);
     }
 }

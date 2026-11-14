@@ -10,10 +10,15 @@ use App\AuditLog\AuditLogEloquentModel;
 use App\Contact\ContactEloquentModel;
 use App\Customer\CustomerEloquentModel;
 use App\EmailCode\EmailCodeEloquentModel;
+use App\Favorite\FavoriteEloquentModel;
+use App\Group\GroupEloquentModel;
 use App\Invoice\InvoiceEloquentModel;
 use App\InvoiceItem\InvoiceItemEloquentModel;
+use App\Label\LabelEloquentModel;
 use App\Location\LocationEloquentModel;
+use App\Milestone\MilestoneEloquentModel;
 use App\Passkey\PasskeyEloquentModel;
+use App\Project\ProjectEloquentModel;
 use App\Service\ServiceEloquentModel;
 use App\Shared\Traits\Enum;
 use App\SocialAccount\SocialAccountEloquentModel;
@@ -41,10 +46,15 @@ enum MorphMapKeyEnum: string
     case Contact = 'contact';
     case Customer = 'customer';
     case EmailCode = 'email_code';
+    case Favorite = 'favorite';
+    case Group = 'group';
     case Invoice = 'invoice';
     case InvoiceItem = 'invoice_item';
+    case Label = 'label';
     case Location = 'location';
+    case Milestone = 'milestone';
     case Passkey = 'passkey';
+    case Project = 'project';
     case Service = 'service';
     case SocialAccount = 'social_account';
     case Team = 'team';
@@ -85,10 +95,15 @@ enum MorphMapKeyEnum: string
             self::Contact => ContactEloquentModel::class,
             self::Customer => CustomerEloquentModel::class,
             self::EmailCode => EmailCodeEloquentModel::class,
+            self::Favorite => FavoriteEloquentModel::class,
+            self::Group => GroupEloquentModel::class,
             self::Invoice => InvoiceEloquentModel::class,
             self::InvoiceItem => InvoiceItemEloquentModel::class,
+            self::Label => LabelEloquentModel::class,
             self::Location => LocationEloquentModel::class,
+            self::Milestone => MilestoneEloquentModel::class,
             self::Passkey => PasskeyEloquentModel::class,
+            self::Project => ProjectEloquentModel::class,
             self::Service => ServiceEloquentModel::class,
             self::SocialAccount => SocialAccountEloquentModel::class,
             self::Team => TeamEloquentModel::class,
