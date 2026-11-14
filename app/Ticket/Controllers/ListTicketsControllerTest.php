@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Customer\CustomerEloquentModel;
+use App\Label\LabelEloquentModel;
+use App\Project\ProjectEloquentModel;
 use App\Ticket\TicketEloquentModel;
 use App\Ticket\TicketStatusEnum;
 use App\User\UserEloquentModel;
@@ -59,3 +61,95 @@ it('finds a ticket by its number or title', function (string $search): void {
         ->get(route('tickets.index', ['search' => $search]))
         ->assertInertia(fn (Assert $page) => $page->where('tickets.total', 1)->where('tickets.data.0.number', 41));
 })->with(['#41', 'printer']);
+
+it('shows every status on the board, each column in its saved order', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    ticketFor($user, ['number' => 1, 'title' => 'Second', 'position' => 1]);
+    ticketFor($user, ['number' => 2, 'title' => 'First', 'position' => 0]);
+    ticketFor($user, ['number' => 3, 'title' => 'Done', 'status' => TicketStatusEnum::Closed->value, 'position' => 2]);
+
+    actingAs($user)
+        ->get(route('tickets.index', ['view' => 'board']))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('filters.view', 'board')
+            ->where('filters.status', 'all')
+            ->where('tickets.total', 3)
+            ->where('tickets.data.0.title', 'First')
+            ->where('tickets.data.1.title', 'Second'),
+        );
+});
+
+it('filters by priority, assignee, project and label', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $project = ProjectEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
+    $label = LabelEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
+    $match = ticketFor($user, ['number' => 1, 'priority' => 'urgent', 'assignee_id' => $user->id, 'project_id' => $project->id]);
+    $match->labels()->attach($label);
+    ticketFor($user, ['number' => 2, 'priority' => 'urgent', 'assignee_id' => $user->id]);
+    ticketFor($user, ['number' => 3, 'priority' => 'low', 'project_id' => $project->id]);
+
+    actingAs($user)
+        ->get(route('tickets.index', ['priority' => 'urgent,high', 'assignee' => 'me', 'project' => $project->id, 'label' => $label->id]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('tickets.total', 1)
+            ->where('tickets.data.0.id', $match->id)
+            ->where('tickets.data.0.labels.0.name', $label->name)
+            ->where('filters.priority', ['urgent', 'high']),
+        );
+
+    actingAs($user)
+        ->get(route('tickets.index', ['assignee' => 'none', 'project' => 'none']))
+        ->assertInertia(fn (Assert $page) => $page->where('tickets.total', 0));
+});
+
+it('sorts the table by priority', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    ticketFor($user, ['number' => 1, 'priority' => 'low']);
+    ticketFor($user, ['number' => 2, 'priority' => 'urgent']);
+    ticketFor($user, ['number' => 3, 'priority' => 'normal']);
+
+    actingAs($user)
+        ->get(route('tickets.index', ['view' => 'table', 'sort' => 'priority', 'direction' => 'desc']))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('tickets.data.0.priority', 'urgent')
+            ->where('tickets.data.1.priority', 'normal')
+            ->where('tickets.data.2.priority', 'low'),
+        );
+});
+
+it('leaves subtasks out of the views and counts them on their parent', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $parent = ticketFor($user, ['number' => 1]);
+    ticketFor($user, ['number' => 2, 'parent_id' => $parent->id, 'status' => 'closed']);
+    ticketFor($user, ['number' => 3, 'parent_id' => $parent->id]);
+
+    actingAs($user)
+        ->get(route('tickets.index'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('tickets.total', 1)
+            ->where('tickets.data.0.subtasks_count', 2)
+            ->where('tickets.data.0.closed_subtasks_count', 1),
+        );
+});
+
+it('opens a ticket in the drawer', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $ticket = ticketFor($user, ['number' => 5, 'title' => 'Printer']);
+    $subtask = ticketFor($user, ['number' => 6, 'parent_id' => $ticket->id]);
+
+    actingAs($user)
+        ->get(route('tickets.index', ['ticket' => $ticket->id]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('drawer.title', 'Printer')
+            ->where('drawer.customer_name', 'Acme IT')
+            ->where('drawer.subtasks.0.id', $subtask->id)
+            ->where('drawer.is_favorite', false)
+            ->has('options.labels'),
+        );
+});
+
+it("keeps the drawer closed for another team's ticket", function (): void {
+    actingAs(UserEloquentModel::factory()->withPersonalTeam()->create())
+        ->get(route('tickets.index', ['ticket' => TicketEloquentModel::factory()->create()->id]))
+        ->assertInertia(fn (Assert $page) => $page->where('drawer', null));
+});

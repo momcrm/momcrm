@@ -1,16 +1,11 @@
 import { Head, Link } from '@inertiajs/react';
+import CustomerTable from '@/components/customers/customer-table';
 import EmptyState from '@/components/empty-state';
 import PageHeader from '@/components/page-header';
 import Pager from '@/components/pager';
 import SearchInput from '@/components/search-input';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-    create,
-    importMethod as importRoute,
-    index,
-    show,
-} from '@/routes/customers';
+import { create, importMethod as importRoute, index } from '@/routes/customers';
 import type { CustomerListItem, Paginated } from '@/types';
 
 export default function CustomersIndex({
@@ -69,50 +64,7 @@ export default function CustomersIndex({
                     )
                 ) : (
                     <>
-                        <ul className="divide-y rounded-lg border">
-                            {customers.data.map((customer) => (
-                                <li key={customer.id}>
-                                    <Link
-                                        href={show(customer.id)}
-                                        className="flex items-center justify-between gap-4 px-4 py-3 hover:bg-accent"
-                                        prefetch
-                                    >
-                                        <div className="min-w-0">
-                                            <p className="truncate font-medium">
-                                                {customer.name}
-                                            </p>
-                                            <p className="truncate text-sm text-muted-foreground">
-                                                {[
-                                                    customer.email,
-                                                    customer.phone,
-                                                ]
-                                                    .filter(Boolean)
-                                                    .join(' · ') ||
-                                                    `Customer #${customer.number}`}
-                                            </p>
-                                        </div>
-                                        <div className="flex shrink-0 items-center gap-2">
-                                            {customer.is_sample && (
-                                                <Badge variant="outline">
-                                                    Sample
-                                                </Badge>
-                                            )}
-                                            {customer.status === 'inactive' && (
-                                                <Badge variant="secondary">
-                                                    Inactive
-                                                </Badge>
-                                            )}
-                                            <span className="text-sm text-muted-foreground">
-                                                {customer.contacts_count}{' '}
-                                                {customer.contacts_count === 1
-                                                    ? 'contact'
-                                                    : 'contacts'}
-                                            </span>
-                                        </div>
-                                    </Link>
-                                </li>
-                            ))}
-                        </ul>
+                        <CustomerTable customers={customers.data} />
                         <Pager page={customers} only="customers" />
                     </>
                 )}

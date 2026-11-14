@@ -1,11 +1,11 @@
 import { Head, Link } from '@inertiajs/react';
+import ContactTable from '@/components/contacts/contact-table';
 import EmptyState from '@/components/empty-state';
 import PageHeader from '@/components/page-header';
 import Pager from '@/components/pager';
 import SearchInput from '@/components/search-input';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { create, edit, index } from '@/routes/contacts';
+import { create, index } from '@/routes/contacts';
 import type { ContactListItem, Paginated } from '@/types';
 
 export default function ContactsIndex({
@@ -59,35 +59,7 @@ export default function ContactsIndex({
                     )
                 ) : (
                     <>
-                        <ul className="divide-y rounded-lg border">
-                            {contacts.data.map((contact) => (
-                                <li key={contact.id}>
-                                    <Link
-                                        href={edit(contact.id)}
-                                        className="flex items-center justify-between gap-4 px-4 py-3 hover:bg-accent"
-                                    >
-                                        <div className="min-w-0">
-                                            <p className="truncate font-medium">
-                                                {contact.full_name}
-                                            </p>
-                                            <p className="truncate text-sm text-muted-foreground">
-                                                {[
-                                                    contact.customer_name,
-                                                    contact.email,
-                                                ]
-                                                    .filter(Boolean)
-                                                    .join(' · ')}
-                                            </p>
-                                        </div>
-                                        {contact.is_primary && (
-                                            <Badge variant="secondary">
-                                                Primary
-                                            </Badge>
-                                        )}
-                                    </Link>
-                                </li>
-                            ))}
-                        </ul>
+                        <ContactTable contacts={contacts.data} />
                         <Pager page={contacts} only="contacts" />
                     </>
                 )}

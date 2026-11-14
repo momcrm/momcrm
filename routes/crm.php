@@ -46,11 +46,14 @@ use App\Ticket\Controllers\ArchiveTicketController;
 use App\Ticket\Controllers\CloseTicketController;
 use App\Ticket\Controllers\CreateTicketController;
 use App\Ticket\Controllers\EditTicketController;
+use App\Ticket\Controllers\ListMyTicketsController;
 use App\Ticket\Controllers\ListTicketsController;
 use App\Ticket\Controllers\MoveTicketController;
+use App\Ticket\Controllers\PatchTicketController;
 use App\Ticket\Controllers\ReopenTicketController;
 use App\Ticket\Controllers\RestoreTicketController;
 use App\Ticket\Controllers\ShowTicketController;
+use App\Ticket\Controllers\StoreSubtaskController;
 use App\Ticket\Controllers\StoreTicketController;
 use App\Ticket\Controllers\UpdateTicketController;
 use Illuminate\Support\Facades\Route;
@@ -93,6 +96,7 @@ Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function 
     Route::delete('services/{service}', DeleteServiceController::class)->whereUuid('service')->name('services.destroy');
 
     Route::get('tickets', ListTicketsController::class)->name('tickets.index');
+    Route::get('my-tickets', ListMyTicketsController::class)->name('tickets.mine');
     Route::get('tickets/create', CreateTicketController::class)->name('tickets.create');
     Route::post('tickets', StoreTicketController::class)->name('tickets.store');
     Route::get('tickets/{ticket}', ShowTicketController::class)->whereUuid('ticket')->name('tickets.show');
@@ -100,6 +104,8 @@ Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function 
     Route::put('tickets/{ticket}', UpdateTicketController::class)->whereUuid('ticket')->name('tickets.update');
     Route::post('tickets/{ticket}/close', CloseTicketController::class)->whereUuid('ticket')->name('tickets.close');
     Route::post('tickets/{ticket}/reopen', ReopenTicketController::class)->whereUuid('ticket')->name('tickets.reopen');
+    Route::patch('tickets/{ticket}', PatchTicketController::class)->whereUuid('ticket')->name('tickets.patch');
+    Route::post('tickets/{ticket}/subtasks', StoreSubtaskController::class)->whereUuid('ticket')->name('tickets.subtasks.store');
     Route::put('tickets/{ticket}/move', MoveTicketController::class)->whereUuid('ticket')->name('tickets.move');
     Route::post('tickets/{ticket}/archive', ArchiveTicketController::class)->whereUuid('ticket')->name('tickets.archive');
     Route::post('tickets/{ticket}/restore', RestoreTicketController::class)->whereUuid('ticket')->name('tickets.restore');

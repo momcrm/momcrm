@@ -1,10 +1,11 @@
-import { router } from '@inertiajs/react';
 import { Search } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Input } from '@/components/ui/input';
+import { visitWithQuery } from '@/lib/query';
 
 /**
- * Filters the current page by a `search` query parameter as the user types.
+ * Filters the current page by a `search` query parameter as the user types,
+ * keeping the page's other query parameters.
  */
 export default function SearchInput({
     value,
@@ -26,12 +27,7 @@ export default function SearchInput({
         }
 
         const timeout = setTimeout(() => {
-            router.get(window.location.pathname, term ? { search: term } : {}, {
-                only,
-                preserveState: true,
-                preserveScroll: true,
-                replace: true,
-            });
+            visitWithQuery({ search: term }, { only });
         }, 250);
 
         return () => clearTimeout(timeout);

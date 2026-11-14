@@ -1,6 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import EmptyState from '@/components/empty-state';
-import InvoiceList from '@/components/invoices/invoice-list';
+import InvoiceTable from '@/components/invoices/invoice-table';
 import PageHeader from '@/components/page-header';
 import Pager from '@/components/pager';
 import SearchInput from '@/components/search-input';
@@ -81,7 +81,7 @@ export default function InvoicesIndex({
                     )
                 ) : (
                     <>
-                        <InvoiceList invoices={invoices.data} />
+                        <InvoiceTable invoices={invoices.data} />
                         <Pager page={invoices} only="invoices" />
                     </>
                 )}
