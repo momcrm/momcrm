@@ -1,6 +1,6 @@
 import { Form, Head } from '@inertiajs/react';
 import { useRef } from 'react';
-import SecurityController from '@/actions/App/Http/Controllers/Settings/SecurityController';
+import UpdatePasswordController from '@/actions/App/User/Controllers/UpdatePasswordController';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
@@ -36,7 +36,7 @@ export default function Security(props: Props) {
                 />
 
                 <Form
-                    {...SecurityController.update.form()}
+                    {...UpdatePasswordController.form()}
                     options={{
                         preserveScroll: true,
                     }}
