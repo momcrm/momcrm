@@ -1,17 +1,6 @@
-import { Link } from '@inertiajs/react';
-import {
-    BookOpen,
-    Building2,
-    FolderGit2,
-    LayoutGrid,
-    Receipt,
-    Ticket,
-    Users,
-} from 'lucide-react';
-import AppLogo from '@/components/app-logo';
+import { usePage } from '@inertiajs/react';
 import { GettingStartedNav } from '@/components/getting-started-nav';
-import { NavFooter } from '@/components/nav-footer';
-import { NavMain } from '@/components/nav-main';
+import { NavSection } from '@/components/nav-section';
 import { NavUser } from '@/components/nav-user';
 import { TeamSwitcher } from '@/components/team-switcher';
 import {
@@ -19,81 +8,40 @@ import {
     SidebarContent,
     SidebarFooter,
     SidebarHeader,
-    SidebarMenu,
-    SidebarMenuButton,
-    SidebarMenuItem,
+    SidebarTrigger,
 } from '@/components/ui/sidebar';
-import { dashboard } from '@/routes';
-import { index as contactsIndex } from '@/routes/contacts';
-import { index as customersIndex } from '@/routes/customers';
-import { index as invoicesIndex } from '@/routes/invoices';
-import { index as ticketsIndex } from '@/routes/tickets';
-import type { NavItem } from '@/types';
-
-const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
-    },
-    {
-        title: 'Customers',
-        href: customersIndex(),
-        icon: Building2,
-    },
-    {
-        title: 'Contacts',
-        href: contactsIndex(),
-        icon: Users,
-    },
-    {
-        title: 'Tickets',
-        href: ticketsIndex(),
-        icon: Ticket,
-    },
-    {
-        title: 'Invoices',
-        href: invoicesIndex(),
-        icon: Receipt,
-    },
-];
-
-const footerNavItems: NavItem[] = [
-    {
-        title: 'Repository',
-        href: 'https://github.com/laravel/react-starter-kit',
-        icon: FolderGit2,
-    },
-    {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#react',
-        icon: BookOpen,
-    },
-];
+import {
+    footerNavigation,
+    workspaceNavigation,
+} from '@/lib/workspace-navigation';
 
 export function AppSidebar() {
+    const { sidebarCounts } = usePage().props;
+
     return (
-        <Sidebar collapsible="icon" variant="inset">
-            <SidebarHeader>
-                <SidebarMenu>
-                    <SidebarMenuItem>
-                        <SidebarMenuButton size="lg" asChild>
-                            <Link href={dashboard()} prefetch>
-                                <AppLogo />
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                </SidebarMenu>
-                <TeamSwitcher />
+        <Sidebar collapsible="icon" variant="sidebar">
+            <SidebarHeader className="flex-row items-center gap-1 p-2">
+                <div className="min-w-0 flex-1">
+                    <TeamSwitcher />
+                </div>
+                <SidebarTrigger className="size-7 text-muted-foreground group-data-[collapsible=icon]:hidden" />
             </SidebarHeader>
 
-            <SidebarContent>
+            <SidebarContent className="gap-1">
                 <GettingStartedNav />
-                <NavMain items={mainNavItems} />
+                {workspaceNavigation(sidebarCounts).map((section, index) => (
+                    <NavSection
+                        key={section.title ?? index}
+                        section={section}
+                    />
+                ))}
             </SidebarContent>
 
-            <SidebarFooter>
-                <NavFooter items={footerNavItems} className="mt-auto" />
+            <SidebarFooter className="gap-1 p-2">
+                <NavSection
+                    section={{ items: footerNavigation() }}
+                    className="p-0"
+                />
                 <NavUser />
             </SidebarFooter>
         </Sidebar>

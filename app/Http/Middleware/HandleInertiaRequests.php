@@ -6,6 +6,7 @@ use App\Onboarding\Actions\GetGettingStartedProgress;
 use App\Onboarding\Actions\RemoveSampleData;
 use App\Team\Actions\FindTeam;
 use App\Team\Team;
+use App\Ticket\Actions\FindTicket;
 use App\User\UserEloquentModel;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -50,6 +51,7 @@ class HandleInertiaRequests extends Middleware
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'hasSampleData' => fn (): bool => $this->hasSampleData($request),
+            'sidebarCounts' => fn (): ?array => $this->sidebarCounts($request),
             'gettingStarted' => fn (): ?array => $request->user() instanceof UserEloquentModel
                 ? GetGettingStartedProgress::forUser($request->user())
                 : null,
@@ -64,6 +66,25 @@ class HandleInertiaRequests extends Middleware
         $teamId = $request->user()?->current_team_id;
 
         return is_string($teamId) && RemoveSampleData::teamHasSampleData($teamId);
+    }
+
+    /**
+     * The numbers shown next to sidebar items.
+     *
+     * @return array{openTickets: int, myOpenTickets: int}|null
+     */
+    private function sidebarCounts(Request $request): ?array
+    {
+        $user = $request->user();
+
+        if (! $user instanceof UserEloquentModel || ! is_string($user->current_team_id)) {
+            return null;
+        }
+
+        return [
+            'openTickets' => FindTicket::countOpenForTeam($user->current_team_id),
+            'myOpenTickets' => FindTicket::countOpenForTeam($user->current_team_id, $user->id),
+        ];
     }
 
     /**
