@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Activity\ActivityEloquentModel;
+use App\Activity\ActivityTypeEnum;
 use App\Team\TeamEloquentModel;
 use App\TeamUser\Actions\CreateTeamUser;
 use App\User\UserEloquentModel;
@@ -46,4 +48,17 @@ it('requires a team id', function (): void {
         ->from(route('dashboard'))
         ->put(route('current-team.update'), [])
         ->assertSessionHasErrors(['team_id' => 'The team id field is required.']);
+});
+
+it('records the switch in the new teams activity', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $otherTeam = TeamEloquentModel::factory()->create();
+    CreateTeamUser::fromIds(teamId: $otherTeam->id, userId: $user->id);
+
+    actingAs($user)->put(route('current-team.update'), ['team_id' => $otherTeam->id]);
+
+    $activity = ActivityEloquentModel::query()->where('type', ActivityTypeEnum::TeamSwitched->value)->sole();
+
+    expect($activity->team_id)->toBe($otherTeam->id)
+        ->and($activity->user_id)->toBe($user->id);
 });

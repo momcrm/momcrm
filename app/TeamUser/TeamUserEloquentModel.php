@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\TeamUser;
 
+use App\AuditLog\AuditObserver;
+use App\AuditLog\Contracts\Auditable;
 use App\Shared\Table;
 use App\TeamUser\Properties\Id;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 
@@ -18,11 +21,17 @@ use Illuminate\Database\Eloquent\Model;
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  */
-final class TeamUserEloquentModel extends Model
+#[ObservedBy(AuditObserver::class)]
+final class TeamUserEloquentModel extends Model implements Auditable
 {
     use HasUuids;
 
     protected $guarded = [];
+
+    public function auditTeamId(): string
+    {
+        return $this->team_id;
+    }
 
     public function getTable(): string
     {

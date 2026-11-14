@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\User\FormRequests;
 
+use App\Activity\Actions\RecordActivity;
+use App\Activity\ActivityTypeEnum;
 use App\User\Actions\UpdateUserPassword;
 use App\User\Properties\CurrentPassword;
 use App\User\Properties\Password;
@@ -27,10 +29,12 @@ final class UpdatePasswordFormRequest extends FormRequest
 
     public function process(): RedirectResponse
     {
-        UpdateUserPassword::fromUser(
+        $user = UpdateUserPassword::fromUser(
             User::fromEloquentModel($this->user())
                 ->setPassword($this->string(Password::getNameForValidation())->toString()),
         );
+
+        RecordActivity::for(type: ActivityTypeEnum::PasswordChanged, userId: $user->getId()->toString());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Password updated.')]);
 

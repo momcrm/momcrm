@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Activity\ActivityEloquentModel;
+use App\Activity\ActivityTypeEnum;
 use App\User\UserEloquentModel;
 
 use function Pest\Laravel\actingAs;
@@ -73,4 +75,28 @@ it('keeps the email verified when the email address is unchanged', function (): 
         ->assertRedirect(route('profile.edit'));
 
     expect($user->refresh()->email_verified_at)->not->toBeNull();
+});
+
+it('records which profile fields changed, without their values', function (): void {
+    $user = UserEloquentModel::factory()->create();
+
+    actingAs($user)->patch(route('profile.update'), [
+        'name' => 'Brand New Name',
+        'email' => $user->email,
+    ]);
+
+    $activity = ActivityEloquentModel::query()->where('type', ActivityTypeEnum::ProfileUpdated->value)->sole();
+
+    expect($activity->details)->toBe(['fields' => ['name']]);
+});
+
+it('records nothing when the profile is saved unchanged', function (): void {
+    $user = UserEloquentModel::factory()->create();
+
+    actingAs($user)->patch(route('profile.update'), [
+        'name' => $user->name,
+        'email' => $user->email,
+    ]);
+
+    expect(ActivityEloquentModel::query()->where('type', ActivityTypeEnum::ProfileUpdated->value)->exists())->toBeFalse();
 });

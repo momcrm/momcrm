@@ -1,5 +1,7 @@
 <?php
 
+use App\Activity\Controllers\ListAccountActivityController;
+use App\Activity\Controllers\ListTeamActivityController;
 use App\Team\Controllers\EditTeamController;
 use App\Team\Controllers\UpdateTeamController;
 use App\User\Controllers\DeleteProfileController;
@@ -30,6 +32,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('settings/team', EditTeamController::class)->name('team.edit');
     Route::patch('settings/team', UpdateTeamController::class)->name('team.update');
+    Route::get('settings/team/activity', ListTeamActivityController::class)->name('team-activity.index');
+
+    Route::get('settings/activity', ListAccountActivityController::class)->name('activity.index');
 
     Route::inertia('settings/appearance', 'settings/appearance')->name('appearance.edit');
 });

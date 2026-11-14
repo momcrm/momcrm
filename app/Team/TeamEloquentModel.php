@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Team;
 
+use App\AuditLog\AuditObserver;
+use App\AuditLog\Contracts\Auditable;
 use App\Shared\Table;
 use App\Team\Factories\TeamFactory;
 use App\Team\Properties\Id;
@@ -14,6 +16,7 @@ use App\TeamUser\Properties\TeamId;
 use App\TeamUser\Properties\UserId;
 use App\User\UserEloquentModel;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -28,7 +31,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  */
-final class TeamEloquentModel extends Model
+#[ObservedBy(AuditObserver::class)]
+final class TeamEloquentModel extends Model implements Auditable
 {
     /** @use HasFactory<TeamFactory> */
     use HasFactory;
@@ -36,6 +40,11 @@ final class TeamEloquentModel extends Model
     use HasUuids;
 
     protected $guarded = [];
+
+    public function auditTeamId(): string
+    {
+        return $this->id;
+    }
 
     public function getTable(): string
     {

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\User\FormRequests;
 
+use App\Activity\Actions\RecordActivity;
+use App\Activity\ActivityTypeEnum;
 use App\User\Actions\UpdateUser;
 use App\User\Properties\Email;
 use App\User\Properties\Name;
@@ -30,6 +32,7 @@ final class UpdateProfileFormRequest extends FormRequest
     {
         $user = User::fromEloquentModel($this->user());
         $previousEmail = $user->getEmail()->toString();
+        $previousName = $user->getName()->toString();
 
         $user->setPropertyIfExists($this->validated());
 
@@ -38,6 +41,19 @@ final class UpdateProfileFormRequest extends FormRequest
         }
 
         UpdateUser::fromUser($user);
+
+        $changedFields = array_keys(array_filter([
+            Name::getName() => $user->getName()->toString() !== $previousName,
+            Email::getName() => $user->getEmail()->toString() !== $previousEmail,
+        ]));
+
+        if ($changedFields !== []) {
+            RecordActivity::for(
+                type: ActivityTypeEnum::ProfileUpdated,
+                userId: $user->getId()->toString(),
+                details: ['fields' => $changedFields],
+            );
+        }
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Profile updated.')]);
 
