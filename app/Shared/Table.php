@@ -8,6 +8,8 @@ enum Table: string
 {
     case Activities = 'activities';
     case AuditLogs = 'audit_logs';
+    case Contacts = 'contacts';
+    case Customers = 'customers';
     case Passkeys = 'passkeys';
     case TeamInvitations = 'team_invitations';
     case TeamUser = 'team_user';

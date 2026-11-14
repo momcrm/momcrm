@@ -6,6 +6,8 @@ namespace App\Shared;
 
 use App\Activity\ActivityEloquentModel;
 use App\AuditLog\AuditLogEloquentModel;
+use App\Contact\ContactEloquentModel;
+use App\Customer\CustomerEloquentModel;
 use App\Passkey\PasskeyEloquentModel;
 use App\Shared\Traits\Enum;
 use App\Team\TeamEloquentModel;
@@ -27,6 +29,8 @@ enum MorphMapKeyEnum: string
 
     case Activity = 'activity';
     case AuditLog = 'audit_log';
+    case Contact = 'contact';
+    case Customer = 'customer';
     case Passkey = 'passkey';
     case Team = 'team';
     case TeamInvitation = 'team_invitation';
@@ -61,6 +65,8 @@ enum MorphMapKeyEnum: string
         return match ($this) {
             self::Activity => ActivityEloquentModel::class,
             self::AuditLog => AuditLogEloquentModel::class,
+            self::Contact => ContactEloquentModel::class,
+            self::Customer => CustomerEloquentModel::class,
             self::Passkey => PasskeyEloquentModel::class,
             self::Team => TeamEloquentModel::class,
             self::TeamInvitation => TeamInvitationEloquentModel::class,
