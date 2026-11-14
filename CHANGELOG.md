@@ -19,7 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Issue forms for bug reports and feature requests, and a pull request template.
 - Release workflow that publishes a GitHub release with notes from this changelog when a version tag is pushed.
 - Laravel Boost for AI coding assistants.
-- mom/data v6.2.0 for data transfer objects.
+- mom/data v6.2.2 for data transfer objects, with its Laravel Boost guidelines.
 - Architecture tests (`tests/Arch`) enforce the domain conventions: strict types, final invokable controllers, final actions, FormRequests and mom/data Properties and DTOs, string-backed enums, and a test beside every controller.
 - Audit trail: every create, update and delete of users, teams and team memberships is recorded with old/new values (secrets never stored), actor, IP and request id.
 - Activity feed: sign-ins, sign-outs, password, two-factor, passkey and email-verification events, plus team renames and switches. Viewable under Settings → Activity (your account) and Settings → Team → Activity (team owners).
