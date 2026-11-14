@@ -105,6 +105,48 @@ export type TicketListItem = Ticket & {
     assignee_name: string | null;
     project_name: string | null;
     project_color: ColorName | null;
+    labels: TicketLabel[];
+    subtasks_count: number;
+    closed_subtasks_count: number;
+};
+
+export type TicketLabel = { id: string; name: string; color: ColorName };
+
+export type TicketDrawerData = Omit<
+    TicketListItem,
+    'subtasks_count' | 'closed_subtasks_count'
+> & {
+    parent: { id: string; number: number; title: string } | null;
+    subtasks: {
+        id: string;
+        number: number;
+        title: string;
+        status: TicketStatus;
+    }[];
+    is_favorite: boolean;
+};
+
+export type TicketPickerOptions = {
+    members: CustomerOption[];
+    projects: ProjectOption[];
+    labels: TicketLabel[];
+    customers: CustomerOption[];
+    statuses: Option[];
+    priorities: Option[];
+};
+
+export type TicketView = 'list' | 'board' | 'table';
+
+export type TicketFilters = {
+    view: TicketView;
+    status: 'open' | 'closed' | 'all';
+    search: string | null;
+    priority: TicketPriority[];
+    assignee: string | null;
+    project: string | null;
+    label: string | null;
+    sort: string;
+    direction: 'asc' | 'desc';
 };
 
 export type ColorName =

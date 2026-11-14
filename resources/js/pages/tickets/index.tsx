@@ -1,83 +1,72 @@
 import { Head, Link } from '@inertiajs/react';
+import { Plus } from 'lucide-react';
 import EmptyState from '@/components/empty-state';
 import PageHeader from '@/components/page-header';
 import Pager from '@/components/pager';
-import SearchInput from '@/components/search-input';
-import TicketList from '@/components/tickets/ticket-list';
+import TicketBoard from '@/components/tickets/ticket-board';
+import TicketDrawer from '@/components/tickets/ticket-drawer';
+import TicketGroups from '@/components/tickets/ticket-groups';
+import { ticketStatuses } from '@/components/tickets/ticket-meta';
+import TicketTable from '@/components/tickets/ticket-table';
+import TicketToolbar from '@/components/tickets/ticket-toolbar';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { visitWithQuery } from '@/lib/query';
 import { create, index } from '@/routes/tickets';
-import type { Paginated, TicketListItem } from '@/types';
-
-type Filter = 'open' | 'closed' | 'all';
-
-const filters: { value: Filter; label: string }[] = [
-    { value: 'open', label: 'Open' },
-    { value: 'closed', label: 'Closed' },
-    { value: 'all', label: 'All' },
-];
+import type {
+    Paginated,
+    TicketDrawerData,
+    TicketFilters,
+    TicketListItem,
+    TicketPickerOptions,
+} from '@/types';
 
 export default function TicketsIndex({
     tickets,
-    filters: current,
+    filters,
+    favoriteTicketIds,
+    options,
+    drawer,
 }: {
     tickets: Paginated<TicketListItem>;
-    filters: { search: string | null; status: Filter };
+    filters: TicketFilters;
+    favoriteTicketIds: string[];
+    options: TicketPickerOptions;
+    drawer: TicketDrawerData | null;
 }) {
+    const isFiltered =
+        Boolean(filters.search) ||
+        filters.priority.length > 0 ||
+        filters.assignee !== null ||
+        filters.project !== null ||
+        filters.label !== null;
+
     return (
         <>
             <Head title="Tickets" />
 
-            <div className="flex flex-col gap-6 p-4 md:p-6">
+            <div className="flex flex-col gap-5 p-4 md:p-6">
                 <PageHeader
                     title="Tickets"
-                    description="Every request and job for your customers."
+                    description="Every request and job, for customers and your own projects."
                     actions={
                         <Button asChild>
-                            <Link href={create()}>Open ticket</Link>
+                            <Link href={create()}>
+                                <Plus />
+                                New ticket
+                            </Link>
                         </Button>
                     }
                 />
 
-                <div className="flex flex-wrap items-center gap-4">
-                    <nav className="flex gap-1 rounded-lg bg-muted p-1">
-                        {filters.map((filter) => (
-                            <Link
-                                key={filter.value}
-                                href={index({
-                                    query: {
-                                        status:
-                                            filter.value === 'open'
-                                                ? undefined
-                                                : filter.value,
-                                    },
-                                })}
-                                preserveState
-                                className={cn(
-                                    'rounded-md px-3 py-1 text-sm',
-                                    current.status === filter.value
-                                        ? 'bg-background shadow-xs'
-                                        : 'text-muted-foreground',
-                                )}
-                            >
-                                {filter.label}
-                            </Link>
-                        ))}
-                    </nav>
-                    <SearchInput
-                        value={current.search}
-                        placeholder="Search by title or number"
-                        only={['tickets', 'filters']}
-                    />
-                </div>
+                <TicketToolbar filters={filters} options={options} />
 
-                {tickets.data.length === 0 ? (
-                    current.search ? (
+                {tickets.data.length === 0 && filters.view !== 'board' ? (
+                    isFiltered ? (
                         <EmptyState
-                            title={`No matches for "${current.search}"`}
-                            description="Check the spelling or try a shorter search."
+                            title="No tickets match"
+                            description="Try a shorter search or clear a filter."
                         />
-                    ) : current.status === 'closed' ? (
+                    ) : filters.status === 'closed' ? (
                         <EmptyState
                             title="No closed tickets"
                             description="Tickets you close will show up here."
@@ -93,13 +82,48 @@ export default function TicketsIndex({
                             }
                         />
                     )
-                ) : (
+                ) : filters.view === 'board' ? (
+                    <TicketBoard
+                        tickets={tickets.data}
+                        favoriteIds={favoriteTicketIds}
+                    />
+                ) : filters.view === 'table' ? (
                     <>
-                        <TicketList tickets={tickets.data} />
+                        <TicketTable
+                            tickets={tickets.data}
+                            sort={{
+                                column: filters.sort,
+                                direction: filters.direction,
+                            }}
+                            onSortChange={({ column, direction }) =>
+                                visitWithQuery(
+                                    { sort: column, direction },
+                                    { only: ['tickets', 'filters'] },
+                                )
+                            }
+                        />
                         <Pager page={tickets} only="tickets" />
                     </>
+                ) : (
+                    <TicketGroups
+                        key={filters.status}
+                        favoriteIds={favoriteTicketIds}
+                        groups={ticketStatuses.map((status) => ({
+                            key: status.value,
+                            label: status.label,
+                            tone: status.tone,
+                            collapsed:
+                                status.value === 'closed' &&
+                                filters.status === 'all',
+                            tickets: tickets.data.filter(
+                                (ticket) => ticket.status === status.value,
+                            ),
+                        }))}
+                    />
                 )}
             </div>
+
+            <TicketDrawer ticket={drawer} options={options} />
         </>
     );
 }

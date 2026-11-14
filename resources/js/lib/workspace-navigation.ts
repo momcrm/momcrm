@@ -1,5 +1,6 @@
 import {
     Building2,
+    CircleUser,
     Home,
     Palette,
     Receipt,
@@ -12,7 +13,7 @@ import { index as contactsIndex } from '@/routes/contacts';
 import { index as customersIndex } from '@/routes/customers';
 import { index as invoicesIndex } from '@/routes/invoices';
 import { edit as profileEdit } from '@/routes/profile';
-import { index as ticketsIndex } from '@/routes/tickets';
+import { mine as myTickets, index as ticketsIndex } from '@/routes/tickets';
 import type { NavItem } from '@/types';
 
 export type NavSection = {
@@ -41,6 +42,13 @@ export function workspaceNavigation(
                     href: dashboard(),
                     icon: Home,
                     shortcut: 'h',
+                },
+                {
+                    title: 'My tickets',
+                    href: myTickets(),
+                    icon: CircleUser,
+                    badge: counts?.myOpenTickets,
+                    shortcut: 'm',
                 },
             ],
         },
