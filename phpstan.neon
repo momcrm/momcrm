@@ -10,4 +10,8 @@ parameters:
         - database/
         - routes/
 
+    excludePaths:
+        analyse:
+            - app/*Test.php
+
     level: 7
