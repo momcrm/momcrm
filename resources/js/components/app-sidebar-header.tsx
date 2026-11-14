@@ -1,5 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
+    Bell as BellIcon,
     Building2,
     ChevronDown,
     CircleDashed,
@@ -28,6 +29,7 @@ import { useInitials } from '@/hooks/use-initials';
 import { create as createContact } from '@/routes/contacts';
 import { create as createCustomer } from '@/routes/customers';
 import { create as createInvoice } from '@/routes/invoices';
+import { index as notificationsIndex } from '@/routes/notifications';
 import { index as projectsIndex } from '@/routes/projects';
 import { edit as teamEdit } from '@/routes/team';
 import { create as createTicket } from '@/routes/tickets';
@@ -80,6 +82,29 @@ function NewMenu() {
                 </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
+    );
+}
+
+function Bell() {
+    const { sidebarCounts } = usePage().props;
+    const unread = sidebarCounts?.unreadNotifications ?? 0;
+
+    return (
+        <Button variant="ghost" size="icon" className="relative size-7" asChild>
+            <Link
+                href={notificationsIndex()}
+                aria-label={
+                    unread > 0
+                        ? `Notifications, ${unread} unread`
+                        : 'Notifications'
+                }
+            >
+                <BellIcon />
+                {unread > 0 && (
+                    <span className="absolute top-1 right-1 size-2 rounded-full bg-primary ring-2 ring-background" />
+                )}
+            </Link>
+        </Button>
     );
 }
 
@@ -142,6 +167,7 @@ export function AppSidebarHeader({
                         {isMac ? '⌘K' : 'Ctrl K'}
                     </kbd>
                 </button>
+                <Bell />
                 <NewMenu />
                 <AccountMenu />
             </div>

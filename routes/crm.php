@@ -1,11 +1,18 @@
 <?php
 
+use App\Activity\Controllers\ListWorkspaceActivityController;
 use App\Archive\Controllers\ShowArchiveController;
 use App\Asset\Controllers\CreateAssetController;
 use App\Asset\Controllers\DeleteAssetController;
 use App\Asset\Controllers\EditAssetController;
 use App\Asset\Controllers\StoreAssetController;
 use App\Asset\Controllers\UpdateAssetController;
+use App\Attachment\Controllers\DeleteAttachmentController;
+use App\Attachment\Controllers\ShowAttachmentController;
+use App\Attachment\Controllers\StoreProjectAttachmentController;
+use App\Attachment\Controllers\StoreTicketAttachmentController;
+use App\Comment\Controllers\DeleteCommentController;
+use App\Comment\Controllers\StoreCommentController;
 use App\Contact\Controllers\CreateContactController;
 use App\Contact\Controllers\DeleteContactController;
 use App\Contact\Controllers\EditContactController;
@@ -23,6 +30,11 @@ use App\Customer\Controllers\StoreCustomerController;
 use App\Customer\Controllers\UpdateCustomerController;
 use App\Favorite\Controllers\ListFavoritesController;
 use App\Favorite\Controllers\ToggleFavoriteController;
+use App\Inbox\Controllers\DeleteNotificationController;
+use App\Inbox\Controllers\ListNotificationsController;
+use App\Inbox\Controllers\MarkAllNotificationsReadController;
+use App\Inbox\Controllers\MarkNotificationReadController;
+use App\Inbox\Controllers\ShowInboxController;
 use App\Invoice\Controllers\CreateInvoiceController;
 use App\Invoice\Controllers\EditInvoiceController;
 use App\Invoice\Controllers\ListInvoicesController;
@@ -124,6 +136,20 @@ Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function 
     Route::post('tickets/{ticket}/restore', RestoreTicketController::class)->whereUuid('ticket')->name('tickets.restore');
 
     Route::delete('tickets/{ticket}', DeleteTicketController::class)->whereUuid('ticket')->name('tickets.destroy');
+
+    Route::post('tickets/{ticket}/comments', StoreCommentController::class)->whereUuid('ticket')->name('comments.store');
+    Route::delete('comments/{comment}', DeleteCommentController::class)->whereUuid('comment')->name('comments.destroy');
+    Route::post('tickets/{ticket}/attachments', StoreTicketAttachmentController::class)->whereUuid('ticket')->name('tickets.attachments.store');
+    Route::post('projects/{project}/attachments', StoreProjectAttachmentController::class)->whereUuid('project')->name('projects.attachments.store');
+    Route::get('attachments/{attachment}', ShowAttachmentController::class)->whereUuid('attachment')->name('attachments.show');
+    Route::delete('attachments/{attachment}', DeleteAttachmentController::class)->whereUuid('attachment')->name('attachments.destroy');
+
+    Route::get('inbox', ShowInboxController::class)->name('inbox');
+    Route::get('notifications', ListNotificationsController::class)->name('notifications.index');
+    Route::post('notifications/read-all', MarkAllNotificationsReadController::class)->name('notifications.read-all');
+    Route::post('notifications/{notification}/read', MarkNotificationReadController::class)->whereUuid('notification')->name('notifications.read');
+    Route::delete('notifications/{notification}', DeleteNotificationController::class)->whereUuid('notification')->name('notifications.destroy');
+    Route::get('activity', ListWorkspaceActivityController::class)->name('activity');
 
     Route::get('favorites', ListFavoritesController::class)->name('favorites.index');
     Route::post('favorites', ToggleFavoriteController::class)->name('favorites.toggle');

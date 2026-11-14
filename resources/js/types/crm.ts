@@ -124,6 +124,49 @@ export type TicketDrawerData = Omit<
         status: TicketStatus;
     }[];
     is_favorite: boolean;
+    comments: TicketComment[];
+    attachments: AttachmentItem[];
+    activity: import('./activity').ActivityItem[];
+};
+
+export type TicketComment = {
+    id: string;
+    body: string;
+    author_id: string | null;
+    author_name: string | null;
+    mentions: string[];
+    created_at: string | null;
+    can_delete: boolean;
+};
+
+export type AttachmentItem = {
+    id: string;
+    name: string;
+    size: number;
+    mime_type: string;
+    uploaded_by: string | null;
+    created_at: string | null;
+    url: string;
+};
+
+export type InboxKind = 'mention' | 'assignment' | 'comment' | 'update';
+
+export type NotificationItem = {
+    id: string;
+    kind: InboxKind;
+    team_id: string;
+    actor_id: string | null;
+    actor_name: string | null;
+    subject_type: 'ticket' | 'project';
+    subject_id: string;
+    number: number;
+    title: string;
+    project_name: string | null;
+    message: string;
+    excerpt: string | null;
+    read_at: string | null;
+    created_at: string | null;
+    url: string;
 };
 
 export type TicketPickerOptions = {

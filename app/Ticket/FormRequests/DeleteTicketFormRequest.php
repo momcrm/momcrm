@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Ticket\FormRequests;
 
+use App\Attachment\Actions\DeleteAttachments;
+use App\Shared\MorphMapKeyEnum;
 use App\Ticket\Actions\FindTicket;
 use App\Ticket\Exceptions\CouldNotFindTicket;
 use App\Ticket\Ticket;
@@ -47,6 +49,7 @@ final class DeleteTicketFormRequest extends FormRequest
 
     public function process(): RedirectResponse
     {
+        DeleteAttachments::for(MorphMapKeyEnum::Ticket, $this->ticket->getId()->toString());
         TicketEloquentModel::query()->findOrFail($this->ticket->getId()->toString())->delete();
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Ticket #:number deleted.', ['number' => $this->ticket->getNumber()->toInteger()])]);

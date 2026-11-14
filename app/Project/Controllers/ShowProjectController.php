@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Project\Controllers;
 
+use App\Attachment\Actions\FindAttachment;
+use App\Attachment\AttachmentEloquentModel;
 use App\Favorite\Actions\FindFavorite;
 use App\Favorite\FavoritableTypeEnum;
 use App\Group\GroupEloquentModel;
@@ -12,6 +14,7 @@ use App\Project\Exceptions\CouldNotFindProject;
 use App\Project\ProjectFormOptions;
 use App\Project\ProjectOverview;
 use App\Project\ProjectRelationship;
+use App\Shared\MorphMapKeyEnum;
 use App\Ticket\TicketDrawer;
 use App\Ticket\TicketListFilters;
 use App\Ticket\TicketViewProps;
@@ -22,11 +25,11 @@ use Inertia\Response;
 
 /**
  * A project's page. The Overview tab sums it up; the List, Board and Table
- * tabs are the ticket views limited to the project.
+ * tabs are the ticket views limited to the project; Files lists its uploads.
  */
 final class ShowProjectController
 {
-    public const array TABS = ['overview', TicketListFilters::VIEW_LIST, TicketListFilters::VIEW_BOARD, TicketListFilters::VIEW_TABLE];
+    public const array TABS = ['overview', TicketListFilters::VIEW_LIST, TicketListFilters::VIEW_BOARD, TicketListFilters::VIEW_TABLE, 'files'];
 
     /**
      * @throws CouldNotFindProject
@@ -51,14 +54,24 @@ final class ShowProjectController
                 'group_name' => $group instanceof GroupEloquentModel ? $group->name : null,
             ],
             'tab' => $tab,
-            ...($tab === 'overview'
-                ? [
+            ...match ($tab) {
+                'files' => [
+                    'attachments' => FindAttachment::forAttachable(MorphMapKeyEnum::Project, $model->id)
+                        ->map(fn (AttachmentEloquentModel $attachment): array => FindAttachment::listItem($attachment))
+                        ->values()
+                        ->all(),
+                    'favoriteTicketIds' => [],
+                    ...TicketDrawer::options($teamId),
+                    'drawer' => null,
+                ],
+                'overview' => [
                     ...ProjectOverview::for($model->id),
                     'favoriteTicketIds' => FindFavorite::idsForUser($teamId, $user->id, FavoritableTypeEnum::Ticket),
                     ...TicketDrawer::options($teamId),
                     'drawer' => TicketDrawer::forRequest($request),
-                ]
-                : TicketViewProps::for($request, TicketListFilters::fromRequest($request)->forProject($model->id))),
+                ],
+                default => TicketViewProps::for($request, TicketListFilters::fromRequest($request)->forProject($model->id)),
+            },
             ...ProjectFormOptions::forTeam($teamId),
         ]);
     }

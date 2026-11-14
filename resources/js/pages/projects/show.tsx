@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import type { ReactNode } from 'react';
+import Attachments from '@/components/attachments';
 import EmptyState from '@/components/empty-state';
 import Pager from '@/components/pager';
 import { toggleProjectStar } from '@/components/projects/project-card';
@@ -51,8 +52,10 @@ import {
     toggle as toggleMilestone,
 } from '@/routes/milestones';
 import { archive, index, restore, show, update } from '@/routes/projects';
+import { store as storeAttachment } from '@/routes/projects/attachments';
 import type {
     ActivityItem,
+    AttachmentItem,
     Milestone,
     Paginated,
     ProjectFormOptions,
@@ -64,7 +67,7 @@ import type {
     TicketStatus,
 } from '@/types';
 
-type Tab = 'overview' | 'list' | 'board' | 'table';
+type Tab = 'overview' | 'list' | 'board' | 'table' | 'files';
 
 type Props = {
     project: ProjectListItem & { group_name: string | null };
@@ -79,6 +82,7 @@ type Props = {
     activity?: ActivityItem[];
     tickets?: Paginated<TicketListItem>;
     filters?: TicketFilters;
+    attachments?: AttachmentItem[];
 };
 
 const tabs: { value: Tab; label: string }[] = [
@@ -86,6 +90,7 @@ const tabs: { value: Tab; label: string }[] = [
     { value: 'list', label: 'List' },
     { value: 'board', label: 'Board' },
     { value: 'table', label: 'Table' },
+    { value: 'files', label: 'Files' },
 ];
 
 export default function ShowProject(props: Props) {
@@ -251,6 +256,14 @@ export default function ShowProject(props: Props) {
             <div className="p-4 md:p-6">
                 {tab === 'overview' ? (
                     <Overview {...props} />
+                ) : tab === 'files' ? (
+                    <div className="max-w-3xl">
+                        <Attachments
+                            attachments={props.attachments ?? []}
+                            uploadUrl={storeAttachment.url(project.id)}
+                            reload={['attachments']}
+                        />
+                    </div>
                 ) : (
                     <TicketTabs {...props} />
                 )}

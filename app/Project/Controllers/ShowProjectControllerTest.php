@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Attachment\AttachmentEloquentModel;
 use App\Milestone\MilestoneEloquentModel;
 use App\Project\ProjectEloquentModel;
 use App\Ticket\TicketEloquentModel;
@@ -52,4 +53,14 @@ it("returns not found for another team's project", function (): void {
     actingAs(UserEloquentModel::factory()->withPersonalTeam()->create())
         ->get(route('projects.show', ProjectEloquentModel::factory()->create()->id))
         ->assertNotFound();
+});
+
+it("lists a project's files", function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $project = ProjectEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
+    AttachmentEloquentModel::factory()->on($project)->create(['name' => 'plan.pdf']);
+
+    actingAs($user)
+        ->get(route('projects.show', ['project' => $project->id, 'view' => 'files']))
+        ->assertInertia(fn (Assert $page) => $page->where('tab', 'files')->where('attachments.0.name', 'plan.pdf'));
 });

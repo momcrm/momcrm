@@ -9,6 +9,7 @@ use App\Activity\ActivityTypeEnum;
 use App\Project\Actions\FindProject;
 use App\Shared\Actions\NextTeamNumber;
 use App\Shared\Table;
+use App\Ticket\Notifications\TicketAssignedNotification;
 use App\Ticket\Properties\Id;
 use App\Ticket\Properties\Position;
 use App\Ticket\Properties\Status;
@@ -16,11 +17,13 @@ use App\Ticket\Properties\TeamId;
 use App\Ticket\Ticket;
 use App\Ticket\TicketEloquentModel;
 use App\Ticket\TicketStatusEnum;
+use App\User\UserEloquentModel;
 use Illuminate\Support\Facades\DB;
 
 /**
  * Opens a ticket with the team's next number, at the bottom of its status
  * column. A project ticket with no customer takes the project's customer.
+ * Someone other than the opener who is assigned it is notified.
  */
 final readonly class CreateTicket
 {
@@ -63,6 +66,15 @@ final readonly class CreateTicket
                 subject: $model,
                 details: ['number' => $this->ticket->getNumber()->toInteger()],
             );
+
+            $assigneeId = $this->ticket->getAssigneeId()->toNullableString();
+
+            if ($assigneeId !== null && $assigneeId !== $this->openedById) {
+                UserEloquentModel::query()->find($assigneeId)?->notify(new TicketAssignedNotification(
+                    $model->refresh(),
+                    $this->openedById === null ? null : UserEloquentModel::query()->find($this->openedById),
+                ));
+            }
 
             return Ticket::fromEloquentModel($model->refresh());
         });

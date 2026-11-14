@@ -24,6 +24,8 @@ import {
     ticketPriorities,
     ticketStatuses,
 } from '@/components/tickets/ticket-meta';
+import Attachments from '@/components/attachments';
+import TicketConversation from '@/components/tickets/ticket-conversation';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -50,6 +52,7 @@ import { useTicketActions } from '@/hooks/use-ticket-actions';
 import { colorDot } from '@/lib/colors';
 import { cn } from '@/lib/utils';
 import { show } from '@/routes/tickets';
+import { store as storeAttachment } from '@/routes/tickets/attachments';
 import type { TicketDrawerData, TicketPickerOptions } from '@/types';
 
 const NONE = '__none__';
@@ -370,6 +373,25 @@ function DrawerBody({
                 </section>
 
                 {!ticket.parent && <Subtasks ticket={ticket} />}
+
+                <section className="space-y-2">
+                    <h3 className="text-xs font-medium tracking-wide text-subtle-foreground uppercase">
+                        Files
+                    </h3>
+                    <Attachments
+                        attachments={ticket.attachments}
+                        uploadUrl={storeAttachment.url(ticket.id)}
+                        reload={['drawer']}
+                    />
+                </section>
+
+                <TicketConversation
+                    ticketId={ticket.id}
+                    comments={ticket.comments}
+                    activity={ticket.activity}
+                    members={options.members}
+                    reload={['drawer']}
+                />
             </div>
         </>
     );
