@@ -7,6 +7,7 @@ use App\Passkey\PasskeyEloquentModel;
 use App\Shared\MorphMapKeyEnum;
 use App\Team\Team;
 use App\Team\TeamPolicy;
+use App\TeamInvitation\Listeners\AcceptPendingTeamInvitation;
 use App\User\Listeners\SendWelcomeNotification;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Events\Verified;
@@ -78,6 +79,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Event::listen(RecordAccountActivity::EVENTS, RecordAccountActivity::class);
         Event::listen(Verified::class, SendWelcomeNotification::class);
+        Event::listen(AcceptPendingTeamInvitation::EVENTS, AcceptPendingTeamInvitation::class);
     }
 
     /**

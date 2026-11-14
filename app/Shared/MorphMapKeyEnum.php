@@ -9,6 +9,7 @@ use App\AuditLog\AuditLogEloquentModel;
 use App\Passkey\PasskeyEloquentModel;
 use App\Shared\Traits\Enum;
 use App\Team\TeamEloquentModel;
+use App\TeamInvitation\TeamInvitationEloquentModel;
 use App\TeamUser\TeamUserEloquentModel;
 use App\User\UserEloquentModel;
 use Illuminate\Database\Eloquent\Model;
@@ -28,6 +29,7 @@ enum MorphMapKeyEnum: string
     case AuditLog = 'audit_log';
     case Passkey = 'passkey';
     case Team = 'team';
+    case TeamInvitation = 'team_invitation';
     case TeamUser = 'team_user';
     case User = 'user';
 
@@ -61,6 +63,7 @@ enum MorphMapKeyEnum: string
             self::AuditLog => AuditLogEloquentModel::class,
             self::Passkey => PasskeyEloquentModel::class,
             self::Team => TeamEloquentModel::class,
+            self::TeamInvitation => TeamInvitationEloquentModel::class,
             self::TeamUser => TeamUserEloquentModel::class,
             self::User => UserEloquentModel::class,
         };

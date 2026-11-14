@@ -11,6 +11,8 @@ enum ActivityTypeEnum: string
     use Enum;
 
     case EmailVerified = 'email_verified';
+    case InvitationAccepted = 'invitation_accepted';
+    case InvitationSent = 'invitation_sent';
     case OnboardingCompleted = 'onboarding_completed';
     case PasskeyDeleted = 'passkey_deleted';
     case PasskeyRegistered = 'passkey_registered';
@@ -33,6 +35,8 @@ enum ActivityTypeEnum: string
     {
         return match ($this) {
             self::EmailVerified => 'Verified email address',
+            self::InvitationAccepted => 'Joined the team',
+            self::InvitationSent => 'Invited someone to the team',
             self::OnboardingCompleted => 'Finished setting up MomCRM',
             self::PasskeyDeleted => 'Removed a passkey',
             self::PasskeyRegistered => 'Added a passkey',

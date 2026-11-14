@@ -69,6 +69,6 @@ final class UpdateWorkspaceFormRequest extends FormRequest
             );
         }
 
-        return to_route('onboarding.start');
+        return to_route('onboarding.invite');
     }
 }

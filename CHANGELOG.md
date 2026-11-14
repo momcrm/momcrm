@@ -25,6 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Activity feed: sign-ins, sign-outs, password, two-factor, passkey and email-verification events, plus team renames and switches. Viewable under Settings → Activity (your account) and Settings → Team → Activity (team owners).
 - Onboarding: new accounts answer three optional questions, name their workspace and pick a starting point before reaching the dashboard. Existing accounts skip it.
 - Landing page, sign-up and email verification copy for MomCRM, plus a welcome email once an address is confirmed.
+- Team invitations: owners and admins invite people by email from onboarding or Settings → Team, see pending invites and revoke them. Invitation links work for new and existing accounts and expire after 7 days. Adds an Admin team role.
 - Structured logging: every request gets an `X-Request-Id`, and log lines carry the request, user and team ids. Logs default to daily-rotated JSON files.
 - Audit and activity retention (365 and 180 days by default, `AUDIT_LOG_RETENTION_DAYS` / `ACTIVITY_RETENTION_DAYS`), pruned daily by the scheduler.
 - Team-based tenancy: every user gets a personal team, can switch their current team from the sidebar, and owners can rename it under Settings → Team. Team-owned models are isolated with `CurrentTeamScope`.

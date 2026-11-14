@@ -10,12 +10,12 @@ use App\User\UserEloquentModel;
 
 use function Pest\Laravel\actingAs;
 
-it('names the workspace and moves on to the starting point', function (): void {
+it('names the workspace and moves on to inviting the team', function (): void {
     $user = UserEloquentModel::factory()->notOnboarded()->withPersonalTeam()->create(['name' => 'Jane Smith']);
 
     $response = actingAs($user)->put(route('onboarding.workspace.update'), ['name' => 'Acme IT']);
 
-    $response->assertRedirectToRoute('onboarding.start');
+    $response->assertRedirectToRoute('onboarding.invite');
     expect(TeamEloquentModel::query()->findOrFail($user->current_team_id)->name)->toBe('Acme IT');
     expect(ActivityEloquentModel::query()->where('type', ActivityTypeEnum::TeamRenamed->value)->sole()->details)
         ->toEqual(['from' => "Jane's Team", 'to' => 'Acme IT']);
@@ -26,7 +26,7 @@ it('records no rename when the name is kept', function (): void {
 
     actingAs($user)
         ->put(route('onboarding.workspace.update'), ['name' => "Jane's Team"])
-        ->assertRedirectToRoute('onboarding.start');
+        ->assertRedirectToRoute('onboarding.invite');
 
     expect(ActivityEloquentModel::query()->where('type', ActivityTypeEnum::TeamRenamed->value)->exists())->toBeFalse();
 });

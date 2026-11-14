@@ -6,7 +6,8 @@ export const onboardingSteps = {
     role: 2,
     teamSize: 3,
     workspace: 4,
-    start: 5,
+    invite: 5,
+    start: 6,
 } as const;
 
-export const onboardingTotalSteps = 5;
+export const onboardingTotalSteps = 6;

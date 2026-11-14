@@ -1,7 +1,9 @@
 <?php
 
 use App\Onboarding\Controllers\CompleteOnboardingController;
+use App\Onboarding\Controllers\SendInvitesController;
 use App\Onboarding\Controllers\ShowAboutController;
+use App\Onboarding\Controllers\ShowInviteController;
 use App\Onboarding\Controllers\ShowStartController;
 use App\Onboarding\Controllers\ShowWorkspaceController;
 use App\Onboarding\Controllers\UpdateAboutController;
@@ -18,6 +20,9 @@ Route::middleware(['auth', 'verified', RedirectIfOnboarded::class])
 
         Route::get('workspace', ShowWorkspaceController::class)->name('workspace');
         Route::put('workspace', UpdateWorkspaceController::class)->name('workspace.update');
+
+        Route::get('invite', ShowInviteController::class)->name('invite');
+        Route::post('invite', SendInvitesController::class)->name('invite.store');
 
         Route::get('start', ShowStartController::class)->name('start');
         Route::post('complete', CompleteOnboardingController::class)->name('complete');

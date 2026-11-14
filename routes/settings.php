@@ -4,6 +4,8 @@ use App\Activity\Controllers\ListAccountActivityController;
 use App\Activity\Controllers\ListTeamActivityController;
 use App\Team\Controllers\EditTeamController;
 use App\Team\Controllers\UpdateTeamController;
+use App\TeamInvitation\Controllers\DeleteTeamInvitationController;
+use App\TeamInvitation\Controllers\StoreTeamInvitationController;
 use App\User\Controllers\DeleteProfileController;
 use App\User\Controllers\EditProfileController;
 use App\User\Controllers\EditSecurityController;
@@ -32,6 +34,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('settings/team', EditTeamController::class)->name('team.edit');
     Route::patch('settings/team', UpdateTeamController::class)->name('team.update');
+    Route::post('settings/team/invitations', StoreTeamInvitationController::class)->name('team.invitations.store');
+    Route::delete('settings/team/invitations/{invitation}', DeleteTeamInvitationController::class)->name('team.invitations.destroy');
     Route::get('settings/team/activity', ListTeamActivityController::class)->name('team-activity.index');
 
     Route::get('settings/activity', ListAccountActivityController::class)->name('activity.index');
