@@ -18,6 +18,11 @@ pest()->extend(TestCase::class)
  // ->use(RefreshDatabase::class)
     ->in('Feature');
 
+// Tests co-located with the code they cover, e.g. app/Team/Controllers/UpdateTeamControllerTest.php.
+pest()->extend(TestCase::class)
+    ->use(RefreshDatabase::class)
+    ->in('../app');
+
 /*
 |--------------------------------------------------------------------------
 | Expectations
