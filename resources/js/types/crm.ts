@@ -183,6 +183,41 @@ export type Project = {
     archived_at: string | null;
 };
 
+export type ProjectListItem = Project & {
+    customer_name: string | null;
+    lead_name: string | null;
+    members: CustomerOption[];
+    tickets_count: number;
+    closed_tickets_count: number;
+    overdue_tickets_count: number;
+    is_favorite: boolean;
+    updated_at: string | null;
+};
+
+export type ProjectFormOptions = {
+    members: CustomerOption[];
+    customers: CustomerOption[];
+    groups: (CustomerOption & { color: ColorName; icon: string | null })[];
+    statuses: Option[];
+    visibilities: Option[];
+    colors: ColorName[];
+};
+
+export type Milestone = {
+    id: string;
+    name: string;
+    due_on: string;
+    completed_at: string | null;
+};
+
+export type SidebarProject = {
+    id: string;
+    name: string;
+    color: ColorName;
+    status: ProjectStatus;
+    is_favorite: boolean;
+};
+
 export type ProjectOption = {
     id: string;
     name: string;

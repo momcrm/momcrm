@@ -147,6 +147,37 @@ final class FindTicket
     }
 
     /**
+     * Some tickets by id, live or archived, with what list rows show.
+     *
+     * @param  array<int, string>  $ids
+     * @return Collection<int, TicketEloquentModel>
+     */
+    public static function byIdsForTeam(string $teamId, array $ids, bool $archived = false): Collection
+    {
+        return self::query($teamId)
+            ->with([TicketRelationship::Customer->value, TicketRelationship::Assignee->value, TicketRelationship::Project->value, TicketRelationship::Labels->value])
+            ->whereIn(Id::getDatabaseTableColumnName(), $ids)
+            ->when($archived, fn (Builder $query) => $query->whereNotNull(ArchivedAt::getDatabaseTableColumnName()), fn (Builder $query) => $query->whereNull(ArchivedAt::getDatabaseTableColumnName()))
+            ->orderByDesc(Number::getDatabaseTableColumnName())
+            ->get();
+    }
+
+    /**
+     * The team's archived tickets, most recently archived first.
+     *
+     * @return Collection<int, TicketEloquentModel>
+     */
+    public static function archivedForTeam(string $teamId): Collection
+    {
+        return self::query($teamId)
+            ->with([TicketRelationship::Customer->value, TicketRelationship::Assignee->value, TicketRelationship::Project->value, TicketRelationship::Labels->value])
+            ->whereNotNull(ArchivedAt::getDatabaseTableColumnName())
+            ->orderByDesc(ArchivedAt::getDatabaseTableColumnName())
+            ->limit(200)
+            ->get();
+    }
+
+    /**
      * How many open tickets the team has, optionally only those assigned to one person.
      */
     public static function countOpenForTeam(string $teamId, ?string $assigneeId = null): int

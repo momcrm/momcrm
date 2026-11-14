@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Contact\ContactEloquentModel;
 use App\Customer\CustomerEloquentModel;
 use App\Invoice\InvoiceEloquentModel;
+use App\Project\ProjectEloquentModel;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
 
@@ -26,11 +27,13 @@ it('returns the most recent tickets when there is no search term', function (): 
         ->assertJsonMissingPath('customers');
 });
 
-it('finds tickets, customers, contacts and invoices matching the term', function (): void {
+it('finds tickets, projects, customers, contacts and invoices matching the term', function (): void {
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
     $customer = CustomerEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'name' => 'Harbour Dental']);
     TicketEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'customer_id' => $customer->id, 'title' => 'Harbour printer jammed']);
     ContactEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'customer_id' => $customer->id, 'first_name' => 'Harbour', 'last_name' => 'Admin']);
+    $project = ProjectEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'customer_id' => $customer->id, 'name' => 'Harbour refit']);
+    ProjectEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'name' => 'Harbour secret', 'visibility' => 'restricted']);
 
     actingAs($user)
         ->getJson(route('search', ['q' => 'harbour']))
@@ -39,6 +42,8 @@ it('finds tickets, customers, contacts and invoices matching the term', function
         ->assertJsonPath('customers.0.title', 'Harbour Dental')
         ->assertJsonPath('customers.0.url', route('customers.show', $customer->id))
         ->assertJsonPath('contacts.0.title', 'Harbour Admin')
+        ->assertJsonCount(1, 'projects')
+        ->assertJsonPath('projects.0.url', route('projects.show', $project->id))
         ->assertJsonCount(0, 'invoices');
 });
 

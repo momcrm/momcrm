@@ -6,6 +6,11 @@ import DetailSection from '@/components/detail-section';
 import EmptyState from '@/components/empty-state';
 import PageHeader from '@/components/page-header';
 import InvoiceList from '@/components/invoices/invoice-list';
+import {
+    ProgressBar,
+    ProjectIcon,
+    ProjectStatusPill,
+} from '@/components/projects/project-meta';
 import TicketList from '@/components/tickets/ticket-list';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -23,8 +28,10 @@ import {
 } from '@/routes/services';
 import { formatCents } from '@/lib/money';
 import { create as createInvoice } from '@/routes/invoices';
+import { show as showProject } from '@/routes/projects';
 import { create as createTicket } from '@/routes/tickets';
 import type {
+    ProjectListItem,
     Asset,
     Contact,
     Customer,
@@ -65,6 +72,7 @@ export default function ShowCustomer({
     locations,
     assets,
     services,
+    projects,
     tickets,
     invoices,
 }: {
@@ -73,6 +81,7 @@ export default function ShowCustomer({
     locations: Location[];
     assets: Asset[];
     services: Service[];
+    projects: ProjectListItem[];
     tickets: TicketListItem[];
     invoices: InvoiceListItem[];
 }) {
@@ -153,6 +162,41 @@ export default function ShowCustomer({
                             </div>
                         )}
                     </dl>
+                )}
+
+                {projects.length > 0 && (
+                    <DetailSection title="Projects">
+                        <ul className="divide-y overflow-hidden rounded-lg border bg-card">
+                            {projects.map((project) => (
+                                <li key={project.id}>
+                                    <Link
+                                        href={showProject(project.id)}
+                                        className="flex h-11 items-center gap-3 px-3 text-sm hover:bg-accent/50"
+                                    >
+                                        <ProjectIcon
+                                            icon={project.icon}
+                                            color={project.color}
+                                            size="sm"
+                                        />
+                                        <span className="min-w-0 flex-1 truncate font-medium">
+                                            {project.name}
+                                        </span>
+                                        <span className="hidden w-40 md:block">
+                                            <ProgressBar
+                                                closed={
+                                                    project.closed_tickets_count
+                                                }
+                                                total={project.tickets_count}
+                                            />
+                                        </span>
+                                        <ProjectStatusPill
+                                            status={project.status}
+                                        />
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                    </DetailSection>
                 )}
 
                 <DetailSection

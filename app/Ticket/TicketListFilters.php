@@ -79,6 +79,24 @@ final readonly class TicketListFilters
     }
 
     /**
+     * The same filters, limited to one project (a project page's ticket tabs).
+     */
+    public function forProject(string $projectId): self
+    {
+        return new self(
+            view: $this->view,
+            status: $this->status,
+            search: $this->search,
+            priorities: $this->priorities,
+            assignee: $this->assignee,
+            project: $projectId,
+            label: $this->label,
+            sort: $this->sort,
+            direction: $this->direction,
+        );
+    }
+
+    /**
      * @return array{view: string, status: string, search: ?string, priority: array<int, string>, assignee: ?string, project: ?string, label: ?string, sort: string, direction: string}
      */
     public function toArray(): array

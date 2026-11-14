@@ -1,18 +1,23 @@
 import {
+    Archive,
     Building2,
     CircleUser,
+    FolderKanban,
     Home,
+    Star,
     Palette,
     Receipt,
     Settings,
     Ticket,
     Users,
 } from 'lucide-react';
-import { dashboard, designSystem } from '@/routes';
+import { archive, dashboard, designSystem } from '@/routes';
 import { index as contactsIndex } from '@/routes/contacts';
 import { index as customersIndex } from '@/routes/customers';
+import { index as favoritesIndex } from '@/routes/favorites';
 import { index as invoicesIndex } from '@/routes/invoices';
 import { edit as profileEdit } from '@/routes/profile';
+import { index as projectsIndex } from '@/routes/projects';
 import { mine as myTickets, index as ticketsIndex } from '@/routes/tickets';
 import type { NavItem } from '@/types';
 
@@ -50,17 +55,35 @@ export function workspaceNavigation(
                     badge: counts?.myOpenTickets,
                     shortcut: 'm',
                 },
+                {
+                    title: 'Favorites',
+                    href: favoritesIndex(),
+                    icon: Star,
+                    shortcut: 'f',
+                },
             ],
         },
         {
             title: 'Workspace',
             items: [
                 {
+                    title: 'Projects',
+                    href: projectsIndex(),
+                    icon: FolderKanban,
+                    shortcut: 'p',
+                },
+                {
                     title: 'Tickets',
                     href: ticketsIndex(),
                     icon: Ticket,
                     badge: counts?.openTickets,
                     shortcut: 't',
+                },
+                {
+                    title: 'Archive',
+                    href: archive(),
+                    icon: Archive,
+                    shortcut: 'a',
                 },
             ],
         },

@@ -2,8 +2,11 @@
 
 namespace App\Http\Middleware;
 
+use App\Favorite\Actions\FindFavorite;
+use App\Favorite\FavoritableTypeEnum;
 use App\Onboarding\Actions\GetGettingStartedProgress;
 use App\Onboarding\Actions\RemoveSampleData;
+use App\Project\Actions\FindProject;
 use App\Team\Actions\FindTeam;
 use App\Team\Team;
 use App\Ticket\Actions\FindTicket;
@@ -84,6 +87,11 @@ class HandleInertiaRequests extends Middleware
         return [
             'openTickets' => FindTicket::countOpenForTeam($user->current_team_id),
             'myOpenTickets' => FindTicket::countOpenForTeam($user->current_team_id, $user->id),
+            'projects' => FindProject::forSidebar(
+                $user->current_team_id,
+                $user->id,
+                FindFavorite::idsForUser($user->current_team_id, $user->id, FavoritableTypeEnum::Project),
+            ),
         ];
     }
 

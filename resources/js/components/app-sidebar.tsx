@@ -1,5 +1,6 @@
 import { usePage } from '@inertiajs/react';
 import { GettingStartedNav } from '@/components/getting-started-nav';
+import { NavProjects } from '@/components/nav-projects';
 import { NavSection } from '@/components/nav-section';
 import { NavUser } from '@/components/nav-user';
 import { TeamSwitcher } from '@/components/team-switcher';
@@ -35,6 +36,9 @@ export function AppSidebar() {
                         section={section}
                     />
                 ))}
+                {sidebarCounts && (
+                    <NavProjects projects={sidebarCounts.projects} />
+                )}
             </SidebarContent>
 
             <SidebarFooter className="gap-1 p-2">

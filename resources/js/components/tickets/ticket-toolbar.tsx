@@ -45,9 +45,12 @@ const ONLY = ['tickets', 'filters'];
 export default function TicketToolbar({
     filters,
     options,
+    inProject = false,
 }: {
     filters: TicketFilters;
     options: TicketPickerOptions;
+    /** On a project's page: the tabs pick the view and the project is fixed. */
+    inProject?: boolean;
 }) {
     const set = (changes: Record<string, string | string[] | null>) =>
         visitWithQuery(changes, { only: ONLY });
@@ -68,44 +71,46 @@ export default function TicketToolbar({
     const hasFilters =
         filters.priority.length > 0 ||
         filters.assignee !== null ||
-        filters.project !== null ||
+        (!inProject && filters.project !== null) ||
         filters.label !== null;
 
     return (
         <div className="flex flex-col gap-3">
             <div className="flex flex-wrap items-center gap-2">
-                <ToggleGroup
-                    type="single"
-                    variant="outline"
-                    size="sm"
-                    value={filters.view}
-                    onValueChange={(view) =>
-                        view &&
-                        visitWithQuery(
-                            {
-                                view: view === 'list' ? null : view,
-                                status: null,
-                                sort: null,
-                                direction: null,
-                            },
-                            { only: ONLY },
-                        )
-                    }
-                    aria-label="View"
-                    className="bg-card"
-                >
-                    {views.map((view) => (
-                        <ToggleGroupItem
-                            key={view.value}
-                            value={view.value}
-                            aria-label={view.label}
-                            className="gap-1.5 px-2.5"
-                        >
-                            <view.icon className="size-3.5" />
-                            {view.label}
-                        </ToggleGroupItem>
-                    ))}
-                </ToggleGroup>
+                {!inProject && (
+                    <ToggleGroup
+                        type="single"
+                        variant="outline"
+                        size="sm"
+                        value={filters.view}
+                        onValueChange={(view) =>
+                            view &&
+                            visitWithQuery(
+                                {
+                                    view: view === 'list' ? null : view,
+                                    status: null,
+                                    sort: null,
+                                    direction: null,
+                                },
+                                { only: ONLY },
+                            )
+                        }
+                        aria-label="View"
+                        className="bg-card"
+                    >
+                        {views.map((view) => (
+                            <ToggleGroupItem
+                                key={view.value}
+                                value={view.value}
+                                aria-label={view.label}
+                                className="gap-1.5 px-2.5"
+                            >
+                                <view.icon className="size-3.5" />
+                                {view.label}
+                            </ToggleGroupItem>
+                        ))}
+                    </ToggleGroup>
+                )}
 
                 <nav
                     aria-label="Open or closed"
@@ -198,22 +203,24 @@ export default function TicketToolbar({
                     />
                 </FilterChip>
 
-                <FilterChip
-                    label="Project"
-                    value={projectName(filters.project) ?? null}
-                    onClear={() => set({ project: null })}
-                >
-                    <RadioChoices
-                        value={filters.project}
-                        onChange={(project) => set({ project })}
-                        choices={[{ value: 'none', label: 'No project' }]}
-                        more={options.projects.map((project) => ({
-                            value: project.id,
-                            label: project.name,
-                            dot: colorDot[project.color],
-                        }))}
-                    />
-                </FilterChip>
+                {!inProject && (
+                    <FilterChip
+                        label="Project"
+                        value={projectName(filters.project) ?? null}
+                        onClear={() => set({ project: null })}
+                    >
+                        <RadioChoices
+                            value={filters.project}
+                            onChange={(project) => set({ project })}
+                            choices={[{ value: 'none', label: 'No project' }]}
+                            more={options.projects.map((project) => ({
+                                value: project.id,
+                                label: project.name,
+                                dot: colorDot[project.color],
+                            }))}
+                        />
+                    </FilterChip>
+                )}
 
                 {options.labels.length > 0 && (
                     <FilterChip
@@ -241,8 +248,8 @@ export default function TicketToolbar({
                             set({
                                 priority: null,
                                 assignee: null,
-                                project: null,
                                 label: null,
+                                ...(inProject ? {} : { project: null }),
                             })
                         }
                         className="px-1.5 text-xs text-muted-foreground hover:text-foreground"
