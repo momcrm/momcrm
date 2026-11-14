@@ -29,6 +29,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- `composer update` refreshes Laravel Boost's AI guidelines and skills (`app:boost-update`), and skips it on machines where Boost isn't set up.
 - CI runs the test suite on MySQL 8.4 instead of in-memory SQLite, and tests run in parallel (`php artisan test --parallel`). ParaTest is pinned to 7.27.5 because Pest 5.3.5's parallel runner fails with ParaTest 7.28.
 - Every Eloquent model must have a morph alias, defined once in `App\Shared\MorphMapKeyEnum` and enforced with `Relation::enforceMorphMap()`; tests fail if a model is added without one or a stored alias is renamed.
 - All application tables (users, teams, team memberships, passkeys and the sessions user reference) use UUIDv7 primary and foreign keys. The framework's queue tables keep their own keys.
