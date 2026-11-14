@@ -4,6 +4,16 @@ declare(strict_types=1);
 
 namespace App\Ticket;
 
+use App\Activity\Activity;
+use App\Activity\ActivityEloquentModel;
+use App\Activity\ActivityRelationship;
+use App\Activity\Properties\SubjectId;
+use App\Activity\Properties\SubjectType;
+use App\Attachment\Actions\FindAttachment;
+use App\Attachment\AttachmentEloquentModel;
+use App\Comment\CommentEloquentModel;
+use App\Comment\CommentRelationship;
+use App\Comment\Properties\TicketId as CommentTicketId;
 use App\Customer\Actions\FindCustomer;
 use App\Customer\CustomerEloquentModel;
 use App\Favorite\Actions\FindFavorite;
@@ -12,6 +22,7 @@ use App\Label\Actions\FindLabel;
 use App\Label\LabelEloquentModel;
 use App\Project\Actions\FindProject;
 use App\Project\ProjectEloquentModel;
+use App\Shared\MorphMapKeyEnum;
 use App\TeamUser\Actions\FindTeamMembers;
 use App\Ticket\Properties\Number;
 use App\Ticket\Properties\TeamId;
@@ -87,6 +98,37 @@ final class TicketDrawer
                 ->values()
                 ->all(),
             'is_favorite' => in_array($model->id, FindFavorite::idsForUser($teamId, $userId, FavoritableTypeEnum::Ticket), true),
+            'comments' => CommentEloquentModel::query()
+                ->withoutGlobalScopes()
+                ->with(CommentRelationship::Author->value)
+                ->where(CommentTicketId::getDatabaseTableColumnName(), $model->id)
+                ->oldest()
+                ->get()
+                ->map(fn (CommentEloquentModel $comment): array => [
+                    'id' => $comment->id,
+                    'body' => $comment->body,
+                    'author_id' => $comment->user_id,
+                    'author_name' => $comment->author?->name,
+                    'mentions' => $comment->mentions ?? [],
+                    'created_at' => $comment->created_at?->toIso8601String(),
+                    'can_delete' => $comment->user_id === $userId,
+                ])
+                ->values()
+                ->all(),
+            'attachments' => FindAttachment::forAttachable(MorphMapKeyEnum::Ticket, $model->id)
+                ->map(fn (AttachmentEloquentModel $attachment): array => FindAttachment::listItem($attachment))
+                ->values()
+                ->all(),
+            'activity' => ActivityEloquentModel::query()
+                ->with(ActivityRelationship::Actor->value)
+                ->where(SubjectType::getDatabaseTableColumnName(), MorphMapKeyEnum::Ticket->value)
+                ->where(SubjectId::getDatabaseTableColumnName(), $model->id)
+                ->latest()
+                ->limit(30)
+                ->get()
+                ->map(fn (ActivityEloquentModel $activity): array => Activity::fromEloquentModel($activity)->toListItem($activity->actor?->name))
+                ->values()
+                ->all(),
         ];
     }
 

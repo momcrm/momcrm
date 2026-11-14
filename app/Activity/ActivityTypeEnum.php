@@ -10,6 +10,7 @@ enum ActivityTypeEnum: string
 {
     use Enum;
 
+    case AttachmentAdded = 'attachment_added';
     case CustomersImported = 'customers_imported';
     case EmailVerified = 'email_verified';
     case InvitationAccepted = 'invitation_accepted';
@@ -19,6 +20,7 @@ enum ActivityTypeEnum: string
     case PasskeyRegistered = 'passkey_registered';
     case PasswordChanged = 'password_changed';
     case PasswordReset = 'password_reset';
+    case ProjectStatusChanged = 'project_status_changed';
     case ProfileUpdated = 'profile_updated';
     case ProjectArchived = 'project_archived';
     case ProjectCreated = 'project_created';
@@ -32,10 +34,13 @@ enum ActivityTypeEnum: string
     case TeamRenamed = 'team_renamed';
     case TeamSwitched = 'team_switched';
     case TicketArchived = 'ticket_archived';
+    case TicketAssigned = 'ticket_assigned';
     case TicketClosed = 'ticket_closed';
+    case TicketCommented = 'ticket_commented';
     case TicketOpened = 'ticket_opened';
     case TicketReopened = 'ticket_reopened';
     case TicketRestored = 'ticket_restored';
+    case TicketStatusChanged = 'ticket_status_changed';
     case TwoFactorDisabled = 'two_factor_disabled';
     case TwoFactorEnabled = 'two_factor_enabled';
 
@@ -45,6 +50,7 @@ enum ActivityTypeEnum: string
     public function label(): string
     {
         return match ($this) {
+            self::AttachmentAdded => 'Attached a file',
             self::CustomersImported => 'Imported customers',
             self::EmailVerified => 'Verified email address',
             self::InvitationAccepted => 'Joined the team',
@@ -54,6 +60,7 @@ enum ActivityTypeEnum: string
             self::PasskeyRegistered => 'Added a passkey',
             self::PasswordChanged => 'Changed password',
             self::PasswordReset => 'Reset password',
+            self::ProjectStatusChanged => 'Changed a project\'s status',
             self::ProfileUpdated => 'Updated profile',
             self::ProjectArchived => 'Archived a project',
             self::ProjectCreated => 'Created a project',
@@ -67,10 +74,13 @@ enum ActivityTypeEnum: string
             self::TeamRenamed => 'Renamed the team',
             self::TeamSwitched => 'Switched to this team',
             self::TicketArchived => 'Archived a ticket',
+            self::TicketAssigned => 'Assigned a ticket',
             self::TicketClosed => 'Closed a ticket',
+            self::TicketCommented => 'Commented on a ticket',
             self::TicketOpened => 'Opened a ticket',
             self::TicketReopened => 'Reopened a ticket',
             self::TicketRestored => 'Restored a ticket',
+            self::TicketStatusChanged => 'Changed a ticket\'s status',
             self::TwoFactorDisabled => 'Disabled two-factor authentication',
             self::TwoFactorEnabled => 'Enabled two-factor authentication',
         };

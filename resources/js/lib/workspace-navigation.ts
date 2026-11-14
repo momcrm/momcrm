@@ -1,5 +1,7 @@
 import {
+    Activity,
     Archive,
+    Inbox,
     Building2,
     CircleUser,
     FolderKanban,
@@ -11,7 +13,7 @@ import {
     Ticket,
     Users,
 } from 'lucide-react';
-import { archive, dashboard, designSystem } from '@/routes';
+import { activity, archive, dashboard, designSystem, inbox } from '@/routes';
 import { index as contactsIndex } from '@/routes/contacts';
 import { index as customersIndex } from '@/routes/customers';
 import { index as favoritesIndex } from '@/routes/favorites';
@@ -30,6 +32,7 @@ export type NavSection = {
 export type SidebarCounts = {
     openTickets: number;
     myOpenTickets: number;
+    unreadNotifications: number;
 };
 
 /**
@@ -47,6 +50,13 @@ export function workspaceNavigation(
                     href: dashboard(),
                     icon: Home,
                     shortcut: 'h',
+                },
+                {
+                    title: 'Inbox',
+                    href: inbox(),
+                    icon: Inbox,
+                    badge: counts?.unreadNotifications,
+                    shortcut: 'i',
                 },
                 {
                     title: 'My tickets',
@@ -78,6 +88,12 @@ export function workspaceNavigation(
                     icon: Ticket,
                     badge: counts?.openTickets,
                     shortcut: 't',
+                },
+                {
+                    title: 'Activity',
+                    href: activity(),
+                    icon: Activity,
+                    shortcut: 'y',
                 },
                 {
                     title: 'Archive',

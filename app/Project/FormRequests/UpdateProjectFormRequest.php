@@ -58,7 +58,10 @@ final class UpdateProjectFormRequest extends FormRequest
     public function process(): RedirectResponse
     {
         $validated = $this->validated();
-        $project = UpdateProject::fromProject($this->project->setPropertyIfExists(Arr::except($validated, ProjectValidationRules::MEMBER_IDS)));
+        $project = UpdateProject::fromProject(
+            $this->project->setPropertyIfExists(Arr::except($validated, ProjectValidationRules::MEMBER_IDS)),
+            updatedById: (string) $this->user()?->getAuthIdentifier(),
+        );
 
         $model = ProjectEloquentModel::query()->findOrFail($project->getId()->toString());
 

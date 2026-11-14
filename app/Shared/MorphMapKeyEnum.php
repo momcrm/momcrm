@@ -6,7 +6,9 @@ namespace App\Shared;
 
 use App\Activity\ActivityEloquentModel;
 use App\Asset\AssetEloquentModel;
+use App\Attachment\AttachmentEloquentModel;
 use App\AuditLog\AuditLogEloquentModel;
+use App\Comment\CommentEloquentModel;
 use App\Contact\ContactEloquentModel;
 use App\Customer\CustomerEloquentModel;
 use App\EmailCode\EmailCodeEloquentModel;
@@ -42,7 +44,9 @@ enum MorphMapKeyEnum: string
 
     case Activity = 'activity';
     case Asset = 'asset';
+    case Attachment = 'attachment';
     case AuditLog = 'audit_log';
+    case Comment = 'comment';
     case Contact = 'contact';
     case Customer = 'customer';
     case EmailCode = 'email_code';
@@ -91,7 +95,9 @@ enum MorphMapKeyEnum: string
         return match ($this) {
             self::Activity => ActivityEloquentModel::class,
             self::Asset => AssetEloquentModel::class,
+            self::Attachment => AttachmentEloquentModel::class,
             self::AuditLog => AuditLogEloquentModel::class,
+            self::Comment => CommentEloquentModel::class,
             self::Contact => ContactEloquentModel::class,
             self::Customer => CustomerEloquentModel::class,
             self::EmailCode => EmailCodeEloquentModel::class,

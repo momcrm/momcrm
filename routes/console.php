@@ -2,6 +2,7 @@
 
 use App\Activity\ActivityEloquentModel;
 use App\AuditLog\AuditLogEloquentModel;
+use App\Ticket\Actions\RemindDueTickets;
 use Illuminate\Console\Command;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -29,3 +30,12 @@ Artisan::command('app:boost-update', function (): int {
 Schedule::command('model:prune', [
     '--model' => [AuditLogEloquentModel::class, ActivityEloquentModel::class],
 ])->daily();
+
+// Tells assignees about their open tickets due tomorrow.
+Artisan::command('tickets:remind-due', function (): int {
+    $this->components->info(__(':count reminders sent.', ['count' => RemindDueTickets::run()]));
+
+    return Command::SUCCESS;
+})->purpose('Notify assignees of open tickets due tomorrow');
+
+Schedule::command('tickets:remind-due')->dailyAt('07:00');

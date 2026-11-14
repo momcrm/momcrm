@@ -4,16 +4,18 @@ declare(strict_types=1);
 
 namespace App\Project\Actions;
 
+use App\Attachment\Actions\DeleteAttachments;
 use App\Project\Project;
 use App\Project\ProjectEloquentModel;
+use App\Shared\MorphMapKeyEnum;
 use App\Team\Scopes\CurrentTeamScope;
 use App\Ticket\Properties\ProjectId;
 use App\Ticket\TicketEloquentModel;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Deletes a project for good, with its tickets and milestones. Each ticket is
- * deleted on its own so the audit trail records it.
+ * Deletes a project for good, with its tickets, milestones and files. Each
+ * ticket is deleted on its own so the audit trail records it.
  */
 final readonly class DeleteProject
 {
@@ -28,7 +30,12 @@ final readonly class DeleteProject
                 ->withoutGlobalScope(CurrentTeamScope::class)
                 ->where(ProjectId::getDatabaseTableColumnName(), $this->project->getId()->toString())
                 ->get()
-                ->each(fn (TicketEloquentModel $ticket): ?bool => $ticket->delete());
+                ->each(function (TicketEloquentModel $ticket): void {
+                    DeleteAttachments::for(MorphMapKeyEnum::Ticket, $ticket->id);
+                    $ticket->delete();
+                });
+
+            DeleteAttachments::for(MorphMapKeyEnum::Project, $this->project->getId()->toString());
 
             ProjectEloquentModel::query()
                 ->withoutGlobalScope(CurrentTeamScope::class)

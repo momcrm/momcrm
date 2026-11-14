@@ -28,3 +28,15 @@ it('runs the scheduled prune without errors', function (): void {
         '--pretend' => true,
     ])->assertSuccessful();
 });
+
+it('reminds assignees of tickets due tomorrow every morning', function (): void {
+    $remind = collect(app(Schedule::class)->events())
+        ->first(fn (Event $event): bool => str_contains((string) $event->command, 'tickets:remind-due'));
+
+    expect($remind)->not->toBeNull()
+        ->and($remind->expression)->toBe('0 7 * * *');
+});
+
+it('runs the due reminder without errors', function (): void {
+    artisan('tickets:remind-due')->assertSuccessful();
+});

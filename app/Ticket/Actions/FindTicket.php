@@ -9,6 +9,7 @@ use App\Ticket\Properties\ArchivedAt;
 use App\Ticket\Properties\AssigneeId;
 use App\Ticket\Properties\ClosedAt;
 use App\Ticket\Properties\CustomerId;
+use App\Ticket\Properties\DueOn;
 use App\Ticket\Properties\Id;
 use App\Ticket\Properties\Number;
 use App\Ticket\Properties\ParentId;
@@ -163,6 +164,23 @@ final class FindTicket
     }
 
     /**
+     * Open tickets due on a day, in every team, for the due-soon reminder.
+     *
+     * @return Collection<int, TicketEloquentModel>
+     */
+    public static function openDueOn(string $date): Collection
+    {
+        return TicketEloquentModel::query()
+            ->withoutGlobalScope(CurrentTeamScope::class)
+            ->with(TicketRelationship::Project->value)
+            ->whereNull(ArchivedAt::getDatabaseTableColumnName())
+            ->whereNotNull(AssigneeId::getDatabaseTableColumnName())
+            ->whereIn(Status::getDatabaseTableColumnName(), TicketStatusEnum::openValues())
+            ->whereDate(DueOn::getDatabaseTableColumnName(), $date)
+            ->get();
+    }
+
+    /**
      * The team's archived tickets, most recently archived first.
      *
      * @return Collection<int, TicketEloquentModel>
@@ -178,12 +196,14 @@ final class FindTicket
     }
 
     /**
-     * How many open tickets the team has, optionally only those assigned to one person.
+     * How many open tickets (not subtasks) the team has, optionally only those
+     * assigned to one person.
      */
     public static function countOpenForTeam(string $teamId, ?string $assigneeId = null): int
     {
         return self::query($teamId)
             ->whereNull(ArchivedAt::getDatabaseTableColumnName())
+            ->whereNull(ParentId::getDatabaseTableColumnName())
             ->whereIn(Status::getDatabaseTableColumnName(), TicketStatusEnum::openValues())
             ->when($assigneeId, fn (Builder $query, string $assigneeId) => $query->where(AssigneeId::getDatabaseTableColumnName(), $assigneeId))
             ->count();

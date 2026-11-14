@@ -10,7 +10,7 @@ import type { TicketStatus } from '@/types';
 /**
  * The props a page hosting ticket views reloads after a change.
  */
-const RELOAD = ['tickets', 'drawer', 'favoriteTicketIds'];
+const RELOAD = ['tickets', 'drawer', 'favoriteTicketIds', 'sidebarCounts'];
 
 const showFirstError = (errors: Record<string, string>) => {
     const message = Object.values(errors)[0];

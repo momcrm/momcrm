@@ -8,7 +8,9 @@ enum Table: string
 {
     case Activities = 'activities';
     case Assets = 'assets';
+    case Attachments = 'attachments';
     case AuditLogs = 'audit_logs';
+    case Comments = 'comments';
     case Contacts = 'contacts';
     case Customers = 'customers';
     case EmailCodes = 'email_codes';
@@ -21,6 +23,7 @@ enum Table: string
     case Labels = 'labels';
     case Locations = 'locations';
     case Milestones = 'milestones';
+    case Notifications = 'notifications';
     case Passkeys = 'passkeys';
     case ProjectUser = 'project_user';
     case Projects = 'projects';
