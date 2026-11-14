@@ -19,5 +19,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Issue forms for bug reports and feature requests, and a pull request template.
 - Release workflow that publishes a GitHub release with notes from this changelog when a version tag is pushed.
 - Laravel Boost for AI coding assistants.
+- mom/data v6.2.0 for data transfer objects.
 
 [Unreleased]: https://github.com/momcrm/momcrm/commits/main
