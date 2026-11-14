@@ -7,7 +7,7 @@ namespace App\Project\Actions;
 use App\Project\Project;
 use App\Project\ProjectEloquentModel;
 use App\Project\ProjectRelationship;
-use App\Project\ProjectVisibilityEnum;
+use App\Project\ProjectVisibility;
 use App\Project\Properties\ArchivedAt;
 use App\Project\Properties\CustomerId;
 use App\Project\Properties\DueOn;
@@ -15,7 +15,6 @@ use App\Project\Properties\Id;
 use App\Project\Properties\Name;
 use App\Project\Properties\Status;
 use App\Project\Properties\TeamId;
-use App\Project\Properties\Visibility;
 use App\Shared\Table;
 use App\Team\Scopes\CurrentTeamScope;
 use App\Ticket\Properties\ArchivedAt as TicketArchivedAt;
@@ -216,13 +215,10 @@ final class FindProject
      */
     private static function visibleQuery(string $teamId, string $userId): Builder
     {
-        return self::query($teamId)->where(fn (Builder $query) => $query
-            ->where(Visibility::getDatabaseTableColumnName(), ProjectVisibilityEnum::Open->value)
-            ->orWhereExists(fn ($members) => $members
-                ->selectRaw('1')
-                ->from(Table::ProjectUser->value)
-                ->whereColumn(Table::ProjectUser->value.'.project_id', Table::Projects->value.'.id')
-                ->where(Table::ProjectUser->value.'.user_id', $userId)));
+        $query = self::query($teamId);
+        ProjectVisibility::constrainProjects($query->getQuery(), $userId, Table::Projects->value);
+
+        return $query;
     }
 
     /**

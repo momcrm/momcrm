@@ -15,6 +15,7 @@ use App\Activity\Properties\SubjectType;
 use App\Activity\Properties\TeamId;
 use App\Activity\Properties\Type;
 use App\Activity\Properties\UserId;
+use App\Project\ProjectVisibility;
 use App\Shared\MorphMapKeyEnum;
 use App\TeamUser\Actions\FindTeamMembers;
 use App\User\UserEloquentModel;
@@ -58,6 +59,7 @@ final class ListWorkspaceActivityController
                 ->where(TeamId::getDatabaseTableColumnName(), $teamId)
                 ->whereIn(Type::getDatabaseTableColumnName(), array_map(fn (ActivityTypeEnum $type): string => $type->value, $types))
                 ->when($person, fn (Builder $query, string $person) => $query->where(UserId::getDatabaseTableColumnName(), $person))
+                ->tap(fn (Builder $query) => ProjectVisibility::constrainActivities($query->getQuery(), $user->id))
                 ->orderByDesc(CreatedAt::getDatabaseTableColumnName())
                 ->orderByDesc(Id::getDatabaseTableColumnName())
                 ->paginate(40)
