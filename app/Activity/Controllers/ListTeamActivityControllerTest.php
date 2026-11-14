@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Activity\Actions\RecordActivity;
 use App\Activity\ActivityTypeEnum;
+use App\Shared\MorphMapKeyEnum;
 use App\Team\TeamEloquentModel;
 use App\TeamUser\Actions\CreateTeamUser;
 use App\User\UserEloquentModel;
@@ -25,7 +26,7 @@ it('shows the owner their teams activity and audit trail', function (): void {
             ->has('activities.data', 1)
             ->where('activities.data.0.details', ['from' => 'A', 'to' => 'B'])
             ->where('auditLogs.data', fn ($rows): bool => collect($rows)->isNotEmpty()
-                && collect($rows)->every(fn (array $row): bool => in_array($row['subject'], ['team', 'team_user'], true))),
+                && collect($rows)->every(fn (array $row): bool => in_array($row['subject'], [MorphMapKeyEnum::Team->value, MorphMapKeyEnum::TeamUser->value], true))),
         );
 });
 

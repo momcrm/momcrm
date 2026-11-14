@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Activity\Properties;
 
-use Mom\Data\AbstractString;
+use App\Shared\Abstracts\AbstractMorphMapKeyEnum;
 
-final class SubjectType extends AbstractString
+final class SubjectType extends AbstractMorphMapKeyEnum
 {
     public static function getName(): string
     {

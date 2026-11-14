@@ -9,13 +9,13 @@ use App\AuditLog\Properties\AuditableId;
 use App\AuditLog\Properties\AuditableType;
 use App\AuditLog\Properties\TeamId;
 use App\AuditLog\Properties\UserId;
+use App\Shared\MorphMapKeyEnum;
 use Illuminate\Database\Eloquent\Builder;
 
 final readonly class PurgeAccountAuditLogs
 {
     public function __construct(
         private string $userId,
-        private string $userMorphType,
     ) {}
 
     /**
@@ -29,14 +29,14 @@ final readonly class PurgeAccountAuditLogs
                 ->where(UserId::getDatabaseTableColumnName(), $this->userId)
                 ->whereNull(TeamId::getDatabaseTableColumnName()))
             ->orWhere(fn (Builder $query) => $query
-                ->where(AuditableType::getDatabaseTableColumnName(), $this->userMorphType)
+                ->where(AuditableType::getDatabaseTableColumnName(), MorphMapKeyEnum::User->value)
                 ->where(AuditableId::getDatabaseTableColumnName(), $this->userId))
             ->delete();
     }
 
-    public static function fromUserId(string $userId, string $userMorphType): int
+    public static function fromUserId(string $userId): int
     {
-        return new self($userId, $userMorphType)->handle();
+        return new self($userId)->handle();
     }
 
     public function handle(): int

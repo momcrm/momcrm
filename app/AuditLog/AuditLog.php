@@ -18,6 +18,7 @@ use App\AuditLog\Properties\Url;
 use App\AuditLog\Properties\UserAgent;
 use App\AuditLog\Properties\UserId;
 use App\Shared\Abstracts\AbstractUuid;
+use App\Shared\MorphMapKeyEnum;
 use Illuminate\Support\Collection;
 use Mom\Data\AbstractData;
 use Mom\Data\AbstractString;
@@ -118,7 +119,7 @@ final class AuditLog extends AbstractData
         return $this->auditableType;
     }
 
-    public function setAuditableType(AuditableType|AbstractString|string|null $auditableType): self
+    public function setAuditableType(AuditableType|MorphMapKeyEnum|string $auditableType): self
     {
         if ($auditableType instanceof AuditableType) {
             $this->auditableType = $auditableType;
@@ -126,8 +127,8 @@ final class AuditLog extends AbstractData
             return $this;
         }
 
-        if ($auditableType instanceof AbstractString) {
-            $this->auditableType = AuditableType::fromNullableString($auditableType->toNullableString());
+        if ($auditableType instanceof MorphMapKeyEnum) {
+            $this->auditableType = AuditableType::fromEnum($auditableType);
 
             return $this;
         }

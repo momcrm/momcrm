@@ -7,6 +7,7 @@ namespace App\Activity\Actions;
 use App\Activity\Activity;
 use App\Activity\ActivityEloquentModel;
 use App\Activity\ActivityTypeEnum;
+use App\Shared\MorphMapKeyEnum;
 use App\Shared\RequestContext;
 use Illuminate\Database\Eloquent\Model;
 
@@ -45,7 +46,7 @@ final readonly class RecordActivity
                 ->setType($type)
                 ->setUserId($userId)
                 ->setTeamId($teamId)
-                ->setSubjectType($subject?->getMorphClass())
+                ->setSubjectType($subject === null ? null : MorphMapKeyEnum::fromModel($subject))
                 ->setSubjectId($subject === null ? null : (string) $subject->getKey())
                 ->setDetails($details === [] ? null : $details)
                 ->setRequestId(RequestContext::requestId())

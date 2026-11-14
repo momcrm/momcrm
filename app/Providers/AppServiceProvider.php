@@ -4,11 +4,9 @@ namespace App\Providers;
 
 use App\Activity\Listeners\RecordAccountActivity;
 use App\Passkey\PasskeyEloquentModel;
+use App\Shared\MorphMapKeyEnum;
 use App\Team\Team;
-use App\Team\TeamEloquentModel;
 use App\Team\TeamPolicy;
-use App\TeamUser\TeamUserEloquentModel;
-use App\User\UserEloquentModel;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Date;
@@ -44,20 +42,16 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
-     * Stable aliases for polymorphic columns (audit and activity subjects),
-     * so stored rows do not depend on class names.
+     * Stable aliases for polymorphic columns (audit and activity subjects), so
+     * stored rows do not depend on class names.
      *
-     * Not enforced: mom/data calls getMorphClass() on every model it wraps,
-     * and only these models are ever stored as morph types.
+     * Enforced: every Eloquent model must have an alias, otherwise
+     * getMorphClass() throws. mom/data calls it on every model it wraps, so a
+     * new model needs a case in MorphMapKeyEnum (AppServiceProviderTest checks this).
      */
     protected function configureMorphMap(): void
     {
-        Relation::morphMap([
-            'passkey' => PasskeyEloquentModel::class,
-            'team' => TeamEloquentModel::class,
-            'team_user' => TeamUserEloquentModel::class,
-            'user' => UserEloquentModel::class,
-        ]);
+        Relation::enforceMorphMap(MorphMapKeyEnum::map());
     }
 
     /**

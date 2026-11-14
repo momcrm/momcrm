@@ -29,18 +29,17 @@ final readonly class DeleteUser
     public function __invoke(): User
     {
         $userId = $this->user->getId()->toString();
-        $morphType = new UserEloquentModel()->getMorphClass();
 
-        DB::transaction(function () use ($userId, $morphType): void {
-            PurgeAccountActivities::fromUserId($userId, $morphType);
-            PurgeAccountAuditLogs::fromUserId($userId, $morphType);
+        DB::transaction(function () use ($userId): void {
+            PurgeAccountActivities::fromUserId($userId);
+            PurgeAccountAuditLogs::fromUserId($userId);
 
             UserEloquentModel::query()
                 ->where(Id::getDatabaseTableColumnName(), $userId)
                 ->first()
                 ?->delete();
 
-            PurgeAccountAuditLogs::fromUserId($userId, $morphType);
+            PurgeAccountAuditLogs::fromUserId($userId);
         });
 
         return $this->user;
