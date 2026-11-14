@@ -10,13 +10,19 @@ use App\User\Properties\CreatedAt;
 use App\User\Properties\CurrentTeamId;
 use App\User\Properties\Email;
 use App\User\Properties\EmailVerifiedAt;
+use App\User\Properties\GettingStartedDismissedAt;
 use App\User\Properties\Id;
 use App\User\Properties\Name;
+use App\User\Properties\OnboardedAt;
+use App\User\Properties\OnboardingRole;
+use App\User\Properties\OnboardingTeamSize;
+use App\User\Properties\OnboardingUseCase;
 use App\User\Properties\Password;
 use App\User\Properties\UpdatedAt;
 use DateTimeInterface;
 use Mom\Data\AbstractData;
 use Mom\Data\AbstractDate;
+use Mom\Data\AbstractEnum;
 use Mom\Data\AbstractString;
 use Mom\Data\AbstractValue;
 
@@ -30,8 +36,13 @@ final class User extends AbstractData
         public CurrentTeamId $currentTeamId,
         public Email $email,
         public EmailVerifiedAt $emailVerifiedAt,
+        public GettingStartedDismissedAt $gettingStartedDismissedAt,
         public Id $id,
         public Name $name,
+        public OnboardedAt $onboardedAt,
+        public OnboardingRole $onboardingRole,
+        public OnboardingTeamSize $onboardingTeamSize,
+        public OnboardingUseCase $onboardingUseCase,
         public Password $password,
         public UpdatedAt $updatedAt,
     ) {}
@@ -123,6 +134,30 @@ final class User extends AbstractData
         return $this;
     }
 
+    public function getGettingStartedDismissedAt(): GettingStartedDismissedAt
+    {
+        return $this->gettingStartedDismissedAt;
+    }
+
+    public function setGettingStartedDismissedAt(GettingStartedDismissedAt|AbstractDate|DateTimeInterface|null $gettingStartedDismissedAt): self
+    {
+        if ($gettingStartedDismissedAt instanceof GettingStartedDismissedAt) {
+            $this->gettingStartedDismissedAt = $gettingStartedDismissedAt;
+
+            return $this;
+        }
+
+        if ($gettingStartedDismissedAt instanceof AbstractDate) {
+            $this->gettingStartedDismissedAt = GettingStartedDismissedAt::fromNullableCarbon($gettingStartedDismissedAt->toNullableCarbon());
+
+            return $this;
+        }
+
+        $this->gettingStartedDismissedAt = new GettingStartedDismissedAt($gettingStartedDismissedAt);
+
+        return $this;
+    }
+
     public function getId(): Id
     {
         return $this->id;
@@ -167,6 +202,102 @@ final class User extends AbstractData
         }
 
         $this->name = Name::fromNullableString($name->toNullableString());
+
+        return $this;
+    }
+
+    public function getOnboardedAt(): OnboardedAt
+    {
+        return $this->onboardedAt;
+    }
+
+    public function setOnboardedAt(OnboardedAt|AbstractDate|DateTimeInterface|null $onboardedAt): self
+    {
+        if ($onboardedAt instanceof OnboardedAt) {
+            $this->onboardedAt = $onboardedAt;
+
+            return $this;
+        }
+
+        if ($onboardedAt instanceof AbstractDate) {
+            $this->onboardedAt = OnboardedAt::fromNullableCarbon($onboardedAt->toNullableCarbon());
+
+            return $this;
+        }
+
+        $this->onboardedAt = new OnboardedAt($onboardedAt);
+
+        return $this;
+    }
+
+    public function getOnboardingRole(): OnboardingRole
+    {
+        return $this->onboardingRole;
+    }
+
+    public function setOnboardingRole(OnboardingRole|AbstractEnum|OnboardingRoleEnum|string|null $onboardingRole): self
+    {
+        if ($onboardingRole instanceof OnboardingRole) {
+            $this->onboardingRole = $onboardingRole;
+
+            return $this;
+        }
+
+        if ($onboardingRole instanceof AbstractEnum) {
+            $this->onboardingRole = new OnboardingRole($onboardingRole->toNullableEnum());
+
+            return $this;
+        }
+
+        $this->onboardingRole = new OnboardingRole($onboardingRole);
+
+        return $this;
+    }
+
+    public function getOnboardingTeamSize(): OnboardingTeamSize
+    {
+        return $this->onboardingTeamSize;
+    }
+
+    public function setOnboardingTeamSize(OnboardingTeamSize|AbstractEnum|OnboardingTeamSizeEnum|string|null $onboardingTeamSize): self
+    {
+        if ($onboardingTeamSize instanceof OnboardingTeamSize) {
+            $this->onboardingTeamSize = $onboardingTeamSize;
+
+            return $this;
+        }
+
+        if ($onboardingTeamSize instanceof AbstractEnum) {
+            $this->onboardingTeamSize = new OnboardingTeamSize($onboardingTeamSize->toNullableEnum());
+
+            return $this;
+        }
+
+        $this->onboardingTeamSize = new OnboardingTeamSize($onboardingTeamSize);
+
+        return $this;
+    }
+
+    public function getOnboardingUseCase(): OnboardingUseCase
+    {
+        return $this->onboardingUseCase;
+    }
+
+    public function setOnboardingUseCase(OnboardingUseCase|AbstractEnum|OnboardingUseCaseEnum|string|null $onboardingUseCase): self
+    {
+        if ($onboardingUseCase instanceof OnboardingUseCase) {
+            $this->onboardingUseCase = $onboardingUseCase;
+
+            return $this;
+        }
+
+        if ($onboardingUseCase instanceof AbstractEnum) {
+            $this->onboardingUseCase = new OnboardingUseCase($onboardingUseCase->toNullableEnum());
+
+            return $this;
+        }
+
+        $this->onboardingUseCase = new OnboardingUseCase($onboardingUseCase);
 
         return $this;
     }

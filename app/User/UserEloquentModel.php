@@ -15,7 +15,9 @@ use App\TeamUser\Properties\UserId;
 use App\User\Factories\UserFactory;
 use App\User\Properties\CurrentTeamId;
 use App\User\Properties\EmailVerifiedAt;
+use App\User\Properties\GettingStartedDismissedAt;
 use App\User\Properties\Id;
+use App\User\Properties\OnboardedAt;
 use App\User\Properties\Password;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -38,6 +40,11 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property string $email
  * @property CarbonImmutable|null $email_verified_at
  * @property string|null $current_team_id
+ * @property string|null $onboarding_use_case
+ * @property string|null $onboarding_role
+ * @property string|null $onboarding_team_size
+ * @property CarbonImmutable|null $onboarded_at
+ * @property CarbonImmutable|null $getting_started_dismissed_at
  * @property string $password
  * @property string|null $two_factor_secret
  * @property string|null $two_factor_recovery_codes
@@ -127,6 +134,8 @@ final class UserEloquentModel extends Authenticatable implements Auditable, Must
     {
         return [
             EmailVerifiedAt::getDatabaseTableColumnName() => 'datetime',
+            GettingStartedDismissedAt::getDatabaseTableColumnName() => 'datetime',
+            OnboardedAt::getDatabaseTableColumnName() => 'datetime',
             Password::getDatabaseTableColumnName() => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
         ];

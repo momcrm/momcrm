@@ -8,6 +8,7 @@ use App\Team\Actions\CreatePersonalTeam;
 use App\User\Properties\Email;
 use App\User\Properties\EmailVerifiedAt;
 use App\User\Properties\Name;
+use App\User\Properties\OnboardedAt;
 use App\User\Properties\Password;
 use App\User\User;
 use App\User\UserEloquentModel;
@@ -36,6 +37,7 @@ final class UserFactory extends Factory
             Name::getDatabaseTableColumnName() => fake()->name(),
             Email::getDatabaseTableColumnName() => fake()->unique()->safeEmail(),
             EmailVerifiedAt::getDatabaseTableColumnName() => now(),
+            OnboardedAt::getDatabaseTableColumnName() => now(),
             Password::getDatabaseTableColumnName() => self::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
             'two_factor_secret' => null,
@@ -51,6 +53,16 @@ final class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes): array => [
             EmailVerifiedAt::getDatabaseTableColumnName() => null,
+        ]);
+    }
+
+    /**
+     * Indicate that the user has not finished onboarding yet.
+     */
+    public function notOnboarded(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            OnboardedAt::getDatabaseTableColumnName() => null,
         ]);
     }
 

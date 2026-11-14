@@ -7,8 +7,12 @@ use App\Passkey\PasskeyEloquentModel;
 use App\Shared\MorphMapKeyEnum;
 use App\Team\Team;
 use App\Team\TeamPolicy;
+use App\User\Listeners\SendWelcomeNotification;
 use Carbon\CarbonImmutable;
+use Illuminate\Auth\Events\Verified;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
@@ -39,6 +43,19 @@ class AppServiceProvider extends ServiceProvider
 
         $this->configureMorphMap();
         $this->configureListeners();
+        $this->configureMail();
+    }
+
+    /**
+     * Copy for the emails Laravel and Fortify send on our behalf.
+     */
+    protected function configureMail(): void
+    {
+        VerifyEmail::toMailUsing(fn (object $notifiable, string $url): MailMessage => new MailMessage()
+            ->subject(__('Confirm your email to finish setting up MomCRM'))
+            ->line(__("Thanks for signing up. Confirm your email address so we know it's really you."))
+            ->action(__('Confirm my email'), $url)
+            ->line(__("Didn't create a MomCRM account? You can ignore this email — nothing happens unless you click the button.")));
     }
 
     /**
@@ -60,6 +77,7 @@ class AppServiceProvider extends ServiceProvider
     protected function configureListeners(): void
     {
         Event::listen(RecordAccountActivity::EVENTS, RecordAccountActivity::class);
+        Event::listen(Verified::class, SendWelcomeNotification::class);
     }
 
     /**

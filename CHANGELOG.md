@@ -23,6 +23,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Architecture tests (`tests/Arch`) enforce the domain conventions: strict types, final invokable controllers, final actions, FormRequests and mom/data Properties and DTOs, string-backed enums, and a test beside every controller.
 - Audit trail: every create, update and delete of users, teams and team memberships is recorded with old/new values (secrets never stored), actor, IP and request id.
 - Activity feed: sign-ins, sign-outs, password, two-factor, passkey and email-verification events, plus team renames and switches. Viewable under Settings → Activity (your account) and Settings → Team → Activity (team owners).
+- Onboarding: new accounts answer three optional questions, name their workspace and pick a starting point before reaching the dashboard. Existing accounts skip it.
+- Landing page, sign-up and email verification copy for MomCRM, plus a welcome email once an address is confirmed.
 - Structured logging: every request gets an `X-Request-Id`, and log lines carry the request, user and team ids. Logs default to daily-rotated JSON files.
 - Audit and activity retention (365 and 180 days by default, `AUDIT_LOG_RETENTION_DAYS` / `ACTIVITY_RETENTION_DAYS`), pruned daily by the scheduler.
 - Team-based tenancy: every user gets a personal team, can switch their current team from the sidebar, and owners can rename it under Settings → Team. Team-owned models are isolated with `CurrentTeamScope`.
