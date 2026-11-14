@@ -49,3 +49,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Backend code is organised by domain (`app/User`, `app/Team`, `app/TeamUser`) with mom/data DTOs, single-action controllers and actions, replacing the starter kit's `app/Models`, `app/Http/Controllers/Settings`, `app/Http/Requests`, `app/Actions` and `app/Concerns`.
 
 [Unreleased]: https://github.com/momcrm/momcrm/commits/main
+
+### Fixed
+
+- Skipped tests no longer crash: the class-map exclusion for co-located tests is limited to `app/`, so PHPUnit's own classes load again.
