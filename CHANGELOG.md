@@ -17,5 +17,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Project documentation: README, contributing guide, security policy and MIT license.
 - Contributor Covenant 2.1 code of conduct.
 - Issue forms for bug reports and feature requests, and a pull request template.
+- Release workflow that publishes a GitHub release with notes from this changelog when a version tag is pushed.
 
 [Unreleased]: https://github.com/momcrm/momcrm/commits/main

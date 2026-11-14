@@ -10,3 +10,18 @@ Thanks for helping out! Everyone taking part in MomCRM is expected to follow our
 6. Open a pull request describing what you changed and why.
 
 Please keep pull requests focused on one change.
+
+## Releasing
+
+Maintainers release new versions by tagging `main`:
+
+1. In a pull request, move the entries under `## [Unreleased]` in [CHANGELOG.md](CHANGELOG.md) into a new section such as `## [0.1.0] - 2026-11-20`, and add a matching compare link at the bottom. Merge it.
+2. Tag the merge commit on `main` and push the tag:
+
+    ```bash
+    git checkout main && git pull
+    git tag v0.1.0
+    git push origin v0.1.0
+    ```
+
+The [release workflow](.github/workflows/release.yml) then creates a GitHub release using that version's changelog section as the release notes. Tags with a suffix, such as `v0.2.0-beta.1`, are published as pre-releases. The workflow fails if the tag isn't on `main` or the changelog has no section for that version.
