@@ -6,6 +6,9 @@ use App\Activity\Actions\RecordActivity;
 use App\Activity\ActivityEloquentModel;
 use App\Activity\ActivityTypeEnum;
 use App\AuditLog\AuditLogEloquentModel;
+use App\EmailCode\Actions\VerifyEmailCode;
+use App\EmailCode\EmailCodeEloquentModel;
+use App\EmailCode\EmailCodePurposeEnum;
 use App\Shared\MorphMapKeyEnum;
 use App\Team\TeamEloquentModel;
 use App\TeamUser\Actions\CreateTeamUser;
@@ -64,4 +67,24 @@ it('removes the users account activity and audit rows but keeps team history', f
     expect(ActivityEloquentModel::query()->whereNull('team_id')->exists())->toBeFalse()
         ->and(AuditLogEloquentModel::query()->where('auditable_type', MorphMapKeyEnum::User->value)->where('auditable_id', $user->id)->exists())->toBeFalse()
         ->and(ActivityEloquentModel::query()->findOrFail($teamActivity->getId()->toString())->user_id)->toBeNull();
+});
+
+it('deletes a passwordless account once an emailed code confirms it', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create(['email' => 'sam@acme.test', 'password' => null]);
+    EmailCodeEloquentModel::factory()->create(['email' => 'sam@acme.test', 'purpose' => EmailCodePurposeEnum::Confirm->value, 'code_hash' => VerifyEmailCode::hash('123456')]);
+
+    actingAs($user)->delete(route('profile.destroy'), ['code' => '123456'])->assertRedirect('/');
+
+    expect(UserEloquentModel::query()->whereKey($user->id)->exists())->toBeFalse();
+});
+
+it('keeps a passwordless account when the code is wrong', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create(['email' => 'sam@acme.test', 'password' => null]);
+    EmailCodeEloquentModel::factory()->create(['email' => 'sam@acme.test', 'purpose' => EmailCodePurposeEnum::Confirm->value, 'code_hash' => VerifyEmailCode::hash('123456')]);
+
+    actingAs($user)
+        ->delete(route('profile.destroy'), ['code' => '000000'])
+        ->assertSessionHasErrors(['code' => "That code isn't right. Check the email and try again."]);
+
+    expect($user->fresh())->not->toBeNull();
 });

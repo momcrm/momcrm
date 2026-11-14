@@ -1,4 +1,4 @@
-import AuthLayoutTemplate from '@/layouts/auth/auth-simple-layout';
+import AuthBackdropLayout from '@/layouts/auth/auth-backdrop-layout';
 
 export default function AuthLayout({
     title = '',
@@ -10,8 +10,8 @@ export default function AuthLayout({
     children: React.ReactNode;
 }) {
     return (
-        <AuthLayoutTemplate title={title} description={description}>
+        <AuthBackdropLayout title={title} description={description}>
             {children}
-        </AuthLayoutTemplate>
+        </AuthBackdropLayout>
     );
 }

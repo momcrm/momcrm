@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Auth\AuthSession;
 use App\TeamInvitation\Listeners\AcceptPendingTeamInvitation;
 use App\TeamInvitation\TeamInvitationEloquentModel;
 use App\TeamUser\Actions\FindTeamUser;
@@ -12,12 +13,10 @@ use function Pest\Laravel\withSession;
 it('joins the team when a guest who opened the invitation signs up', function (): void {
     $invitation = TeamInvitationEloquentModel::factory()->create(['email' => 'sam@acme.test', 'token_hash' => hash('sha256', 'secret-token')]);
 
-    withSession([AcceptPendingTeamInvitation::SESSION_KEY => 'secret-token'])->post(route('register.store'), [
-        'name' => 'Sam Lee',
-        'email' => 'sam@acme.test',
-        'password' => 'password',
-        'password_confirmation' => 'password',
-    ]);
+    withSession([
+        AcceptPendingTeamInvitation::SESSION_KEY => 'secret-token',
+        AuthSession::VERIFIED_EMAIL => 'sam@acme.test',
+    ])->post(route('signup.profile.store'), ['name' => 'Sam Lee']);
 
     $user = UserEloquentModel::query()->where('email', 'sam@acme.test')->sole();
     expect(FindTeamUser::byTeamAndUser(teamId: $invitation->team_id, userId: $user->id)->isNotNull())->toBeTrue()

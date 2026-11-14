@@ -49,3 +49,29 @@ it('records the password change in the account activity', function (): void {
     expect(ActivityEloquentModel::query()->where('user_id', $user->id)->pluck('type')->all())
         ->toBe([ActivityTypeEnum::PasswordChanged->value]);
 });
+
+it('lets someone who signs in with codes set a first password without a current one', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create(['password' => null]);
+
+    actingAs($user)
+        ->from(route('security.edit'))
+        ->put(route('user-password.update'), [
+            'password' => 'a-long-passphrase',
+            'password_confirmation' => 'a-long-passphrase',
+        ])
+        ->assertSessionHasNoErrors();
+
+    expect(Hash::check('a-long-passphrase', (string) $user->fresh()->password))->toBeTrue();
+});
+
+it('still needs the current password to change an existing one', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+
+    actingAs($user)
+        ->from(route('security.edit'))
+        ->put(route('user-password.update'), [
+            'password' => 'a-long-passphrase',
+            'password_confirmation' => 'a-long-passphrase',
+        ])
+        ->assertSessionHasErrors(['current_password' => 'The current password field is required.']);
+});

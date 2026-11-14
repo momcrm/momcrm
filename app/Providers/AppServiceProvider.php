@@ -22,6 +22,8 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 use Laravel\Passkeys\Passkeys;
+use SocialiteProviders\Manager\SocialiteWasCalled;
+use SocialiteProviders\Microsoft\Provider as MicrosoftProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -82,6 +84,7 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(RecordAccountActivity::EVENTS, RecordAccountActivity::class);
         Event::listen(Verified::class, SendWelcomeNotification::class);
         Event::listen(AcceptPendingTeamInvitation::EVENTS, AcceptPendingTeamInvitation::class);
+        Event::listen(fn (SocialiteWasCalled $event) => $event->extendSocialite('microsoft', MicrosoftProvider::class));
     }
 
     /**

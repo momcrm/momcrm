@@ -54,10 +54,16 @@ export default function TeamInvitation(props: Props) {
             {props.status === 'guest' && (
                 <div className="flex flex-col gap-3">
                     <Button asChild>
-                        <Link href={register()}>Create your account</Link>
+                        <Link
+                            href={register({ query: { email: props.email } })}
+                        >
+                            Create your account
+                        </Link>
                     </Button>
                     <Button variant="outline" asChild>
-                        <Link href={login()}>I already have an account</Link>
+                        <Link href={login({ query: { email: props.email } })}>
+                            I already have an account
+                        </Link>
                     </Button>
                     <p className="text-center text-xs text-muted-foreground">
                         Use {props.email} so we can match you to the invitation.

@@ -21,8 +21,11 @@ final class UpdatePasswordFormRequest extends FormRequest
      */
     public function rules(): array
     {
+        // Someone without a password yet (they sign in with codes) sets one without a current password.
         return [
-            CurrentPassword::getNameForValidation() => CurrentPassword::getValidationRulesForCreate($this),
+            ...($this->user()?->hasPassword() === false ? [] : [
+                CurrentPassword::getNameForValidation() => CurrentPassword::getValidationRulesForCreate($this),
+            ]),
             Password::getNameForValidation() => Password::getValidationRulesForCreate($this),
         ];
     }

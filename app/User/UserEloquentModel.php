@@ -45,7 +45,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property string|null $onboarding_team_size
  * @property CarbonImmutable|null $onboarded_at
  * @property CarbonImmutable|null $getting_started_dismissed_at
- * @property string $password
+ * @property string|null $password
  * @property string|null $two_factor_secret
  * @property string|null $two_factor_recovery_codes
  * @property CarbonImmutable|null $two_factor_confirmed_at
@@ -66,6 +66,14 @@ final class UserEloquentModel extends Authenticatable implements Auditable, Must
     use TwoFactorAuthenticatable;
 
     protected $guarded = [];
+
+    /**
+     * People who sign in with emailed codes or Google/Microsoft may never set a password.
+     */
+    public function hasPassword(): bool
+    {
+        return $this->password !== null;
+    }
 
     public function auditTeamId(): ?string
     {

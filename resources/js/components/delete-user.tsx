@@ -1,5 +1,7 @@
 import { Form } from '@inertiajs/react';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
+import CodeInput from '@/components/auth/code-input';
+import SendConfirmationCodeController from '@/actions/App/Auth/Controllers/SendConfirmationCodeController';
 import DeleteProfileController from '@/actions/App/User/Controllers/DeleteProfileController';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
@@ -16,8 +18,33 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 
-export default function DeleteUser() {
+function SendCodeButton() {
+    return (
+        <Form
+            {...SendConfirmationCodeController.form()}
+            options={{ preserveScroll: true }}
+        >
+            {({ processing }) => (
+                <Button
+                    type="submit"
+                    variant="outline"
+                    size="sm"
+                    disabled={processing}
+                >
+                    Email me a code
+                </Button>
+            )}
+        </Form>
+    );
+}
+
+export default function DeleteUser({
+    hasPassword = true,
+}: {
+    hasPassword?: boolean;
+}) {
     const passwordInput = useRef<HTMLInputElement>(null);
+    const [code, setCode] = useState('');
 
     return (
         <div className="space-y-6">
@@ -49,10 +76,13 @@ export default function DeleteUser() {
                         </DialogTitle>
                         <DialogDescription>
                             Once your account is deleted, all of its resources
-                            and data will also be permanently deleted. Please
-                            enter your password to confirm you would like to
-                            permanently delete your account.
+                            and data will also be permanently deleted.{' '}
+                            {hasPassword
+                                ? 'Enter your password to confirm.'
+                                : "We'll email you a code to confirm it's you."}
                         </DialogDescription>
+
+                        {!hasPassword && <SendCodeButton />}
 
                         <Form
                             {...DeleteProfileController.form()}
@@ -65,24 +95,39 @@ export default function DeleteUser() {
                         >
                             {({ resetAndClearErrors, processing, errors }) => (
                                 <>
-                                    <div className="grid gap-2">
-                                        <Label
-                                            htmlFor="password"
-                                            className="sr-only"
-                                        >
-                                            Password
-                                        </Label>
+                                    {hasPassword ? (
+                                        <div className="grid gap-2">
+                                            <Label
+                                                htmlFor="password"
+                                                className="sr-only"
+                                            >
+                                                Password
+                                            </Label>
 
-                                        <PasswordInput
-                                            id="password"
-                                            name="password"
-                                            ref={passwordInput}
-                                            placeholder="Password"
-                                            autoComplete="current-password"
-                                        />
+                                            <PasswordInput
+                                                id="password"
+                                                name="password"
+                                                ref={passwordInput}
+                                                placeholder="Password"
+                                                autoComplete="current-password"
+                                            />
 
-                                        <InputError message={errors.password} />
-                                    </div>
+                                            <InputError
+                                                message={errors.password}
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div className="grid gap-2">
+                                            <CodeInput
+                                                value={code}
+                                                onChange={setCode}
+                                            />
+                                            <InputError
+                                                className="text-center"
+                                                message={errors.code}
+                                            />
+                                        </div>
+                                    )}
 
                                     <DialogFooter className="gap-2">
                                         <DialogClose asChild>

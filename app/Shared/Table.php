@@ -11,11 +11,13 @@ enum Table: string
     case AuditLogs = 'audit_logs';
     case Contacts = 'contacts';
     case Customers = 'customers';
+    case EmailCodes = 'email_codes';
     case InvoiceItems = 'invoice_items';
     case Invoices = 'invoices';
     case Locations = 'locations';
     case Passkeys = 'passkeys';
     case Services = 'services';
+    case SocialAccounts = 'social_accounts';
     case TeamInvitations = 'team_invitations';
     case TeamUser = 'team_user';
     case Teams = 'teams';
