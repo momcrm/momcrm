@@ -283,6 +283,11 @@ export default function ProjectFormDialog({
                                             );
                                         })}
                                     </div>
+                                    <input
+                                        type="hidden"
+                                        name="members_sent"
+                                        value="1"
+                                    />
                                     {memberIds.map((id) => (
                                         <input
                                             key={id}

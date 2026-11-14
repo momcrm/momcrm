@@ -1,10 +1,15 @@
 import { router } from '@inertiajs/react';
-import DataTable, { dataTableColumns } from '@/components/data-table';
+import DataTable, {
+    dataTableColumns,
+    withoutColumn,
+} from '@/components/data-table';
 import SoftBadge from '@/components/soft-badge';
 import { edit } from '@/routes/contacts';
-import type { ContactListItem } from '@/types';
+import type { Contact } from '@/types';
 
-const column = dataTableColumns<ContactListItem>();
+type ContactRow = Contact & { customer_name?: string | null };
+
+const column = dataTableColumns<ContactRow>();
 
 const columns = column.columns([
     column.accessor('full_name', {
@@ -60,12 +65,16 @@ const columns = column.columns([
 
 export default function ContactTable({
     contacts,
+    showCustomer = true,
 }: {
-    contacts: ContactListItem[];
+    contacts: ContactRow[];
+    showCustomer?: boolean;
 }) {
     return (
         <DataTable
-            columns={columns}
+            columns={
+                showCustomer ? columns : withoutColumn(columns, 'customer_name')
+            }
             data={contacts}
             getRowId={(contact) => contact.id}
             onRowClick={(contact) => router.visit(edit.url(contact.id))}

@@ -33,6 +33,13 @@ final class UpdateGroupFormRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->boolean(GroupValidationRules::MEMBERS_SENT) && ! $this->has(GroupValidationRules::MEMBER_IDS)) {
+            $this->merge([GroupValidationRules::MEMBER_IDS => []]);
+        }
+    }
+
     /**
      * @return array<string, array<int, mixed>>
      */

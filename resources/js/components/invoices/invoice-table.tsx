@@ -1,5 +1,8 @@
 import { router } from '@inertiajs/react';
-import DataTable, { dataTableColumns } from '@/components/data-table';
+import DataTable, {
+    dataTableColumns,
+    withoutColumn,
+} from '@/components/data-table';
 import StatusPill from '@/components/status-pill';
 import { formatCents } from '@/lib/money';
 import { show } from '@/routes/invoices';
@@ -90,12 +93,16 @@ const columns = column.columns([
 
 export default function InvoiceTable({
     invoices,
+    showCustomer = true,
 }: {
     invoices: InvoiceListItem[];
+    showCustomer?: boolean;
 }) {
     return (
         <DataTable
-            columns={columns}
+            columns={
+                showCustomer ? columns : withoutColumn(columns, 'customer_name')
+            }
             data={invoices}
             getRowId={(invoice) => invoice.id}
             onRowClick={(invoice) => router.visit(show.url(invoice.id))}

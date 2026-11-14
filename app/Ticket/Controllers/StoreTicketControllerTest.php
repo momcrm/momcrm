@@ -126,3 +126,18 @@ it('rejects a due date before the start date', function (): void {
         ->post(route('tickets.store'), ['customer_id' => $customer->id, 'title' => 'X', 'priority' => 'normal', 'starts_on' => '2026-12-05', 'due_on' => '2026-12-01'])
         ->assertSessionHasErrors(['due_on' => "The due date can't be before the start date."]);
 });
+
+it('quick-adds a ticket into a board column and stays on the board', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $project = ProjectEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
+    TicketEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'status' => 'in_progress', 'position' => 4]);
+
+    actingAs($user)
+        ->from(route('tickets.index', ['view' => 'board']))
+        ->post(route('tickets.store'), ['title' => 'Quick one', 'priority' => 'normal', 'project_id' => $project->id, 'status' => 'in_progress', 'quick' => '1'])
+        ->assertRedirectToRoute('tickets.index', ['view' => 'board']);
+
+    expect(TicketEloquentModel::query()->where('title', 'Quick one')->sole())
+        ->status->toBe('in_progress')
+        ->position->toBe(5);
+});

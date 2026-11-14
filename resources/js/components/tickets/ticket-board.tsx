@@ -1,14 +1,17 @@
-import { Link } from '@inertiajs/react';
 import { Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { DragEvent } from 'react';
 import StatusPill from '@/components/status-pill';
+import QuickAddTicket from '@/components/tickets/quick-add-ticket';
 import TicketCard from '@/components/tickets/ticket-card';
 import { ticketStatuses } from '@/components/tickets/ticket-meta';
 import { useTicketActions } from '@/hooks/use-ticket-actions';
 import { cn } from '@/lib/utils';
-import { create } from '@/routes/tickets';
-import type { TicketListItem, TicketStatus } from '@/types';
+import type {
+    TicketListItem,
+    TicketPickerOptions,
+    TicketStatus,
+} from '@/types';
 
 /**
  * A column per status. Dragging a card to another column or place changes its
@@ -17,10 +20,16 @@ import type { TicketListItem, TicketStatus } from '@/types';
 export default function TicketBoard({
     tickets,
     favoriteIds,
+    options,
+    projectId = null,
 }: {
     tickets: TicketListItem[];
     favoriteIds: string[];
+    options: TicketPickerOptions;
+    /** On one project's board, new tickets go in that project. */
+    projectId?: string | null;
 }) {
+    const [addingTo, setAddingTo] = useState<TicketStatus | null>(null);
     const { openTicket, moveTicket } = useTicketActions();
     const [items, setItems] = useState(tickets);
     const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -107,13 +116,14 @@ export default function TicketBoard({
                         <span className="text-xs text-subtle-foreground">
                             {column.tickets.length}
                         </span>
-                        <Link
-                            href={create()}
-                            aria-label={`New ticket in ${column.label}`}
+                        <button
+                            type="button"
+                            onClick={() => setAddingTo(column.value)}
+                            aria-label={`Add a ticket to ${column.label}`}
                             className="ml-auto rounded p-0.5 text-subtle-foreground hover:bg-accent hover:text-foreground"
                         >
                             <Plus className="size-4" />
-                        </Link>
+                        </button>
                     </header>
                     <ol className="flex flex-col gap-2">
                         {column.tickets.map((ticket) => (
@@ -148,13 +158,23 @@ export default function TicketBoard({
                             Drop tickets here
                         </p>
                     )}
-                    <Link
-                        href={create()}
-                        className="mt-1 flex items-center gap-1.5 rounded-md px-1.5 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
-                    >
-                        <Plus className="size-3.5" />
-                        Add ticket
-                    </Link>
+                    {addingTo === column.value ? (
+                        <QuickAddTicket
+                            status={column.value}
+                            options={options}
+                            projectId={projectId}
+                            onClose={() => setAddingTo(null)}
+                        />
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={() => setAddingTo(column.value)}
+                            className="mt-1 flex items-center gap-1.5 rounded-md px-1.5 py-1 text-left text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
+                        >
+                            <Plus className="size-3.5" />
+                            Add ticket
+                        </button>
+                    )}
                 </section>
             ))}
         </div>

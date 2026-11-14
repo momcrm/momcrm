@@ -352,6 +352,8 @@ function TicketTabs({
                 <TicketBoard
                     tickets={page.data}
                     favoriteIds={favoriteTicketIds}
+                    options={options}
+                    projectId={filters.project}
                 />
             ) : page.data.length === 0 ? (
                 <EmptyState

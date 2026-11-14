@@ -1,17 +1,17 @@
-import { Head, Link, setLayoutProps } from '@inertiajs/react';
+import { Head, Link, router, setLayoutProps } from '@inertiajs/react';
 import ConfirmDelete from '@/components/confirm-delete';
-import ContactList from '@/components/contacts/contact-list';
+import ContactTable from '@/components/contacts/contact-table';
 import RecordList from '@/components/customers/record-list';
 import DetailSection from '@/components/detail-section';
 import EmptyState from '@/components/empty-state';
 import PageHeader from '@/components/page-header';
-import InvoiceList from '@/components/invoices/invoice-list';
+import InvoiceTable from '@/components/invoices/invoice-table';
 import {
     ProgressBar,
     ProjectIcon,
     ProjectStatusPill,
 } from '@/components/projects/project-meta';
-import TicketList from '@/components/tickets/ticket-list';
+import TicketTable from '@/components/tickets/ticket-table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import DeleteCustomerController from '@/actions/App/Customer/Controllers/DeleteCustomerController';
@@ -29,7 +29,7 @@ import {
 import { formatCents } from '@/lib/money';
 import { create as createInvoice } from '@/routes/invoices';
 import { show as showProject } from '@/routes/projects';
-import { create as createTicket } from '@/routes/tickets';
+import { create as createTicket, show as showTicket } from '@/routes/tickets';
 import type {
     ProjectListItem,
     Asset,
@@ -215,7 +215,12 @@ export default function ShowCustomer({
                     }
                 >
                     {tickets.length > 0 ? (
-                        <TicketList tickets={tickets} showCustomer={false} />
+                        <TicketTable
+                            tickets={tickets}
+                            onOpen={(ticket) =>
+                                router.visit(showTicket.url(ticket.id))
+                            }
+                        />
                     ) : (
                         <EmptyState
                             title="Nothing in the queue"
@@ -250,7 +255,10 @@ export default function ShowCustomer({
                     }
                 >
                     {invoices.length > 0 ? (
-                        <InvoiceList invoices={invoices} showCustomer={false} />
+                        <InvoiceTable
+                            invoices={invoices}
+                            showCustomer={false}
+                        />
                     ) : (
                         <EmptyState
                             title="No invoices yet"
@@ -274,7 +282,10 @@ export default function ShowCustomer({
                     action={contacts.length > 0 && addContact}
                 >
                     {contacts.length > 0 ? (
-                        <ContactList contacts={contacts} />
+                        <ContactTable
+                            contacts={contacts}
+                            showCustomer={false}
+                        />
                     ) : (
                         <EmptyState
                             title="No contacts yet"
