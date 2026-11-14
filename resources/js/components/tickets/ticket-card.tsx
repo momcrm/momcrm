@@ -1,4 +1,4 @@
-import { Star } from 'lucide-react';
+import { CircleCheck, Star } from 'lucide-react';
 import {
     AssigneeAvatar,
     DueChip,
@@ -43,6 +43,9 @@ export default function TicketCard({
                     isClosed && 'text-muted-foreground line-through',
                 )}
             >
+                {isClosed && (
+                    <CircleCheck className="mr-1 inline size-3.5 -translate-y-px fill-success text-card" />
+                )}
                 {isFavorite && (
                     <Star className="mr-1 inline size-3 fill-amber-400 text-amber-400" />
                 )}

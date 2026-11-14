@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { CheckCheck, Maximize2 } from 'lucide-react';
+import { CheckCheck, ChevronLeft, Maximize2 } from 'lucide-react';
 import EmptyState from '@/components/empty-state';
 import NotificationLine from '@/components/inbox/notification-line';
 import TicketConversation from '@/components/tickets/ticket-conversation';
@@ -75,7 +75,12 @@ export default function Inbox({
             <Head title="Inbox" />
 
             <div className="sticky top-[46px] flex h-[calc(100svh-46px)] min-h-0">
-                <aside className="flex w-full max-w-md shrink-0 flex-col border-r">
+                <aside
+                    className={cn(
+                        'w-full shrink-0 flex-col border-r md:flex md:max-w-md',
+                        selected ? 'hidden' : 'flex',
+                    )}
+                >
                     <div className="flex items-center gap-2 px-4 pt-4 pb-2">
                         <h1 className="text-lg font-semibold">Inbox</h1>
                         <label className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
@@ -175,9 +180,27 @@ export default function Inbox({
                     </ul>
                 </aside>
 
-                <section className="hidden min-w-0 flex-1 overflow-y-auto md:block">
+                <section
+                    className={cn(
+                        'min-w-0 flex-1 overflow-y-auto md:block',
+                        selected ? 'block' : 'hidden',
+                    )}
+                >
                     {selected ? (
-                        <div className="mx-auto max-w-2xl space-y-5 p-6">
+                        <div className="mx-auto max-w-2xl space-y-5 p-4 md:p-6">
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    visitWithQuery(
+                                        { ticket: null },
+                                        { only: RELOAD },
+                                    )
+                                }
+                                className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground md:hidden"
+                            >
+                                <ChevronLeft className="size-4" />
+                                Inbox
+                            </button>
                             <header className="space-y-2">
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                     <span className="font-mono text-xs">

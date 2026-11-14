@@ -1,5 +1,14 @@
 import { Link } from '@inertiajs/react';
-import { Plus, Star } from 'lucide-react';
+import {
+    Columns3,
+    GanttChart,
+    List,
+    Paperclip,
+    Plus,
+    Star,
+} from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import { projectStatusOf } from '@/components/projects/project-meta';
 import {
     SidebarGroup,
     SidebarGroupAction,
@@ -7,15 +16,35 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
+    SidebarMenuSub,
+    SidebarMenuSubButton,
+    SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { colorDot } from '@/lib/colors';
 import { cn } from '@/lib/utils';
 import { index, show } from '@/routes/projects';
-import type { SidebarProject } from '@/types';
+import type { SidebarProject, Tone } from '@/types';
+
+const statusDots: Record<Tone, string> = {
+    neutral: 'bg-muted-foreground/50',
+    primary: 'bg-primary',
+    info: 'bg-info',
+    success: 'bg-success',
+    warning: 'bg-warning',
+    destructive: 'bg-destructive',
+};
+
+const views: { value: string; label: string; icon: LucideIcon }[] = [
+    { value: 'board', label: 'Board', icon: Columns3 },
+    { value: 'list', label: 'List', icon: List },
+    { value: 'timeline', label: 'Timeline', icon: GanttChart },
+    { value: 'files', label: 'Files', icon: Paperclip },
+];
 
 /**
- * The sidebar's Projects section: starred projects first, then recent ones.
+ * The sidebar's Projects section: starred projects first, then recent ones,
+ * each with its status. The project you're in opens out into its views.
  */
 export function NavProjects({ projects }: { projects: SidebarProject[] }) {
     const { isCurrentOrParentUrl } = useCurrentUrl();
@@ -36,29 +65,71 @@ export function NavProjects({ projects }: { projects: SidebarProject[] }) {
                         No projects yet.
                     </p>
                 )}
-                {projects.map((project) => (
-                    <SidebarMenuItem key={project.id}>
-                        <SidebarMenuButton
-                            asChild
-                            isActive={isCurrentOrParentUrl(show(project.id))}
-                            className="h-[30px] gap-2.5 text-sidebar-foreground data-[active=true]:bg-card data-[active=true]:font-medium data-[active=true]:text-foreground data-[active=true]:shadow-card"
-                        >
-                            <Link href={show(project.id)} prefetch>
-                                <span
-                                    aria-hidden
-                                    className={cn(
-                                        'ml-0.5 size-2.5 shrink-0 rounded-[3px]',
-                                        colorDot[project.color],
+                {projects.map((project) => {
+                    const isCurrent = isCurrentOrParentUrl(show(project.id));
+
+                    return (
+                        <SidebarMenuItem key={project.id}>
+                            <SidebarMenuButton
+                                asChild
+                                isActive={isCurrent}
+                                className="h-[30px] gap-2.5 text-sidebar-foreground data-[active=true]:bg-card data-[active=true]:font-medium data-[active=true]:text-foreground data-[active=true]:shadow-card"
+                            >
+                                <Link href={show(project.id)} prefetch>
+                                    <span
+                                        aria-hidden
+                                        className={cn(
+                                            'ml-0.5 size-2.5 shrink-0 rounded-[3px]',
+                                            colorDot[project.color],
+                                        )}
+                                    />
+                                    <span className="truncate">
+                                        {project.name}
+                                    </span>
+                                    {project.is_favorite && (
+                                        <Star className="size-3! shrink-0 fill-amber-400 text-amber-400" />
                                     )}
-                                />
-                                <span className="truncate">{project.name}</span>
-                                {project.is_favorite && (
-                                    <Star className="ml-auto size-3! fill-amber-400 text-amber-400" />
-                                )}
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                ))}
+                                    <span
+                                        aria-label={
+                                            projectStatusOf(project.status)
+                                                .label
+                                        }
+                                        className={cn(
+                                            'ml-auto size-1.5 shrink-0 rounded-full',
+                                            statusDots[
+                                                projectStatusOf(project.status)
+                                                    .tone
+                                            ],
+                                        )}
+                                    />
+                                </Link>
+                            </SidebarMenuButton>
+                            {isCurrent && (
+                                <SidebarMenuSub className="mr-0 gap-px">
+                                    {views.map((view) => (
+                                        <SidebarMenuSubItem key={view.value}>
+                                            <SidebarMenuSubButton
+                                                asChild
+                                                size="sm"
+                                            >
+                                                <Link
+                                                    href={show(project.id, {
+                                                        query: {
+                                                            view: view.value,
+                                                        },
+                                                    })}
+                                                >
+                                                    <view.icon />
+                                                    <span>{view.label}</span>
+                                                </Link>
+                                            </SidebarMenuSubButton>
+                                        </SidebarMenuSubItem>
+                                    ))}
+                                </SidebarMenuSub>
+                            )}
+                        </SidebarMenuItem>
+                    );
+                })}
             </SidebarMenu>
         </SidebarGroup>
     );

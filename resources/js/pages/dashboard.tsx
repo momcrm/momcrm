@@ -1,5 +1,13 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { FolderKanban, Plus, UserPlus } from 'lucide-react';
+import {
+    AlertCircle,
+    CircleCheck,
+    CircleDot,
+    FolderKanban,
+    Plus,
+    UserPlus,
+} from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import GettingStartedChecklist from '@/components/getting-started-checklist';
@@ -12,7 +20,11 @@ import {
 import SecurityNudge from '@/components/security-nudge';
 import { describe } from '@/components/tickets/ticket-conversation';
 import TicketDrawer from '@/components/tickets/ticket-drawer';
-import { daysUntil, formatDay } from '@/components/tickets/ticket-meta';
+import {
+    AssigneeAvatar,
+    daysUntil,
+    formatDay,
+} from '@/components/tickets/ticket-meta';
 import TicketRow from '@/components/tickets/ticket-row';
 import { Button } from '@/components/ui/button';
 import { useTicketActions } from '@/hooks/use-ticket-actions';
@@ -38,6 +50,7 @@ import type {
 
 type Stats = {
     active_projects: number;
+    at_risk_projects: number;
     open_tickets: number;
     closed_this_week: number;
     overdue_tickets: number;
@@ -90,22 +103,23 @@ export default function Dashboard({
     options: TicketPickerOptions;
     drawer: TicketDrawerData | null;
 }) {
-    const { gettingStarted } = usePage().props;
+    const { gettingStarted, sidebarCounts } = usePage().props;
     const firstName = preferredName.split(' ')[0];
 
     return (
         <>
             <Head title="Home" />
 
-            <div className="flex flex-col gap-5 p-4 md:p-6">
+            <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 p-4 md:p-6">
                 <header className="flex flex-wrap items-end justify-between gap-3">
                     <div>
-                        <p className="text-sm text-muted-foreground">
-                            {dateFormatter.format(new Date())}
-                        </p>
                         <h1 className="text-2xl font-semibold">
                             {greeting()}, {firstName}
                         </h1>
+                        <p className="text-sm text-muted-foreground">
+                            {dateFormatter.format(new Date())} · Here's what's
+                            happening across your workspace.
+                        </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
                         <Button variant="outline" asChild>
@@ -138,25 +152,37 @@ export default function Dashboard({
                     !hasSecurity && <SecurityNudge />
                 )}
 
-                <div className="grid overflow-hidden rounded-xl border bg-card shadow-xs sm:grid-cols-2 lg:grid-cols-4">
+                <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
                     <Stat
                         label="Active projects"
+                        icon={FolderKanban}
                         value={stats.active_projects}
+                        hint={`${stats.at_risk_projects} at risk`}
                         href={projectsIndex().url}
                     />
                     <Stat
                         label="Open tickets"
+                        icon={CircleDot}
                         value={stats.open_tickets}
+                        hint={`${sidebarCounts?.myOpenTickets ?? 0} assigned to you`}
                         href={ticketsIndex().url}
                     />
                     <Stat
-                        label="Closed this week"
+                        label="Completed"
+                        icon={CircleCheck}
                         value={stats.closed_this_week}
+                        hint="this week"
                         href={ticketsIndex({ query: { status: 'closed' } }).url}
                     />
                     <Stat
                         label="Overdue"
+                        icon={AlertCircle}
                         value={stats.overdue_tickets}
+                        hint={
+                            stats.overdue_tickets > 0
+                                ? 'need attention'
+                                : 'all on time'
+                        }
                         href={overview().url}
                         tone={
                             stats.overdue_tickets > 0
@@ -190,12 +216,12 @@ export default function Dashboard({
                     </Link>
                 )}
 
-                <div className="grid gap-4 lg:grid-cols-3">
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
                     <MyTickets tickets={myTickets} />
                     <Deadlines tickets={deadlines} />
                 </div>
 
-                <div className="grid gap-4 lg:grid-cols-3">
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
                     <Panel
                         title="Project progress"
                         href={projectsIndex().url}
@@ -261,31 +287,44 @@ export default function Dashboard({
                         ) : (
                             <ol className="space-y-2.5">
                                 {activity.map((item) => (
-                                    <li key={item.id} className="text-sm">
-                                        <p className="truncate">
-                                            <span className="font-medium">
-                                                {item.actor ?? 'Someone'}
-                                            </span>{' '}
-                                            <span className="text-muted-foreground">
-                                                {describe(item)}
-                                            </span>
-                                            {typeof item.details?.number ===
-                                                'number' &&
-                                                (item.url ? (
-                                                    <Link
-                                                        href={item.url}
-                                                        className="font-medium hover:underline"
-                                                    >
-                                                        {' '}
-                                                        #{item.details.number}
-                                                    </Link>
-                                                ) : (
-                                                    ` #${item.details.number}`
-                                                ))}
-                                        </p>
-                                        <p className="text-xs text-subtle-foreground">
-                                            {timeAgo(item.created_at)}
-                                        </p>
+                                    <li
+                                        key={item.id}
+                                        className="flex gap-2.5 text-sm"
+                                    >
+                                        <AssigneeAvatar
+                                            name={item.actor}
+                                            className="mt-0.5 size-6 text-[10px]"
+                                        />
+                                        <div className="min-w-0 flex-1">
+                                            <p className="truncate">
+                                                <span className="font-medium">
+                                                    {item.actor ?? 'Someone'}
+                                                </span>{' '}
+                                                <span className="text-muted-foreground">
+                                                    {describe(item)}
+                                                </span>
+                                                {typeof item.details?.number ===
+                                                    'number' &&
+                                                    (item.url ? (
+                                                        <Link
+                                                            href={item.url}
+                                                            className="font-medium hover:underline"
+                                                        >
+                                                            {' '}
+                                                            #
+                                                            {
+                                                                item.details
+                                                                    .number
+                                                            }
+                                                        </Link>
+                                                    ) : (
+                                                        ` #${item.details.number}`
+                                                    ))}
+                                            </p>
+                                            <p className="text-xs text-subtle-foreground">
+                                                {timeAgo(item.created_at)}
+                                            </p>
+                                        </div>
                                     </li>
                                 ))}
                             </ol>
@@ -301,21 +340,28 @@ export default function Dashboard({
 
 function Stat({
     label,
+    icon: Icon,
     value,
+    hint,
     href,
     tone,
 }: {
     label: string;
+    icon: LucideIcon;
     value: number;
+    hint: string;
     href: string;
     tone?: 'destructive';
 }) {
     return (
         <Link
             href={href}
-            className="flex flex-col gap-1 border-b p-4 last:border-b-0 hover:bg-accent/40 sm:border-r lg:border-b-0 lg:last:border-r-0"
+            className="flex flex-col gap-1 rounded-xl border bg-card p-4 shadow-xs transition hover:border-border-strong"
         >
-            <span className="text-xs text-muted-foreground">{label}</span>
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Icon className="size-3.5" />
+                {label}
+            </span>
             <span
                 className={cn(
                     'text-2xl font-semibold tabular-nums',
@@ -323,6 +369,16 @@ function Stat({
                 )}
             >
                 {value}
+            </span>
+            <span
+                className={cn(
+                    'text-xs',
+                    tone === 'destructive'
+                        ? 'text-destructive'
+                        : 'text-subtle-foreground',
+                )}
+            >
+                {hint}
             </span>
         </Link>
     );

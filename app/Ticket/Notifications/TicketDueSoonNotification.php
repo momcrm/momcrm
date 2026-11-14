@@ -8,12 +8,13 @@ use App\Inbox\InboxKindEnum;
 use App\Inbox\InboxPayload;
 use App\Ticket\TicketEloquentModel;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueueAfterCommit;
 use Illuminate\Notifications\Notification;
 
 /**
  * Reminds the assignee that an open ticket is due tomorrow.
  */
-final class TicketDueSoonNotification extends Notification
+final class TicketDueSoonNotification extends Notification implements ShouldQueueAfterCommit
 {
     use Queueable;
 

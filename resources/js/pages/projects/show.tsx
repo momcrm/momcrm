@@ -1,6 +1,14 @@
 import { Form, Head, Link, router, setLayoutProps } from '@inertiajs/react';
+import type { LucideIcon } from 'lucide-react';
 import {
     Archive,
+    CalendarDays,
+    Columns3,
+    GanttChart,
+    LayoutDashboard,
+    List,
+    Paperclip,
+    Table2,
     Check,
     MoreHorizontal,
     Plus,
@@ -103,14 +111,14 @@ type Props = {
     projects?: (ProjectOption & TimelineProject)[];
 };
 
-const tabs: { value: Tab; label: string }[] = [
-    { value: 'overview', label: 'Overview' },
-    { value: 'list', label: 'List' },
-    { value: 'board', label: 'Board' },
-    { value: 'table', label: 'Table' },
-    { value: 'calendar', label: 'Calendar' },
-    { value: 'timeline', label: 'Timeline' },
-    { value: 'files', label: 'Files' },
+const tabs: { value: Tab; label: string; icon: LucideIcon }[] = [
+    { value: 'overview', label: 'Overview', icon: LayoutDashboard },
+    { value: 'list', label: 'List', icon: List },
+    { value: 'board', label: 'Board', icon: Columns3 },
+    { value: 'table', label: 'Table', icon: Table2 },
+    { value: 'calendar', label: 'Calendar', icon: CalendarDays },
+    { value: 'timeline', label: 'Timeline', icon: GanttChart },
+    { value: 'files', label: 'Files', icon: Paperclip },
 ];
 
 export default function ShowProject(props: Props) {
@@ -248,7 +256,7 @@ export default function ShowProject(props: Props) {
 
                 <nav
                     aria-label="Project views"
-                    className="mt-4 -mb-px flex gap-4"
+                    className="mt-4 -mb-px flex [scrollbar-width:none] gap-4 overflow-x-auto"
                 >
                     {tabs.map((item) => (
                         <Link
@@ -261,12 +269,13 @@ export default function ShowProject(props: Props) {
                             })}
                             preserveScroll
                             className={cn(
-                                'border-b-2 pb-2 text-sm',
+                                'flex shrink-0 items-center gap-1.5 border-b-2 pb-2 text-sm whitespace-nowrap [&>svg]:size-3.5',
                                 tab === item.value
                                     ? 'border-foreground font-medium text-foreground'
                                     : 'border-transparent text-muted-foreground hover:text-foreground',
                             )}
                         >
+                            <item.icon />
                             {item.label}
                         </Link>
                     ))}
@@ -408,7 +417,7 @@ function Overview({
             : Math.round((project.closed_tickets_count / total) * 100);
 
     return (
-        <div className="grid gap-4 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
             <div className="flex flex-col gap-4 lg:col-span-2">
                 <Panel title="About">
                     <p className="text-sm whitespace-pre-line text-muted-foreground">

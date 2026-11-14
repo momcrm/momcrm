@@ -70,6 +70,7 @@ export function workspaceNavigation(
                     href: inbox(),
                     icon: Inbox,
                     badge: counts?.unreadNotifications,
+                    highlightBadge: true,
                     shortcut: 'i',
                 },
                 {

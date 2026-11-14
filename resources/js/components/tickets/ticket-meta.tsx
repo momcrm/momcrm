@@ -6,7 +6,6 @@ import {
     Equal,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import SoftBadge from '@/components/soft-badge';
 import StatusPill from '@/components/status-pill';
 import {
     Tooltip,
@@ -14,7 +13,7 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useInitials } from '@/hooks/use-initials';
-import { colorDot, colorSoft } from '@/lib/colors';
+import { colorDot } from '@/lib/colors';
 import { cn } from '@/lib/utils';
 import type {
     ColorName,
@@ -207,11 +206,15 @@ export function LabelChips({
             {labels.map((label) => (
                 <span
                     key={label.id}
-                    className={cn(
-                        'rounded-sm px-1.5 py-px text-[11px] font-medium',
-                        colorSoft[label.color],
-                    )}
+                    className="inline-flex items-center gap-1 rounded-[5px] border bg-card px-1.5 py-px text-[11px] font-medium text-muted-foreground"
                 >
+                    <span
+                        aria-hidden
+                        className={cn(
+                            'size-1.5 rounded-full',
+                            colorDot[label.color],
+                        )}
+                    />
                     {label.name}
                 </span>
             ))}
@@ -292,8 +295,20 @@ export function SubtaskProgress({
     }
 
     return (
-        <SoftBadge tone={done === total ? 'success' : 'neutral'}>
+        <span
+            aria-label={`${done} of ${total} subtasks done`}
+            className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground tabular-nums"
+        >
+            <span className="h-1 w-8 overflow-hidden rounded-full bg-muted">
+                <span
+                    className={cn(
+                        'block h-full rounded-full',
+                        done === total ? 'bg-success' : 'bg-primary',
+                    )}
+                    style={{ width: `${(done / total) * 100}%` }}
+                />
+            </span>
             {done}/{total}
-        </SoftBadge>
+        </span>
     );
 }

@@ -9,12 +9,13 @@ use App\Inbox\InboxPayload;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueueAfterCommit;
 use Illuminate\Notifications\Notification;
 
 /**
  * Tells someone they were @mentioned in a comment.
  */
-final class MentionedInCommentNotification extends Notification
+final class MentionedInCommentNotification extends Notification implements ShouldQueueAfterCommit
 {
     use Queueable;
 

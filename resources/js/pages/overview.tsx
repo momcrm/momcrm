@@ -123,7 +123,7 @@ export default function Overview({
                     />
                 </section>
 
-                <div className="grid gap-4 lg:grid-cols-2">
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                     <Panel title="Tickets by status">
                         <div className="flex h-3 overflow-hidden rounded-full bg-muted">
                             {ticketStatuses.map((status) =>

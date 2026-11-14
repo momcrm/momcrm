@@ -48,7 +48,7 @@ use Illuminate\Database\Eloquent\Builder;
 final class WorkspaceNumbers
 {
     /**
-     * @return array{active_projects: int, open_tickets: int, closed_this_week: int, overdue_tickets: int}
+     * @return array{active_projects: int, at_risk_projects: int, open_tickets: int, closed_this_week: int, overdue_tickets: int}
      */
     public static function headline(string $teamId): array
     {
@@ -56,6 +56,7 @@ final class WorkspaceNumbers
 
         return [
             'active_projects' => self::liveProjects($teamId)->where(ProjectStatus::getDatabaseTableColumnName(), '!=', ProjectStatusEnum::Completed->value)->count(),
+            'at_risk_projects' => self::liveProjects($teamId)->where(ProjectStatus::getDatabaseTableColumnName(), ProjectStatusEnum::AtRisk->value)->count(),
             'open_tickets' => self::open($teamId)->count(),
             'closed_this_week' => self::tickets($teamId)
                 ->where(Status::getDatabaseTableColumnName(), TicketStatusEnum::Closed->value)
