@@ -1,4 +1,7 @@
-import DataTable, { dataTableColumns } from '@/components/data-table';
+import DataTable, {
+    dataTableColumns,
+    withoutColumn,
+} from '@/components/data-table';
 import type { DataTableSort } from '@/components/data-table';
 import {
     AssigneeAvatar,
@@ -109,27 +112,34 @@ const columns = column.columns([
 ]);
 
 /**
- * The dense, sortable ticket table. Sorting reloads from the server.
+ * The dense ticket table. Sorting reloads from the server when the page
+ * handles it; rows open the drawer unless `onOpen` says otherwise.
  */
 export default function TicketTable({
     tickets,
     sort,
     onSortChange,
+    onOpen,
+    hideProject = false,
 }: {
     tickets: TicketListItem[];
-    sort: DataTableSort;
-    onSortChange: (sort: DataTableSort) => void;
+    sort?: DataTableSort;
+    onSortChange?: (sort: DataTableSort) => void;
+    onOpen?: (ticket: TicketListItem) => void;
+    hideProject?: boolean;
 }) {
     const { openTicket } = useTicketActions();
 
     return (
         <DataTable
-            columns={columns}
+            columns={hideProject ? withoutColumn(columns, 'project') : columns}
             data={tickets}
             getRowId={(ticket) => ticket.id}
             sort={sort}
             onSortChange={onSortChange}
-            onRowClick={(ticket) => openTicket(ticket.id)}
+            onRowClick={(ticket) =>
+                onOpen ? onOpen(ticket) : openTicket(ticket.id)
+            }
         />
     );
 }

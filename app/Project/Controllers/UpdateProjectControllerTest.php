@@ -37,3 +37,27 @@ it("returns not found for another team's project", function (): void {
         ->put(route('projects.update', ProjectEloquentModel::factory()->create()->id), ['status' => 'at_risk'])
         ->assertNotFound();
 });
+
+it('removes every member but the lead when none are picked', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $colleague = UserEloquentModel::factory()->create();
+    TeamUserEloquentModel::query()->create(['team_id' => $user->current_team_id, 'user_id' => $colleague->id, 'role' => 'member']);
+    $project = ProjectEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'lead_id' => $user->id]);
+    $project->members()->attach([$user->id, $colleague->id]);
+
+    actingAs($user)->put(route('projects.update', $project->id), ['members_sent' => '1'])->assertSessionHasNoErrors();
+
+    expect($project->fresh()->members->pluck('id')->all())->toBe([$user->id]);
+});
+
+it('keeps the members when the form did not include them', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $colleague = UserEloquentModel::factory()->create();
+    TeamUserEloquentModel::query()->create(['team_id' => $user->current_team_id, 'user_id' => $colleague->id, 'role' => 'member']);
+    $project = ProjectEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'lead_id' => $user->id]);
+    $project->members()->attach([$user->id, $colleague->id]);
+
+    actingAs($user)->put(route('projects.update', $project->id), ['status' => 'at_risk']);
+
+    expect($project->fresh()->members)->toHaveCount(2);
+});

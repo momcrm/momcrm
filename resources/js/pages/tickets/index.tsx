@@ -86,6 +86,12 @@ export default function TicketsIndex({
                     <TicketBoard
                         tickets={tickets.data}
                         favoriteIds={favoriteTicketIds}
+                        options={options}
+                        projectId={
+                            filters.project && filters.project !== 'none'
+                                ? filters.project
+                                : null
+                        }
                     />
                 ) : filters.view === 'table' ? (
                     <>

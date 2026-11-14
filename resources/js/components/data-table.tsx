@@ -46,6 +46,21 @@ export function dataTableColumns<TRow extends RowData>() {
 
 export type DataTableSort = { column: string; direction: 'asc' | 'desc' };
 
+/**
+ * The same columns without the one for `key`, e.g. a customer column on that
+ * customer's own page.
+ */
+export function withoutColumn<TColumn extends { id?: string }>(
+    columns: TColumn[],
+    key: string,
+): TColumn[] {
+    return columns.filter(
+        (column) =>
+            column.id !== key &&
+            (column as { accessorKey?: string }).accessorKey !== key,
+    );
+}
+
 const defaultColumn = { enableSorting: false };
 
 /**
@@ -86,6 +101,7 @@ export default function DataTable<TRow extends RowData>({
         defaultColumn,
         getRowId: (row) => getRowId(row),
         manualSorting: true,
+        enableSorting: onSortChange !== undefined,
         enableSortingRemoval: false,
         state: { sorting },
         onSortingChange: (updater: Updater<SortingState>) => {

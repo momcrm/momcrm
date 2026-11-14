@@ -90,6 +90,7 @@ final class UpdateProjectFormRequest extends FormRequest
 
         $this->merge(array_merge(
             Arr::except($this->project->toSummary(), ['id', 'number', 'archived_at']),
+            $this->boolean(ProjectValidationRules::MEMBERS_SENT) ? [ProjectValidationRules::MEMBER_IDS => []] : [],
             $this->all(),
         ));
     }

@@ -187,6 +187,11 @@ export default function GroupFormDialog({
                                         );
                                     })}
                                 </div>
+                                <input
+                                    type="hidden"
+                                    name="members_sent"
+                                    value="1"
+                                />
                                 {[
                                     ...new Set([
                                         ...memberIds,

@@ -28,6 +28,12 @@ final class ProjectValidationRules
     public const string MEMBER_IDS = 'member_ids';
 
     /**
+     * Sent by the form alongside the member pickers, so an empty selection
+     * (which sends no member_ids at all) still means "no members".
+     */
+    public const string MEMBERS_SENT = 'members_sent';
+
+    /**
      * @return array<string, array<int, mixed>>
      */
     public static function for(FormRequest $request, string $teamId): array
