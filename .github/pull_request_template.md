@@ -26,3 +26,4 @@ Closes #
 - [ ] Tests added or updated for this change
 - [ ] Code formatted with `composer lint` and `npm run check:fix`
 - [ ] Documentation updated if needed
+- [ ] `CHANGELOG.md` updated under `[Unreleased]`
