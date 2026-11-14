@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace App\Shared;
 
 use App\Activity\ActivityEloquentModel;
+use App\Asset\AssetEloquentModel;
 use App\AuditLog\AuditLogEloquentModel;
 use App\Contact\ContactEloquentModel;
 use App\Customer\CustomerEloquentModel;
+use App\Location\LocationEloquentModel;
 use App\Passkey\PasskeyEloquentModel;
+use App\Service\ServiceEloquentModel;
 use App\Shared\Traits\Enum;
 use App\Team\TeamEloquentModel;
 use App\TeamInvitation\TeamInvitationEloquentModel;
@@ -28,10 +31,13 @@ enum MorphMapKeyEnum: string
     use Enum;
 
     case Activity = 'activity';
+    case Asset = 'asset';
     case AuditLog = 'audit_log';
     case Contact = 'contact';
     case Customer = 'customer';
+    case Location = 'location';
     case Passkey = 'passkey';
+    case Service = 'service';
     case Team = 'team';
     case TeamInvitation = 'team_invitation';
     case TeamUser = 'team_user';
@@ -64,10 +70,13 @@ enum MorphMapKeyEnum: string
     {
         return match ($this) {
             self::Activity => ActivityEloquentModel::class,
+            self::Asset => AssetEloquentModel::class,
             self::AuditLog => AuditLogEloquentModel::class,
             self::Contact => ContactEloquentModel::class,
             self::Customer => CustomerEloquentModel::class,
+            self::Location => LocationEloquentModel::class,
             self::Passkey => PasskeyEloquentModel::class,
+            self::Service => ServiceEloquentModel::class,
             self::Team => TeamEloquentModel::class,
             self::TeamInvitation => TeamInvitationEloquentModel::class,
             self::TeamUser => TeamUserEloquentModel::class,

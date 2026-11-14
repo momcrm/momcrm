@@ -1,5 +1,10 @@
 <?php
 
+use App\Asset\Controllers\CreateAssetController;
+use App\Asset\Controllers\DeleteAssetController;
+use App\Asset\Controllers\EditAssetController;
+use App\Asset\Controllers\StoreAssetController;
+use App\Asset\Controllers\UpdateAssetController;
 use App\Contact\Controllers\CreateContactController;
 use App\Contact\Controllers\DeleteContactController;
 use App\Contact\Controllers\EditContactController;
@@ -13,7 +18,17 @@ use App\Customer\Controllers\ListCustomersController;
 use App\Customer\Controllers\ShowCustomerController;
 use App\Customer\Controllers\StoreCustomerController;
 use App\Customer\Controllers\UpdateCustomerController;
+use App\Location\Controllers\CreateLocationController;
+use App\Location\Controllers\DeleteLocationController;
+use App\Location\Controllers\EditLocationController;
+use App\Location\Controllers\StoreLocationController;
+use App\Location\Controllers\UpdateLocationController;
 use App\Onboarding\Middleware\EnsureOnboarded;
+use App\Service\Controllers\CreateServiceController;
+use App\Service\Controllers\DeleteServiceController;
+use App\Service\Controllers\EditServiceController;
+use App\Service\Controllers\StoreServiceController;
+use App\Service\Controllers\UpdateServiceController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function () {
@@ -31,4 +46,22 @@ Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function 
     Route::get('contacts/{contact}/edit', EditContactController::class)->whereUuid('contact')->name('contacts.edit');
     Route::put('contacts/{contact}', UpdateContactController::class)->whereUuid('contact')->name('contacts.update');
     Route::delete('contacts/{contact}', DeleteContactController::class)->whereUuid('contact')->name('contacts.destroy');
+
+    Route::get('customers/{customer}/locations/create', CreateLocationController::class)->whereUuid('customer')->name('locations.create');
+    Route::post('customers/{customer}/locations', StoreLocationController::class)->whereUuid('customer')->name('locations.store');
+    Route::get('locations/{location}/edit', EditLocationController::class)->whereUuid('location')->name('locations.edit');
+    Route::put('locations/{location}', UpdateLocationController::class)->whereUuid('location')->name('locations.update');
+    Route::delete('locations/{location}', DeleteLocationController::class)->whereUuid('location')->name('locations.destroy');
+
+    Route::get('customers/{customer}/assets/create', CreateAssetController::class)->whereUuid('customer')->name('assets.create');
+    Route::post('customers/{customer}/assets', StoreAssetController::class)->whereUuid('customer')->name('assets.store');
+    Route::get('assets/{asset}/edit', EditAssetController::class)->whereUuid('asset')->name('assets.edit');
+    Route::put('assets/{asset}', UpdateAssetController::class)->whereUuid('asset')->name('assets.update');
+    Route::delete('assets/{asset}', DeleteAssetController::class)->whereUuid('asset')->name('assets.destroy');
+
+    Route::get('customers/{customer}/services/create', CreateServiceController::class)->whereUuid('customer')->name('services.create');
+    Route::post('customers/{customer}/services', StoreServiceController::class)->whereUuid('customer')->name('services.store');
+    Route::get('services/{service}/edit', EditServiceController::class)->whereUuid('service')->name('services.edit');
+    Route::put('services/{service}', UpdateServiceController::class)->whereUuid('service')->name('services.update');
+    Route::delete('services/{service}', DeleteServiceController::class)->whereUuid('service')->name('services.destroy');
 });

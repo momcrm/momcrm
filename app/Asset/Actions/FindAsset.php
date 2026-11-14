@@ -1,0 +1,50 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Asset\Actions;
+
+use App\Asset\Asset;
+use App\Asset\AssetEloquentModel;
+use App\Asset\Properties\CustomerId;
+use App\Asset\Properties\Id;
+use App\Asset\Properties\Name;
+use App\Asset\Properties\TeamId;
+use App\Team\Scopes\CurrentTeamScope;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
+
+final class FindAsset
+{
+    public static function byIdForTeam(?string $id, ?string $teamId): Asset
+    {
+        if ($id === null || $teamId === null) {
+            return Asset::new();
+        }
+
+        return Asset::fromEloquentModel(self::query($teamId)->where(Id::getDatabaseTableColumnName(), $id)->first());
+    }
+
+    /**
+     * @return Collection<int, Asset>
+     */
+    public static function forCustomer(string $customerId, string $teamId): Collection
+    {
+        $models = self::query($teamId)
+            ->where(CustomerId::getDatabaseTableColumnName(), $customerId)
+            ->orderBy(Name::getDatabaseTableColumnName())
+            ->get();
+
+        return Asset::collect($models, 'fromEloquentModel');
+    }
+
+    /**
+     * @return Builder<AssetEloquentModel>
+     */
+    private static function query(string $teamId): Builder
+    {
+        return AssetEloquentModel::query()
+            ->withoutGlobalScope(CurrentTeamScope::class)
+            ->where(TeamId::getDatabaseTableColumnName(), $teamId);
+    }
+}

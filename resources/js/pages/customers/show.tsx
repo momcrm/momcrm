@@ -1,22 +1,64 @@
 import { Head, Link, setLayoutProps } from '@inertiajs/react';
 import ConfirmDelete from '@/components/confirm-delete';
 import ContactList from '@/components/contacts/contact-list';
+import RecordList from '@/components/customers/record-list';
 import DetailSection from '@/components/detail-section';
 import EmptyState from '@/components/empty-state';
 import PageHeader from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import DeleteCustomerController from '@/actions/App/Customer/Controllers/DeleteCustomerController';
+import { create as createAsset, edit as editAsset } from '@/routes/assets';
 import { create as createContact } from '@/routes/contacts';
 import { edit, index, show } from '@/routes/customers';
-import type { Contact, Customer } from '@/types';
+import {
+    create as createLocation,
+    edit as editLocation,
+} from '@/routes/locations';
+import {
+    create as createService,
+    edit as editService,
+} from '@/routes/services';
+import { formatCents } from '@/lib/money';
+import type { Asset, Contact, Customer, Location, Service } from '@/types';
+
+const serviceStatusLabels: Record<Service['status'], string> = {
+    active: 'Active',
+    pending: 'Pending',
+    cancelled: 'Cancelled',
+};
+
+function billingPeriod(months: number | null): string {
+    switch (months) {
+        case 1:
+            return 'month';
+        case 12:
+            return 'year';
+        default:
+            return `${months} months`;
+    }
+}
+
+function AddButton({ href, label }: { href: string; label: string }) {
+    return (
+        <Button variant="outline" size="sm" asChild>
+            <Link href={href}>{label}</Link>
+        </Button>
+    );
+}
 
 export default function ShowCustomer({
     customer,
     contacts,
+    locations,
+    assets,
+    services,
 }: {
     customer: Customer;
     contacts: Contact[];
+    locations: Location[];
+    assets: Asset[];
+    services: Service[];
 }) {
     setLayoutProps({
         breadcrumbs: [
@@ -108,6 +150,137 @@ export default function ShowCustomer({
                             title="No contacts yet"
                             description="Add the people you deal with at this customer, so you know who to call."
                             action={addContact}
+                        />
+                    )}
+                </DetailSection>
+
+                <DetailSection
+                    title="Locations"
+                    action={
+                        locations.length > 0 && (
+                            <AddButton
+                                href={createLocation(customer.id).url}
+                                label="Add location"
+                            />
+                        )
+                    }
+                >
+                    {locations.length > 0 ? (
+                        <RecordList
+                            items={locations.map((location) => ({
+                                id: location.id,
+                                href: editLocation(location.id).url,
+                                title: location.name,
+                                detail: [
+                                    location.street_one,
+                                    location.suburb,
+                                    location.state,
+                                    location.postcode,
+                                ]
+                                    .filter(Boolean)
+                                    .join(', '),
+                                badge: location.is_primary && (
+                                    <Badge variant="secondary">Main</Badge>
+                                ),
+                            }))}
+                        />
+                    ) : (
+                        <EmptyState
+                            title={`No locations for ${customer.name}`}
+                            description="Add an office or site so tickets and assets know where they belong."
+                            action={
+                                <AddButton
+                                    href={createLocation(customer.id).url}
+                                    label="Add location"
+                                />
+                            }
+                        />
+                    )}
+                </DetailSection>
+
+                <DetailSection
+                    title="Assets"
+                    action={
+                        assets.length > 0 && (
+                            <AddButton
+                                href={createAsset(customer.id).url}
+                                label="Add asset"
+                            />
+                        )
+                    }
+                >
+                    {assets.length > 0 ? (
+                        <RecordList
+                            items={assets.map((asset) => ({
+                                id: asset.id,
+                                href: editAsset(asset.id).url,
+                                title: asset.name,
+                                detail: [
+                                    asset.serial_number,
+                                    locations.find(
+                                        (location) =>
+                                            location.id === asset.location_id,
+                                    )?.name,
+                                ]
+                                    .filter(Boolean)
+                                    .join(' · '),
+                                badge: asset.status === 'retired' && (
+                                    <Badge variant="secondary">Retired</Badge>
+                                ),
+                            }))}
+                        />
+                    ) : (
+                        <EmptyState
+                            title="No assets recorded"
+                            description={`Track the devices and equipment you look after for ${customer.name}.`}
+                            action={
+                                <AddButton
+                                    href={createAsset(customer.id).url}
+                                    label="Add asset"
+                                />
+                            }
+                        />
+                    )}
+                </DetailSection>
+
+                <DetailSection
+                    title="Services"
+                    action={
+                        services.length > 0 && (
+                            <AddButton
+                                href={createService(customer.id).url}
+                                label="Add service"
+                            />
+                        )
+                    }
+                >
+                    {services.length > 0 ? (
+                        <RecordList
+                            items={services.map((service) => ({
+                                id: service.id,
+                                href: editService(service.id).url,
+                                title: service.name,
+                                detail:
+                                    service.unit_price_in_cents != null
+                                        ? `${service.quantity} × ${formatCents(service.unit_price_in_cents)} per ${billingPeriod(service.billing_period_in_months)}`
+                                        : `Quantity ${service.quantity}`,
+                                badge: service.status !== 'active' && (
+                                    <Badge variant="secondary">
+                                        {serviceStatusLabels[service.status]}
+                                    </Badge>
+                                ),
+                            }))}
+                        />
+                    ) : (
+                        <EmptyState
+                            title="No services yet"
+                            description={`List what ${customer.name} gets from you, so billing and support stay in step.`}
+                            action={
+                                <AddButton
+                                    href={createService(customer.id).url}
+                                    label="Add service"
+                                />
+                            }
                         />
                     )}
                 </DetailSection>

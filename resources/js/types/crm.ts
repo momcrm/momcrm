@@ -31,3 +31,40 @@ export type Contact = {
 };
 
 export type ContactListItem = Contact & { customer_name: string | null };
+
+export type Location = {
+    id: string;
+    customer_id: string;
+    name: string;
+    street_one: string | null;
+    street_two: string | null;
+    suburb: string | null;
+    state: string | null;
+    postcode: string | null;
+    country: string | null;
+    is_primary: boolean;
+};
+
+export type Asset = {
+    id: string;
+    customer_id: string;
+    name: string;
+    serial_number: string | null;
+    location_id: string | null;
+    status: 'active' | 'retired';
+    description: string | null;
+};
+
+export type Service = {
+    id: string;
+    customer_id: string;
+    name: string;
+    status: 'active' | 'pending' | 'cancelled';
+    quantity: number | null;
+    unit_price_in_cents: number | null;
+    billing_period_in_months: number | null;
+    starts_on: string | null;
+    ends_on: string | null;
+    location_id: string | null;
+    note: string | null;
+};
