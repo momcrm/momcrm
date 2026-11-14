@@ -19,6 +19,7 @@ use App\Milestone\Properties\DueOn as MilestoneDueOn;
 use App\Milestone\Properties\TeamId as MilestoneTeamId;
 use App\Project\ProjectEloquentModel;
 use App\Project\ProjectStatusEnum;
+use App\Project\ProjectVisibility;
 use App\Project\Properties\ArchivedAt as ProjectArchivedAt;
 use App\Project\Properties\Status as ProjectStatus;
 use App\Project\Properties\TeamId as ProjectTeamId;
@@ -158,16 +159,17 @@ final class WorkspaceNumbers
     }
 
     /**
-     * The team's latest work on tickets and projects.
+     * The team's latest work on tickets and projects someone may see.
      *
      * @return array<int, array<string, mixed>>
      */
-    public static function recentActivity(string $teamId, int $limit = 8): array
+    public static function recentActivity(string $teamId, string $userId, int $limit = 8): array
     {
         return ActivityEloquentModel::query()
             ->with(ActivityRelationship::Actor->value)
             ->where(ActivityTeamId::getDatabaseTableColumnName(), $teamId)
             ->whereIn(Type::getDatabaseTableColumnName(), array_map(fn (ActivityTypeEnum $type): string => $type->value, ActivityTypeEnum::work()))
+            ->tap(fn (Builder $query) => ProjectVisibility::constrainActivities($query->getQuery(), $userId))
             ->latest()
             ->limit($limit)
             ->get()
