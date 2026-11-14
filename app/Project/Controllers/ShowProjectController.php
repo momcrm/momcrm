@@ -15,8 +15,10 @@ use App\Project\ProjectFormOptions;
 use App\Project\ProjectOverview;
 use App\Project\ProjectRelationship;
 use App\Shared\MorphMapKeyEnum;
+use App\Ticket\TicketCalendar;
 use App\Ticket\TicketDrawer;
 use App\Ticket\TicketListFilters;
+use App\Ticket\TicketTimeline;
 use App\Ticket\TicketViewProps;
 use App\User\UserEloquentModel;
 use Illuminate\Http\Request;
@@ -25,11 +27,12 @@ use Inertia\Response;
 
 /**
  * A project's page. The Overview tab sums it up; the List, Board and Table
- * tabs are the ticket views limited to the project; Files lists its uploads.
+ * tabs are the ticket views limited to the project, Calendar and Timeline
+ * plan its dates, and Files lists its uploads.
  */
 final class ShowProjectController
 {
-    public const array TABS = ['overview', TicketListFilters::VIEW_LIST, TicketListFilters::VIEW_BOARD, TicketListFilters::VIEW_TABLE, 'files'];
+    public const array TABS = ['overview', TicketListFilters::VIEW_LIST, TicketListFilters::VIEW_BOARD, TicketListFilters::VIEW_TABLE, 'calendar', 'timeline', 'files'];
 
     /**
      * @throws CouldNotFindProject
@@ -63,6 +66,12 @@ final class ShowProjectController
                     'favoriteTicketIds' => [],
                     ...TicketDrawer::options($teamId),
                     'drawer' => null,
+                ],
+                'calendar', 'timeline' => [
+                    ...($tab === 'calendar' ? TicketCalendar::forRequest($request, $model->id) : TicketTimeline::forRequest($request, $model->id)),
+                    'favoriteTicketIds' => FindFavorite::idsForUser($teamId, $user->id, FavoritableTypeEnum::Ticket),
+                    ...TicketDrawer::options($teamId),
+                    'drawer' => TicketDrawer::forRequest($request),
                 ],
                 'overview' => [
                     ...ProjectOverview::for($model->id),
