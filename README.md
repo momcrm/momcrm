@@ -40,7 +40,7 @@ Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Security
 
-If you find a security vulnerability, please email security@momcrm.app instead of opening a public issue.
+If you find a security vulnerability, please report it privately through [GitHub's private vulnerability reporting](https://github.com/momcrm/momcrm/security/advisories/new) instead of opening a public issue. See [SECURITY.md](SECURITY.md).
 
 ## License
 
