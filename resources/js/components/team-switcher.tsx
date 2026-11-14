@@ -1,5 +1,6 @@
 import { router, usePage } from '@inertiajs/react';
-import { Check, ChevronsUpDown, Users } from 'lucide-react';
+import { Check, ChevronsUpDown } from 'lucide-react';
+import AppLogoIcon from '@/components/app-logo-icon';
 import SwitchCurrentTeamController from '@/actions/App/Team/Controllers/SwitchCurrentTeamController';
 import {
     DropdownMenu,
@@ -43,15 +44,17 @@ export function TeamSwitcher() {
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <SidebarMenuButton
-                            className="data-[state=open]:bg-sidebar-accent"
+                            className="h-8 gap-2 px-1.5 font-semibold text-foreground data-[state=open]:bg-sidebar-accent"
                             tooltip={auth.currentTeam.name}
                             data-test="team-switcher-button"
                         >
-                            <Users />
+                            <span className="flex size-5 shrink-0 items-center justify-center rounded-md bg-foreground text-background">
+                                <AppLogoIcon className="size-3 fill-current" />
+                            </span>
                             <span className="truncate">
                                 {auth.currentTeam.name}
                             </span>
-                            <ChevronsUpDown className="ml-auto size-4" />
+                            <ChevronsUpDown className="size-3.5! shrink-0 text-muted-foreground" />
                         </SidebarMenuButton>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent

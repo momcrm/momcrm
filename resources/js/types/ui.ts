@@ -19,3 +19,14 @@ export type AuthLayoutProps = {
     title?: string;
     description?: string;
 };
+
+/**
+ * A colour with meaning, shared by status pills and soft badges.
+ */
+export type Tone =
+    | 'neutral'
+    | 'primary'
+    | 'info'
+    | 'success'
+    | 'warning'
+    | 'destructive';

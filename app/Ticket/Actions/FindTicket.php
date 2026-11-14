@@ -59,6 +59,17 @@ final class FindTicket
     }
 
     /**
+     * How many open tickets the team has, optionally only those assigned to one person.
+     */
+    public static function countOpenForTeam(string $teamId, ?string $assigneeId = null): int
+    {
+        return self::query($teamId)
+            ->whereIn(Status::getDatabaseTableColumnName(), TicketStatusEnum::openValues())
+            ->when($assigneeId, fn (Builder $query, string $assigneeId) => $query->where(AssigneeId::getDatabaseTableColumnName(), $assigneeId))
+            ->count();
+    }
+
+    /**
      * @return Builder<TicketEloquentModel>
      */
     private static function query(string $teamId): Builder

@@ -1,17 +1,142 @@
+import { Link, usePage } from '@inertiajs/react';
+import {
+    Building2,
+    ChevronDown,
+    CircleDashed,
+    Plus,
+    Receipt,
+    Search,
+    UserPlus,
+    UserRound,
+} from 'lucide-react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
-import { SidebarTrigger } from '@/components/ui/sidebar';
+import { useCommandPalette } from '@/components/command-palette';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
+import { UserMenuContent } from '@/components/user-menu-content';
+import { useInitials } from '@/hooks/use-initials';
+import { create as createContact } from '@/routes/contacts';
+import { create as createCustomer } from '@/routes/customers';
+import { create as createInvoice } from '@/routes/invoices';
+import { edit as teamEdit } from '@/routes/team';
+import { create as createTicket } from '@/routes/tickets';
 import type { BreadcrumbItem as BreadcrumbItemType } from '@/types';
 
+const isMac =
+    typeof navigator !== 'undefined' &&
+    /Mac|iP(hone|ad)/.test(navigator.platform);
+
+function NewMenu() {
+    const items = [
+        { label: 'Ticket', icon: CircleDashed, href: createTicket() },
+        { label: 'Customer', icon: Building2, href: createCustomer() },
+        { label: 'Contact', icon: UserRound, href: createContact() },
+        { label: 'Invoice', icon: Receipt, href: createInvoice() },
+    ];
+
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-7 gap-1 px-2">
+                    <Plus />
+                    New
+                    <ChevronDown className="size-3.5! text-muted-foreground" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuLabel className="text-[11px] font-medium tracking-wide text-subtle-foreground uppercase">
+                    Create
+                </DropdownMenuLabel>
+                {items.map((item) => (
+                    <DropdownMenuItem key={item.label} asChild>
+                        <Link href={item.href}>
+                            <item.icon />
+                            {item.label}
+                        </Link>
+                    </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                    <Link href={teamEdit()}>
+                        <UserPlus />
+                        Invite member
+                    </Link>
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+}
+
+function AccountMenu() {
+    const { auth } = usePage().props;
+    const getInitials = useInitials();
+
+    if (!auth.user) {
+        return null;
+    }
+
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger
+                className="rounded-full outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                aria-label="Account menu"
+            >
+                <Avatar className="size-7">
+                    <AvatarImage src={auth.user.avatar} alt={auth.user.name} />
+                    <AvatarFallback className="bg-accent text-[11px] font-medium">
+                        {getInitials(auth.user.name)}
+                    </AvatarFallback>
+                </Avatar>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+                <UserMenuContent user={auth.user} />
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+}
+
+/**
+ * The bar above every page: where you are on the left, and search, create
+ * and your account on the right.
+ */
 export function AppSidebarHeader({
     breadcrumbs = [],
 }: {
     breadcrumbs?: BreadcrumbItemType[];
 }) {
+    const { open: openPalette } = useCommandPalette();
+    const { state, isMobile } = useSidebar();
+
     return (
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b border-sidebar-border/50 px-6 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-4">
-            <div className="flex items-center gap-2">
-                <SidebarTrigger className="-ml-1" />
-                <Breadcrumbs breadcrumbs={breadcrumbs} />
+        <header className="sticky top-0 z-20 flex h-[46px] shrink-0 items-center gap-2 border-b bg-background/90 px-4 backdrop-blur">
+            {(state === 'collapsed' || isMobile) && (
+                <SidebarTrigger className="-ml-1 size-7" />
+            )}
+            <Breadcrumbs breadcrumbs={breadcrumbs} />
+
+            <div className="ml-auto flex items-center gap-2">
+                <button
+                    type="button"
+                    onClick={openPalette}
+                    className="flex h-7 items-center gap-2 rounded-md border bg-card px-2 text-sm text-subtle-foreground shadow-xs transition-colors hover:text-muted-foreground md:w-56"
+                >
+                    <Search className="size-3.5" />
+                    <span className="hidden md:inline">Search or jump to…</span>
+                    <kbd className="ml-auto hidden rounded-sm border bg-muted px-1 font-mono text-[10px] md:inline">
+                        {isMac ? '⌘K' : 'Ctrl K'}
+                    </kbd>
+                </button>
+                <NewMenu />
+                <AccountMenu />
             </div>
         </header>
     );
