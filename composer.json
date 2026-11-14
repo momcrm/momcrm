@@ -21,6 +21,7 @@
         "mom/data": "6.2.2"
     },
     "require-dev": {
+        "brianium/paratest": "7.27.5",
         "fakerphp/faker": "^1.24",
         "larastan/larastan": "^3.9",
         "laravel/boost": "^2.10",
@@ -81,7 +82,7 @@
             "@php artisan config:clear --ansi",
             "@lint:check",
             "@types:check",
-            "@php artisan test"
+            "@php artisan test --parallel"
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
