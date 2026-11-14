@@ -14,6 +14,9 @@ use App\Invoice\Actions\FindInvoice;
 use App\Invoice\InvoiceEloquentModel;
 use App\Location\Actions\FindLocation;
 use App\Location\Location;
+use App\Project\Actions\FindProject;
+use App\Project\Controllers\ListProjectsController;
+use App\Project\ProjectEloquentModel;
 use App\Service\Actions\FindService;
 use App\Service\Service;
 use App\Ticket\Actions\FindTicket;
@@ -55,6 +58,10 @@ final class ShowCustomerController
                 ->all(),
             'services' => FindService::forCustomer($customerId, $teamId)
                 ->map(fn (Service $service): array => $service->toSummary())
+                ->values()
+                ->all(),
+            'projects' => FindProject::forCustomer($teamId, (string) $request->user()?->getAuthIdentifier(), $customerId)
+                ->map(fn (ProjectEloquentModel $model): array => ListProjectsController::listItem($model, []))
                 ->values()
                 ->all(),
             'tickets' => FindTicket::paginateForTeam($teamId, FindTicket::FILTER_ALL, customerId: $customerId, perPage: 10)

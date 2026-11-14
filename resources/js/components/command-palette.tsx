@@ -2,6 +2,7 @@ import { router, useHttp } from '@inertiajs/react';
 import {
     Building2,
     CircleDashed,
+    FolderKanban,
     Moon,
     Plus,
     Receipt,
@@ -35,6 +36,7 @@ import {
 } from '@/lib/workspace-navigation';
 import { search } from '@/routes';
 import { create as createCustomer } from '@/routes/customers';
+import { index as projectsIndex } from '@/routes/projects';
 import { create as createTicket } from '@/routes/tickets';
 
 type SearchHit = {
@@ -49,6 +51,7 @@ type SearchHit = {
 type SearchResponse = {
     recentTickets?: SearchHit[];
     tickets?: SearchHit[];
+    projects?: SearchHit[];
     customers?: SearchHit[];
     contacts?: SearchHit[];
     invoices?: SearchHit[];
@@ -177,6 +180,13 @@ function Palette({ onDone }: { onDone: () => void }) {
                 onSelect: () => go(toUrl(createTicket())),
             },
             {
+                id: 'create-project',
+                group: 'Suggestions',
+                label: 'Create project',
+                icon: Plus,
+                onSelect: () => go(toUrl(projectsIndex({ query: { new: 1 } }))),
+            },
+            {
                 id: 'create-customer',
                 group: 'Suggestions',
                 label: 'Create customer',
@@ -240,6 +250,7 @@ function Palette({ onDone }: { onDone: () => void }) {
             ...(query ? [] : suggestions),
             ...hits('Recent tickets', results.recentTickets, CircleDashed),
             ...hits('Tickets', results.tickets, CircleDashed),
+            ...hits('Projects', results.projects, FolderKanban),
             ...hits('Customers', results.customers, Building2),
             ...hits('Contacts', results.contacts, UserRound),
             ...hits('Invoices', results.invoices, Receipt),

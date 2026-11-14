@@ -10,6 +10,7 @@ use App\Customer\Actions\FindCustomer;
 use App\Customer\CustomerEloquentModel;
 use App\Invoice\Actions\FindInvoice;
 use App\Invoice\InvoiceEloquentModel;
+use App\Project\Actions\FindProject;
 use App\Project\ProjectEloquentModel;
 use App\Ticket\Actions\FindTicket;
 use App\Ticket\TicketEloquentModel;
@@ -41,6 +42,16 @@ final class SearchWorkspaceController
 
         return response()->json([
             'tickets' => $this->tickets($teamId, $term),
+            'projects' => FindProject::listForTeam($teamId, $user->id, $term)
+                ->take(self::RESULTS_PER_GROUP)
+                ->map(fn (ProjectEloquentModel $project): array => [
+                    'id' => $project->id,
+                    'title' => $project->name,
+                    'subtitle' => $project->customer?->name,
+                    'url' => route('projects.show', $project->id),
+                ])
+                ->values()
+                ->all(),
             'customers' => FindCustomer::paginateForTeam($teamId, $term, self::RESULTS_PER_GROUP)
                 ->getCollection()
                 ->map(fn (CustomerEloquentModel $customer): array => [

@@ -3,6 +3,7 @@ import {
     Building2,
     ChevronDown,
     CircleDashed,
+    FolderKanban,
     Plus,
     Receipt,
     Search,
@@ -27,6 +28,7 @@ import { useInitials } from '@/hooks/use-initials';
 import { create as createContact } from '@/routes/contacts';
 import { create as createCustomer } from '@/routes/customers';
 import { create as createInvoice } from '@/routes/invoices';
+import { index as projectsIndex } from '@/routes/projects';
 import { edit as teamEdit } from '@/routes/team';
 import { create as createTicket } from '@/routes/tickets';
 import type { BreadcrumbItem as BreadcrumbItemType } from '@/types';
@@ -38,6 +40,11 @@ const isMac =
 function NewMenu() {
     const items = [
         { label: 'Ticket', icon: CircleDashed, href: createTicket() },
+        {
+            label: 'Project',
+            icon: FolderKanban,
+            href: projectsIndex({ query: { new: 1 } }),
+        },
         { label: 'Customer', icon: Building2, href: createCustomer() },
         { label: 'Contact', icon: UserRound, href: createContact() },
         { label: 'Invoice', icon: Receipt, href: createInvoice() },

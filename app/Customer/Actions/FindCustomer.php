@@ -43,6 +43,21 @@ final class FindCustomer
     }
 
     /**
+     * Some of the team's customers by id, by name.
+     *
+     * @param  array<int, string>  $ids
+     * @return Collection<int, Customer>
+     */
+    public static function byIdsForTeam(string $teamId, array $ids): Collection
+    {
+        return self::query($teamId)
+            ->whereIn(Id::getDatabaseTableColumnName(), $ids)
+            ->orderBy(Name::getDatabaseTableColumnName())
+            ->get()
+            ->map(fn (CustomerEloquentModel $customer): Customer => Customer::fromEloquentModel($customer));
+    }
+
+    /**
      * Every customer in the team as id/name pairs, for pickers.
      *
      * @return Collection<int, array{id: string, name: string}>

@@ -1,5 +1,6 @@
 <?php
 
+use App\Archive\Controllers\ShowArchiveController;
 use App\Asset\Controllers\CreateAssetController;
 use App\Asset\Controllers\DeleteAssetController;
 use App\Asset\Controllers\EditAssetController;
@@ -20,6 +21,7 @@ use App\Customer\Controllers\ShowCustomerController;
 use App\Customer\Controllers\ShowImportCustomersController;
 use App\Customer\Controllers\StoreCustomerController;
 use App\Customer\Controllers\UpdateCustomerController;
+use App\Favorite\Controllers\ListFavoritesController;
 use App\Favorite\Controllers\ToggleFavoriteController;
 use App\Invoice\Controllers\CreateInvoiceController;
 use App\Invoice\Controllers\EditInvoiceController;
@@ -35,8 +37,18 @@ use App\Location\Controllers\DeleteLocationController;
 use App\Location\Controllers\EditLocationController;
 use App\Location\Controllers\StoreLocationController;
 use App\Location\Controllers\UpdateLocationController;
+use App\Milestone\Controllers\DeleteMilestoneController;
+use App\Milestone\Controllers\StoreMilestoneController;
+use App\Milestone\Controllers\ToggleMilestoneController;
 use App\Onboarding\Controllers\RemoveSampleDataController;
 use App\Onboarding\Middleware\EnsureOnboarded;
+use App\Project\Controllers\ArchiveProjectController;
+use App\Project\Controllers\DeleteProjectController;
+use App\Project\Controllers\ListProjectsController;
+use App\Project\Controllers\RestoreProjectController;
+use App\Project\Controllers\ShowProjectController;
+use App\Project\Controllers\StoreProjectController;
+use App\Project\Controllers\UpdateProjectController;
 use App\Service\Controllers\CreateServiceController;
 use App\Service\Controllers\DeleteServiceController;
 use App\Service\Controllers\EditServiceController;
@@ -45,6 +57,7 @@ use App\Service\Controllers\UpdateServiceController;
 use App\Ticket\Controllers\ArchiveTicketController;
 use App\Ticket\Controllers\CloseTicketController;
 use App\Ticket\Controllers\CreateTicketController;
+use App\Ticket\Controllers\DeleteTicketController;
 use App\Ticket\Controllers\EditTicketController;
 use App\Ticket\Controllers\ListMyTicketsController;
 use App\Ticket\Controllers\ListTicketsController;
@@ -110,7 +123,22 @@ Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function 
     Route::post('tickets/{ticket}/archive', ArchiveTicketController::class)->whereUuid('ticket')->name('tickets.archive');
     Route::post('tickets/{ticket}/restore', RestoreTicketController::class)->whereUuid('ticket')->name('tickets.restore');
 
+    Route::delete('tickets/{ticket}', DeleteTicketController::class)->whereUuid('ticket')->name('tickets.destroy');
+
+    Route::get('favorites', ListFavoritesController::class)->name('favorites.index');
     Route::post('favorites', ToggleFavoriteController::class)->name('favorites.toggle');
+    Route::get('archive', ShowArchiveController::class)->name('archive');
+
+    Route::get('projects', ListProjectsController::class)->name('projects.index');
+    Route::post('projects', StoreProjectController::class)->name('projects.store');
+    Route::get('projects/{project}', ShowProjectController::class)->whereUuid('project')->name('projects.show');
+    Route::put('projects/{project}', UpdateProjectController::class)->whereUuid('project')->name('projects.update');
+    Route::post('projects/{project}/archive', ArchiveProjectController::class)->whereUuid('project')->name('projects.archive');
+    Route::post('projects/{project}/restore', RestoreProjectController::class)->whereUuid('project')->name('projects.restore');
+    Route::delete('projects/{project}', DeleteProjectController::class)->whereUuid('project')->name('projects.destroy');
+    Route::post('projects/{project}/milestones', StoreMilestoneController::class)->whereUuid('project')->name('milestones.store');
+    Route::post('milestones/{milestone}/toggle', ToggleMilestoneController::class)->whereUuid('milestone')->name('milestones.toggle');
+    Route::delete('milestones/{milestone}', DeleteMilestoneController::class)->whereUuid('milestone')->name('milestones.destroy');
 
     Route::get('invoices', ListInvoicesController::class)->name('invoices.index');
     Route::get('invoices/create', CreateInvoiceController::class)->name('invoices.create');

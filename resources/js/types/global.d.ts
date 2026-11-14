@@ -17,6 +17,7 @@ declare module '@inertiajs/core' {
             sidebarCounts?: {
                 openTickets: number;
                 myOpenTickets: number;
+                projects: import('./crm').SidebarProject[];
             } | null;
             gettingStarted?: GettingStarted | null;
             [key: string]: unknown;
