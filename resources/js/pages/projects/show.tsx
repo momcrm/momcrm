@@ -10,6 +10,8 @@ import {
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import Attachments from '@/components/attachments';
+import TicketCalendar from '@/components/planning/ticket-calendar';
+import TicketTimeline from '@/components/planning/ticket-timeline';
 import EmptyState from '@/components/empty-state';
 import Pager from '@/components/pager';
 import { toggleProjectStar } from '@/components/projects/project-card';
@@ -56,6 +58,11 @@ import { store as storeAttachment } from '@/routes/projects/attachments';
 import type {
     ActivityItem,
     AttachmentItem,
+    CalendarWindow,
+    ProjectOption,
+    TimelineMilestone,
+    TimelineProject,
+    TimelineWindow,
     Milestone,
     Paginated,
     ProjectFormOptions,
@@ -67,7 +74,14 @@ import type {
     TicketStatus,
 } from '@/types';
 
-type Tab = 'overview' | 'list' | 'board' | 'table' | 'files';
+type Tab =
+    | 'overview'
+    | 'list'
+    | 'board'
+    | 'table'
+    | 'calendar'
+    | 'timeline'
+    | 'files';
 
 type Props = {
     project: ProjectListItem & { group_name: string | null };
@@ -78,11 +92,15 @@ type Props = {
     favoriteTicketIds: string[];
     statusCounts?: Partial<Record<TicketStatus, number>>;
     upcoming?: TicketListItem[];
-    milestones?: Milestone[];
+    milestones?: Milestone[] | TimelineMilestone[];
     activity?: ActivityItem[];
-    tickets?: Paginated<TicketListItem>;
+    /** Paginated on the ticket tabs; a plain list on Calendar and Timeline. */
+    tickets?: Paginated<TicketListItem> | TicketListItem[];
     filters?: TicketFilters;
     attachments?: AttachmentItem[];
+    calendar?: CalendarWindow;
+    timeline?: TimelineWindow;
+    projects?: (ProjectOption & TimelineProject)[];
 };
 
 const tabs: { value: Tab; label: string }[] = [
@@ -90,6 +108,8 @@ const tabs: { value: Tab; label: string }[] = [
     { value: 'list', label: 'List' },
     { value: 'board', label: 'Board' },
     { value: 'table', label: 'Table' },
+    { value: 'calendar', label: 'Calendar' },
+    { value: 'timeline', label: 'Timeline' },
     { value: 'files', label: 'Files' },
 ];
 
@@ -256,6 +276,28 @@ export default function ShowProject(props: Props) {
             <div className="p-4 md:p-6">
                 {tab === 'overview' ? (
                     <Overview {...props} />
+                ) : tab === 'calendar' &&
+                  props.calendar &&
+                  Array.isArray(props.tickets) ? (
+                    <TicketCalendar
+                        calendar={props.calendar}
+                        tickets={props.tickets}
+                        projects={props.projects ?? []}
+                        favoriteIds={props.favoriteTicketIds}
+                        showMine={false}
+                    />
+                ) : tab === 'timeline' &&
+                  props.timeline &&
+                  Array.isArray(props.tickets) ? (
+                    <TicketTimeline
+                        timeline={props.timeline}
+                        tickets={props.tickets}
+                        projects={props.projects ?? []}
+                        milestones={
+                            (props.milestones ?? []) as TimelineMilestone[]
+                        }
+                        showUngrouped={false}
+                    />
                 ) : tab === 'files' ? (
                     <div className="max-w-3xl">
                         <Attachments
@@ -288,19 +330,21 @@ function TicketTabs({
     options,
     favoriteTicketIds,
 }: Props) {
-    if (!tickets || !filters) {
+    if (!tickets || Array.isArray(tickets) || !filters) {
         return null;
     }
+
+    const page: Paginated<TicketListItem> = tickets;
 
     return (
         <div className="flex flex-col gap-5">
             <TicketToolbar filters={filters} options={options} inProject />
             {tab === 'board' ? (
                 <TicketBoard
-                    tickets={tickets.data}
+                    tickets={page.data}
                     favoriteIds={favoriteTicketIds}
                 />
-            ) : tickets.data.length === 0 ? (
+            ) : page.data.length === 0 ? (
                 <EmptyState
                     title="No tickets here"
                     description="Tickets put in this project show up here."
@@ -308,7 +352,7 @@ function TicketTabs({
             ) : tab === 'table' ? (
                 <>
                     <TicketTable
-                        tickets={tickets.data}
+                        tickets={page.data}
                         sort={{
                             column: filters.sort,
                             direction: filters.direction,
@@ -320,7 +364,7 @@ function TicketTabs({
                             )
                         }
                     />
-                    <Pager page={tickets} only="tickets" />
+                    <Pager page={page} only="tickets" />
                 </>
             ) : (
                 <TicketGroups
@@ -330,7 +374,7 @@ function TicketTabs({
                         key: status.value,
                         label: status.label,
                         tone: status.tone,
-                        tickets: tickets.data.filter(
+                        tickets: page.data.filter(
                             (ticket) => ticket.status === status.value,
                         ),
                     }))}

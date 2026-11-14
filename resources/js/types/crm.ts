@@ -319,3 +319,34 @@ export type InvoiceItem = {
     unit_price_in_cents: number;
     line_total_in_cents: number;
 };
+
+export type CalendarWindow = {
+    view: 'month' | 'week';
+    date: string;
+    from: string;
+    to: string;
+    mine: boolean;
+};
+
+export type TimelineWindow = {
+    zoom: 'weeks' | 'months';
+    from: string;
+    to: string;
+};
+
+export type TimelineProject = {
+    id: string;
+    name: string;
+    color: ColorName;
+    icon: string | null;
+    starts_on: string | null;
+    due_on: string | null;
+};
+
+export type TimelineMilestone = {
+    id: string;
+    project_id: string;
+    name: string;
+    due_on: string;
+    completed_at: string | null;
+};

@@ -1,6 +1,8 @@
 import {
     Activity,
     Archive,
+    CalendarDays,
+    GanttChart,
     Inbox,
     Building2,
     CircleUser,
@@ -13,7 +15,15 @@ import {
     Ticket,
     Users,
 } from 'lucide-react';
-import { activity, archive, dashboard, designSystem, inbox } from '@/routes';
+import {
+    activity,
+    archive,
+    calendar,
+    dashboard,
+    designSystem,
+    inbox,
+    timeline,
+} from '@/routes';
 import { index as contactsIndex } from '@/routes/contacts';
 import { index as customersIndex } from '@/routes/customers';
 import { index as favoritesIndex } from '@/routes/favorites';
@@ -88,6 +98,18 @@ export function workspaceNavigation(
                     icon: Ticket,
                     badge: counts?.openTickets,
                     shortcut: 't',
+                },
+                {
+                    title: 'Calendar',
+                    href: calendar(),
+                    icon: CalendarDays,
+                    shortcut: 'l',
+                },
+                {
+                    title: 'Timeline',
+                    href: timeline(),
+                    icon: GanttChart,
+                    shortcut: 'r',
                 },
                 {
                     title: 'Activity',

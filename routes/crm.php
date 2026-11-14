@@ -77,7 +77,9 @@ use App\Ticket\Controllers\MoveTicketController;
 use App\Ticket\Controllers\PatchTicketController;
 use App\Ticket\Controllers\ReopenTicketController;
 use App\Ticket\Controllers\RestoreTicketController;
+use App\Ticket\Controllers\ShowCalendarController;
 use App\Ticket\Controllers\ShowTicketController;
+use App\Ticket\Controllers\ShowTimelineController;
 use App\Ticket\Controllers\StoreSubtaskController;
 use App\Ticket\Controllers\StoreTicketController;
 use App\Ticket\Controllers\UpdateTicketController;
@@ -150,6 +152,8 @@ Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function 
     Route::post('notifications/{notification}/read', MarkNotificationReadController::class)->whereUuid('notification')->name('notifications.read');
     Route::delete('notifications/{notification}', DeleteNotificationController::class)->whereUuid('notification')->name('notifications.destroy');
     Route::get('activity', ListWorkspaceActivityController::class)->name('activity');
+    Route::get('calendar', ShowCalendarController::class)->name('calendar');
+    Route::get('timeline', ShowTimelineController::class)->name('timeline');
 
     Route::get('favorites', ListFavoritesController::class)->name('favorites.index');
     Route::post('favorites', ToggleFavoriteController::class)->name('favorites.toggle');

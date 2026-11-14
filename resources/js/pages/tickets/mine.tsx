@@ -1,10 +1,13 @@
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
+import { CalendarDays } from 'lucide-react';
 import EmptyState from '@/components/empty-state';
 import PageHeader from '@/components/page-header';
 import TicketDrawer from '@/components/tickets/ticket-drawer';
 import TicketGroups from '@/components/tickets/ticket-groups';
 import type { TicketGroup } from '@/components/tickets/ticket-groups';
 import { daysUntil } from '@/components/tickets/ticket-meta';
+import { Button } from '@/components/ui/button';
+import { calendar } from '@/routes';
 import { mine } from '@/routes/tickets';
 import type {
     TicketDrawerData,
@@ -73,6 +76,14 @@ export default function MyTickets({
                 <PageHeader
                     title="My tickets"
                     description="Everything assigned to you, by when it's due."
+                    actions={
+                        <Button variant="outline" asChild>
+                            <Link href={calendar({ query: { mine: 1 } })}>
+                                <CalendarDays />
+                                Calendar
+                            </Link>
+                        </Button>
+                    }
                 />
 
                 {tickets.length === 0 ? (
