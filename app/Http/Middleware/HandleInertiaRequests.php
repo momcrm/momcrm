@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Favorite\Actions\FindFavorite;
 use App\Favorite\FavoritableTypeEnum;
+use App\Group\Actions\FindGroup;
 use App\Inbox\Actions\FindNotifications;
 use App\Onboarding\Actions\GetGettingStartedProgress;
 use App\Onboarding\Actions\RemoveSampleData;
@@ -89,6 +90,7 @@ class HandleInertiaRequests extends Middleware
             'openTickets' => FindTicket::countOpenForTeam($user->current_team_id),
             'myOpenTickets' => FindTicket::countOpenForTeam($user->current_team_id, $user->id),
             'unreadNotifications' => FindNotifications::countUnread($user),
+            'groups' => FindGroup::optionsForTeam($user->current_team_id),
             'projects' => FindProject::forSidebar(
                 $user->current_team_id,
                 $user->id,

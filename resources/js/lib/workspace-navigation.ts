@@ -4,6 +4,8 @@ import {
     CalendarDays,
     GanttChart,
     Inbox,
+    LayoutDashboard,
+    UsersRound,
     Building2,
     CircleUser,
     FolderKanban,
@@ -22,6 +24,8 @@ import {
     dashboard,
     designSystem,
     inbox,
+    members,
+    overview,
     timeline,
 } from '@/routes';
 import { index as contactsIndex } from '@/routes/contacts';
@@ -87,6 +91,12 @@ export function workspaceNavigation(
             title: 'Workspace',
             items: [
                 {
+                    title: 'Overview',
+                    href: overview(),
+                    icon: LayoutDashboard,
+                    shortcut: 'w',
+                },
+                {
                     title: 'Projects',
                     href: projectsIndex(),
                     icon: FolderKanban,
@@ -110,6 +120,12 @@ export function workspaceNavigation(
                     href: timeline(),
                     icon: GanttChart,
                     shortcut: 'r',
+                },
+                {
+                    title: 'Members',
+                    href: members(),
+                    icon: UsersRound,
+                    shortcut: 'u',
                 },
                 {
                     title: 'Activity',
