@@ -11,6 +11,8 @@ enum Table: string
     case AuditLogs = 'audit_logs';
     case Contacts = 'contacts';
     case Customers = 'customers';
+    case InvoiceItems = 'invoice_items';
+    case Invoices = 'invoices';
     case Locations = 'locations';
     case Passkeys = 'passkeys';
     case Services = 'services';

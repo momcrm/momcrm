@@ -29,6 +29,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Customers and contacts: add, search, edit and delete the businesses you work for and the people at each, with one primary contact per customer. Every record belongs to the current team and is numbered per team.
 - Locations, assets and services on each customer: record their sites, the equipment you look after and what they get from you, with pricing in AUD.
 - Tickets: open, assign, prioritise, close and reopen requests for a customer, numbered per team. Filter open, closed or all tickets and search by title or number. Opening, closing and reopening show in the team's activity.
+- Invoices: draft invoices with line items (fill a line from a customer's service), GST at 10% by default, totals in AUD, numbered INV-0001 per team. Mark them sent, paid or void; sent invoices past their due date show as overdue.
 - Structured logging: every request gets an `X-Request-Id`, and log lines carry the request, user and team ids. Logs default to daily-rotated JSON files.
 - Audit and activity retention (365 and 180 days by default, `AUDIT_LOG_RETENTION_DAYS` / `ACTIVITY_RETENTION_DAYS`), pruned daily by the scheduler.
 - Team-based tenancy: every user gets a personal team, can switch their current team from the sidebar, and owners can rename it under Settings → Team. Team-owned models are isolated with `CurrentTeamScope`.

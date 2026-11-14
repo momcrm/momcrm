@@ -10,6 +10,8 @@ use App\Contact\Actions\FindContact;
 use App\Contact\Contact;
 use App\Customer\Actions\FindCustomer;
 use App\Customer\Exceptions\CouldNotFindCustomer;
+use App\Invoice\Actions\FindInvoice;
+use App\Invoice\InvoiceEloquentModel;
 use App\Location\Actions\FindLocation;
 use App\Location\Location;
 use App\Service\Actions\FindService;
@@ -58,6 +60,10 @@ final class ShowCustomerController
             'tickets' => FindTicket::paginateForTeam($teamId, FindTicket::FILTER_ALL, customerId: $customerId, perPage: 10)
                 ->getCollection()
                 ->map(fn (TicketEloquentModel $model): array => ListTicketsController::listItem($model))
+                ->all(),
+            'invoices' => FindInvoice::paginateForTeam($teamId, customerId: $customerId, perPage: 10)
+                ->getCollection()
+                ->map(fn (InvoiceEloquentModel $model): array => FindInvoice::listItem($model))
                 ->all(),
         ]);
     }

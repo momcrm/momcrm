@@ -9,6 +9,8 @@ use App\Asset\AssetEloquentModel;
 use App\AuditLog\AuditLogEloquentModel;
 use App\Contact\ContactEloquentModel;
 use App\Customer\CustomerEloquentModel;
+use App\Invoice\InvoiceEloquentModel;
+use App\InvoiceItem\InvoiceItemEloquentModel;
 use App\Location\LocationEloquentModel;
 use App\Passkey\PasskeyEloquentModel;
 use App\Service\ServiceEloquentModel;
@@ -36,6 +38,8 @@ enum MorphMapKeyEnum: string
     case AuditLog = 'audit_log';
     case Contact = 'contact';
     case Customer = 'customer';
+    case Invoice = 'invoice';
+    case InvoiceItem = 'invoice_item';
     case Location = 'location';
     case Passkey = 'passkey';
     case Service = 'service';
@@ -76,6 +80,8 @@ enum MorphMapKeyEnum: string
             self::AuditLog => AuditLogEloquentModel::class,
             self::Contact => ContactEloquentModel::class,
             self::Customer => CustomerEloquentModel::class,
+            self::Invoice => InvoiceEloquentModel::class,
+            self::InvoiceItem => InvoiceItemEloquentModel::class,
             self::Location => LocationEloquentModel::class,
             self::Passkey => PasskeyEloquentModel::class,
             self::Service => ServiceEloquentModel::class,

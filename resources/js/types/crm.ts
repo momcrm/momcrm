@@ -112,3 +112,39 @@ export type TicketFormOptions = {
     priorities: Option[];
     statuses: Option[];
 };
+
+export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'void';
+
+export type Invoice = {
+    id: string;
+    number: number;
+    reference: string;
+    customer_id: string;
+    issued_on: string | null;
+    due_on: string | null;
+    status: InvoiceStatus;
+    is_overdue: boolean;
+    tax_rate_basis_points: number;
+    purchase_order: string | null;
+    notes: string | null;
+    sent_at: string | null;
+    paid_at: string | null;
+};
+
+export type InvoiceTotals = {
+    subtotal_in_cents: number;
+    tax_in_cents: number;
+    total_in_cents: number;
+};
+
+export type InvoiceListItem = Invoice &
+    InvoiceTotals & { customer_name: string | null };
+
+export type InvoiceItem = {
+    id: string;
+    service_id: string | null;
+    description: string;
+    quantity: number;
+    unit_price_in_cents: number;
+    line_total_in_cents: number;
+};

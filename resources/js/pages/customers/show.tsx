@@ -5,6 +5,7 @@ import RecordList from '@/components/customers/record-list';
 import DetailSection from '@/components/detail-section';
 import EmptyState from '@/components/empty-state';
 import PageHeader from '@/components/page-header';
+import InvoiceList from '@/components/invoices/invoice-list';
 import TicketList from '@/components/tickets/ticket-list';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -21,11 +22,13 @@ import {
     edit as editService,
 } from '@/routes/services';
 import { formatCents } from '@/lib/money';
+import { create as createInvoice } from '@/routes/invoices';
 import { create as createTicket } from '@/routes/tickets';
 import type {
     Asset,
     Contact,
     Customer,
+    InvoiceListItem,
     Location,
     Service,
     TicketListItem,
@@ -63,6 +66,7 @@ export default function ShowCustomer({
     assets,
     services,
     tickets,
+    invoices,
 }: {
     customer: Customer;
     contacts: Contact[];
@@ -70,6 +74,7 @@ export default function ShowCustomer({
     assets: Asset[];
     services: Service[];
     tickets: TicketListItem[];
+    invoices: InvoiceListItem[];
 }) {
     setLayoutProps({
         breadcrumbs: [
@@ -179,6 +184,41 @@ export default function ShowCustomer({
                                         }).url
                                     }
                                     label="Open ticket"
+                                />
+                            }
+                        />
+                    )}
+                </DetailSection>
+
+                <DetailSection
+                    title="Recent invoices"
+                    action={
+                        invoices.length > 0 && (
+                            <AddButton
+                                href={
+                                    createInvoice({
+                                        query: { customer: customer.id },
+                                    }).url
+                                }
+                                label="Create invoice"
+                            />
+                        )
+                    }
+                >
+                    {invoices.length > 0 ? (
+                        <InvoiceList invoices={invoices} showCustomer={false} />
+                    ) : (
+                        <EmptyState
+                            title="No invoices yet"
+                            description={`Invoices for ${customer.name} will show up here once you bill them.`}
+                            action={
+                                <AddButton
+                                    href={
+                                        createInvoice({
+                                            query: { customer: customer.id },
+                                        }).url
+                                    }
+                                    label="Create invoice"
                                 />
                             }
                         />

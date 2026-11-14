@@ -4,6 +4,7 @@ import {
     Building2,
     FolderGit2,
     LayoutGrid,
+    Receipt,
     Ticket,
     Users,
 } from 'lucide-react';
@@ -24,6 +25,7 @@ import {
 import { dashboard } from '@/routes';
 import { index as contactsIndex } from '@/routes/contacts';
 import { index as customersIndex } from '@/routes/customers';
+import { index as invoicesIndex } from '@/routes/invoices';
 import { index as ticketsIndex } from '@/routes/tickets';
 import type { NavItem } from '@/types';
 
@@ -47,6 +49,11 @@ const mainNavItems: NavItem[] = [
         title: 'Tickets',
         href: ticketsIndex(),
         icon: Ticket,
+    },
+    {
+        title: 'Invoices',
+        href: invoicesIndex(),
+        icon: Receipt,
     },
 ];
 
