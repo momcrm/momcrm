@@ -15,6 +15,7 @@ final class EditSecurityController
     public function __invoke(EditSecurityFormRequest $request): Response
     {
         $props = [
+            'hasPassword' => $request->user()->hasPassword(),
             'canManageTwoFactor' => Features::canManageTwoFactorAuthentication(),
             'canManagePasskeys' => Features::canManagePasskeys(),
             'passkeys' => Features::canManagePasskeys()

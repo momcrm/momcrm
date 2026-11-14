@@ -2,7 +2,7 @@
 
 namespace App\Providers;
 
-use App\User\Actions\RegisterUser;
+use App\Auth\Controllers\ShowContinueController;
 use App\User\Actions\ResetUserPassword;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -11,7 +11,6 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
-use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
 
 class FortifyServiceProvider extends ServiceProvider
@@ -40,7 +39,6 @@ class FortifyServiceProvider extends ServiceProvider
     private function configureActions(): void
     {
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
-        Fortify::createUsersUsing(RegisterUser::class);
     }
 
     /**
@@ -48,10 +46,8 @@ class FortifyServiceProvider extends ServiceProvider
      */
     private function configureViews(): void
     {
-        Fortify::loginView(fn (Request $request) => Inertia::render('auth/login', [
-            'canResetPassword' => Features::enabled(Features::resetPasswords()),
-            'status' => $request->session()->get('status'),
-        ]));
+        // Sign-up and log-in share one email-first page, as in Notion; /register is our own route.
+        Fortify::loginView(fn (Request $request) => ShowContinueController::render($request, ShowContinueController::MODE_LOG_IN));
 
         Fortify::resetPasswordView(fn (Request $request) => Inertia::render('auth/reset-password', [
             'email' => $request->email,
@@ -67,13 +63,12 @@ class FortifyServiceProvider extends ServiceProvider
             'status' => $request->session()->get('status'),
         ]));
 
-        Fortify::registerView(fn () => Inertia::render('auth/register', [
-            'passwordRules' => Password::defaults()->toPasswordRulesString(),
-        ]));
-
         Fortify::twoFactorChallengeView(fn () => Inertia::render('auth/two-factor-challenge'));
 
-        Fortify::confirmPasswordView(fn () => Inertia::render('auth/confirm-password'));
+        Fortify::confirmPasswordView(fn (Request $request) => Inertia::render('auth/confirm-password', [
+            'hasPassword' => $request->user()?->password !== null,
+            'email' => $request->user()?->email,
+        ]));
     }
 
     /**
@@ -89,6 +84,19 @@ class FortifyServiceProvider extends ServiceProvider
             $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());
 
             return Limit::perMinute(5)->by($throttleKey);
+        });
+
+        RateLimiter::for('email-code-send', function (Request $request) {
+            $email = Str::transliterate(Str::lower((string) ($request->input('email') ?? $request->user()->email ?? $request->session()->get('auth.pending_email'))));
+
+            return [
+                Limit::perMinute(3)->by('email|'.$email),
+                Limit::perMinute(10)->by('ip|'.$request->ip()),
+            ];
+        });
+
+        RateLimiter::for('email-code-verify', function (Request $request) {
+            return Limit::perMinute(10)->by($request->session()->getId().'|'.$request->ip());
         });
 
         RateLimiter::for('passkeys', function (Request $request) {

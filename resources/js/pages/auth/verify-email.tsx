@@ -1,5 +1,5 @@
 // Components
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, usePage } from '@inertiajs/react';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
@@ -7,14 +7,24 @@ import { logout } from '@/routes';
 import { send } from '@/routes/verification';
 
 export default function VerifyEmail({ status }: { status?: string }) {
+    const { auth } = usePage().props;
+
     return (
         <>
-            <Head title="Email verification" />
+            <Head title="Check your inbox" />
+
+            <p className="text-center text-sm text-muted-foreground">
+                We sent a link to{' '}
+                <span className="font-medium text-foreground">
+                    {auth.user.email}
+                </span>
+                . Click it to confirm it's you and open your workspace.
+            </p>
 
             {status === 'verification-link-sent' && (
-                <div className="mb-4 text-center text-sm font-medium text-green-600">
-                    A new verification link has been sent to the email address
-                    you provided during registration.
+                <div className="text-center text-sm font-medium text-green-600">
+                    A fresh link is on its way. Check spam if it doesn't show up
+                    in a minute.
                 </div>
             )}
 
@@ -23,7 +33,7 @@ export default function VerifyEmail({ status }: { status?: string }) {
                     <>
                         <Button disabled={processing} variant="secondary">
                             {processing && <Spinner />}
-                            Resend verification email
+                            Send it again
                         </Button>
 
                         <TextLink
@@ -40,7 +50,6 @@ export default function VerifyEmail({ status }: { status?: string }) {
 }
 
 VerifyEmail.layout = {
-    title: 'Email verification',
-    description:
-        'Please verify your email address by clicking on the link we just emailed to you.',
+    title: 'Check your inbox',
+    description: 'One click and you are in.',
 };

@@ -1,7 +1,6 @@
-import { Link } from '@inertiajs/react';
 import Heading from '@/components/heading';
+import Pager from '@/components/pager';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import type { ActivityItem, AuditLogItem, Paginated } from '@/types';
 
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
@@ -28,47 +27,6 @@ function Meta({
             {ipAddress && ` · ${ipAddress}`}
             {createdAt && ` · ${formatDate(createdAt)}`}
         </p>
-    );
-}
-
-function Pager<T>({ page, only }: { page: Paginated<T>; only: string }) {
-    if (page.last_page <= 1) {
-        return null;
-    }
-
-    return (
-        <div className="flex items-center justify-between pt-2 text-sm text-muted-foreground">
-            <span>
-                Page {page.current_page} of {page.last_page}
-            </span>
-            <div className="flex gap-2">
-                {[
-                    { label: 'Previous', url: page.prev_page_url },
-                    { label: 'Next', url: page.next_page_url },
-                ].map(({ label, url }) => (
-                    <Button
-                        key={label}
-                        variant="outline"
-                        size="sm"
-                        disabled={!url}
-                        asChild={Boolean(url)}
-                    >
-                        {url ? (
-                            <Link
-                                href={url}
-                                only={[only]}
-                                preserveScroll
-                                preserveState
-                            >
-                                {label}
-                            </Link>
-                        ) : (
-                            label
-                        )}
-                    </Button>
-                ))}
-            </div>
-        </div>
     );
 }
 

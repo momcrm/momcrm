@@ -17,9 +17,11 @@ type PageProps = {
 
 export default function Profile({
     mustVerifyEmail,
+    hasPassword,
     status,
 }: {
     mustVerifyEmail: boolean;
+    hasPassword: boolean;
     status?: string;
 }) {
     const { auth } = usePage<PageProps>().props;
@@ -47,7 +49,7 @@ export default function Profile({
                     {({ processing, errors }) => (
                         <>
                             <div className="grid gap-2">
-                                <Label htmlFor="name">Name</Label>
+                                <Label htmlFor="name">Preferred name</Label>
 
                                 <Input
                                     id="name"
@@ -56,7 +58,7 @@ export default function Profile({
                                     name="name"
                                     required
                                     autoComplete="name"
-                                    placeholder="Full name"
+                                    placeholder="What should we call you?"
                                 />
 
                                 <InputError
@@ -123,7 +125,7 @@ export default function Profile({
                 </Form>
             </div>
 
-            <DeleteUser />
+            <DeleteUser hasPassword={hasPassword} />
         </>
     );
 }

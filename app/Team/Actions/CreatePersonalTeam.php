@@ -6,7 +6,6 @@ namespace App\Team\Actions;
 
 use App\Team\Team;
 use App\User\User;
-use Illuminate\Support\Str;
 use Throwable;
 
 final readonly class CreatePersonalTeam
@@ -24,7 +23,7 @@ final readonly class CreatePersonalTeam
     {
         $team = CreateTeam::fromTeam(
             Team::new()
-                ->setName(Str::of($this->user->getName()->toString())->before(' ')->append("'s Team")->toString())
+                ->setName(__(":name's Team", ['name' => $this->user->getName()->toString()]))
                 ->setIsPersonal(true)
                 ->setOwnerId($this->user->getId()->toString()),
         );

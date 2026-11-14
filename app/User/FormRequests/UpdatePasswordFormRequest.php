@@ -21,8 +21,11 @@ final class UpdatePasswordFormRequest extends FormRequest
      */
     public function rules(): array
     {
+        // Someone without a password yet (they sign in with codes) sets one without a current password.
         return [
-            CurrentPassword::getNameForValidation() => CurrentPassword::getValidationRulesForCreate($this),
+            ...($this->user()?->hasPassword() === false ? [] : [
+                CurrentPassword::getNameForValidation() => CurrentPassword::getValidationRulesForCreate($this),
+            ]),
             Password::getNameForValidation() => Password::getValidationRulesForCreate($this),
         ];
     }
@@ -36,7 +39,7 @@ final class UpdatePasswordFormRequest extends FormRequest
 
         RecordActivity::for(type: ActivityTypeEnum::PasswordChanged, userId: $user->getId()->toString());
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Password updated.')]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __("Password changed. You're still signed in here.")]);
 
         return back();
     }

@@ -5,11 +5,22 @@ declare(strict_types=1);
 namespace App\Shared;
 
 use App\Activity\ActivityEloquentModel;
+use App\Asset\AssetEloquentModel;
 use App\AuditLog\AuditLogEloquentModel;
+use App\Contact\ContactEloquentModel;
+use App\Customer\CustomerEloquentModel;
+use App\EmailCode\EmailCodeEloquentModel;
+use App\Invoice\InvoiceEloquentModel;
+use App\InvoiceItem\InvoiceItemEloquentModel;
+use App\Location\LocationEloquentModel;
 use App\Passkey\PasskeyEloquentModel;
+use App\Service\ServiceEloquentModel;
 use App\Shared\Traits\Enum;
+use App\SocialAccount\SocialAccountEloquentModel;
 use App\Team\TeamEloquentModel;
+use App\TeamInvitation\TeamInvitationEloquentModel;
 use App\TeamUser\TeamUserEloquentModel;
+use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
 use Illuminate\Database\Eloquent\Model;
 
@@ -25,10 +36,21 @@ enum MorphMapKeyEnum: string
     use Enum;
 
     case Activity = 'activity';
+    case Asset = 'asset';
     case AuditLog = 'audit_log';
+    case Contact = 'contact';
+    case Customer = 'customer';
+    case EmailCode = 'email_code';
+    case Invoice = 'invoice';
+    case InvoiceItem = 'invoice_item';
+    case Location = 'location';
     case Passkey = 'passkey';
+    case Service = 'service';
+    case SocialAccount = 'social_account';
     case Team = 'team';
+    case TeamInvitation = 'team_invitation';
     case TeamUser = 'team_user';
+    case Ticket = 'ticket';
     case User = 'user';
 
     /**
@@ -58,10 +80,21 @@ enum MorphMapKeyEnum: string
     {
         return match ($this) {
             self::Activity => ActivityEloquentModel::class,
+            self::Asset => AssetEloquentModel::class,
             self::AuditLog => AuditLogEloquentModel::class,
+            self::Contact => ContactEloquentModel::class,
+            self::Customer => CustomerEloquentModel::class,
+            self::EmailCode => EmailCodeEloquentModel::class,
+            self::Invoice => InvoiceEloquentModel::class,
+            self::InvoiceItem => InvoiceItemEloquentModel::class,
+            self::Location => LocationEloquentModel::class,
             self::Passkey => PasskeyEloquentModel::class,
+            self::Service => ServiceEloquentModel::class,
+            self::SocialAccount => SocialAccountEloquentModel::class,
             self::Team => TeamEloquentModel::class,
+            self::TeamInvitation => TeamInvitationEloquentModel::class,
             self::TeamUser => TeamUserEloquentModel::class,
+            self::Ticket => TicketEloquentModel::class,
             self::User => UserEloquentModel::class,
         };
     }

@@ -1,6 +1,15 @@
 import { Link } from '@inertiajs/react';
-import { BookOpen, FolderGit2, LayoutGrid } from 'lucide-react';
+import {
+    BookOpen,
+    Building2,
+    FolderGit2,
+    LayoutGrid,
+    Receipt,
+    Ticket,
+    Users,
+} from 'lucide-react';
 import AppLogo from '@/components/app-logo';
+import { GettingStartedNav } from '@/components/getting-started-nav';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -15,6 +24,10 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
+import { index as contactsIndex } from '@/routes/contacts';
+import { index as customersIndex } from '@/routes/customers';
+import { index as invoicesIndex } from '@/routes/invoices';
+import { index as ticketsIndex } from '@/routes/tickets';
 import type { NavItem } from '@/types';
 
 const mainNavItems: NavItem[] = [
@@ -22,6 +35,26 @@ const mainNavItems: NavItem[] = [
         title: 'Dashboard',
         href: dashboard(),
         icon: LayoutGrid,
+    },
+    {
+        title: 'Customers',
+        href: customersIndex(),
+        icon: Building2,
+    },
+    {
+        title: 'Contacts',
+        href: contactsIndex(),
+        icon: Users,
+    },
+    {
+        title: 'Tickets',
+        href: ticketsIndex(),
+        icon: Ticket,
+    },
+    {
+        title: 'Invoices',
+        href: invoicesIndex(),
+        icon: Receipt,
     },
 ];
 
@@ -55,6 +88,7 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
+                <GettingStartedNav />
                 <NavMain items={mainNavItems} />
             </SidebarContent>
 

@@ -55,7 +55,7 @@ final class UpdateProfileFormRequest extends FormRequest
             );
         }
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Profile updated.')]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Profile saved.')]);
 
         return to_route('profile.edit');
     }

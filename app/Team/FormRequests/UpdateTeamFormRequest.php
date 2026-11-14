@@ -68,7 +68,7 @@ final class UpdateTeamFormRequest extends FormRequest
             details: ['from' => $previousName, 'to' => $this->team->getName()->toString()],
         );
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Team updated.')]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Team renamed to :name.', ['name' => $this->team->getName()->toString()])]);
 
         return to_route('team.edit');
     }

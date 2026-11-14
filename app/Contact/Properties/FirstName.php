@@ -1,0 +1,24 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Contact\Properties;
+
+use Illuminate\Foundation\Http\FormRequest;
+use Mom\Data\AbstractString;
+
+final class FirstName extends AbstractString
+{
+    public static function getName(): string
+    {
+        return 'first_name';
+    }
+
+    /**
+     * @return array<int, mixed>
+     */
+    public static function getValidationRulesForCreate(FormRequest $request): array
+    {
+        return ['required', 'string', 'max:255'];
+    }
+}

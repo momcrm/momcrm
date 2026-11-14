@@ -1,0 +1,150 @@
+export type Option = { value: string; label: string };
+
+export type CustomerOption = { id: string; name: string };
+
+export type Customer = {
+    id: string;
+    number: number;
+    name: string;
+    abn: string | null;
+    email: string | null;
+    phone: string | null;
+    website: string | null;
+    status: 'active' | 'inactive';
+    notes: string | null;
+    is_sample: boolean;
+};
+
+export type CustomerListItem = Customer & { contacts_count: number };
+
+export type Contact = {
+    id: string;
+    customer_id: string;
+    first_name: string;
+    last_name: string | null;
+    full_name: string;
+    email: string | null;
+    position: string | null;
+    work_phone: string | null;
+    mobile_phone: string | null;
+    is_primary: boolean;
+};
+
+export type ContactListItem = Contact & { customer_name: string | null };
+
+export type Location = {
+    id: string;
+    customer_id: string;
+    name: string;
+    street_one: string | null;
+    street_two: string | null;
+    suburb: string | null;
+    state: string | null;
+    postcode: string | null;
+    country: string | null;
+    is_primary: boolean;
+};
+
+export type Asset = {
+    id: string;
+    customer_id: string;
+    name: string;
+    serial_number: string | null;
+    location_id: string | null;
+    status: 'active' | 'retired';
+    description: string | null;
+};
+
+export type Service = {
+    id: string;
+    customer_id: string;
+    name: string;
+    status: 'active' | 'pending' | 'cancelled';
+    quantity: number | null;
+    unit_price_in_cents: number | null;
+    billing_period_in_months: number | null;
+    starts_on: string | null;
+    ends_on: string | null;
+    location_id: string | null;
+    note: string | null;
+};
+
+export type TicketStatus =
+    | 'new'
+    | 'in_progress'
+    | 'waiting_on_customer'
+    | 'waiting_on_supplier'
+    | 'closed';
+
+export type TicketPriority = 'low' | 'normal' | 'high' | 'urgent';
+
+export type Ticket = {
+    id: string;
+    number: number;
+    title: string;
+    description: string | null;
+    status: TicketStatus;
+    priority: TicketPriority;
+    customer_id: string;
+    contact_id: string | null;
+    location_id: string | null;
+    assignee_id: string | null;
+    closed_at: string | null;
+    created_at: string | null;
+};
+
+export type TicketListItem = Ticket & {
+    customer_name: string | null;
+    assignee_name: string | null;
+};
+
+export type CustomerChildOption = {
+    id: string;
+    name: string;
+    customer_id: string;
+};
+
+export type TicketFormOptions = {
+    customers: CustomerOption[];
+    contacts: CustomerChildOption[];
+    locations: CustomerChildOption[];
+    members: CustomerOption[];
+    priorities: Option[];
+    statuses: Option[];
+};
+
+export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'void';
+
+export type Invoice = {
+    id: string;
+    number: number;
+    reference: string;
+    customer_id: string;
+    issued_on: string | null;
+    due_on: string | null;
+    status: InvoiceStatus;
+    is_overdue: boolean;
+    tax_rate_basis_points: number;
+    purchase_order: string | null;
+    notes: string | null;
+    sent_at: string | null;
+    paid_at: string | null;
+};
+
+export type InvoiceTotals = {
+    subtotal_in_cents: number;
+    tax_in_cents: number;
+    total_in_cents: number;
+};
+
+export type InvoiceListItem = Invoice &
+    InvoiceTotals & { customer_name: string | null };
+
+export type InvoiceItem = {
+    id: string;
+    service_id: string | null;
+    description: string;
+    quantity: number;
+    unit_price_in_cents: number;
+    line_total_in_cents: number;
+};

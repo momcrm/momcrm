@@ -10,6 +10,7 @@ enum TeamRoleEnum: string
 {
     use Enum;
 
+    case Admin = 'admin';
     case Member = 'member';
     case Owner = 'owner';
 }
