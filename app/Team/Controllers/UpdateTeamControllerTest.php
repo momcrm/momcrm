@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Activity\ActivityEloquentModel;
+use App\Activity\ActivityTypeEnum;
 use App\Team\TeamEloquentModel;
 use App\TeamUser\Actions\CreateTeamUser;
 use App\User\UserEloquentModel;
@@ -38,4 +40,17 @@ it('forbids members who do not own the team from renaming it', function (): void
         ->assertForbidden();
 
     expect($team->refresh()->name)->toBe('Original Name');
+});
+
+it('records the rename in the team activity', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $previousName = TeamEloquentModel::query()->findOrFail($user->current_team_id)->name;
+
+    actingAs($user)->patch(route('team.update'), ['name' => 'Acme Sales']);
+
+    $activity = ActivityEloquentModel::query()->where('type', ActivityTypeEnum::TeamRenamed->value)->sole();
+
+    expect($activity->team_id)->toBe($user->current_team_id)
+        ->and($activity->user_id)->toBe($user->id)
+        ->and($activity->details)->toBe(['from' => $previousName, 'to' => 'Acme Sales']);
 });

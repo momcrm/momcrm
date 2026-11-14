@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Team\FormRequests;
 
+use App\Activity\Actions\RecordActivity;
+use App\Activity\ActivityTypeEnum;
 use App\Team\Actions\FindTeam;
 use App\Team\Actions\SwitchCurrentTeam;
 use App\Team\Exceptions\CouldNotSwitchCurrentTeam;
@@ -37,7 +39,13 @@ final class SwitchCurrentTeamFormRequest extends FormRequest
             throw CouldNotSwitchCurrentTeam::notFound();
         }
 
-        SwitchCurrentTeam::fromTeam(user: User::fromEloquentModel($this->user()), team: $team);
+        $user = SwitchCurrentTeam::fromTeam(user: User::fromEloquentModel($this->user()), team: $team);
+
+        RecordActivity::for(
+            type: ActivityTypeEnum::TeamSwitched,
+            userId: $user->getId()->toString(),
+            teamId: $team->getId()->toString(),
+        );
 
         return back();
     }

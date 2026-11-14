@@ -1,4 +1,4 @@
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, Link } from '@inertiajs/react';
 import UpdateTeamController from '@/actions/App/Team/Controllers/UpdateTeamController';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { edit } from '@/routes/team';
+import { index as teamActivityIndex } from '@/routes/team-activity';
 import type { Team as TeamType } from '@/types';
 
 export default function Team({
@@ -74,6 +75,21 @@ export default function Team({
                     )}
                 </Form>
             </div>
+
+            {canUpdateTeam && (
+                <div className="space-y-2">
+                    <Heading
+                        variant="small"
+                        title="Activity"
+                        description="See what happened in this team and every change to it"
+                    />
+                    <Button variant="outline" asChild>
+                        <Link href={teamActivityIndex()} prefetch>
+                            View team activity
+                        </Link>
+                    </Button>
+                </div>
+            )}
         </>
     );
 }

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\User;
 
+use App\AuditLog\AuditObserver;
+use App\AuditLog\Contracts\Auditable;
 use App\Shared\Table;
 use App\Team\Properties\OwnerId;
 use App\Team\TeamEloquentModel;
@@ -18,6 +20,7 @@ use App\User\Properties\Password;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -44,7 +47,8 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property CarbonImmutable|null $updated_at
  */
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
-final class UserEloquentModel extends Authenticatable implements MustVerifyEmail, PasskeyUser
+#[ObservedBy(AuditObserver::class)]
+final class UserEloquentModel extends Authenticatable implements Auditable, MustVerifyEmail, PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory;
@@ -55,6 +59,11 @@ final class UserEloquentModel extends Authenticatable implements MustVerifyEmail
     use TwoFactorAuthenticatable;
 
     protected $guarded = [];
+
+    public function auditTeamId(): ?string
+    {
+        return null;
+    }
 
     public function getTable(): string
     {

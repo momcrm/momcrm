@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Team\FormRequests;
 
+use App\Activity\Actions\RecordActivity;
+use App\Activity\ActivityTypeEnum;
 use App\Team\Actions\FindTeam;
 use App\Team\Actions\UpdateTeam;
 use App\Team\Exceptions\CouldNotUpdateTeam;
@@ -55,7 +57,16 @@ final class UpdateTeamFormRequest extends FormRequest
 
     public function process(): RedirectResponse
     {
+        $previousName = $this->team->getName()->toString();
+
         UpdateTeam::fromTeam($this->team->setPropertyIfExists($this->validated()));
+
+        RecordActivity::for(
+            type: ActivityTypeEnum::TeamRenamed,
+            userId: (string) $this->user()?->getAuthIdentifier(),
+            teamId: $this->team->getId()->toString(),
+            details: ['from' => $previousName, 'to' => $this->team->getName()->toString()],
+        );
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Team updated.')]);
 

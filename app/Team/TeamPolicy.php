@@ -20,4 +20,13 @@ final class TeamPolicy
 
         return Response::deny('Only the team owner can update the team.');
     }
+
+    public function viewActivity(UserEloquentModel $user, Team $team): Response
+    {
+        if ($team->getOwnerId()->toString() === $user->getAuthIdentifier()) {
+            return Response::allow();
+        }
+
+        return Response::deny("Only the team owner can view the team's activity.");
+    }
 }
