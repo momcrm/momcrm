@@ -11,6 +11,16 @@ Thanks for helping out! Everyone taking part in MomCRM is expected to follow our
 
 Please keep pull requests focused on one change.
 
+## AI coding assistants
+
+MomCRM uses [Laravel Boost](https://laravel.com/docs/boost) to give AI coding assistants (Claude Code, Cursor, Codex, Copilot and others) project-specific guidelines, skills and an MCP server. The generated files are ignored by git, so each contributor sets them up for their own tools:
+
+```bash
+php artisan boost:install
+```
+
+Run `php artisan boost:update` after updating dependencies to refresh the guidelines and skills.
+
 ## Releasing
 
 Maintainers release new versions by tagging `main`:
