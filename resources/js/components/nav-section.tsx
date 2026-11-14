@@ -49,7 +49,14 @@ export function NavSection({
                                 </Link>
                             </SidebarMenuButton>
                             {item.badge ? (
-                                <SidebarMenuBadge className="top-[5px] text-[11px] text-subtle-foreground">
+                                <SidebarMenuBadge
+                                    className={cn(
+                                        'top-[5px] text-[11px]',
+                                        item.highlightBadge
+                                            ? 'h-[18px] min-w-[18px] rounded-full bg-primary px-1 text-primary-foreground'
+                                            : 'text-subtle-foreground',
+                                    )}
+                                >
                                     {item.badge}
                                 </SidebarMenuBadge>
                             ) : null}

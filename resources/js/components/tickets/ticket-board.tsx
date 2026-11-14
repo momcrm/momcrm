@@ -95,7 +95,7 @@ export default function TicketBoard({
                         drop(column.value, target?.beforeId ?? null);
                     }}
                     className={cn(
-                        'flex w-72 shrink-0 flex-col rounded-xl bg-muted/70 p-2',
+                        'flex w-72 shrink-0 flex-col rounded-xl p-1',
                         target?.status === column.value &&
                             'ring-2 ring-ring/40',
                     )}
@@ -115,7 +115,7 @@ export default function TicketBoard({
                             <Plus className="size-4" />
                         </Link>
                     </header>
-                    <ol className="flex flex-1 flex-col gap-2">
+                    <ol className="flex flex-col gap-2">
                         {column.tickets.map((ticket) => (
                             <li
                                 key={ticket.id}
@@ -144,10 +144,17 @@ export default function TicketBoard({
                         ))}
                     </ol>
                     {column.tickets.length === 0 && (
-                        <p className="px-2 py-6 text-center text-xs text-subtle-foreground">
+                        <p className="rounded-lg border border-dashed px-2 py-6 text-center text-xs text-subtle-foreground">
                             Drop tickets here
                         </p>
                     )}
+                    <Link
+                        href={create()}
+                        className="mt-1 flex items-center gap-1.5 rounded-md px-1.5 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
+                    >
+                        <Plus className="size-3.5" />
+                        Add ticket
+                    </Link>
                 </section>
             ))}
         </div>

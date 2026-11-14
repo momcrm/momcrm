@@ -9,12 +9,13 @@ use App\Inbox\InboxPayload;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueueAfterCommit;
 use Illuminate\Notifications\Notification;
 
 /**
  * Tells a ticket's watchers its status changed.
  */
-final class TicketStatusChangedNotification extends Notification
+final class TicketStatusChangedNotification extends Notification implements ShouldQueueAfterCommit
 {
     use Queueable;
 

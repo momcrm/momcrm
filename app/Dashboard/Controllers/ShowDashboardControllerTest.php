@@ -40,6 +40,7 @@ it("shows the team's numbers, the user's tickets and the checklist", function ()
             ->where('preferredName', 'Jane Smith')
             ->where('stats', [
                 'active_projects' => 0,
+                'at_risk_projects' => 0,
                 'open_tickets' => 2,
                 'closed_this_week' => 0,
                 'overdue_tickets' => 0,

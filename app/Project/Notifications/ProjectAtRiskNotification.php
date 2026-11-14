@@ -9,12 +9,13 @@ use App\Inbox\InboxPayload;
 use App\Project\ProjectEloquentModel;
 use App\User\UserEloquentModel;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueueAfterCommit;
 use Illuminate\Notifications\Notification;
 
 /**
  * Tells a project's members it was marked at risk.
  */
-final class ProjectAtRiskNotification extends Notification
+final class ProjectAtRiskNotification extends Notification implements ShouldQueueAfterCommit
 {
     use Queueable;
 

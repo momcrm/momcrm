@@ -11,7 +11,9 @@ use App\Ticket\Notifications\TicketStatusChangedNotification;
 use App\Ticket\Ticket;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
+use Illuminate\Notifications\SendQueuedNotifications;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Queue;
 
 it('tells the new assignee, and records the assignment', function (): void {
     Notification::fake();
@@ -49,4 +51,13 @@ it("tells the watchers a ticket's status changed, but not whoever changed it", f
     Notification::assertNotSentTo($actor, TicketStatusChangedNotification::class);
     expect(ActivityEloquentModel::query()->where('type', ActivityTypeEnum::TicketStatusChanged->value)->sole()->details)
         ->toMatchArray(['from' => 'New', 'to' => 'In progress']);
+});
+
+it('sends notifications in the background, not during the request', function (): void {
+    Queue::fake();
+    $assignee = UserEloquentModel::factory()->create();
+
+    UpdateTicket::fromTicket(Ticket::fromEloquentModel(TicketEloquentModel::factory()->create())->setAssigneeId($assignee->id), updatedById: UserEloquentModel::factory()->create()->id);
+
+    Queue::assertPushed(SendQueuedNotifications::class, fn (SendQueuedNotifications $job): bool => $job->notification instanceof TicketAssignedNotification);
 });

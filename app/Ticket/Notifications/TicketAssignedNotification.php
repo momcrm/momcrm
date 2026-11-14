@@ -9,12 +9,13 @@ use App\Inbox\InboxPayload;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueueAfterCommit;
 use Illuminate\Notifications\Notification;
 
 /**
  * Tells someone a ticket was assigned to them.
  */
-final class TicketAssignedNotification extends Notification
+final class TicketAssignedNotification extends Notification implements ShouldQueueAfterCommit
 {
     use Queueable;
 
