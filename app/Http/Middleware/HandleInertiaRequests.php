@@ -2,6 +2,9 @@
 
 namespace App\Http\Middleware;
 
+use App\Team\Actions\FindTeam;
+use App\Team\Team;
+use App\User\UserEloquentModel;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -40,8 +43,42 @@ class HandleInertiaRequests extends Middleware
             'name' => config('app.name'),
             'auth' => [
                 'user' => $request->user(),
+                'currentTeam' => fn (): ?array => $this->currentTeam($request),
+                'teams' => fn (): array => $this->teams($request),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
+    }
+
+    /**
+     * @return array{id: string, name: string}|null
+     */
+    private function currentTeam(Request $request): ?array
+    {
+        $user = $request->user();
+
+        if (! $user instanceof UserEloquentModel) {
+            return null;
+        }
+
+        $team = FindTeam::byIdForMember(id: $user->current_team_id, userId: $user->id);
+
+        return $team->isNull() ? null : $team->toSummary();
+    }
+
+    /**
+     * @return array<int, array{id: string, name: string}>
+     */
+    private function teams(Request $request): array
+    {
+        $user = $request->user();
+
+        if (! $user instanceof UserEloquentModel) {
+            return [];
+        }
+
+        return FindTeam::allForMember($user->id)
+            ->map(fn (Team $team): array => $team->toSummary())
+            ->all();
     }
 }

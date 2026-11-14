@@ -2,7 +2,9 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
+use App\User\Properties\Email;
+use App\User\Properties\Name;
+use App\User\UserEloquentModel;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -15,11 +17,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // UserEloquentModel::factory(10)->create();
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        UserEloquentModel::factory()->withPersonalTeam()->create([
+            Name::getDatabaseTableColumnName() => 'Test User',
+            Email::getDatabaseTableColumnName() => 'test@example.com',
         ]);
     }
 }
