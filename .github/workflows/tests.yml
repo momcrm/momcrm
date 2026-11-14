@@ -50,3 +50,13 @@ jobs:
 
       - name: Run CI Checks
         run: composer ci:check
+        env:
+          # Run the test suite on the MySQL service, not the in-memory SQLite
+          # database from phpunit.xml (PHPUnit's <env> does not override these).
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: momcrm
+          DB_USERNAME: root
+          DB_PASSWORD: ''
+          DB_URL: ''

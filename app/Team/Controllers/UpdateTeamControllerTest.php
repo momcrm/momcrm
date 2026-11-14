@@ -52,5 +52,6 @@ it('records the rename in the team activity', function (): void {
 
     expect($activity->team_id)->toBe($user->current_team_id)
         ->and($activity->user_id)->toBe($user->id)
-        ->and($activity->details)->toBe(['from' => $previousName, 'to' => 'Acme Sales']);
+        // toEqual: MySQL JSON columns do not keep key order.
+        ->and($activity->details)->toEqual(['from' => $previousName, 'to' => 'Acme Sales']);
 });
