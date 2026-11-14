@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import SendEmailCodeController from '@/actions/App/Auth/Controllers/SendEmailCodeController';
 import VerifyEmailCodeController from '@/actions/App/Auth/Controllers/VerifyEmailCodeController';
-import { register } from '@/routes';
+import { signup } from '@/routes';
 import { store as logInWithPassword } from '@/routes/login';
 import { request as forgotPassword } from '@/routes/password';
 
@@ -151,7 +151,7 @@ export default function Code({ email, minutesValid, canResetPassword }: Props) {
                         : 'Use a password instead'}
                 </button>
                 <Link
-                    href={register()}
+                    href={signup()}
                     className="text-muted-foreground underline-offset-4 hover:underline"
                 >
                     Use a different email

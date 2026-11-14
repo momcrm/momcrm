@@ -47,7 +47,7 @@ final class CreateAccountFormRequest extends FormRequest
         $email = $this->session()->get(AuthSession::VERIFIED_EMAIL);
 
         if (! is_string($email)) {
-            return to_route('register');
+            return to_route('signup');
         }
 
         $user = UserEloquentModel::query()->where(Email::getDatabaseTableColumnName(), $email)->first();

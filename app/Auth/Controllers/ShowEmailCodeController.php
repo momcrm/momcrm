@@ -19,7 +19,7 @@ final class ShowEmailCodeController
         $email = $request->session()->get(AuthSession::PENDING_EMAIL);
 
         if (! is_string($email)) {
-            return to_route('register');
+            return to_route('signup');
         }
 
         return Inertia::render('auth/code', [

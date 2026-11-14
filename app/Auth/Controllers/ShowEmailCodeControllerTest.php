@@ -16,5 +16,5 @@ it('asks for the code emailed to the address', function (): void {
 });
 
 it('starts over when no code was sent', function (): void {
-    get(route('auth.code'))->assertRedirectToRoute('register');
+    get(route('auth.code'))->assertRedirectToRoute('signup');
 });

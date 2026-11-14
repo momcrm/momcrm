@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import SendEmailCodeController from '@/actions/App/Auth/Controllers/SendEmailCodeController';
-import { login, register } from '@/routes';
+import { login, signup } from '@/routes';
 import type { Option } from '@/types';
 
 type Props = {
@@ -110,7 +110,7 @@ export default function Continue({
                 ) : (
                     <>
                         New to MomCRM?{' '}
-                        <TextLink href={register()}>Sign up</TextLink>
+                        <TextLink href={signup()}>Sign up</TextLink>
                     </>
                 )}
             </p>

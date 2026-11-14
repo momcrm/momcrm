@@ -20,5 +20,5 @@ it('asks what to call a person whose email is proven', function (): void {
 });
 
 it('starts over without a proven email', function (): void {
-    get(route('signup.profile'))->assertRedirectToRoute('register');
+    get(route('signup.profile'))->assertRedirectToRoute('signup');
 });

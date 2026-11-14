@@ -18,7 +18,7 @@ final class ShowCreateAccountController
         $email = $request->session()->get(AuthSession::VERIFIED_EMAIL);
 
         if (! is_string($email)) {
-            return to_route('register');
+            return to_route('signup');
         }
 
         return Inertia::render('auth/create-account', [

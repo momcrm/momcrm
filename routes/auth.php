@@ -14,7 +14,8 @@ use Illuminate\Support\Facades\Route;
 
 // Notion-style sign-in: an email, then a code. Log-in (/login) is Fortify's route rendering the same page.
 Route::middleware('guest')->group(function () {
-    Route::get('register', ShowContinueController::class)->name('register');
+    Route::get('signup', ShowContinueController::class)->name('signup');
+    Route::permanentRedirect('register', '/signup');
 
     Route::post('auth/code', SendEmailCodeController::class)->middleware('throttle:email-code-send')->name('auth.code.send');
     Route::get('auth/code', ShowEmailCodeController::class)->name('auth.code');

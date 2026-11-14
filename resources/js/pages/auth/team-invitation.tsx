@@ -3,7 +3,7 @@ import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import AcceptTeamInvitationController from '@/actions/App/TeamInvitation/Controllers/AcceptTeamInvitationController';
-import { dashboard, home, login, logout, register } from '@/routes';
+import { dashboard, home, login, logout, signup } from '@/routes';
 
 type Props =
     | { status: 'expired' }
@@ -54,9 +54,7 @@ export default function TeamInvitation(props: Props) {
             {props.status === 'guest' && (
                 <div className="flex flex-col gap-3">
                     <Button asChild>
-                        <Link
-                            href={register({ query: { email: props.email } })}
-                        >
+                        <Link href={signup({ query: { email: props.email } })}>
                             Create your account
                         </Link>
                     </Button>

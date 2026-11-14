@@ -52,7 +52,7 @@ final class VerifyEmailCodeFormRequest extends FormRequest
         $email = $this->session()->get(AuthSession::PENDING_EMAIL);
 
         if (! is_string($email)) {
-            return to_route('register');
+            return to_route('signup');
         }
 
         $result = VerifyEmailCode::check($email, EmailCodePurposeEnum::SignIn, $this->string('code')->toString());

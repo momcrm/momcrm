@@ -70,7 +70,7 @@ it('requires a name', function (): void {
 });
 
 it('creates nothing without a proven email', function (): void {
-    post(route('signup.profile.store'), ['name' => 'Ada'])->assertRedirectToRoute('register');
+    post(route('signup.profile.store'), ['name' => 'Ada'])->assertRedirectToRoute('signup');
 
     expect(UserEloquentModel::query()->exists())->toBeFalse();
     assertGuest();

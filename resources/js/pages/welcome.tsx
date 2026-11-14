@@ -2,7 +2,7 @@ import { Head, Link, usePage } from '@inertiajs/react';
 import { Building2, ShieldCheck, Ticket } from 'lucide-react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { Button } from '@/components/ui/button';
-import { dashboard, login, register } from '@/routes';
+import { dashboard, login, signup } from '@/routes';
 
 const points = [
     {
@@ -68,7 +68,7 @@ export default function Welcome({
                             <div className="flex flex-wrap gap-3">
                                 {canRegister && (
                                     <Button asChild size="lg">
-                                        <Link href={register()}>
+                                        <Link href={signup()}>
                                             Create your free account
                                         </Link>
                                     </Button>
