@@ -4,7 +4,7 @@ An open-source CRM built with Laravel and Inertia. Website: [momcrm.app](https:/
 
 ## Stack
 
-- [Laravel 12](https://laravel.com) (PHP 8.3+)
+- [Laravel 13](https://laravel.com) (PHP 8.4+)
 - [Inertia.js](https://inertiajs.com) + React 19 + TypeScript
 - Tailwind CSS + [shadcn/ui](https://ui.shadcn.com)
 - MySQL
@@ -12,7 +12,7 @@ An open-source CRM built with Laravel and Inertia. Website: [momcrm.app](https:/
 
 ## Getting started
 
-Requirements: PHP 8.3+, Composer, Node.js 20+, MySQL 8+.
+Requirements: PHP 8.4+, Composer, Node.js 22+, MySQL 8+.
 
 ```bash
 git clone <repo-url> momcrm
