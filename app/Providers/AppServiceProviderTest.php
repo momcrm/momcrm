@@ -50,11 +50,12 @@ it('throws for a model without a morph alias', function (): void {
 })->throws(ClassMorphViolationException::class);
 
 it('sends the verification email in MomCRM copy', function (): void {
-    $user = UserEloquentModel::factory()->unverified()->create();
+    $user = UserEloquentModel::factory()->unverified()->create(['name' => 'Jane Smith']);
 
     $mail = new VerifyEmail()->toMail($user);
 
     expect($mail->subject)->toBe('Confirm your email to finish setting up MomCRM')
+        ->and($mail->greeting)->toBe('Hi Jane,')
         ->and($mail->actionText)->toBe('Confirm my email')
         ->and($mail->actionUrl)->toContain('/email/verify/'.$user->id);
 });

@@ -31,7 +31,7 @@ export default function Welcome({
 
     return (
         <>
-            <Head title="MomCRM — the open-source CRM" />
+            <Head title="The open-source CRM" />
 
             <div className="flex min-h-screen flex-col bg-background text-foreground">
                 <header className="mx-auto flex w-full max-w-5xl items-center justify-between p-6">
