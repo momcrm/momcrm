@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Onboarding\Actions\RemoveSampleData;
 use App\Team\Actions\FindTeam;
 use App\Team\Team;
 use App\User\UserEloquentModel;
@@ -47,7 +48,18 @@ class HandleInertiaRequests extends Middleware
                 'teams' => fn (): array => $this->teams($request),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            'hasSampleData' => fn (): bool => $this->hasSampleData($request),
         ];
+    }
+
+    /**
+     * Whether the current team still has the sample customers added during onboarding.
+     */
+    private function hasSampleData(Request $request): bool
+    {
+        $teamId = $request->user()?->current_team_id;
+
+        return is_string($teamId) && RemoveSampleData::teamHasSampleData($teamId);
     }
 
     /**

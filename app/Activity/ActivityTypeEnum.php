@@ -10,6 +10,7 @@ enum ActivityTypeEnum: string
 {
     use Enum;
 
+    case CustomersImported = 'customers_imported';
     case EmailVerified = 'email_verified';
     case InvitationAccepted = 'invitation_accepted';
     case InvitationSent = 'invitation_sent';
@@ -21,6 +22,8 @@ enum ActivityTypeEnum: string
     case ProfileUpdated = 'profile_updated';
     case RecoveryCodesRegenerated = 'recovery_codes_regenerated';
     case Registered = 'registered';
+    case SampleDataAdded = 'sample_data_added';
+    case SampleDataRemoved = 'sample_data_removed';
     case SignedIn = 'signed_in';
     case SignedOut = 'signed_out';
     case TeamRenamed = 'team_renamed';
@@ -37,6 +40,7 @@ enum ActivityTypeEnum: string
     public function label(): string
     {
         return match ($this) {
+            self::CustomersImported => 'Imported customers',
             self::EmailVerified => 'Verified email address',
             self::InvitationAccepted => 'Joined the team',
             self::InvitationSent => 'Invited someone to the team',
@@ -48,6 +52,8 @@ enum ActivityTypeEnum: string
             self::ProfileUpdated => 'Updated profile',
             self::RecoveryCodesRegenerated => 'Regenerated recovery codes',
             self::Registered => 'Created account',
+            self::SampleDataAdded => 'Added sample data',
+            self::SampleDataRemoved => 'Removed the sample data',
             self::SignedIn => 'Signed in',
             self::SignedOut => 'Signed out',
             self::TeamRenamed => 'Renamed the team',

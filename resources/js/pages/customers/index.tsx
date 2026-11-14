@@ -5,7 +5,12 @@ import Pager from '@/components/pager';
 import SearchInput from '@/components/search-input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { create, index, show } from '@/routes/customers';
+import {
+    create,
+    importMethod as importRoute,
+    index,
+    show,
+} from '@/routes/customers';
 import type { CustomerListItem, Paginated } from '@/types';
 
 export default function CustomersIndex({
@@ -26,9 +31,14 @@ export default function CustomersIndex({
                     title="Customers"
                     description="The businesses and people you work for."
                     actions={
-                        <Button asChild>
-                            <Link href={create()}>Add customer</Link>
-                        </Button>
+                        <>
+                            <Button variant="outline" asChild>
+                                <Link href={importRoute()}>Import</Link>
+                            </Button>
+                            <Button asChild>
+                                <Link href={create()}>Add customer</Link>
+                            </Button>
+                        </>
                     }
                 />
 

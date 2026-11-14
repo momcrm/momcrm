@@ -6,6 +6,8 @@ use App\Onboarding\Controllers\ShowAboutController;
 use App\Onboarding\Controllers\ShowInviteController;
 use App\Onboarding\Controllers\ShowStartController;
 use App\Onboarding\Controllers\ShowWorkspaceController;
+use App\Onboarding\Controllers\StartWithImportController;
+use App\Onboarding\Controllers\StartWithSampleDataController;
 use App\Onboarding\Controllers\UpdateAboutController;
 use App\Onboarding\Controllers\UpdateWorkspaceController;
 use App\Onboarding\Middleware\RedirectIfOnboarded;
@@ -26,4 +28,6 @@ Route::middleware(['auth', 'verified', RedirectIfOnboarded::class])
 
         Route::get('start', ShowStartController::class)->name('start');
         Route::post('complete', CompleteOnboardingController::class)->name('complete');
+        Route::post('start/sample', StartWithSampleDataController::class)->name('start.sample');
+        Route::post('start/import', StartWithImportController::class)->name('start.import');
     });
