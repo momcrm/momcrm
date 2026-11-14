@@ -25,6 +25,9 @@ enum ActivityTypeEnum: string
     case SignedOut = 'signed_out';
     case TeamRenamed = 'team_renamed';
     case TeamSwitched = 'team_switched';
+    case TicketClosed = 'ticket_closed';
+    case TicketOpened = 'ticket_opened';
+    case TicketReopened = 'ticket_reopened';
     case TwoFactorDisabled = 'two_factor_disabled';
     case TwoFactorEnabled = 'two_factor_enabled';
 
@@ -49,6 +52,9 @@ enum ActivityTypeEnum: string
             self::SignedOut => 'Signed out',
             self::TeamRenamed => 'Renamed the team',
             self::TeamSwitched => 'Switched to this team',
+            self::TicketClosed => 'Closed a ticket',
+            self::TicketOpened => 'Opened a ticket',
+            self::TicketReopened => 'Reopened a ticket',
             self::TwoFactorDisabled => 'Disabled two-factor authentication',
             self::TwoFactorEnabled => 'Enabled two-factor authentication',
         };

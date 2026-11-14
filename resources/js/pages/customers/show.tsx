@@ -5,6 +5,7 @@ import RecordList from '@/components/customers/record-list';
 import DetailSection from '@/components/detail-section';
 import EmptyState from '@/components/empty-state';
 import PageHeader from '@/components/page-header';
+import TicketList from '@/components/tickets/ticket-list';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import DeleteCustomerController from '@/actions/App/Customer/Controllers/DeleteCustomerController';
@@ -20,7 +21,15 @@ import {
     edit as editService,
 } from '@/routes/services';
 import { formatCents } from '@/lib/money';
-import type { Asset, Contact, Customer, Location, Service } from '@/types';
+import { create as createTicket } from '@/routes/tickets';
+import type {
+    Asset,
+    Contact,
+    Customer,
+    Location,
+    Service,
+    TicketListItem,
+} from '@/types';
 
 const serviceStatusLabels: Record<Service['status'], string> = {
     active: 'Active',
@@ -53,12 +62,14 @@ export default function ShowCustomer({
     locations,
     assets,
     services,
+    tickets,
 }: {
     customer: Customer;
     contacts: Contact[];
     locations: Location[];
     assets: Asset[];
     services: Service[];
+    tickets: TicketListItem[];
 }) {
     setLayoutProps({
         breadcrumbs: [
@@ -138,6 +149,41 @@ export default function ShowCustomer({
                         )}
                     </dl>
                 )}
+
+                <DetailSection
+                    title="Recent tickets"
+                    action={
+                        tickets.length > 0 && (
+                            <AddButton
+                                href={
+                                    createTicket({
+                                        query: { customer: customer.id },
+                                    }).url
+                                }
+                                label="Open ticket"
+                            />
+                        )
+                    }
+                >
+                    {tickets.length > 0 ? (
+                        <TicketList tickets={tickets} showCustomer={false} />
+                    ) : (
+                        <EmptyState
+                            title="Nothing in the queue"
+                            description={`Open a ticket for every request or job for ${customer.name}.`}
+                            action={
+                                <AddButton
+                                    href={
+                                        createTicket({
+                                            query: { customer: customer.id },
+                                        }).url
+                                    }
+                                    label="Open ticket"
+                                />
+                            }
+                        />
+                    )}
+                </DetailSection>
 
                 <DetailSection
                     title="Contacts"

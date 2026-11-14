@@ -14,6 +14,9 @@ use App\Location\Actions\FindLocation;
 use App\Location\Location;
 use App\Service\Actions\FindService;
 use App\Service\Service;
+use App\Ticket\Actions\FindTicket;
+use App\Ticket\Controllers\ListTicketsController;
+use App\Ticket\TicketEloquentModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -51,6 +54,10 @@ final class ShowCustomerController
             'services' => FindService::forCustomer($customerId, $teamId)
                 ->map(fn (Service $service): array => $service->toSummary())
                 ->values()
+                ->all(),
+            'tickets' => FindTicket::paginateForTeam($teamId, FindTicket::FILTER_ALL, customerId: $customerId, perPage: 10)
+                ->getCollection()
+                ->map(fn (TicketEloquentModel $model): array => ListTicketsController::listItem($model))
                 ->all(),
         ]);
     }

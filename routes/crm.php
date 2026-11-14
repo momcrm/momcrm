@@ -29,6 +29,14 @@ use App\Service\Controllers\DeleteServiceController;
 use App\Service\Controllers\EditServiceController;
 use App\Service\Controllers\StoreServiceController;
 use App\Service\Controllers\UpdateServiceController;
+use App\Ticket\Controllers\CloseTicketController;
+use App\Ticket\Controllers\CreateTicketController;
+use App\Ticket\Controllers\EditTicketController;
+use App\Ticket\Controllers\ListTicketsController;
+use App\Ticket\Controllers\ReopenTicketController;
+use App\Ticket\Controllers\ShowTicketController;
+use App\Ticket\Controllers\StoreTicketController;
+use App\Ticket\Controllers\UpdateTicketController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function () {
@@ -64,4 +72,13 @@ Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function 
     Route::get('services/{service}/edit', EditServiceController::class)->whereUuid('service')->name('services.edit');
     Route::put('services/{service}', UpdateServiceController::class)->whereUuid('service')->name('services.update');
     Route::delete('services/{service}', DeleteServiceController::class)->whereUuid('service')->name('services.destroy');
+
+    Route::get('tickets', ListTicketsController::class)->name('tickets.index');
+    Route::get('tickets/create', CreateTicketController::class)->name('tickets.create');
+    Route::post('tickets', StoreTicketController::class)->name('tickets.store');
+    Route::get('tickets/{ticket}', ShowTicketController::class)->whereUuid('ticket')->name('tickets.show');
+    Route::get('tickets/{ticket}/edit', EditTicketController::class)->whereUuid('ticket')->name('tickets.edit');
+    Route::put('tickets/{ticket}', UpdateTicketController::class)->whereUuid('ticket')->name('tickets.update');
+    Route::post('tickets/{ticket}/close', CloseTicketController::class)->whereUuid('ticket')->name('tickets.close');
+    Route::post('tickets/{ticket}/reopen', ReopenTicketController::class)->whereUuid('ticket')->name('tickets.reopen');
 });

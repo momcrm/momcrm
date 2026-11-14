@@ -68,3 +68,47 @@ export type Service = {
     location_id: string | null;
     note: string | null;
 };
+
+export type TicketStatus =
+    | 'new'
+    | 'in_progress'
+    | 'waiting_on_customer'
+    | 'waiting_on_supplier'
+    | 'closed';
+
+export type TicketPriority = 'low' | 'normal' | 'high' | 'urgent';
+
+export type Ticket = {
+    id: string;
+    number: number;
+    title: string;
+    description: string | null;
+    status: TicketStatus;
+    priority: TicketPriority;
+    customer_id: string;
+    contact_id: string | null;
+    location_id: string | null;
+    assignee_id: string | null;
+    closed_at: string | null;
+    created_at: string | null;
+};
+
+export type TicketListItem = Ticket & {
+    customer_name: string | null;
+    assignee_name: string | null;
+};
+
+export type CustomerChildOption = {
+    id: string;
+    name: string;
+    customer_id: string;
+};
+
+export type TicketFormOptions = {
+    customers: CustomerOption[];
+    contacts: CustomerChildOption[];
+    locations: CustomerChildOption[];
+    members: CustomerOption[];
+    priorities: Option[];
+    statuses: Option[];
+};

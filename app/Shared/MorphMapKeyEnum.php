@@ -16,6 +16,7 @@ use App\Shared\Traits\Enum;
 use App\Team\TeamEloquentModel;
 use App\TeamInvitation\TeamInvitationEloquentModel;
 use App\TeamUser\TeamUserEloquentModel;
+use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
 use Illuminate\Database\Eloquent\Model;
 
@@ -41,6 +42,7 @@ enum MorphMapKeyEnum: string
     case Team = 'team';
     case TeamInvitation = 'team_invitation';
     case TeamUser = 'team_user';
+    case Ticket = 'ticket';
     case User = 'user';
 
     /**
@@ -80,6 +82,7 @@ enum MorphMapKeyEnum: string
             self::Team => TeamEloquentModel::class,
             self::TeamInvitation => TeamInvitationEloquentModel::class,
             self::TeamUser => TeamUserEloquentModel::class,
+            self::Ticket => TicketEloquentModel::class,
             self::User => UserEloquentModel::class,
         };
     }

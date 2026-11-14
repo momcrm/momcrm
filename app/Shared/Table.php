@@ -17,5 +17,6 @@ enum Table: string
     case TeamInvitations = 'team_invitations';
     case TeamUser = 'team_user';
     case Teams = 'teams';
+    case Tickets = 'tickets';
     case Users = 'users';
 }
