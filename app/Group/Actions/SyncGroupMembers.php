@@ -15,7 +15,7 @@ final class SyncGroupMembers
     /**
      * @param  array<int, string>  $memberIds
      */
-    public static function to(GroupEloquentModel $group, ?string $leadId, array $memberIds): void
+    public static function to(string $groupId, ?string $leadId, array $memberIds): void
     {
         $members = collect($memberIds)
             ->reject(fn (string $id): bool => $id === $leadId)
@@ -25,6 +25,6 @@ final class SyncGroupMembers
             $members->put($leadId, ['role' => GroupRoleEnum::Lead->value]);
         }
 
-        $group->members()->sync($members->all());
+        GroupEloquentModel::query()->withoutGlobalScopes()->find($groupId)?->members()->sync($members->all());
     }
 }

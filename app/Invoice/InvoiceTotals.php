@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Invoice;
 
 use App\InvoiceItem\InvoiceItem;
+use App\Shared\Types;
 use Illuminate\Support\Collection;
 
 /**
@@ -24,10 +25,14 @@ final readonly class InvoiceTotals
      */
     public static function fromItems(Collection $items, int $taxRateBasisPoints): self
     {
-        $subtotal = (int) $items->sum(fn (InvoiceItem $item): int => $item->getLineTotalInCents());
-        $tax = (int) round($subtotal * $taxRateBasisPoints / 10000);
+        return self::fromSubtotal(Types::intOrZero($items->sum(fn (InvoiceItem $item): int => $item->getLineTotalInCents())), $taxRateBasisPoints);
+    }
 
-        return new self($subtotal, $tax, $subtotal + $tax);
+    public static function fromSubtotal(int $subtotalInCents, int $taxRateBasisPoints): self
+    {
+        $tax = (int) round($subtotalInCents * $taxRateBasisPoints / 10000);
+
+        return new self($subtotalInCents, $tax, $subtotalInCents + $tax);
     }
 
     /**

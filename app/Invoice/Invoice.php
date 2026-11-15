@@ -7,9 +7,11 @@ namespace App\Invoice;
 use App\Invoice\Factories\InvoiceFactory;
 use App\Invoice\Properties\CreatedAt;
 use App\Invoice\Properties\CustomerId;
+use App\Invoice\Properties\CustomerName;
 use App\Invoice\Properties\DueOn;
 use App\Invoice\Properties\Id;
 use App\Invoice\Properties\IssuedOn;
+use App\Invoice\Properties\ItemsSubtotalInCents;
 use App\Invoice\Properties\Notes;
 use App\Invoice\Properties\Number;
 use App\Invoice\Properties\PaidAt;
@@ -30,9 +32,11 @@ final class Invoice extends AbstractData
     public function __construct(
         public CreatedAt $createdAt,
         public CustomerId $customerId,
+        public CustomerName $customerName,
         public DueOn $dueOn,
         public Id $id,
         public IssuedOn $issuedOn,
+        public ItemsSubtotalInCents $itemsSubtotalInCents,
         public Notes $notes,
         public Number $number,
         public PaidAt $paidAt,
@@ -251,5 +255,15 @@ final class Invoice extends AbstractData
     public function getUpdatedAt(): UpdatedAt
     {
         return $this->updatedAt;
+    }
+
+    public function getCustomerName(): CustomerName
+    {
+        return $this->customerName;
+    }
+
+    public function getItemsSubtotalInCents(): ItemsSubtotalInCents
+    {
+        return $this->itemsSubtotalInCents;
     }
 }

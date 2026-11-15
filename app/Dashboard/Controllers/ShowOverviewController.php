@@ -9,7 +9,7 @@ use App\Favorite\Actions\FindFavorite;
 use App\Favorite\FavoritableTypeEnum;
 use App\Project\Actions\FindProject;
 use App\Project\Controllers\ListProjectsController;
-use App\Project\ProjectEloquentModel;
+use App\Project\Project;
 use App\TeamUser\Actions\FindTeamMembers;
 use App\User\UserEloquentModel;
 use Illuminate\Http\Request;
@@ -38,8 +38,8 @@ final class ShowOverviewController
                 'members' => FindTeamMembers::optionsForTeam($teamId)->count(),
             ],
             'portfolio' => FindProject::listForTeam($teamId, $user->id, sort: 'due_on')
-                ->map(fn (ProjectEloquentModel $model): array => ListProjectsController::listItem(
-                    $model,
+                ->map(fn (Project $project): array => ListProjectsController::listItem(
+                    $project,
                     FindFavorite::idsForUser($teamId, $user->id, FavoritableTypeEnum::Project),
                 ))
                 ->values(),

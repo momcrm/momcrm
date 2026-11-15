@@ -8,7 +8,7 @@ use App\Milestone\MilestoneEloquentModel;
 use App\Milestone\Properties\DueOn as MilestoneDueOn;
 use App\Milestone\Properties\ProjectId as MilestoneProjectId;
 use App\Project\Actions\FindProject;
-use App\Project\ProjectEloquentModel;
+use App\Project\Project;
 use App\Team\Scopes\CurrentTeamScope;
 use App\Ticket\Controllers\ListTicketsController;
 use App\Ticket\Properties\ArchivedAt;
@@ -53,7 +53,7 @@ final class TicketTimeline
         $projects = $projectId === null
             ? FindProject::listForTeam($teamId, $user->id)
             : FindProject::liveByIds($teamId, $user->id, [$projectId]);
-        $projectIds = $projects->modelKeys();
+        $projectIds = $projects->map(fn (Project $project): string => $project->getId()->toString())->all();
 
         return [
             'timeline' => ['zoom' => $zoom, 'from' => $window[0], 'to' => $window[1]],
@@ -77,17 +77,17 @@ final class TicketTimeline
                 ->orderBy(Number::getDatabaseTableColumnName())
                 ->limit(1000)
                 ->get()
-                ->map(fn (TicketEloquentModel $model): array => ListTicketsController::listItem($model))
+                ->map(fn (TicketEloquentModel $model): array => ListTicketsController::listItem(Ticket::fromEloquentModel($model)))
                 ->values()
                 ->all(),
             'projects' => $projects
-                ->map(fn (ProjectEloquentModel $project): array => [
-                    'id' => $project->id,
-                    'name' => $project->name,
-                    'color' => $project->color,
-                    'icon' => $project->icon,
-                    'starts_on' => $project->starts_on === null ? null : substr($project->starts_on, 0, 10),
-                    'due_on' => $project->due_on === null ? null : substr($project->due_on, 0, 10),
+                ->map(fn (Project $project): array => [
+                    'id' => $project->getId()->toString(),
+                    'name' => $project->getName()->toString(),
+                    'color' => $project->getColor()->toString(),
+                    'icon' => $project->getIcon()->toNullableString(),
+                    'starts_on' => $project->getStartsOn()->toNullableCarbon()?->toDateString(),
+                    'due_on' => $project->getDueOn()->toNullableCarbon()?->toDateString(),
                 ])
                 ->values()
                 ->all(),

@@ -52,8 +52,8 @@ final class HandleProviderCallbackController
 
         $linkedUser = FindSocialAccount::userFor($found, (string) $socialUser->getId());
 
-        if ($linkedUser !== null) {
-            return LogInUser::andRedirect($request, $linkedUser);
+        if ($linkedUser->isNotNull()) {
+            return LogInUser::andRedirect($request, UserEloquentModel::query()->findOrFail($linkedUser->getId()->toString()));
         }
 
         $request->session()->put(AuthSession::PENDING_SOCIAL, [

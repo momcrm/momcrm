@@ -11,11 +11,9 @@ use App\Favorite\FavoritableTypeEnum;
 use App\Project\Actions\FindProject;
 use App\Project\Controllers\ListProjectsController;
 use App\Project\Project;
-use App\Project\ProjectEloquentModel;
 use App\Ticket\Actions\FindTicket;
 use App\Ticket\Controllers\ListTicketsController;
 use App\Ticket\Ticket;
-use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -36,15 +34,15 @@ final class ShowArchiveController
         return Inertia::render('archive', [
             'tab' => $request->query('tab') === 'projects' ? 'projects' : 'tickets',
             'tickets' => FindTicket::archivedForTeam($teamId)
-                ->map(fn (TicketEloquentModel $model): array => [
-                    ...ListTicketsController::listItem($model),
-                    'can' => AccessAbilities::for($user, AccessResourceEnum::Ticket, Ticket::fromEloquentModel($model)),
+                ->map(fn (Ticket $ticket): array => [
+                    ...ListTicketsController::listItem($ticket),
+                    'can' => AccessAbilities::for($user, AccessResourceEnum::Ticket, $ticket),
                 ])
                 ->values(),
             'projects' => FindProject::archivedForTeam($teamId, $user->id)
-                ->map(fn (ProjectEloquentModel $model): array => [
-                    ...ListProjectsController::listItem($model, $favoriteProjectIds),
-                    'can' => AccessAbilities::for($user, AccessResourceEnum::Project, Project::fromEloquentModel($model)),
+                ->map(fn (Project $project): array => [
+                    ...ListProjectsController::listItem($project, $favoriteProjectIds),
+                    'can' => AccessAbilities::for($user, AccessResourceEnum::Project, $project),
                 ])
                 ->values(),
         ]);

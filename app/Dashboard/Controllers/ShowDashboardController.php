@@ -8,18 +8,18 @@ use App\Customer\CustomerEloquentModel;
 use App\Customer\Properties\TeamId as CustomerTeamId;
 use App\Dashboard\WorkspaceNumbers;
 use App\Invoice\Actions\FindInvoice;
-use App\Invoice\InvoiceEloquentModel;
+use App\Invoice\Invoice;
 use App\Invoice\InvoiceStatusEnum;
 use App\Project\Actions\FindProject;
 use App\Project\Controllers\ListProjectsController;
-use App\Project\ProjectEloquentModel;
+use App\Project\Project;
 use App\Project\ProjectStatusEnum;
 use App\Shared\Types;
 use App\Team\Scopes\CurrentTeamScope;
 use App\Ticket\Actions\FindTicket;
 use App\Ticket\Controllers\ListTicketsController;
+use App\Ticket\Ticket;
 use App\Ticket\TicketDrawer;
-use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -40,7 +40,7 @@ final class ShowDashboardController
 
         $unpaid = FindInvoice::paginateForTeam($teamId, InvoiceStatusEnum::Sent, perPage: 1000)
             ->getCollection()
-            ->map(fn (InvoiceEloquentModel $model): array => FindInvoice::listItem($model));
+            ->map(fn (Invoice $invoice): array => FindInvoice::listItem($invoice));
 
         return Inertia::render('dashboard', [
             'preferredName' => $user->name,
@@ -52,14 +52,14 @@ final class ShowDashboardController
                 'overdue_invoices' => $unpaid->where('is_overdue', true)->count(),
             ],
             'myTickets' => FindTicket::assignedTo($teamId, $user->id)
-                ->map(fn (TicketEloquentModel $model): array => ListTicketsController::listItem($model))
+                ->map(fn (Ticket $ticket): array => ListTicketsController::listItem($ticket))
                 ->values()
                 ->all(),
             'deadlines' => WorkspaceNumbers::deadlines($teamId),
             'projects' => FindProject::listForTeam($teamId, $user->id, sort: 'due_on')
-                ->reject(fn (ProjectEloquentModel $project): bool => $project->status === ProjectStatusEnum::Completed->value)
+                ->reject(fn (Project $project): bool => $project->getStatus()->toNullableEnum() === ProjectStatusEnum::Completed)
                 ->take(6)
-                ->map(fn (ProjectEloquentModel $model): array => ListProjectsController::listItem($model, []))
+                ->map(fn (Project $project): array => ListProjectsController::listItem($project, []))
                 ->values()
                 ->all(),
             'activity' => WorkspaceNumbers::recentActivity($teamId, $user->id),

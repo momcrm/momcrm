@@ -13,17 +13,17 @@ use App\Contact\Contact;
 use App\Customer\Actions\FindCustomer;
 use App\Customer\Exceptions\CouldNotFindCustomer;
 use App\Invoice\Actions\FindInvoice;
-use App\Invoice\InvoiceEloquentModel;
+use App\Invoice\Invoice;
 use App\Location\Actions\FindLocation;
 use App\Location\Location;
 use App\Project\Actions\FindProject;
 use App\Project\Controllers\ListProjectsController;
-use App\Project\ProjectEloquentModel;
+use App\Project\Project;
 use App\Service\Actions\FindService;
 use App\Service\Service;
 use App\Ticket\Actions\FindTicket;
 use App\Ticket\Controllers\ListTicketsController;
-use App\Ticket\TicketEloquentModel;
+use App\Ticket\Ticket;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -64,16 +64,16 @@ final class ShowCustomerController
                 ->values()
                 ->all(),
             'projects' => FindProject::forCustomer($teamId, (string) $request->user()?->id, $customerId)
-                ->map(fn (ProjectEloquentModel $model): array => ListProjectsController::listItem($model, []))
+                ->map(fn (Project $project): array => ListProjectsController::listItem($project, []))
                 ->values()
                 ->all(),
             'tickets' => FindTicket::paginateForTeam($teamId, FindTicket::FILTER_ALL, customerId: $customerId, perPage: 10)
                 ->getCollection()
-                ->map(fn (TicketEloquentModel $model): array => ListTicketsController::listItem($model))
+                ->map(fn (Ticket $ticket): array => ListTicketsController::listItem($ticket))
                 ->all(),
             'invoices' => FindInvoice::paginateForTeam($teamId, customerId: $customerId, perPage: 10)
                 ->getCollection()
-                ->map(fn (InvoiceEloquentModel $model): array => FindInvoice::listItem($model))
+                ->map(fn (Invoice $invoice): array => FindInvoice::listItem($invoice))
                 ->all(),
         ]);
     }

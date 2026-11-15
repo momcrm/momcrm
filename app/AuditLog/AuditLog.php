@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\AuditLog;
 
+use App\AuditLog\Properties\ActorName;
 use App\AuditLog\Properties\AuditableId;
 use App\AuditLog\Properties\AuditableType;
 use App\AuditLog\Properties\CreatedAt;
@@ -30,6 +31,7 @@ use Mom\Data\AbstractValue;
 final class AuditLog extends AbstractData
 {
     public function __construct(
+        public ActorName $actorName,
         public AuditableId $auditableId,
         public AuditableType $auditableType,
         public CreatedAt $createdAt,
@@ -55,7 +57,7 @@ final class AuditLog extends AbstractData
      *
      * @return array{id: string, event: string, subject: string, changes: array<int, array{field: string, old: string|null, new: string|null}>, actor: string|null, ip_address: string|null, created_at: string|null}
      */
-    public function toListItem(?string $actorName): array
+    public function toListItem(): array
     {
         $old = $this->getOldValues()->toNullableArray() ?? [];
         $new = $this->getNewValues()->toNullableArray() ?? [];
@@ -74,7 +76,7 @@ final class AuditLog extends AbstractData
             'event' => $this->getEvent()->toString(),
             'subject' => $this->getAuditableType()->toString(),
             'changes' => $changes,
-            'actor' => $actorName,
+            'actor' => $this->getActorName()->toNullableString(),
             'ip_address' => $this->getIpAddress()->toNullableString(),
             'created_at' => $this->getCreatedAt()->toNullableISOString(),
         ];
@@ -387,5 +389,10 @@ final class AuditLog extends AbstractData
         $this->userId = UserId::fromNullableUuid($userId);
 
         return $this;
+    }
+
+    public function getActorName(): ActorName
+    {
+        return $this->actorName;
     }
 }

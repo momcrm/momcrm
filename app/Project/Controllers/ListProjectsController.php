@@ -4,14 +4,11 @@ declare(strict_types=1);
 
 namespace App\Project\Controllers;
 
-use App\Customer\CustomerEloquentModel;
 use App\Favorite\Actions\FindFavorite;
 use App\Favorite\FavoritableTypeEnum;
 use App\Project\Actions\FindProject;
 use App\Project\Project;
-use App\Project\ProjectEloquentModel;
 use App\Project\ProjectFormOptions;
-use App\Project\ProjectRelationship;
 use App\Project\ProjectStatusEnum;
 use App\Shared\Types;
 use App\User\UserEloquentModel;
@@ -39,7 +36,7 @@ final class ListProjectsController
 
         return Inertia::render('projects/index', [
             'projects' => FindProject::listForTeam($teamId, $user->id, $search, $status, $sort, $direction)
-                ->map(fn (ProjectEloquentModel $model): array => self::listItem($model, $favoriteIds))
+                ->map(fn (Project $project): array => self::listItem($project, $favoriteIds))
                 ->values(),
             'filters' => ['search' => $search, 'status' => $status, 'sort' => $sort, 'direction' => $direction, 'view' => $view],
             ...ProjectFormOptions::forTeam($teamId),
@@ -53,24 +50,24 @@ final class ListProjectsController
      * @param  array<int, string>  $favoriteIds
      * @return array<string, mixed>
      */
-    public static function listItem(ProjectEloquentModel $model, array $favoriteIds): array
+    public static function listItem(Project $project, array $favoriteIds): array
     {
-        $customer = $model->getRelationValue(ProjectRelationship::Customer->value);
-        $lead = $model->getRelationValue(ProjectRelationship::Lead->value);
-
         return [
-            ...Project::fromEloquentModel($model)->toSummary(),
-            'customer_name' => $customer instanceof CustomerEloquentModel ? $customer->name : null,
-            'lead_name' => $lead instanceof UserEloquentModel ? $lead->name : null,
-            'members' => $model->members
-                ->map(fn (UserEloquentModel $member): array => ['id' => $member->id, 'name' => $member->name])
+            ...$project->toSummary(),
+            'customer_name' => $project->getCustomerName()->toNullableString(),
+            'lead_name' => $project->getLeadName()->toNullableString(),
+            'members' => $project->getMembers()->toCollection()
+                ->map(fn (mixed $member): array => [
+                    'id' => Types::string(Types::stringKeyed($member)['id'] ?? null),
+                    'name' => Types::string(Types::stringKeyed($member)['name'] ?? null),
+                ])
                 ->values()
                 ->all(),
-            'tickets_count' => Types::intOrZero($model->getAttribute('tickets_count')),
-            'closed_tickets_count' => Types::intOrZero($model->getAttribute('closed_tickets_count')),
-            'overdue_tickets_count' => Types::intOrZero($model->getAttribute('overdue_tickets_count')),
-            'is_favorite' => in_array($model->id, $favoriteIds, true),
-            'updated_at' => $model->updated_at?->toIso8601String(),
+            'tickets_count' => $project->getTicketsCount()->toInteger(),
+            'closed_tickets_count' => $project->getClosedTicketsCount()->toInteger(),
+            'overdue_tickets_count' => $project->getOverdueTicketsCount()->toInteger(),
+            'is_favorite' => in_array($project->getId()->toString(), $favoriteIds, true),
+            'updated_at' => $project->getUpdatedAt()->toNullableISOString(),
         ];
     }
 }

@@ -2,7 +2,10 @@
 
 declare(strict_types=1);
 
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Foundation\Http\FormRequest;
 use Mom\Data\AbstractData;
 use Mom\Data\AbstractValue;
@@ -148,3 +151,69 @@ test('every controller has a test beside it', function (string $controller): voi
 })->with(fn (): array => collect(glob(APP_ROOT.'/*/Controllers/*Controller.php') ?: [])
     ->mapWithKeys(fn (string $path): array => [str_replace(APP_ROOT.'/', 'app/', $path) => $path])
     ->all());
+
+/*
+|--------------------------------------------------------------------------
+| Finders
+|--------------------------------------------------------------------------
+|
+| Finders hand data objects to the rest of the app, never Eloquent models,
+| collections of them or query builders. Paginators of DTOs, collections of
+| arrays and scalars are fine.
+|
+*/
+
+const FINDER_FORBIDDEN_TYPES = [
+    Model::class,
+    Collection::class,
+    Builder::class,
+    Illuminate\Database\Query\Builder::class,
+    Relation::class,
+];
+
+/**
+ * Every public method declared on a finder, keyed "Domain\Actions\FindX::method".
+ *
+ * @return array<string, array{0: ReflectionMethod}>
+ */
+function finderMethods(): array
+{
+    return collect(glob(APP_ROOT.'/*/Actions/Find*.php') ?: [])
+        ->reject(fn (string $path): bool => str_ends_with($path, 'Test.php'))
+        ->map(fn (string $path): string => 'App\\'.basename(dirname($path, 2)).'\\Actions\\'.basename($path, '.php'))
+        ->flatMap(fn (string $class): array => array_values(array_filter(
+            (new ReflectionClass($class))->getMethods(ReflectionMethod::IS_PUBLIC),
+            fn (ReflectionMethod $method): bool => $method->class === $class,
+        )))
+        ->mapWithKeys(fn (ReflectionMethod $method): array => [
+            str_replace('App\\', '', $method->class).'::'.$method->getName() => [$method],
+        ])
+        ->all();
+}
+
+/**
+ * @return array<int, string>
+ */
+function namedReturnTypes(ReflectionMethod $method): array
+{
+    $type = $method->getReturnType();
+    $types = match (true) {
+        $type instanceof ReflectionNamedType => [$type],
+        $type instanceof ReflectionUnionType, $type instanceof ReflectionIntersectionType => $type->getTypes(),
+        default => [],
+    };
+
+    return array_map(fn (ReflectionType $type): string => $type instanceof ReflectionNamedType ? $type->getName() : (string) $type, $types);
+}
+
+test('finders return data objects, not Eloquent models or builders', function (ReflectionMethod $method): void {
+    foreach (namedReturnTypes($method) as $type) {
+        foreach (FINDER_FORBIDDEN_TYPES as $forbidden) {
+            expect(is_a($type, $forbidden, true))->toBeFalse("returns {$type}");
+        }
+    }
+
+    preg_match('/@return\s+([^\n*]+)/', (string) $method->getDocComment(), $docReturn);
+
+    expect($docReturn[1] ?? '')->not->toMatch('/\w*(EloquentModel|EloquentCollection|Builder|DatabaseNotification)\b|\bModel\b/');
+})->with(fn (): array => finderMethods());

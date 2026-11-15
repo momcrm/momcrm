@@ -23,10 +23,12 @@ final class ShowAttachmentController
     {
         $found = FindAttachment::visibleByIdForTeam($attachment, $request->user()?->current_team_id, (string) $request->user()?->id);
 
-        if ($found === null || ! Storage::disk(CreateAttachment::DISK)->exists($found->path)) {
+        $path = $found->getPath()->toString();
+
+        if ($found->isNull() || ! Storage::disk(CreateAttachment::DISK)->exists($path)) {
             throw CouldNotFindAttachment::notFound();
         }
 
-        return Storage::disk(CreateAttachment::DISK)->download($found->path, $found->name);
+        return Storage::disk(CreateAttachment::DISK)->download($path, $found->getName()->toString());
     }
 }

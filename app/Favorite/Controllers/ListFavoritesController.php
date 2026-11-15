@@ -10,11 +10,11 @@ use App\Favorite\Actions\FindFavorite;
 use App\Favorite\FavoritableTypeEnum;
 use App\Project\Actions\FindProject;
 use App\Project\Controllers\ListProjectsController;
-use App\Project\ProjectEloquentModel;
+use App\Project\Project;
 use App\Ticket\Actions\FindTicket;
 use App\Ticket\Controllers\ListTicketsController;
+use App\Ticket\Ticket;
 use App\Ticket\TicketDrawer;
-use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -36,10 +36,10 @@ final class ListFavoritesController
 
         return Inertia::render('favorites', [
             'projects' => FindProject::liveByIds($teamId, $user->id, $projectIds)
-                ->map(fn (ProjectEloquentModel $model): array => ListProjectsController::listItem($model, $projectIds))
+                ->map(fn (Project $project): array => ListProjectsController::listItem($project, $projectIds))
                 ->values(),
             'tickets' => FindTicket::byIdsForTeam($teamId, $ticketIds)
-                ->map(fn (TicketEloquentModel $model): array => ListTicketsController::listItem($model))
+                ->map(fn (Ticket $ticket): array => ListTicketsController::listItem($ticket))
                 ->values(),
             'customers' => FindCustomer::byIdsForTeam($teamId, FindFavorite::idsForUser($teamId, $user->id, FavoritableTypeEnum::Customer))
                 ->map(fn (Customer $customer): array => $customer->toSummary())

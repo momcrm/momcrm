@@ -28,7 +28,7 @@ final class FindCustomer
     }
 
     /**
-     * @return LengthAwarePaginator<int, CustomerEloquentModel>
+     * @return LengthAwarePaginator<int, Customer>
      */
     public static function paginateForTeam(string $teamId, ?string $search = null, int $perPage = 25): LengthAwarePaginator
     {
@@ -39,7 +39,8 @@ final class FindCustomer
             ->withCount(CustomerRelationship::Contacts->value)
             ->orderBy(Name::getDatabaseTableColumnName())
             ->paginate($perPage)
-            ->withQueryString();
+            ->withQueryString()
+            ->through(fn (CustomerEloquentModel $model): Customer => Customer::fromEloquentModel($model));
     }
 
     /**

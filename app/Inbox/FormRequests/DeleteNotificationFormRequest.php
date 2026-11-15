@@ -4,31 +4,28 @@ declare(strict_types=1);
 
 namespace App\Inbox\FormRequests;
 
+use App\Inbox\Actions\DeleteNotification;
 use App\Inbox\Actions\FindNotifications;
 use App\Inbox\Exceptions\CouldNotFindNotification;
 use App\User\UserEloquentModel;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Notifications\DatabaseNotification;
 
 /**
  * Clears a notification from the list.
  */
 final class DeleteNotificationFormRequest extends FormRequest
 {
-    public ?DatabaseNotification $notification = null;
-
     /**
      * @throws CouldNotFindNotification
      */
     public function authorize(): bool
     {
         $user = $this->user();
-        $this->notification = $user instanceof UserEloquentModel
-            ? FindNotifications::byIdForUser($user, (string) $this->route('notification'))
-            : null;
+        $exists = $user instanceof UserEloquentModel
+            && FindNotifications::existsForUser($user, (string) $this->route('notification'));
 
-        if ($this->notification === null) {
+        if (! $exists) {
             throw CouldNotFindNotification::notFound();
         }
 
@@ -45,7 +42,9 @@ final class DeleteNotificationFormRequest extends FormRequest
 
     public function process(): RedirectResponse
     {
-        $this->notification?->delete();
+        /** @var UserEloquentModel $user */
+        $user = $this->user();
+        DeleteNotification::for($user, (string) $this->route('notification'));
 
         return back();
     }

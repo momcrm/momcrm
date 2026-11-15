@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Inbox\FormRequests;
 
-use App\Inbox\Actions\FindNotifications;
+use App\Inbox\Actions\MarkAllNotificationsRead;
 use App\User\UserEloquentModel;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
@@ -32,7 +32,7 @@ final class MarkAllNotificationsReadFormRequest extends FormRequest
     {
         /** @var UserEloquentModel $user */
         $user = $this->user();
-        FindNotifications::query($user)->whereNull('read_at')->update(['read_at' => now()]);
+        MarkAllNotificationsRead::for($user);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('All caught up.')]);
 

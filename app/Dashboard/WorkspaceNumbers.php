@@ -36,6 +36,7 @@ use App\Ticket\Properties\Number;
 use App\Ticket\Properties\ParentId;
 use App\Ticket\Properties\Status;
 use App\Ticket\Properties\TeamId;
+use App\Ticket\Ticket;
 use App\Ticket\TicketEloquentModel;
 use App\Ticket\TicketRelationship;
 use App\Ticket\TicketStatusEnum;
@@ -83,7 +84,7 @@ final class WorkspaceNumbers
             ->orderBy(Number::getDatabaseTableColumnName())
             ->limit(20)
             ->get()
-            ->map(fn (TicketEloquentModel $model): array => ListTicketsController::listItem($model))
+            ->map(fn (TicketEloquentModel $model): array => ListTicketsController::listItem(Ticket::fromEloquentModel($model)))
             ->values()
             ->all();
     }
@@ -175,7 +176,7 @@ final class WorkspaceNumbers
             ->limit($limit)
             ->get()
             ->map(fn (ActivityEloquentModel $model): array => [
-                ...Activity::fromEloquentModel($model)->toListItem($model->actor?->name),
+                ...Activity::fromEloquentModel($model)->toListItem(),
                 'url' => match ($model->getAttribute(SubjectType::getDatabaseTableColumnName())) {
                     MorphMapKeyEnum::Ticket->value => route('tickets.index', ['ticket' => Types::string($model->getAttribute(SubjectId::getDatabaseTableColumnName()))]),
                     MorphMapKeyEnum::Project->value => route('projects.show', Types::string($model->getAttribute(SubjectId::getDatabaseTableColumnName()))),

@@ -4,13 +4,21 @@ declare(strict_types=1);
 
 namespace App\Ticket\Actions;
 
+use App\Team\Scopes\CurrentTeamScope;
 use App\Ticket\Notifications\TicketDueSoonNotification;
+use App\Ticket\Properties\ArchivedAt;
+use App\Ticket\Properties\AssigneeId;
+use App\Ticket\Properties\DueOn;
+use App\Ticket\Properties\Status;
 use App\Ticket\TicketEloquentModel;
+use App\Ticket\TicketRelationship;
+use App\Ticket\TicketStatusEnum;
 use App\User\UserEloquentModel;
 use Carbon\CarbonImmutable;
 
 /**
- * Tells each assignee about their open tickets due tomorrow. Runs daily.
+ * Tells each assignee about their open tickets due tomorrow, in every team.
+ * Runs daily. The notifications are queued, so they take the models.
  */
 final class RemindDueTickets
 {
@@ -19,7 +27,14 @@ final class RemindDueTickets
      */
     public static function run(?CarbonImmutable $today = null): int
     {
-        $tickets = FindTicket::openDueOn(($today ?? CarbonImmutable::today())->addDay()->toDateString());
+        $tickets = TicketEloquentModel::query()
+            ->withoutGlobalScope(CurrentTeamScope::class)
+            ->with(TicketRelationship::Project->value)
+            ->whereNull(ArchivedAt::getDatabaseTableColumnName())
+            ->whereNotNull(AssigneeId::getDatabaseTableColumnName())
+            ->whereIn(Status::getDatabaseTableColumnName(), TicketStatusEnum::openValues())
+            ->whereDate(DueOn::getDatabaseTableColumnName(), ($today ?? CarbonImmutable::today())->addDay()->toDateString())
+            ->get();
 
         $tickets->each(function (TicketEloquentModel $ticket): void {
             UserEloquentModel::query()->find($ticket->assignee_id)?->notify(new TicketDueSoonNotification($ticket));

@@ -6,6 +6,7 @@ namespace App\Customer;
 
 use App\Customer\Factories\CustomerFactory;
 use App\Customer\Properties\Abn;
+use App\Customer\Properties\ContactsCount;
 use App\Customer\Properties\CreatedAt;
 use App\Customer\Properties\Email;
 use App\Customer\Properties\Id;
@@ -28,6 +29,7 @@ final class Customer extends AbstractData
 {
     public function __construct(
         public Abn $abn,
+        public ContactsCount $contactsCount,
         public CreatedAt $createdAt,
         public Email $email,
         public Id $id,
@@ -213,5 +215,10 @@ final class Customer extends AbstractData
         $this->website = new Website($website instanceof AbstractValue ? $website->toValue() : $website);
 
         return $this;
+    }
+
+    public function getContactsCount(): ContactsCount
+    {
+        return $this->contactsCount;
     }
 }

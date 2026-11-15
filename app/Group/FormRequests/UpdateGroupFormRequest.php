@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace App\Group\FormRequests;
 
+use App\Group\Actions\FindGroup;
 use App\Group\Actions\FindGroupForTeam;
 use App\Group\Actions\SyncGroupMembers;
+use App\Group\Actions\UpdateGroup;
 use App\Group\Exceptions\CouldNotFindGroup;
 use App\Group\Group;
-use App\Group\GroupEloquentModel;
 use App\Group\GroupRoleEnum;
 use App\Group\GroupValidationRules;
 use App\Shared\Types;
-use App\User\UserEloquentModel;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
@@ -22,7 +22,14 @@ use Inertia\Inertia;
 
 final class UpdateGroupFormRequest extends FormRequest
 {
-    public ?GroupEloquentModel $group = null;
+    public Group $group;
+
+    public function __construct()
+    {
+        parent::__construct();
+
+        $this->group = Group::new();
+    }
 
     /**
      * @throws CouldNotFindGroup
@@ -31,15 +38,14 @@ final class UpdateGroupFormRequest extends FormRequest
     {
         $this->group = FindGroupForTeam::byId((string) $this->route('group'), $this->user()?->current_team_id);
 
-        if ($this->group === null) {
+        if ($this->group->isNull()) {
             throw CouldNotFindGroup::notFound();
         }
 
-        $group = Group::fromEloquentModel($this->group);
-        Gate::authorize('update', $group);
+        Gate::authorize('update', $this->group);
 
         return $this->changesMembers()
-            ? Gate::authorize('manageMembers', $group)
+            ? Gate::authorize('manageMembers', $this->group)
             : Response::allow();
     }
 
@@ -69,14 +75,12 @@ final class UpdateGroupFormRequest extends FormRequest
     public function process(): RedirectResponse
     {
         $validated = $this->validated();
-        $group = $this->group ?? new GroupEloquentModel;
-
-        $group->update(Group::fromEloquentModel($group)
-            ->setPropertyIfExists(Types::stringKeyed(Arr::except($validated, [GroupValidationRules::LEAD_ID, GroupValidationRules::MEMBER_IDS])))
-            ->forDatabaseUpdate());
+        UpdateGroup::fromGroup(
+            $this->group->setPropertyIfExists(Types::stringKeyed(Arr::except($validated, [GroupValidationRules::LEAD_ID, GroupValidationRules::MEMBER_IDS]))),
+        );
 
         if (array_key_exists(GroupValidationRules::MEMBER_IDS, $validated)) {
-            SyncGroupMembers::to($group, Types::nullableString($validated[GroupValidationRules::LEAD_ID] ?? null), Types::stringList($validated[GroupValidationRules::MEMBER_IDS]));
+            SyncGroupMembers::to($this->group->getId()->toString(), Types::nullableString($validated[GroupValidationRules::LEAD_ID] ?? null), Types::stringList($validated[GroupValidationRules::MEMBER_IDS]));
         }
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Group saved.')]);
@@ -89,12 +93,12 @@ final class UpdateGroupFormRequest extends FormRequest
      */
     private function changesMembers(): bool
     {
-        if ($this->group === null || ! $this->has(GroupValidationRules::MEMBER_IDS)) {
+        if (! $this->has(GroupValidationRules::MEMBER_IDS)) {
             return false;
         }
 
-        $current = $this->group->members()->get()
-            ->mapWithKeys(fn (UserEloquentModel $member): array => [$member->id => GroupRoleEnum::ofMember($member)->value])
+        $current = FindGroup::membersOf($this->group->getId()->toString())
+            ->mapWithKeys(fn (array $member): array => [$member['id'] => $member['role']])
             ->sortKeys()
             ->all();
 

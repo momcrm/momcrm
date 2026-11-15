@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Inbox\Actions;
 
 use App\Inbox\InboxKindEnum;
+use App\Inbox\InboxNotifications;
 use App\Shared\Types;
 use App\User\UserEloquentModel;
 use Illuminate\Database\Eloquent\Builder;
@@ -25,7 +26,7 @@ final class FindNotifications
      */
     public static function forUser(UserEloquentModel $user, ?InboxKindEnum $kind = null, bool $unreadOnly = false): Collection
     {
-        return self::query($user)
+        return InboxNotifications::query($user)
             ->when($kind, fn (Builder $query, InboxKindEnum $kind) => $query->where('data->kind', $kind->value))
             ->when($unreadOnly, fn (Builder $query) => $query->whereNull('read_at'))
             ->latest()
@@ -42,7 +43,7 @@ final class FindNotifications
      */
     public static function unreadCounts(UserEloquentModel $user): array
     {
-        $counts = self::query($user)
+        $counts = InboxNotifications::query($user)
             ->whereNull('read_at')
             ->get(['data'])
             ->countBy(fn (DatabaseNotification $notification): string => Types::string($notification->data['kind'] ?? ''));
@@ -55,23 +56,12 @@ final class FindNotifications
 
     public static function countUnread(UserEloquentModel $user): int
     {
-        return self::query($user)->whereNull('read_at')->count();
+        return InboxNotifications::query($user)->whereNull('read_at')->count();
     }
 
-    public static function byIdForUser(UserEloquentModel $user, string $id): ?DatabaseNotification
+    public static function existsForUser(UserEloquentModel $user, string $id): bool
     {
-        return self::query($user)->whereKey($id)->first();
-    }
-
-    /**
-     * @return Builder<DatabaseNotification>
-     */
-    public static function query(UserEloquentModel $user): Builder
-    {
-        return DatabaseNotification::query()
-            ->where('notifiable_type', $user->getMorphClass())
-            ->where('notifiable_id', $user->id)
-            ->where('data->team_id', $user->current_team_id);
+        return InboxNotifications::query($user)->whereKey($id)->exists();
     }
 
     /**

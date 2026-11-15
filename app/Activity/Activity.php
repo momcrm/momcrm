@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Activity;
 
+use App\Activity\Properties\ActorName;
 use App\Activity\Properties\CreatedAt;
 use App\Activity\Properties\Details;
 use App\Activity\Properties\Id;
@@ -28,6 +29,7 @@ use Mom\Data\AbstractValue;
 final class Activity extends AbstractData
 {
     public function __construct(
+        public ActorName $actorName,
         public CreatedAt $createdAt,
         public Details $details,
         public Id $id,
@@ -51,14 +53,14 @@ final class Activity extends AbstractData
      *
      * @return array{id: string, type: string, label: string, details: array<array-key, mixed>|null, actor: string|null, ip_address: string|null, created_at: string|null}
      */
-    public function toListItem(?string $actorName): array
+    public function toListItem(): array
     {
         return [
             'id' => $this->getId()->toString(),
             'type' => $this->getType()->toString(),
             'label' => $this->getType()->toEnum()->label(),
             'details' => $this->getDetails()->toNullableArray(),
-            'actor' => $actorName,
+            'actor' => $this->getActorName()->toNullableString(),
             'ip_address' => $this->getIpAddress()->toNullableString(),
             'created_at' => $this->getCreatedAt()->toNullableISOString(),
         ];
@@ -310,5 +312,10 @@ final class Activity extends AbstractData
         $this->userId = UserId::fromNullableUuid($userId);
 
         return $this;
+    }
+
+    public function getActorName(): ActorName
+    {
+        return $this->actorName;
     }
 }

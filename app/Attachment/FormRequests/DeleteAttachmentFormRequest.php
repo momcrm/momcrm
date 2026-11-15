@@ -4,23 +4,28 @@ declare(strict_types=1);
 
 namespace App\Attachment\FormRequests;
 
-use App\Attachment\Actions\CreateAttachment;
+use App\Attachment\Actions\DeleteAttachment;
 use App\Attachment\Actions\FindAttachment;
 use App\Attachment\Attachment;
-use App\Attachment\AttachmentEloquentModel;
 use App\Attachment\Exceptions\CouldNotFindAttachment;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * Removes a file and its stored copy.
  */
 final class DeleteAttachmentFormRequest extends FormRequest
 {
-    public ?AttachmentEloquentModel $attachment = null;
+    public Attachment $attachment;
+
+    public function __construct()
+    {
+        parent::__construct();
+
+        $this->attachment = Attachment::new();
+    }
 
     /**
      * @throws CouldNotFindAttachment
@@ -29,11 +34,11 @@ final class DeleteAttachmentFormRequest extends FormRequest
     {
         $this->attachment = FindAttachment::visibleByIdForTeam((string) $this->route('attachment'), $this->user()?->current_team_id, (string) $this->user()?->id);
 
-        if ($this->attachment === null) {
+        if ($this->attachment->isNull()) {
             throw CouldNotFindAttachment::notFound();
         }
 
-        return Gate::authorize('delete', Attachment::fromEloquentModel($this->attachment));
+        return Gate::authorize('delete', $this->attachment);
     }
 
     /**
@@ -46,10 +51,7 @@ final class DeleteAttachmentFormRequest extends FormRequest
 
     public function process(): RedirectResponse
     {
-        if ($this->attachment !== null) {
-            Storage::disk(CreateAttachment::DISK)->delete($this->attachment->path);
-            $this->attachment->delete();
-        }
+        DeleteAttachment::fromAttachment($this->attachment);
 
         return back();
     }
