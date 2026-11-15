@@ -6,6 +6,7 @@ import {
     Shield,
     UserRound,
     UsersRound,
+    Workflow,
 } from 'lucide-react';
 import type { PropsWithChildren } from 'react';
 import { useCurrentUrl } from '@/hooks/use-current-url';
@@ -16,12 +17,19 @@ import { edit as editAppearance } from '@/routes/appearance';
 import { edit } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
 import { edit as editTeam } from '@/routes/team';
+import { edit as editWorkflow } from '@/routes/workflow';
 import type { NavItem } from '@/types';
 
 const accessRulesItem: NavItem = {
     title: 'Access rules',
     href: accessRulesIndex(),
     icon: KeyRound,
+};
+
+const workflowItem: NavItem = {
+    title: 'Workflow',
+    href: editWorkflow(),
+    icon: Workflow,
 };
 
 const sections: { title: string; items: NavItem[] }[] = [
@@ -48,10 +56,17 @@ const sections: { title: string; items: NavItem[] }[] = [
  */
 export default function SettingsLayout({ children }: PropsWithChildren) {
     const { isCurrentOrParentUrl } = useCurrentUrl();
-    const { canManageAccessRules } = usePage().props;
+    const { canManageAccessRules, canManageWorkflow } = usePage().props;
     const visibleSections = sections.map((section) =>
-        section.title === 'Workspace' && canManageAccessRules
-            ? { ...section, items: [...section.items, accessRulesItem] }
+        section.title === 'Workspace'
+            ? {
+                  ...section,
+                  items: [
+                      ...section.items,
+                      ...(canManageWorkflow ? [workflowItem] : []),
+                      ...(canManageAccessRules ? [accessRulesItem] : []),
+                  ],
+              }
             : section,
     );
 

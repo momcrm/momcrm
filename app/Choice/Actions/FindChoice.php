@@ -15,7 +15,9 @@ use App\Choice\Properties\ListName;
 use App\Choice\Properties\Name;
 use App\Choice\Properties\Position;
 use App\Choice\Properties\TeamId;
+use App\Shared\Types;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 
 final class FindChoice
 {
@@ -51,6 +53,32 @@ final class FindChoice
             ->find($id);
 
         return $model === null ? Choice::new() : Choice::fromEloquentModel($model);
+    }
+
+    /**
+     * How many records use each of a team's choices in a list, by choice id.
+     *
+     * @return array<string, int>
+     */
+    public static function usageCountsForTeam(string $teamId, ChoiceListEnum $list): array
+    {
+        $counts = [];
+
+        foreach ($list->usages() as $usage) {
+            DB::table($usage['table']->value)
+                ->where('team_id', $teamId)
+                ->whereNotNull($usage['column'])
+                ->select("{$usage['column']} as choice_id")
+                ->selectRaw('count(*) as aggregate')
+                ->groupBy($usage['column'])
+                ->get()
+                ->each(function (object $row) use (&$counts): void {
+                    $id = Types::string($row->choice_id);
+                    $counts[$id] = ($counts[$id] ?? 0) + Types::int($row->aggregate);
+                });
+        }
+
+        return $counts;
     }
 
     /**
