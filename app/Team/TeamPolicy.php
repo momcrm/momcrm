@@ -52,6 +52,17 @@ final class TeamPolicy
             : Response::deny('Only team owners and admins can remove the sample data.');
     }
 
+    /**
+     * Owners and admins write the team's access rules. This is not itself an
+     * access rule, so nobody can rule themselves out of fixing the rules.
+     */
+    public function manageAccessRules(UserEloquentModel $user, Team $team): Response
+    {
+        return $this->isOwnerOrAdmin($user, $team)
+            ? Response::allow()
+            : Response::deny('Only team owners and admins can manage access rules.');
+    }
+
     private function isOwnerOrAdmin(UserEloquentModel $user, Team $team): bool
     {
         $role = FindTeamUser::byTeamAndUser(

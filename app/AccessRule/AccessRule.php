@@ -170,6 +170,22 @@ final class AccessRule extends AbstractData
     }
 
     /**
+     * @return array{id: string, name: string, resources: array<int, string>, actions: array<int, string>, effect: string, conditions: array<int, array{attribute: ?string, operator: ?string, value: string|array<int, string>|null}>, is_enabled: bool}
+     */
+    public function toListItem(): array
+    {
+        return [
+            'id' => $this->getId()->toString(),
+            'name' => $this->getName()->toString(),
+            'resources' => array_values(array_map(strval(...), $this->getResources()->toArray())),
+            'actions' => array_values(array_map(strval(...), $this->getActions()->toArray())),
+            'effect' => $this->getEffect()->toEnum()->value,
+            'conditions' => array_map(fn (AccessCondition $condition): array => $condition->toArray(), $this->conditionObjects()),
+            'is_enabled' => $this->getIsEnabled()->toBoolean(),
+        ];
+    }
+
+    /**
      * The resources the rule covers; empty covers every resource.
      *
      * @return array<int, AccessResourceEnum>

@@ -58,6 +58,7 @@ class HandleInertiaRequests extends Middleware
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'hasSampleData' => fn (): bool => $this->hasSampleData($request),
             'canRemoveSampleData' => fn (): bool => $this->canRemoveSampleData($request),
+            'canManageAccessRules' => fn (): bool => $this->allowsOnCurrentTeam($request, 'manageAccessRules'),
             'sidebarCounts' => fn (): ?array => $this->sidebarCounts($request),
             'gettingStarted' => fn (): ?array => $request->user() instanceof UserEloquentModel
                 ? GetGettingStartedProgress::forUser($request->user())
@@ -77,6 +78,14 @@ class HandleInertiaRequests extends Middleware
 
     private function canRemoveSampleData(Request $request): bool
     {
+        return $this->allowsOnCurrentTeam($request, 'removeSampleData');
+    }
+
+    /**
+     * Whether the signed-in person may take a TeamPolicy action on their current team.
+     */
+    private function allowsOnCurrentTeam(Request $request, string $ability): bool
+    {
         $user = $request->user();
 
         if (! $user instanceof UserEloquentModel) {
@@ -85,7 +94,7 @@ class HandleInertiaRequests extends Middleware
 
         $team = FindTeam::byIdForMember(id: $user->current_team_id, userId: $user->id);
 
-        return $team->isNotNull() && Gate::forUser($user)->allows('removeSampleData', $team);
+        return $team->isNotNull() && Gate::forUser($user)->allows($ability, $team);
     }
 
     /**

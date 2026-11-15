@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Plus, Search, UserPlus } from 'lucide-react';
 import { useState } from 'react';
 import DataTable, { dataTableColumns } from '@/components/data-table';
@@ -23,6 +23,7 @@ import { colorDot, colorSoft } from '@/lib/colors';
 import { timeAgo } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { members as membersRoute } from '@/routes';
+import { index as accessRulesIndex } from '@/routes/access-rules';
 import { show as showGroup } from '@/routes/groups';
 import { update as updateRole } from '@/routes/members';
 import type { ColorName } from '@/types';
@@ -194,6 +195,7 @@ export default function Members({
     roles: Role[];
     colors: ColorName[];
 }) {
+    const { canManageAccessRules } = usePage().props;
     const [search, setSearch] = useState('');
     const [role, setRole] = useState<Role | null>(null);
     const [inviting, setInviting] = useState(false);
@@ -399,16 +401,22 @@ export default function Members({
                                 {(
                                     [
                                         [
-                                            'Work on customers, tickets, projects and invoices',
+                                            'Create and edit customers, tickets, projects and invoices',
                                             true,
                                             true,
                                             true,
                                         ],
                                         [
-                                            'Create groups and projects',
+                                            'Delete, archive and restore them; manage project and group members',
                                             true,
                                             true,
+                                            false,
+                                        ],
+                                        [
+                                            'Change the access rules',
                                             true,
+                                            true,
+                                            false,
                                         ],
                                         [
                                             'Invite people and revoke invitations',
@@ -455,6 +463,21 @@ export default function Members({
                                 ))}
                             </tbody>
                         </table>
+                        <p className="border-t px-3 py-2.5 text-xs text-muted-foreground">
+                            The first three rows follow the team's access rules,
+                            shown here as they start out.
+                            {canManageAccessRules && (
+                                <>
+                                    {' '}
+                                    <Link
+                                        href={accessRulesIndex()}
+                                        className="font-medium text-foreground underline underline-offset-4"
+                                    >
+                                        Change the access rules
+                                    </Link>
+                                </>
+                            )}
+                        </p>
                     </div>
                 )}
             </div>

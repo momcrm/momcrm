@@ -1,5 +1,9 @@
 <?php
 
+use App\AccessRule\Controllers\DeleteAccessRuleController;
+use App\AccessRule\Controllers\ListAccessRulesController;
+use App\AccessRule\Controllers\StoreAccessRuleController;
+use App\AccessRule\Controllers\UpdateAccessRuleController;
 use App\Activity\Controllers\ListAccountActivityController;
 use App\Activity\Controllers\ListTeamActivityController;
 use App\Team\Controllers\EditTeamController;
@@ -37,6 +41,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('settings/team/invitations', StoreTeamInvitationController::class)->name('team.invitations.store');
     Route::delete('settings/team/invitations/{invitation}', DeleteTeamInvitationController::class)->name('team.invitations.destroy');
     Route::get('settings/team/activity', ListTeamActivityController::class)->name('team-activity.index');
+
+    Route::get('settings/access-rules', ListAccessRulesController::class)->name('access-rules.index');
+    Route::post('settings/access-rules', StoreAccessRuleController::class)->name('access-rules.store');
+    Route::put('settings/access-rules/{accessRule}', UpdateAccessRuleController::class)->name('access-rules.update');
+    Route::delete('settings/access-rules/{accessRule}', DeleteAccessRuleController::class)->name('access-rules.destroy');
 
     Route::get('settings/activity', ListAccountActivityController::class)->name('activity.index');
 
