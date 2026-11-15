@@ -49,7 +49,13 @@ final class AccessAttributeResolver
             AccessAttributeEnum::TicketStatus => $record instanceof Ticket ? $record->getStatusId()->toNullableString() : null,
             AccessAttributeEnum::TicketPriority => $record instanceof Ticket ? $record->getPriorityId()->toNullableString() : null,
             AccessAttributeEnum::TicketType => $record instanceof Ticket ? $record->getTypeId()->toNullableString() : null,
-            AccessAttributeEnum::TicketDepartment => $record instanceof Ticket ? $record->getDepartmentId()->toNullableString() : null,
+            AccessAttributeEnum::TicketGroup => $record instanceof Ticket ? $record->getGroupId()->toNullableString() : null,
+            AccessAttributeEnum::TicketSubjectIsGroupLead => $record instanceof Ticket
+                ? $record->getGroupId()->isNotNull() && self::groupRole($record->getGroupId()->toString(), $subject->userId) === GroupRoleEnum::Lead->value
+                : null,
+            AccessAttributeEnum::TicketSubjectIsGroupMember => $record instanceof Ticket
+                ? $record->getGroupId()->isNotNull() && self::groupRole($record->getGroupId()->toString(), $subject->userId) !== null
+                : null,
             AccessAttributeEnum::TicketProject => $record instanceof Ticket ? $record->getProjectId()->toNullableString() : null,
             AccessAttributeEnum::TicketLabel => $record instanceof Ticket ? self::labelIds(LabelTargetEnum::Ticket, $record->getId()->toString()) : null,
             AccessAttributeEnum::TicketIsArchived => $record instanceof Ticket ? $record->getArchivedAt()->isNotNull() : null,

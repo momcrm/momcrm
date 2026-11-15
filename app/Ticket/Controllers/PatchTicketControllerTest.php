@@ -8,6 +8,7 @@ use App\Choice\ChoiceEloquentModel;
 use App\Choice\ChoiceListEnum;
 use App\Contact\ContactEloquentModel;
 use App\Customer\CustomerEloquentModel;
+use App\Group\GroupEloquentModel;
 use App\Project\ProjectEloquentModel;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
@@ -171,16 +172,16 @@ it('keeps an archived label the ticket already has, but does not add one', funct
     expect($ticket->labels()->pluck('choices.id')->sort()->values()->all())->toBe(collect([$archived->id, $live->id])->sort()->values()->all());
 });
 
-it('sets the type and department, keeping archived ones the ticket has but not choosing one from another list', function (): void {
+it('sets the type and group, keeping an archived type the ticket has but not choosing one from another list or team', function (): void {
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
     $teamId = $user->current_team_id;
     $incident = FindChoice::byNameForTeam($teamId, ChoiceListEnum::TicketType, 'Incident')->getId()->toString();
-    $support = FindChoice::byNameForTeam($teamId, ChoiceListEnum::TicketDepartment, 'Support')->getId()->toString();
+    $group = GroupEloquentModel::factory()->create(['team_id' => $teamId]);
     $ticket = patchableTicket($user);
     $other = patchableTicket($user);
 
     actingAs($user)
-        ->patch(route('tickets.patch', $ticket->id), ['type_id' => $incident, 'department_id' => $support])
+        ->patch(route('tickets.patch', $ticket->id), ['type_id' => $incident, 'group_id' => $group->id])
         ->assertSessionHasNoErrors();
 
     ChoiceEloquentModel::query()->withoutGlobalScopes()->whereKey($incident)->update(['archived_at' => now()]);
@@ -190,12 +191,12 @@ it('sets the type and department, keeping archived ones the ticket has but not c
         ->assertSessionHasNoErrors();
 
     actingAs($user)
-        ->patch(route('tickets.patch', $other->id), ['type_id' => $incident, 'department_id' => teamPriorityId($user, 'Urgent')])
+        ->patch(route('tickets.patch', $other->id), ['type_id' => $incident, 'group_id' => GroupEloquentModel::factory()->create()->id])
         ->assertSessionHasErrors([
             'type_id' => "Choose one of your team's ticket types.",
-            'department_id' => "Choose one of your team's departments.",
+            'group_id' => "Choose one of your team's groups.",
         ]);
 
-    expect($ticket->fresh())->type_id->toBe($incident)->department_id->toBe($support)->title->toBe('Renamed')
-        ->and($other->fresh())->type_id->toBeNull()->department_id->toBeNull();
+    expect($ticket->fresh())->type_id->toBe($incident)->group_id->toBe($group->id)->title->toBe('Renamed')
+        ->and($other->fresh())->type_id->toBeNull()->group_id->toBeNull();
 });

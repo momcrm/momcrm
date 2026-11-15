@@ -10,6 +10,7 @@ use App\Choice\ChoiceEloquentModel;
 use App\Choice\ChoiceListEnum;
 use App\Contact\ContactEloquentModel;
 use App\Customer\CustomerEloquentModel;
+use App\Group\GroupEloquentModel;
 use App\Project\ProjectEloquentModel;
 use App\TeamUser\TeamUserEloquentModel;
 use App\Ticket\TicketEloquentModel;
@@ -100,14 +101,17 @@ it('opens a project ticket without a customer, with dates', function (): void {
         ->due_on->toBe('2026-12-05');
 });
 
-it("gives a project ticket the project's customer when none is chosen", function (): void {
+it("gives a project ticket the project's customer and group when none are chosen", function (): void {
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
     $customer = CustomerEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
-    $project = ProjectEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'customer_id' => $customer->id]);
+    [$projectsGroup, $chosen] = GroupEloquentModel::factory()->count(2)->create(['team_id' => $user->current_team_id])->all();
+    $project = ProjectEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'customer_id' => $customer->id, 'group_id' => $projectsGroup->id]);
 
-    actingAs($user)->post(route('tickets.store'), ['project_id' => $project->id, 'title' => 'X']);
+    actingAs($user)->post(route('tickets.store'), ['project_id' => $project->id, 'title' => 'Inherits']);
+    actingAs($user)->post(route('tickets.store'), ['project_id' => $project->id, 'title' => 'Chosen', 'group_id' => $chosen->id]);
 
-    expect(TicketEloquentModel::query()->sole()->customer_id)->toBe($customer->id);
+    expect(TicketEloquentModel::query()->where('title', 'Inherits')->sole())->customer_id->toBe($customer->id)->group_id->toBe($projectsGroup->id)
+        ->and(TicketEloquentModel::query()->where('title', 'Chosen')->sole()->group_id)->toBe($chosen->id);
 });
 
 it('needs a customer or a project', function (): void {

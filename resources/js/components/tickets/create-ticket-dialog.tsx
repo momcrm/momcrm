@@ -25,7 +25,6 @@ import type { KeyboardEvent, ReactNode } from 'react';
 import {
     defaultStatusId,
     PriorityGlyph,
-    useTicketDepartments,
     useTicketPriorities,
     useTicketStatuses,
     useTicketTypes,
@@ -216,9 +215,8 @@ function CreateTicketForm({
     const types = useTicketTypes();
     const [typeId, setTypeId] = useState('');
     const type = types.find((option) => option.id === typeId);
-    const departments = useTicketDepartments();
-    const [departmentId, setDepartmentId] = useState('');
-    const department = departments.find((option) => option.id === departmentId);
+    const [groupId, setGroupId] = useState('');
+    const group = options.groups.find((option) => option.id === groupId);
     const [startsOn, setStartsOn] = useState<string | null>(null);
     const [dueOn, setDueOn] = useState<string | null>(null);
     const [labelIds, setLabelIds] = useState<string[]>([]);
@@ -286,7 +284,7 @@ function CreateTicketForm({
                 status_id: statusId || null,
                 priority_id: priorityId || null,
                 type_id: typeId || null,
-                department_id: departmentId || null,
+                group_id: groupId || null,
                 starts_on: startsOn,
                 due_on: dueOn,
                 label_ids: labelIds,
@@ -505,38 +503,32 @@ function CreateTicketForm({
                         </SearchPicker>
                     )}
 
-                    {departments.length > 0 && (
+                    {options.groups.length > 0 && (
                         <SearchPicker
-                            label="Department"
-                            value={departmentId}
-                            empty="No department"
-                            choices={departments.map((option) => ({
+                            label="Group"
+                            value={groupId}
+                            empty="No group"
+                            choices={options.groups.map((option) => ({
                                 value: option.id,
                                 label: option.name,
                                 hue: option.hue,
                             }))}
-                            onChange={setDepartmentId}
+                            onChange={setGroupId}
                         >
                             <span
                                 aria-hidden
                                 className={cn(
                                     'size-2 shrink-0 rounded-full',
-                                    department
+                                    group
                                         ? 'hue-dot'
                                         : 'bg-muted-foreground/40',
                                 )}
-                                style={
-                                    department
-                                        ? hueStyle(department.hue)
-                                        : undefined
-                                }
+                                style={group ? hueStyle(group.hue) : undefined}
                             />
-                            {department ? (
-                                <span className="truncate">
-                                    {department.name}
-                                </span>
+                            {group ? (
+                                <span className="truncate">{group.name}</span>
                             ) : (
-                                <Placeholder>Department</Placeholder>
+                                <Placeholder>Group</Placeholder>
                             )}
                         </SearchPicker>
                     )}

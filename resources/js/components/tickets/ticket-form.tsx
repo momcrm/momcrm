@@ -2,7 +2,6 @@ import { Form, Link } from '@inertiajs/react';
 import { useState } from 'react';
 import FormField from '@/components/form-field';
 import {
-    useTicketDepartments,
     useTicketPriorities,
     useTicketTypes,
     useTicketStatuses,
@@ -34,7 +33,6 @@ export default function TicketForm({
     const priorities = useTicketPriorities(ticket?.priority_id);
     const statuses = useTicketStatuses(ticket?.status_id);
     const types = useTicketTypes(ticket?.type_id);
-    const departments = useTicketDepartments(ticket?.department_id);
     const [selectedCustomer, setSelectedCustomer] = useState(
         ticket?.customer_id ?? customerId ?? '',
     );
@@ -257,17 +255,17 @@ export default function TicketForm({
                             </NativeSelect>
                         </FormField>
                         <FormField
-                            id="department_id"
-                            label="Department"
-                            error={errors.department_id}
+                            id="group_id"
+                            label="Group"
+                            error={errors.group_id}
                         >
                             <NativeSelect
-                                id="department_id"
-                                name="department_id"
-                                defaultValue={ticket?.department_id ?? ''}
+                                id="group_id"
+                                name="group_id"
+                                defaultValue={ticket?.group_id ?? ''}
                             >
-                                <option value="">No department</option>
-                                {departments.map((choice) => (
+                                <option value="">No group</option>
+                                {options.groups.map((choice) => (
                                     <option key={choice.id} value={choice.id}>
                                         {choice.name}
                                     </option>

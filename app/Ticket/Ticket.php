@@ -14,10 +14,10 @@ use App\Ticket\Properties\ContactId;
 use App\Ticket\Properties\CreatedAt;
 use App\Ticket\Properties\Customer;
 use App\Ticket\Properties\CustomerId;
-use App\Ticket\Properties\DepartmentId;
 use App\Ticket\Properties\Description;
 use App\Ticket\Properties\DueOn;
 use App\Ticket\Properties\EstimateMinutes;
+use App\Ticket\Properties\GroupId;
 use App\Ticket\Properties\Id;
 use App\Ticket\Properties\Labels;
 use App\Ticket\Properties\LocationId;
@@ -53,10 +53,10 @@ final class Ticket extends AbstractData
         public CreatedAt $createdAt,
         public Customer $customer,
         public CustomerId $customerId,
-        public DepartmentId $departmentId,
         public Description $description,
         public DueOn $dueOn,
         public EstimateMinutes $estimateMinutes,
+        public GroupId $groupId,
         public Id $id,
         public Labels $labels,
         public LocationId $locationId,
@@ -105,7 +105,7 @@ final class Ticket extends AbstractData
     /**
      * The fields the ticket pages show.
      *
-     * @return array{id: string, number: int, title: string, description: ?string, status_id: ?string, priority_id: ?string, type_id: ?string, department_id: ?string, customer_id: ?string, project_id: ?string, parent_id: ?string, contact_id: ?string, location_id: ?string, assignee_id: ?string, starts_on: ?string, due_on: ?string, estimate_minutes: ?int, position: int, closed_at: ?string, archived_at: ?string, created_at: ?string}
+     * @return array{id: string, number: int, title: string, description: ?string, status_id: ?string, priority_id: ?string, type_id: ?string, group_id: ?string, customer_id: ?string, project_id: ?string, parent_id: ?string, contact_id: ?string, location_id: ?string, assignee_id: ?string, starts_on: ?string, due_on: ?string, estimate_minutes: ?int, position: int, closed_at: ?string, archived_at: ?string, created_at: ?string}
      */
     public function toSummary(): array
     {
@@ -117,7 +117,7 @@ final class Ticket extends AbstractData
             'status_id' => $this->getStatusId()->toNullableString(),
             'priority_id' => $this->getPriorityId()->toNullableString(),
             'type_id' => $this->getTypeId()->toNullableString(),
-            'department_id' => $this->getDepartmentId()->toNullableString(),
+            'group_id' => $this->getGroupId()->toNullableString(),
             'customer_id' => $this->getCustomerId()->toNullableString(),
             'project_id' => $this->getProjectId()->toNullableString(),
             'parent_id' => $this->getParentId()->toNullableString(),
@@ -259,14 +259,14 @@ final class Ticket extends AbstractData
         return $this;
     }
 
-    public function getDepartmentId(): DepartmentId
+    public function getGroupId(): GroupId
     {
-        return $this->departmentId;
+        return $this->groupId;
     }
 
-    public function setDepartmentId(mixed $departmentId): self
+    public function setGroupId(mixed $groupId): self
     {
-        $this->departmentId = new DepartmentId($departmentId instanceof AbstractValue ? $departmentId->toValue() : $departmentId);
+        $this->groupId = new GroupId($groupId instanceof AbstractValue ? $groupId->toValue() : $groupId);
 
         return $this;
     }

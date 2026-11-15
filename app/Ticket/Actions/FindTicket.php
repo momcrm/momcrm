@@ -13,7 +13,7 @@ use App\Ticket\Properties\ArchivedAt;
 use App\Ticket\Properties\AssigneeId;
 use App\Ticket\Properties\ClosedAt;
 use App\Ticket\Properties\CustomerId;
-use App\Ticket\Properties\DepartmentId;
+use App\Ticket\Properties\GroupId;
 use App\Ticket\Properties\Id;
 use App\Ticket\Properties\Number;
 use App\Ticket\Properties\ParentId;
@@ -116,9 +116,9 @@ final class FindTicket
             ->when($filters->type, fn (Builder $query, string $type) => $type === TicketListFilters::NONE
                 ? $query->whereNull(TypeId::getDatabaseTableColumnName())
                 : $query->where(TypeId::getDatabaseTableColumnName(), $type))
-            ->when($filters->department, fn (Builder $query, string $department) => $department === TicketListFilters::NONE
-                ? $query->whereNull(DepartmentId::getDatabaseTableColumnName())
-                : $query->where(DepartmentId::getDatabaseTableColumnName(), $department))
+            ->when($filters->group, fn (Builder $query, string $group) => $group === TicketListFilters::NONE
+                ? $query->whereNull(GroupId::getDatabaseTableColumnName())
+                : $query->where(GroupId::getDatabaseTableColumnName(), $group))
             ->when($filters->search, fn (Builder $query, string $search) => $query->where(fn (Builder $query) => $query
                 ->where(Title::getDatabaseTableColumnName(), 'like', "%{$search}%")
                 ->orWhere(Number::getDatabaseTableColumnName(), ltrim($search, '#'))))

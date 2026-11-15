@@ -20,6 +20,7 @@ use App\TeamUser\Actions\FindTeamMembers;
 use App\Ticket\Controllers\ListTicketsController;
 use App\Ticket\Properties\ArchivedAt;
 use App\Ticket\Properties\DueOn;
+use App\Ticket\Properties\GroupId;
 use App\Ticket\Properties\ParentId;
 use App\Ticket\Properties\ProjectId;
 use App\Ticket\Properties\StatusId;
@@ -29,12 +30,14 @@ use App\Ticket\TicketEloquentModel;
 use App\Ticket\TicketRelationship;
 use App\Ticket\TicketStatusCategoryEnum;
 use App\User\UserEloquentModel;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * A group's page: its projects, the open tickets in them and its members.
+ * A group's page: its projects, its open tickets (its own and those in its
+ * projects) and its members.
  */
 final class ShowGroupController
 {
@@ -72,7 +75,9 @@ final class ShowGroupController
             'tickets' => TicketEloquentModel::query()
                 ->withoutGlobalScope(CurrentTeamScope::class)
                 ->with([TicketRelationship::Project->value, TicketRelationship::Assignee->value, TicketRelationship::Customer->value, TicketRelationship::Labels->value])
-                ->whereIn(ProjectId::getDatabaseTableColumnName(), $projects->map(fn (Project $project): string => $project->getId()->toString())->all())
+                ->where(fn (Builder $query) => $query
+                    ->where(GroupId::getDatabaseTableColumnName(), $groupId)
+                    ->orWhereIn(ProjectId::getDatabaseTableColumnName(), $projects->map(fn (Project $project): string => $project->getId()->toString())->all()))
                 ->whereNull(ArchivedAt::getDatabaseTableColumnName())
                 ->whereNull(ParentId::getDatabaseTableColumnName())
                 ->whereIn(StatusId::getDatabaseTableColumnName(), TicketStatusCategoryEnum::Open->statusIds())

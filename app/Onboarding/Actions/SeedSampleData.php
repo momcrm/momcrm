@@ -405,7 +405,6 @@ final readonly class SeedSampleData
             ->setTitle($sample['title'])
             ->setPriorityId(FindChoice::byNameForTeam($this->teamId, ChoiceListEnum::TicketPriority, $sample['priority'])->getId())
             ->setTypeId(FindChoice::byNameForTeam($this->teamId, ChoiceListEnum::TicketType, $projectId === null ? 'Incident' : 'Task')->getId())
-            ->setDepartmentId(FindChoice::byNameForTeam($this->teamId, ChoiceListEnum::TicketDepartment, $projectId === null ? 'Support' : 'Projects')->getId())
             ->setDueOn(isset($sample['due']) ? CarbonImmutable::today()->addDays($sample['due']) : null), openedById: $this->userId);
 
         TicketEloquentModel::query()

@@ -25,8 +25,8 @@ use Illuminate\Support\Facades\DB;
 /**
  * Opens a ticket with the team's next number, at the bottom of its status
  * column, in the team's default open status and default priority unless
- * others are given. A project ticket with no customer takes the project's
- * customer. Someone other than the opener who is assigned it is notified.
+ * others are given. A project ticket with no customer or group takes the
+ * project's. Someone other than the opener who is assigned it is notified.
  */
 final readonly class CreateTicket
 {
@@ -48,10 +48,14 @@ final readonly class CreateTicket
                 $this->ticket->setStatusId(FindChoice::defaultForTeam($teamId, ChoiceListEnum::TicketStatus, TicketStatusCategoryEnum::Open->value)->getId());
             }
 
-            if ($this->ticket->getCustomerId()->isNull() && $this->ticket->getProjectId()->isNotNull()) {
-                $this->ticket->setCustomerId(
-                    FindProject::byIdForTeam($this->ticket->getProjectId()->toString(), $teamId)->getCustomerId(),
-                );
+            $project = FindProject::byIdForTeam($this->ticket->getProjectId()->toNullableString(), $teamId);
+
+            if ($this->ticket->getCustomerId()->isNull() && $project->isNotNull()) {
+                $this->ticket->setCustomerId($project->getCustomerId());
+            }
+
+            if ($this->ticket->getGroupId()->isNull() && $project->isNotNull()) {
+                $this->ticket->setGroupId($project->getGroupId());
             }
 
             if ($this->ticket->getPriorityId()->isNull()) {

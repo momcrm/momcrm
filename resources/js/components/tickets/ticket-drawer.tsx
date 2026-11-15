@@ -24,7 +24,6 @@ import {
     ProjectTag,
     TicketStatusPill,
     usePriority,
-    useTicketDepartments,
     useTicketPriorities,
     useTicketTypes,
     useTicketStatuses,
@@ -116,7 +115,6 @@ function DrawerBody({
     const priority = usePriority(ticket.priority_id);
     const labels = useLabels(...ticket.labels.map((label) => label.id));
     const types = useTicketTypes(ticket.type_id);
-    const departments = useTicketDepartments(ticket.department_id);
     const overdueDays =
         ticket.due_on && !isClosed ? -daysUntil(ticket.due_on) : 0;
 
@@ -283,14 +281,12 @@ function DrawerBody({
                             onChange={(type_id) => save({ type_id })}
                         />
                     </Property>
-                    <Property label="Department">
+                    <Property label="Group">
                         <OptionalChoicePicker
-                            value={ticket.department_id}
-                            choices={departments}
-                            none="No department"
-                            onChange={(department_id) =>
-                                save({ department_id })
-                            }
+                            value={ticket.group_id}
+                            choices={options.groups}
+                            none="No group"
+                            onChange={(group_id) => save({ group_id })}
                         />
                     </Property>
                     <Property label="Assignee">
@@ -565,8 +561,8 @@ function Picker({
 }
 
 /**
- * A pick from one of the team's optional lists, such as the ticket's type,
- * which can also be cleared.
+ * A pick from one of the team's optional lists, such as the ticket's type or
+ * group, which can also be cleared.
  */
 function OptionalChoicePicker({
     value,
@@ -575,7 +571,7 @@ function OptionalChoicePicker({
     onChange,
 }: {
     value: string | null;
-    choices: Choice[];
+    choices: Pick<Choice, 'id' | 'name' | 'hue'>[];
     none: string;
     onChange: (value: string | null) => void;
 }) {

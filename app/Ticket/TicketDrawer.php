@@ -24,6 +24,7 @@ use App\Customer\Actions\FindCustomer;
 use App\Customer\CustomerEloquentModel;
 use App\Favorite\Actions\FindFavorite;
 use App\Favorite\FavoritableTypeEnum;
+use App\Group\Actions\FindGroup;
 use App\Project\Actions\FindProject;
 use App\Project\ProjectEloquentModel;
 use App\Shared\MorphMapKeyEnum;
@@ -146,7 +147,7 @@ final class TicketDrawer
     }
 
     /**
-     * The pickers' choices: members, projects and customers. Statuses,
+     * The pickers' choices: members, projects, customers and groups. Statuses,
      * priorities and labels come from the shared `choices` prop.
      *
      * @return array{options: array<string, mixed>}
@@ -158,6 +159,7 @@ final class TicketDrawer
                 'members' => FindTeamMembers::optionsForTeam($teamId),
                 'projects' => FindProject::optionsForTeam($teamId, $userId),
                 'customers' => FindCustomer::optionsForTeam($teamId),
+                'groups' => FindGroup::optionsForTeam($teamId),
             ],
         ];
     }
