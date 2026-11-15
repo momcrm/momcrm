@@ -15,14 +15,16 @@ import type { ReactNode } from 'react';
 import { toast } from 'sonner';
 import {
     AssigneeAvatar,
+    daysUntil,
+    defaultStatusId,
+    isClosedStatus,
     LabelChips,
     PriorityIcon,
-    usePriority,
-    useTicketPriorities,
     ProjectTag,
     TicketStatusPill,
-    daysUntil,
-    ticketStatuses,
+    usePriority,
+    useTicketPriorities,
+    useTicketStatuses,
 } from '@/components/tickets/ticket-meta';
 import Attachments from '@/components/attachments';
 import TicketConversation from '@/components/tickets/ticket-conversation';
@@ -99,7 +101,8 @@ function DrawerBody({
         useTicketActions();
     const save = (fields: Record<string, unknown>) =>
         updateTicket(ticket.id, fields);
-    const isClosed = ticket.status === 'closed';
+    const statuses = useTicketStatuses();
+    const isClosed = isClosedStatus(statuses, ticket.status_id);
     const priorities = useTicketPriorities();
     const priority = usePriority(ticket.priority_id);
     const overdueDays =
@@ -136,7 +139,12 @@ function DrawerBody({
                             size="sm"
                             className="h-7 gap-1.5"
                             onClick={() =>
-                                save({ status: isClosed ? 'new' : 'closed' })
+                                save({
+                                    status_id: defaultStatusId(
+                                        statuses,
+                                        isClosed ? 'open' : 'closed',
+                                    ),
+                                })
                             }
                         >
                             {isClosed ? <RotateCcw /> : <Check />}
@@ -227,14 +235,17 @@ function DrawerBody({
                 <dl className="grid grid-cols-[7.5rem_1fr] items-center gap-x-3 gap-y-1 text-sm">
                     <Property label="Status">
                         <Picker
-                            value={ticket.status}
-                            choices={ticketStatuses.map((status) => ({
-                                value: status.value,
-                                label: status.label,
+                            value={ticket.status_id ?? NONE}
+                            choices={statuses.map((status) => ({
+                                value: status.id,
+                                label: status.name,
+                                dot: colorDot[status.color],
                             }))}
-                            onChange={(status) => save({ status })}
+                            onChange={(statusId) =>
+                                save({ status_id: statusId })
+                            }
                         >
-                            <TicketStatusPill status={ticket.status} />
+                            <TicketStatusPill statusId={ticket.status_id} />
                         </Picker>
                     </Property>
                     <Property label="Priority">
@@ -631,9 +642,10 @@ function EstimateField({
 
 function Subtasks({ ticket }: { ticket: TicketDrawerData }) {
     const { addSubtask, openTicket, updateTicket } = useTicketActions();
+    const statuses = useTicketStatuses();
     const [title, setTitle] = useState('');
-    const done = ticket.subtasks.filter(
-        (subtask) => subtask.status === 'closed',
+    const done = ticket.subtasks.filter((subtask) =>
+        isClosedStatus(statuses, subtask.status_id),
     ).length;
 
     return (
@@ -648,7 +660,7 @@ function Subtasks({ ticket }: { ticket: TicketDrawerData }) {
             </h3>
             <ul className="space-y-0.5">
                 {ticket.subtasks.map((subtask) => {
-                    const isDone = subtask.status === 'closed';
+                    const isDone = isClosedStatus(statuses, subtask.status_id);
 
                     return (
                         <li
@@ -664,7 +676,10 @@ function Subtasks({ ticket }: { ticket: TicketDrawerData }) {
                                 }
                                 onClick={() =>
                                     updateTicket(subtask.id, {
-                                        status: isDone ? 'new' : 'closed',
+                                        status_id: defaultStatusId(
+                                            statuses,
+                                            isDone ? 'open' : 'closed',
+                                        ),
                                     })
                                 }
                                 className={cn(

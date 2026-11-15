@@ -14,8 +14,8 @@ it("lists the person's open tickets soonest due first, plus recently closed ones
     TicketEloquentModel::factory()->create([...$mine, 'title' => 'Later', 'due_on' => '2026-12-20']);
     TicketEloquentModel::factory()->create([...$mine, 'title' => 'Sooner', 'due_on' => '2026-12-01']);
     TicketEloquentModel::factory()->create([...$mine, 'title' => 'Undated']);
-    TicketEloquentModel::factory()->create([...$mine, 'title' => 'Just closed', 'status' => 'closed', 'closed_at' => now()->subDay()]);
-    TicketEloquentModel::factory()->create([...$mine, 'title' => 'Long closed', 'status' => 'closed', 'closed_at' => now()->subMonth()]);
+    TicketEloquentModel::factory()->create([...$mine, 'title' => 'Just closed', 'status_id' => ticketStatusId($user->current_team_id, 'Closed'), 'closed_at' => now()->subDay()]);
+    TicketEloquentModel::factory()->create([...$mine, 'title' => 'Long closed', 'status_id' => ticketStatusId($user->current_team_id, 'Closed'), 'closed_at' => now()->subMonth()]);
     TicketEloquentModel::factory()->create([...$mine, 'title' => 'Archived'])->update(['archived_at' => now()]);
     TicketEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'title' => 'Someone else']);
 

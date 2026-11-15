@@ -20,8 +20,8 @@ use App\Shared\Table;
 use App\Team\Scopes\CurrentTeamScope;
 use App\Ticket\Properties\ArchivedAt as TicketArchivedAt;
 use App\Ticket\Properties\ParentId as TicketParentId;
-use App\Ticket\Properties\Status as TicketStatus;
-use App\Ticket\TicketStatusEnum;
+use App\Ticket\Properties\StatusId as TicketStatusId;
+use App\Ticket\TicketStatusCategoryEnum;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
@@ -202,9 +202,9 @@ final class FindProject
             ->withCount([
                 ProjectRelationship::Tickets->value => $liveTickets,
                 ProjectRelationship::Tickets->value.' as closed_tickets_count' => fn (Builder $query) => $liveTickets($query)
-                    ->where(TicketStatus::getDatabaseTableColumnName(), TicketStatusEnum::Closed->value),
+                    ->whereIn(TicketStatusId::getDatabaseTableColumnName(), TicketStatusCategoryEnum::Closed->statusIds()),
                 ProjectRelationship::Tickets->value.' as overdue_tickets_count' => fn (Builder $query) => $liveTickets($query)
-                    ->whereIn(TicketStatus::getDatabaseTableColumnName(), TicketStatusEnum::openValues())
+                    ->whereIn(TicketStatusId::getDatabaseTableColumnName(), TicketStatusCategoryEnum::Open->statusIds())
                     ->where(DueOn::getDatabaseTableColumnName(), '<', now()->toDateString()),
             ]);
     }

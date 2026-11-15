@@ -27,7 +27,7 @@ use App\Ticket\Properties\PriorityId;
 use App\Ticket\Properties\Project;
 use App\Ticket\Properties\ProjectId;
 use App\Ticket\Properties\StartsOn;
-use App\Ticket\Properties\Status;
+use App\Ticket\Properties\StatusId;
 use App\Ticket\Properties\SubtasksCount;
 use App\Ticket\Properties\TeamId;
 use App\Ticket\Properties\Title;
@@ -64,7 +64,7 @@ final class Ticket extends AbstractData
         public Project $project,
         public ProjectId $projectId,
         public StartsOn $startsOn,
-        public Status $status,
+        public StatusId $statusId,
         public SubtasksCount $subtasksCount,
         public TeamId $teamId,
         public Title $title,
@@ -98,15 +98,10 @@ final class Ticket extends AbstractData
         return $this->getArchivedAt()->isNotNull();
     }
 
-    public function isOpen(): bool
-    {
-        return $this->getStatus()->toEnum()->isOpen();
-    }
-
     /**
      * The fields the ticket pages show.
      *
-     * @return array{id: string, number: int, title: string, description: ?string, status: string, priority_id: ?string, customer_id: ?string, project_id: ?string, parent_id: ?string, contact_id: ?string, location_id: ?string, assignee_id: ?string, starts_on: ?string, due_on: ?string, estimate_minutes: ?int, position: int, closed_at: ?string, archived_at: ?string, created_at: ?string}
+     * @return array{id: string, number: int, title: string, description: ?string, status_id: ?string, priority_id: ?string, customer_id: ?string, project_id: ?string, parent_id: ?string, contact_id: ?string, location_id: ?string, assignee_id: ?string, starts_on: ?string, due_on: ?string, estimate_minutes: ?int, position: int, closed_at: ?string, archived_at: ?string, created_at: ?string}
      */
     public function toSummary(): array
     {
@@ -115,7 +110,7 @@ final class Ticket extends AbstractData
             'number' => $this->getNumber()->toInteger(),
             'title' => $this->getTitle()->toString(),
             'description' => $this->getDescription()->toNullableString(),
-            'status' => $this->getStatus()->toString(),
+            'status_id' => $this->getStatusId()->toNullableString(),
             'priority_id' => $this->getPriorityId()->toNullableString(),
             'customer_id' => $this->getCustomerId()->toNullableString(),
             'project_id' => $this->getProjectId()->toNullableString(),
@@ -246,14 +241,14 @@ final class Ticket extends AbstractData
         return $this;
     }
 
-    public function getStatus(): Status
+    public function getStatusId(): StatusId
     {
-        return $this->status;
+        return $this->statusId;
     }
 
-    public function setStatus(mixed $status): self
+    public function setStatusId(mixed $statusId): self
     {
-        $this->status = new Status($status instanceof AbstractValue ? $status->toValue() : $status);
+        $this->statusId = new StatusId($statusId instanceof AbstractValue ? $statusId->toValue() : $statusId);
 
         return $this;
     }

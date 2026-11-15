@@ -75,13 +75,6 @@ export type Service = {
     note: string | null;
 };
 
-export type TicketStatus =
-    | 'new'
-    | 'in_progress'
-    | 'waiting_on_customer'
-    | 'waiting_on_supplier'
-    | 'closed';
-
 /**
  * The lists a team can customise, as keyed in the shared `choices` prop.
  */
@@ -105,7 +98,7 @@ export type Ticket = {
     number: number;
     title: string;
     description: string | null;
-    status: TicketStatus;
+    status_id: string | null;
     priority_id: string | null;
     customer_id: string | null;
     project_id: string | null;
@@ -143,7 +136,7 @@ export type TicketDrawerData = Omit<
         id: string;
         number: number;
         title: string;
-        status: TicketStatus;
+        status_id: string | null;
     }[];
     is_favorite: boolean;
     can: Abilities;
@@ -198,7 +191,6 @@ export type TicketPickerOptions = {
     projects: ProjectOption[];
     labels: TicketLabel[];
     customers: CustomerOption[];
-    statuses: Option[];
 };
 
 export type TicketView = 'list' | 'board' | 'table';
@@ -304,7 +296,6 @@ export type TicketFormOptions = {
     members: CustomerOption[];
     projects: ProjectOption[];
     labels: TicketLabel[];
-    statuses: Option[];
 };
 
 export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'void';

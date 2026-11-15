@@ -10,7 +10,6 @@ use App\Invoice\InvoiceStatusEnum;
 use App\InvoiceItem\InvoiceItemEloquentModel;
 use App\Project\ProjectEloquentModel;
 use App\Ticket\TicketEloquentModel;
-use App\Ticket\TicketStatusEnum;
 use App\User\UserEloquentModel;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -22,7 +21,7 @@ it("shows the team's numbers, the user's tickets and the checklist", function ()
     $customer = CustomerEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
     TicketEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'customer_id' => $customer->id, 'assignee_id' => $user->id, 'title' => 'Mine']);
     TicketEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'customer_id' => $customer->id]);
-    TicketEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'customer_id' => $customer->id, 'status' => TicketStatusEnum::Closed->value]);
+    TicketEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'customer_id' => $customer->id, 'status_id' => ticketStatusId($user->current_team_id, 'Closed')]);
     $overdue = InvoiceEloquentModel::factory()->create([
         'team_id' => $user->current_team_id,
         'customer_id' => $customer->id,
@@ -62,7 +61,7 @@ it("shows the week's deadlines, active projects and recent work", function (): v
     $team = ['team_id' => $user->current_team_id];
     TicketEloquentModel::factory()->create([...$team, 'title' => 'Due tomorrow', 'due_on' => now()->addDay()->toDateString()]);
     TicketEloquentModel::factory()->create([...$team, 'title' => 'Overdue', 'due_on' => now()->subDay()->toDateString()]);
-    TicketEloquentModel::factory()->create([...$team, 'title' => 'Closed today', 'status' => 'closed', 'closed_at' => now()]);
+    TicketEloquentModel::factory()->create([...$team, 'title' => 'Closed today', 'status_id' => ticketStatusId($user->current_team_id, 'Closed'), 'closed_at' => now()]);
     ProjectEloquentModel::factory()->create([...$team, 'name' => 'Live', 'status' => 'in_progress']);
     ProjectEloquentModel::factory()->create([...$team, 'name' => 'Done', 'status' => 'completed']);
     RecordActivity::for(ActivityTypeEnum::TicketOpened, $user->id, $user->current_team_id, details: ['number' => 1]);

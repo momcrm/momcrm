@@ -9,10 +9,10 @@ use App\Ticket\Notifications\TicketDueSoonNotification;
 use App\Ticket\Properties\ArchivedAt;
 use App\Ticket\Properties\AssigneeId;
 use App\Ticket\Properties\DueOn;
-use App\Ticket\Properties\Status;
+use App\Ticket\Properties\StatusId;
 use App\Ticket\TicketEloquentModel;
 use App\Ticket\TicketRelationship;
-use App\Ticket\TicketStatusEnum;
+use App\Ticket\TicketStatusCategoryEnum;
 use App\User\UserEloquentModel;
 use Carbon\CarbonImmutable;
 
@@ -32,7 +32,7 @@ final class RemindDueTickets
             ->with(TicketRelationship::Project->value)
             ->whereNull(ArchivedAt::getDatabaseTableColumnName())
             ->whereNotNull(AssigneeId::getDatabaseTableColumnName())
-            ->whereIn(Status::getDatabaseTableColumnName(), TicketStatusEnum::openValues())
+            ->whereIn(StatusId::getDatabaseTableColumnName(), TicketStatusCategoryEnum::Open->statusIds())
             ->whereDate(DueOn::getDatabaseTableColumnName(), ($today ?? CarbonImmutable::today())->addDay()->toDateString())
             ->get();
 

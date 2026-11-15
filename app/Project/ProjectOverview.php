@@ -21,11 +21,11 @@ use App\Ticket\Properties\ArchivedAt;
 use App\Ticket\Properties\DueOn;
 use App\Ticket\Properties\ParentId;
 use App\Ticket\Properties\ProjectId;
-use App\Ticket\Properties\Status;
+use App\Ticket\Properties\StatusId;
 use App\Ticket\Ticket;
 use App\Ticket\TicketEloquentModel;
 use App\Ticket\TicketRelationship;
-use App\Ticket\TicketStatusEnum;
+use App\Ticket\TicketStatusCategoryEnum;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 
@@ -47,17 +47,17 @@ final class ProjectOverview
             ->whereNull(ParentId::getDatabaseTableColumnName());
 
         $statusCounts = $tickets()
-            ->selectRaw('status, count(*) as aggregate')
-            ->groupBy(Status::getDatabaseTableColumnName())
+            ->selectRaw('status_id, count(*) as aggregate')
+            ->groupBy(StatusId::getDatabaseTableColumnName())
             ->get()
-            ->mapWithKeys(fn (TicketEloquentModel $row): array => [$row->status => Types::int($row->getAttribute('aggregate'))])
+            ->mapWithKeys(fn (TicketEloquentModel $row): array => [(string) $row->status_id => Types::int($row->getAttribute('aggregate'))])
             ->all();
 
         return [
             'statusCounts' => $statusCounts,
             'upcoming' => $tickets()
                 ->with([TicketRelationship::Assignee->value, TicketRelationship::Labels->value])
-                ->whereIn(Status::getDatabaseTableColumnName(), TicketStatusEnum::openValues())
+                ->whereIn(StatusId::getDatabaseTableColumnName(), TicketStatusCategoryEnum::Open->statusIds())
                 ->whereNotNull(DueOn::getDatabaseTableColumnName())
                 ->orderBy(DueOn::getDatabaseTableColumnName())
                 ->limit(6)

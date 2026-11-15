@@ -17,7 +17,7 @@ it('closes a ticket', function (): void {
         ->assertInertiaFlash('toast', ['type' => 'success', 'message' => 'Ticket #7 closed. Nice work.']);
 
     expect($ticket->fresh())
-        ->status->toBe('closed')
+        ->status_id->toBe(ticketStatusId($user->current_team_id, 'Closed'))
         ->closed_at->not->toBeNull();
 });
 

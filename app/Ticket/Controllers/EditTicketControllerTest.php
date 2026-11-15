@@ -15,7 +15,7 @@ it('shows the edit form for a ticket', function (): void {
     actingAs($user)
         ->get(route('tickets.edit', $ticket->id))
         ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page->component('tickets/edit')->where('ticket.id', $ticket->id)->has('statuses', 5));
+        ->assertInertia(fn (Assert $page) => $page->component('tickets/edit')->where('ticket.id', $ticket->id));
 });
 
 it("returns not found for another team's ticket", function (): void {

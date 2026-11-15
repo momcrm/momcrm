@@ -6,10 +6,11 @@ import Pager from '@/components/pager';
 import TicketBoard from '@/components/tickets/ticket-board';
 import TicketDrawer from '@/components/tickets/ticket-drawer';
 import TicketGroups from '@/components/tickets/ticket-groups';
-import { ticketStatuses } from '@/components/tickets/ticket-meta';
+import { useTicketStatuses } from '@/components/tickets/ticket-meta';
 import TicketTable from '@/components/tickets/ticket-table';
 import TicketToolbar from '@/components/tickets/ticket-toolbar';
 import { Button } from '@/components/ui/button';
+import { colorDot } from '@/lib/colors';
 import { useCreateTicket } from '@/components/tickets/create-ticket-dialog';
 import { visitWithQuery } from '@/lib/query';
 import { index } from '@/routes/tickets';
@@ -35,6 +36,7 @@ export default function TicketsIndex({
     drawer: TicketDrawerData | null;
 }) {
     const { openCreateTicket } = useCreateTicket();
+    const statuses = useTicketStatuses();
     const isFiltered =
         Boolean(filters.search) ||
         filters.priority.length > 0 ||
@@ -114,15 +116,15 @@ export default function TicketsIndex({
                     <TicketGroups
                         key={filters.status}
                         favoriteIds={favoriteTicketIds}
-                        groups={ticketStatuses.map((status) => ({
-                            key: status.value,
-                            label: status.label,
-                            tone: status.tone,
+                        groups={statuses.map((status) => ({
+                            key: status.id,
+                            label: status.name,
+                            dotClassName: colorDot[status.color],
                             collapsed:
-                                status.value === 'closed' &&
+                                status.category === 'closed' &&
                                 filters.status === 'all',
                             tickets: tickets.data.filter(
-                                (ticket) => ticket.status === status.value,
+                                (ticket) => ticket.status_id === status.id,
                             ),
                         }))}
                     />

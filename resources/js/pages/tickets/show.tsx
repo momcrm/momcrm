@@ -1,6 +1,9 @@
 import { Form, Head, Link, setLayoutProps } from '@inertiajs/react';
 import PageHeader from '@/components/page-header';
-import { usePriority } from '@/components/tickets/ticket-meta';
+import {
+    useIsClosedStatus,
+    usePriority,
+} from '@/components/tickets/ticket-meta';
 import {
     TicketPriorityBadge,
     TicketStatusBadge,
@@ -51,7 +54,7 @@ export default function ShowTicket({
         ],
     });
 
-    const isClosed = ticket.status === 'closed';
+    const isClosed = useIsClosedStatus()(ticket.status_id);
     const priority = usePriority(ticket.priority_id);
 
     const details = [
@@ -115,7 +118,7 @@ export default function ShowTicket({
                     description={
                         <span className="flex items-center gap-2">
                             Ticket #{ticket.number}
-                            <TicketStatusBadge status={ticket.status} />
+                            <TicketStatusBadge statusId={ticket.status_id} />
                             <TicketPriorityBadge
                                 priorityId={ticket.priority_id}
                             />

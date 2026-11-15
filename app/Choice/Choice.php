@@ -17,6 +17,7 @@ use App\Choice\Properties\Name;
 use App\Choice\Properties\Position;
 use App\Choice\Properties\TeamId;
 use App\Choice\Properties\UpdatedAt;
+use BackedEnum;
 use Illuminate\Support\Collection;
 use Mom\Data\AbstractData;
 use Mom\Data\AbstractValue;
@@ -82,6 +83,14 @@ final class Choice extends AbstractData
             'position' => $this->getPosition()->toInteger(),
             'is_default' => $this->getIsDefault()->toBoolean(),
         ];
+    }
+
+    /**
+     * Whether the choice is in this category, such as a closed ticket status.
+     */
+    public function hasCategory(BackedEnum $category): bool
+    {
+        return $this->getCategory()->toNullableString() === (string) $category->value;
     }
 
     public function isArchived(): bool

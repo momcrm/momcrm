@@ -7,7 +7,6 @@ namespace App\Ticket\FormRequests;
 use App\Ticket\Actions\FindTicket;
 use App\Ticket\Actions\UpdateTicket;
 use App\Ticket\Exceptions\CouldNotFindTicket;
-use App\Ticket\Properties\Status;
 use App\Ticket\Ticket;
 use App\Ticket\TicketValidationRules;
 use Illuminate\Auth\Access\Response;
@@ -48,7 +47,7 @@ final class UpdateTicketFormRequest extends FormRequest
     {
         return [
             ...TicketValidationRules::for($this, (string) $this->user()?->current_team_id, $this->ticket->getProjectId()->toNullableString()),
-            Status::getNameForValidation() => Status::getValidationRulesForUpdate($this),
+            ...TicketValidationRules::status($this, (string) $this->user()?->current_team_id),
         ];
     }
 

@@ -14,19 +14,19 @@ use App\Shared\Table;
 use App\Ticket\Notifications\TicketAssignedNotification;
 use App\Ticket\Properties\Id;
 use App\Ticket\Properties\Position;
-use App\Ticket\Properties\Status;
+use App\Ticket\Properties\StatusId;
 use App\Ticket\Properties\TeamId;
 use App\Ticket\Ticket;
 use App\Ticket\TicketEloquentModel;
-use App\Ticket\TicketStatusEnum;
+use App\Ticket\TicketStatusCategoryEnum;
 use App\User\UserEloquentModel;
 use Illuminate\Support\Facades\DB;
 
 /**
  * Opens a ticket with the team's next number, at the bottom of its status
- * column, with the team's default priority unless one is given. A project
- * ticket with no customer takes the project's customer.
- * Someone other than the opener who is assigned it is notified.
+ * column, in the team's default open status and default priority unless
+ * others are given. A project ticket with no customer takes the project's
+ * customer. Someone other than the opener who is assigned it is notified.
  */
 final readonly class CreateTicket
 {
@@ -42,11 +42,11 @@ final readonly class CreateTicket
                 $this->ticket->setId(Id::generate());
             }
 
-            if ($this->ticket->getStatus()->isNull()) {
-                $this->ticket->setStatus(TicketStatusEnum::New);
-            }
-
             $teamId = $this->ticket->getTeamId()->toString();
+
+            if ($this->ticket->getStatusId()->isNull()) {
+                $this->ticket->setStatusId(FindChoice::defaultForTeam($teamId, ChoiceListEnum::TicketStatus, TicketStatusCategoryEnum::Open->value)->getId());
+            }
 
             if ($this->ticket->getCustomerId()->isNull() && $this->ticket->getProjectId()->isNotNull()) {
                 $this->ticket->setCustomerId(
@@ -59,7 +59,7 @@ final readonly class CreateTicket
             }
 
             if ($this->ticket->getPosition()->isNull()) {
-                $this->ticket->setPosition(self::nextPosition($teamId, $this->ticket->getStatus()->toString()));
+                $this->ticket->setPosition(self::nextPosition($teamId, $this->ticket->getStatusId()->toString()));
             }
 
             $this->ticket->setNumber(NextTeamNumber::for(Table::Tickets, $teamId));
@@ -87,12 +87,12 @@ final readonly class CreateTicket
         });
     }
 
-    private static function nextPosition(string $teamId, string $status): int
+    private static function nextPosition(string $teamId, string $statusId): int
     {
         $highest = TicketEloquentModel::query()
             ->withoutGlobalScopes()
             ->where(TeamId::getDatabaseTableColumnName(), $teamId)
-            ->where(Status::getDatabaseTableColumnName(), $status)
+            ->where(StatusId::getDatabaseTableColumnName(), $statusId)
             ->max(Position::getDatabaseTableColumnName());
 
         return is_numeric($highest) ? (int) $highest + 1 : 0;

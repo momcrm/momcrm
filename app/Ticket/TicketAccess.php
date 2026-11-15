@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Ticket;
 
+use App\Choice\Actions\FindChoice;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Support\Facades\Gate;
 
@@ -14,16 +15,19 @@ use Illuminate\Support\Facades\Gate;
  */
 final class TicketAccess
 {
-    public static function authorizeStatusChange(string $ability, Ticket $ticket, mixed $newStatus): Response
+    public static function authorizeStatusChange(string $ability, Ticket $ticket, mixed $newStatusId): Response
     {
         Gate::authorize($ability, $ticket);
 
-        $wasClosed = $ticket->getStatus()->toNullableEnum() === TicketStatusEnum::Closed;
-        $becomes = is_string($newStatus) ? TicketStatusEnum::tryFrom($newStatus) : null;
+        $teamId = $ticket->getTeamId()->toString();
+        $wasClosed = FindChoice::byIdForTeam($ticket->getStatusId()->toNullableString(), $teamId)->hasCategory(TicketStatusCategoryEnum::Closed);
+        $becomes = FindChoice::byIdForTeam(is_string($newStatusId) ? $newStatusId : null, $teamId);
+        $becomesClosed = $becomes->hasCategory(TicketStatusCategoryEnum::Closed);
 
         return match (true) {
-            $becomes === TicketStatusEnum::Closed && ! $wasClosed => Gate::authorize('close', $ticket),
-            $becomes !== null && $becomes !== TicketStatusEnum::Closed && $wasClosed => Gate::authorize('reopen', $ticket),
+            $becomes->isNull() => Response::allow(),
+            $becomesClosed && ! $wasClosed => Gate::authorize('close', $ticket),
+            ! $becomesClosed && $wasClosed => Gate::authorize('reopen', $ticket),
             default => Response::allow(),
         };
     }

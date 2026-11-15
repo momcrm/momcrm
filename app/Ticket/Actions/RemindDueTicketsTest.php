@@ -15,7 +15,7 @@ it('reminds assignees of open tickets due tomorrow', function (): void {
     $mine = ['team_id' => $user->current_team_id, 'assignee_id' => $user->id];
     $due = TicketEloquentModel::factory()->create([...$mine, 'due_on' => '2026-12-02']);
     TicketEloquentModel::factory()->create([...$mine, 'due_on' => '2026-12-03']);
-    TicketEloquentModel::factory()->create([...$mine, 'due_on' => '2026-12-02', 'status' => 'closed']);
+    TicketEloquentModel::factory()->closed()->create([...$mine, 'due_on' => '2026-12-02']);
     TicketEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'due_on' => '2026-12-02']);
 
     expect(RemindDueTickets::run(CarbonImmutable::parse('2026-12-01')))->toBe(1);

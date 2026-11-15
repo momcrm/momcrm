@@ -84,7 +84,7 @@ final class SearchWorkspaceController
     }
 
     /**
-     * @return array<int, array{id: string, number: int, title: string, status: string, subtitle: ?string, url: string}>
+     * @return array<int, array{id: string, number: int, title: string, status_id: ?string, subtitle: ?string, url: string}>
      */
     private function tickets(string $teamId, ?string $term): array
     {
@@ -94,7 +94,7 @@ final class SearchWorkspaceController
                 'id' => $ticket->getId()->toString(),
                 'number' => $ticket->getNumber()->toInteger(),
                 'title' => $ticket->getTitle()->toString(),
-                'status' => $ticket->getStatus()->toString(),
+                'status_id' => $ticket->getStatusId()->toNullableString(),
                 'subtitle' => $ticket->getCustomer()->toNullableData()?->getName()->toString() ?? $ticket->getProject()->toNullableData()?->getName()->toString(),
                 'url' => route('tickets.show', $ticket->getId()->toString()),
             ])

@@ -8,7 +8,6 @@ use App\Customer\CustomerEloquentModel;
 use App\Label\LabelEloquentModel;
 use App\Project\ProjectEloquentModel;
 use App\Ticket\TicketEloquentModel;
-use App\Ticket\TicketStatusEnum;
 use App\User\UserEloquentModel;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -24,8 +23,8 @@ function ticketFor(UserEloquentModel $user, array $attributes = []): TicketEloqu
 it('lists open tickets newest first by default', function (): void {
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
     ticketFor($user, ['number' => 1, 'title' => 'Older']);
-    ticketFor($user, ['number' => 2, 'title' => 'Newer', 'status' => TicketStatusEnum::InProgress->value]);
-    ticketFor($user, ['number' => 3, 'title' => 'Done', 'status' => TicketStatusEnum::Closed->value]);
+    ticketFor($user, ['number' => 2, 'title' => 'Newer', 'status_id' => ticketStatusId($user->current_team_id, 'In progress')]);
+    ticketFor($user, ['number' => 3, 'title' => 'Done', 'status_id' => ticketStatusId($user->current_team_id, 'Closed')]);
     TicketEloquentModel::factory()->create(['title' => 'Another team']);
 
     actingAs($user)
@@ -44,7 +43,7 @@ it('lists open tickets newest first by default', function (): void {
 it('filters closed and all tickets', function (string $status, int $count): void {
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
     ticketFor($user, ['number' => 1]);
-    ticketFor($user, ['number' => 2, 'status' => TicketStatusEnum::Closed->value]);
+    ticketFor($user, ['number' => 2, 'status_id' => ticketStatusId($user->current_team_id, 'Closed')]);
 
     actingAs($user)
         ->get(route('tickets.index', ['status' => $status]))
@@ -68,7 +67,7 @@ it('shows every status on the board, each column in its saved order', function (
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
     ticketFor($user, ['number' => 1, 'title' => 'Second', 'position' => 1]);
     ticketFor($user, ['number' => 2, 'title' => 'First', 'position' => 0]);
-    ticketFor($user, ['number' => 3, 'title' => 'Done', 'status' => TicketStatusEnum::Closed->value, 'position' => 2]);
+    ticketFor($user, ['number' => 3, 'title' => 'Done', 'status_id' => ticketStatusId($user->current_team_id, 'Closed'), 'position' => 2]);
 
     actingAs($user)
         ->get(route('tickets.index', ['view' => 'board']))
@@ -124,7 +123,7 @@ it("sorts the table by priority, in the team's order", function (): void {
 it('leaves subtasks out of the views and counts them on their parent', function (): void {
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
     $parent = ticketFor($user, ['number' => 1]);
-    ticketFor($user, ['number' => 2, 'parent_id' => $parent->id, 'status' => 'closed']);
+    ticketFor($user, ['number' => 2, 'parent_id' => $parent->id, 'status_id' => ticketStatusId($user->current_team_id, 'Closed')]);
     ticketFor($user, ['number' => 3, 'parent_id' => $parent->id]);
 
     actingAs($user)
@@ -156,4 +155,20 @@ it("keeps the drawer closed for another team's ticket", function (): void {
     actingAs(UserEloquentModel::factory()->withPersonalTeam()->create())
         ->get(route('tickets.index', ['ticket' => TicketEloquentModel::factory()->create()->id]))
         ->assertInertia(fn (Assert $page) => $page->where('drawer', null));
+});
+
+it("sorts the table by status, in the team's order", function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    [$new, $waiting, $closed] = array_map(fn (string $name): string => ticketStatusId($user->current_team_id, $name), ['New', 'Waiting on customer', 'Closed']);
+    ticketFor($user, ['number' => 1, 'status_id' => $closed]);
+    ticketFor($user, ['number' => 2, 'status_id' => $new]);
+    ticketFor($user, ['number' => 3, 'status_id' => $waiting]);
+
+    $sorted = collect(actingAs($user)
+        ->get(route('tickets.index', ['view' => 'table', 'status' => 'all', 'sort' => 'status', 'direction' => 'asc']))
+        ->inertiaProps('tickets.data'))
+        ->pluck('status_id')
+        ->all();
+
+    expect($sorted)->toBe([$new, $waiting, $closed]);
 });

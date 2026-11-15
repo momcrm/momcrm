@@ -4,17 +4,14 @@ import type { DragEvent } from 'react';
 import StatusPill from '@/components/status-pill';
 import QuickAddTicket from '@/components/tickets/quick-add-ticket';
 import TicketCard from '@/components/tickets/ticket-card';
-import { ticketStatuses } from '@/components/tickets/ticket-meta';
+import { useTicketStatuses } from '@/components/tickets/ticket-meta';
 import { useTicketActions } from '@/hooks/use-ticket-actions';
+import { colorDot } from '@/lib/colors';
 import { cn } from '@/lib/utils';
-import type {
-    TicketListItem,
-    TicketPickerOptions,
-    TicketStatus,
-} from '@/types';
+import type { TicketListItem, TicketPickerOptions } from '@/types';
 
 /**
- * A column per status. Dragging a card to another column or place changes its
+ * A column per team status, in the team's order. Dragging a card to another column or place changes its
  * status and order straight away, then saves; a failed save reloads the truth.
  */
 export default function TicketBoard({
@@ -29,23 +26,24 @@ export default function TicketBoard({
     /** On one project's board, new tickets go in that project. */
     projectId?: string | null;
 }) {
-    const [addingTo, setAddingTo] = useState<TicketStatus | null>(null);
+    const statuses = useTicketStatuses();
+    const [addingTo, setAddingTo] = useState<string | null>(null);
     const { openTicket, moveTicket } = useTicketActions();
     const [items, setItems] = useState(tickets);
     const [draggingId, setDraggingId] = useState<string | null>(null);
     const [target, setTarget] = useState<{
-        status: TicketStatus;
+        statusId: string;
         beforeId: string | null;
     } | null>(null);
 
     useEffect(() => setItems(tickets), [tickets]);
 
-    const columns = ticketStatuses.map((status) => ({
+    const columns = statuses.map((status) => ({
         ...status,
-        tickets: items.filter((ticket) => ticket.status === status.value),
+        tickets: items.filter((ticket) => ticket.status_id === status.id),
     }));
 
-    const drop = (status: TicketStatus, beforeId: string | null) => {
+    const drop = (statusId: string, beforeId: string | null) => {
         const dragged = items.find((ticket) => ticket.id === draggingId);
 
         setDraggingId(null);
@@ -56,7 +54,8 @@ export default function TicketBoard({
         }
 
         const column = items.filter(
-            (ticket) => ticket.status === status && ticket.id !== dragged.id,
+            (ticket) =>
+                ticket.status_id === statusId && ticket.id !== dragged.id,
         );
         const index = beforeId
             ? Math.max(
@@ -64,22 +63,21 @@ export default function TicketBoard({
                   column.findIndex((ticket) => ticket.id === beforeId),
               )
             : column.length;
-        const moved = { ...dragged, status };
+        const moved = { ...dragged, status_id: statusId };
 
         column.splice(index, 0, moved);
         setItems([
             ...items.filter(
                 (ticket) =>
-                    ticket.status !== status && ticket.id !== dragged.id,
+                    ticket.status_id !== statusId && ticket.id !== dragged.id,
             ),
             ...column,
         ]);
-        moveTicket(dragged.id, status, index);
+        moveTicket(dragged.id, statusId, index);
     };
 
     const allowDrop =
-        (status: TicketStatus, beforeId: string | null) =>
-        (event: DragEvent) => {
+        (statusId: string, beforeId: string | null) => (event: DragEvent) => {
             if (!draggingId) {
                 return;
             }
@@ -87,8 +85,8 @@ export default function TicketBoard({
             event.preventDefault();
             event.stopPropagation();
 
-            if (target?.status !== status || target.beforeId !== beforeId) {
-                setTarget({ status, beforeId });
+            if (target?.statusId !== statusId || target.beforeId !== beforeId) {
+                setTarget({ statusId, beforeId });
             }
         };
 
@@ -96,30 +94,29 @@ export default function TicketBoard({
         <div className="-mx-4 flex min-h-[60vh] gap-3 overflow-x-auto px-4 pb-4 md:-mx-6 md:px-6">
             {columns.map((column) => (
                 <section
-                    key={column.value}
-                    aria-label={column.label}
-                    onDragOver={allowDrop(column.value, null)}
+                    key={column.id}
+                    aria-label={column.name}
+                    onDragOver={allowDrop(column.id, null)}
                     onDrop={(event) => {
                         event.preventDefault();
-                        drop(column.value, target?.beforeId ?? null);
+                        drop(column.id, target?.beforeId ?? null);
                     }}
                     className={cn(
                         'flex w-72 shrink-0 flex-col rounded-xl p-1',
-                        target?.status === column.value &&
-                            'ring-2 ring-ring/40',
+                        target?.statusId === column.id && 'ring-2 ring-ring/40',
                     )}
                 >
                     <header className="flex items-center gap-2 px-1.5 pt-0.5 pb-2">
-                        <StatusPill tone={column.tone}>
-                            {column.label}
+                        <StatusPill dotClassName={colorDot[column.color]}>
+                            {column.name}
                         </StatusPill>
                         <span className="text-xs text-subtle-foreground">
                             {column.tickets.length}
                         </span>
                         <button
                             type="button"
-                            onClick={() => setAddingTo(column.value)}
-                            aria-label={`Add a ticket to ${column.label}`}
+                            onClick={() => setAddingTo(column.id)}
+                            aria-label={`Add a ticket to ${column.name}`}
                             className="ml-auto rounded p-0.5 text-subtle-foreground hover:bg-accent hover:text-foreground"
                         >
                             <Plus className="size-4" />
@@ -138,7 +135,7 @@ export default function TicketBoard({
                                     setDraggingId(null);
                                     setTarget(null);
                                 }}
-                                onDragOver={allowDrop(column.value, ticket.id)}
+                                onDragOver={allowDrop(column.id, ticket.id)}
                                 className={cn(
                                     target?.beforeId === ticket.id &&
                                         'border-t-2 border-primary pt-1',
@@ -158,9 +155,9 @@ export default function TicketBoard({
                             Drop tickets here
                         </p>
                     )}
-                    {addingTo === column.value ? (
+                    {addingTo === column.id ? (
                         <QuickAddTicket
-                            status={column.value}
+                            statusId={column.id}
                             options={options}
                             projectId={projectId}
                             onClose={() => setAddingTo(null)}
@@ -168,7 +165,7 @@ export default function TicketBoard({
                     ) : (
                         <button
                             type="button"
-                            onClick={() => setAddingTo(column.value)}
+                            onClick={() => setAddingTo(column.id)}
                             className="mt-1 flex items-center gap-1.5 rounded-md px-1.5 py-1 text-left text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
                         >
                             <Plus className="size-3.5" />

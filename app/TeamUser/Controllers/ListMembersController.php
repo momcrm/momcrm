@@ -23,7 +23,7 @@ use App\TeamUser\Properties\Role;
 use App\TeamUser\Properties\TeamId;
 use App\TeamUser\Properties\UserId;
 use App\TeamUser\TeamRoleEnum;
-use App\Ticket\TicketStatusEnum;
+use App\Ticket\TicketStatusCategoryEnum;
 use App\User\Properties\Email;
 use App\User\Properties\Id;
 use App\User\Properties\Name;
@@ -81,7 +81,7 @@ final class ListMembersController
             ->where('team_id', $teamId)
             ->whereNull('archived_at')
             ->whereNull('parent_id')
-            ->whereIn('status', TicketStatusEnum::openValues())
+            ->whereIn('status_id', TicketStatusCategoryEnum::Open->statusIds())
             ->whereNotNull('assignee_id')
             ->selectRaw('assignee_id, count(*) as aggregate')
             ->groupBy('assignee_id')

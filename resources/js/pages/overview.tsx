@@ -7,13 +7,13 @@ import {
     AssigneeAvatar,
     daysUntil,
     formatDay,
-    ticketStatuses,
+    useTicketStatuses,
 } from '@/components/tickets/ticket-meta';
 import { colorDot } from '@/lib/colors';
 import { cn } from '@/lib/utils';
 import { overview } from '@/routes';
 import { show as showProject } from '@/routes/projects';
-import type { ColorName, ProjectListItem, TicketStatus } from '@/types';
+import type { ColorName, ProjectListItem } from '@/types';
 
 type Stats = {
     active_projects: number;
@@ -29,7 +29,8 @@ type Workload = {
     id: string;
     name: string;
     total: number;
-    statuses: Partial<Record<TicketStatus, number>>;
+    /** Open tickets by status id. */
+    statuses: Record<string, number>;
 };
 
 type UpcomingMilestone = {
@@ -39,14 +40,6 @@ type UpcomingMilestone = {
     project_id: string;
     project_name: string | null;
     project_color: ColorName | null;
-};
-
-const statusBar: Record<TicketStatus, string> = {
-    new: 'bg-muted-foreground/40',
-    in_progress: 'bg-primary',
-    waiting_on_customer: 'bg-warning',
-    waiting_on_supplier: 'bg-info',
-    closed: 'bg-success',
 };
 
 /**
@@ -62,7 +55,8 @@ export default function Overview({
 }: {
     stats: Stats;
     portfolio: ProjectListItem[];
-    statusCounts: Partial<Record<TicketStatus, number>>;
+    /** Tickets by status id. */
+    statusCounts: Record<string, number>;
     workload: Workload[];
     milestones: UpcomingMilestone[];
 }) {
@@ -82,8 +76,9 @@ export default function Overview({
         return sort.direction === 'asc' ? order : -order;
     });
     const busiest = Math.max(1, ...workload.map((member) => member.total));
-    const openStatuses = ticketStatuses.filter(
-        (status) => status.value !== 'closed',
+    const statuses = useTicketStatuses();
+    const openStatuses = statuses.filter(
+        (status) => status.category !== 'closed',
     );
 
     return (
@@ -126,33 +121,33 @@ export default function Overview({
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                     <Panel title="Tickets by status">
                         <div className="flex h-3 overflow-hidden rounded-full bg-muted">
-                            {ticketStatuses.map((status) =>
-                                (statusCounts[status.value] ?? 0) > 0 ? (
+                            {statuses.map((status) =>
+                                (statusCounts[status.id] ?? 0) > 0 ? (
                                     <span
-                                        key={status.value}
-                                        className={statusBar[status.value]}
+                                        key={status.id}
+                                        className={colorDot[status.color]}
                                         style={{
-                                            width: `${((statusCounts[status.value] ?? 0) / Math.max(1, stats.tickets)) * 100}%`,
+                                            width: `${((statusCounts[status.id] ?? 0) / Math.max(1, stats.tickets)) * 100}%`,
                                         }}
                                     />
                                 ) : null,
                             )}
                         </div>
                         <ul className="mt-4 space-y-2">
-                            {ticketStatuses.map((status) => (
+                            {statuses.map((status) => (
                                 <li
-                                    key={status.value}
+                                    key={status.id}
                                     className="flex items-center gap-2 text-sm"
                                 >
                                     <span
                                         className={cn(
                                             'size-2.5 rounded-full',
-                                            statusBar[status.value],
+                                            colorDot[status.color],
                                         )}
                                     />
-                                    {status.label}
+                                    {status.name}
                                     <span className="ml-auto text-muted-foreground tabular-nums">
-                                        {statusCounts[status.value] ?? 0}
+                                        {statusCounts[status.id] ?? 0}
                                     </span>
                                 </li>
                             ))}
@@ -180,19 +175,18 @@ export default function Overview({
                                         </span>
                                         <span className="flex h-2.5 flex-1 overflow-hidden rounded-full bg-muted">
                                             {openStatuses.map((status) =>
-                                                (member.statuses[
-                                                    status.value
-                                                ] ?? 0) > 0 ? (
+                                                (member.statuses[status.id] ??
+                                                    0) > 0 ? (
                                                     <span
-                                                        key={status.value}
-                                                        title={`${status.label}: ${member.statuses[status.value]}`}
+                                                        key={status.id}
+                                                        title={`${status.name}: ${member.statuses[status.id]}`}
                                                         className={
-                                                            statusBar[
-                                                                status.value
+                                                            colorDot[
+                                                                status.color
                                                             ]
                                                         }
                                                         style={{
-                                                            width: `${((member.statuses[status.value] ?? 0) / busiest) * 100}%`,
+                                                            width: `${((member.statuses[status.id] ?? 0) / busiest) * 100}%`,
                                                         }}
                                                     />
                                                 ) : null,

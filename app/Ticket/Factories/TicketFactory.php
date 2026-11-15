@@ -24,11 +24,11 @@ use App\Ticket\Properties\Position;
 use App\Ticket\Properties\PriorityId;
 use App\Ticket\Properties\ProjectId;
 use App\Ticket\Properties\StartsOn;
-use App\Ticket\Properties\Status;
+use App\Ticket\Properties\StatusId;
 use App\Ticket\Properties\TeamId;
 use App\Ticket\Properties\Title;
 use App\Ticket\TicketEloquentModel;
-use App\Ticket\TicketStatusEnum;
+use App\Ticket\TicketStatusCategoryEnum;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -52,7 +52,7 @@ final class TicketFactory extends Factory
             AssigneeId::getDatabaseTableColumnName() => null,
             Title::getDatabaseTableColumnName() => fake()->sentence(4),
             Description::getDatabaseTableColumnName() => fake()->paragraph(),
-            Status::getDatabaseTableColumnName() => TicketStatusEnum::New->value,
+            StatusId::getDatabaseTableColumnName() => fn (array $attributes): ?string => FindChoice::defaultForTeam(Types::string($attributes[TeamId::getDatabaseTableColumnName()]), ChoiceListEnum::TicketStatus, TicketStatusCategoryEnum::Open->value)->getId()->toNullableString(),
             PriorityId::getDatabaseTableColumnName() => fn (array $attributes): ?string => FindChoice::defaultForTeam(Types::string($attributes[TeamId::getDatabaseTableColumnName()]), ChoiceListEnum::TicketPriority)->getId()->toNullableString(),
             ClosedAt::getDatabaseTableColumnName() => null,
             ProjectId::getDatabaseTableColumnName() => null,
@@ -63,6 +63,27 @@ final class TicketFactory extends Factory
             Position::getDatabaseTableColumnName() => 0,
             ArchivedAt::getDatabaseTableColumnName() => null,
         ];
+    }
+
+    /**
+     * In the team's default closed status. The team is read when the ticket is
+     * made, so it works with a team given to create().
+     */
+    public function closed(): self
+    {
+        return $this->state([
+            StatusId::getDatabaseTableColumnName() => fn (array $attributes): ?string => FindChoice::defaultForTeam(Types::string($attributes[TeamId::getDatabaseTableColumnName()]), ChoiceListEnum::TicketStatus, TicketStatusCategoryEnum::Closed->value)->getId()->toNullableString(),
+        ]);
+    }
+
+    /**
+     * In the team's status with this name, such as "In progress".
+     */
+    public function inStatus(string $name): self
+    {
+        return $this->state([
+            StatusId::getDatabaseTableColumnName() => fn (array $attributes): ?string => FindChoice::byNameForTeam(Types::string($attributes[TeamId::getDatabaseTableColumnName()]), ChoiceListEnum::TicketStatus, $name)->getId()->toNullableString(),
+        ]);
     }
 
     public function archived(): self

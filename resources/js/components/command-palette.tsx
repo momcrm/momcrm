@@ -45,7 +45,7 @@ type SearchHit = {
     subtitle: string | null;
     url: string;
     number?: number;
-    status?: string;
+    status_id?: string | null;
 };
 
 type SearchResponse = {

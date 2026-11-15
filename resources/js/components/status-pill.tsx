@@ -14,13 +14,16 @@ const dotColors: Record<Tone, string> = {
 
 /**
  * A record's state: a coloured dot on a neutral outline, for tables and rows.
+ * The dot takes a tone, or a class such as a team choice's colour.
  */
 export default function StatusPill({
-    tone,
+    tone = 'neutral',
+    dotClassName,
     className,
     children,
 }: {
-    tone: Tone;
+    tone?: Tone;
+    dotClassName?: string;
     className?: string;
     children: ReactNode;
 }) {
@@ -31,7 +34,10 @@ export default function StatusPill({
         >
             <span
                 aria-hidden
-                className={cn('size-1.5 rounded-full', dotColors[tone])}
+                className={cn(
+                    'size-1.5 rounded-full',
+                    dotClassName ?? dotColors[tone],
+                )}
             />
             {children}
         </Badge>

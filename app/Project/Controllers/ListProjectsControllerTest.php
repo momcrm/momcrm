@@ -12,7 +12,7 @@ use function Pest\Laravel\actingAs;
 it('lists the team’s live projects with their progress', function (): void {
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
     $project = ProjectEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'name' => 'Refit']);
-    TicketEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'project_id' => $project->id, 'status' => 'closed']);
+    TicketEloquentModel::factory()->closed()->create(['team_id' => $user->current_team_id, 'project_id' => $project->id]);
     TicketEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'project_id' => $project->id, 'due_on' => now()->subDay()->toDateString()]);
     ProjectEloquentModel::factory()->archived()->create(['team_id' => $user->current_team_id]);
     ProjectEloquentModel::factory()->create();

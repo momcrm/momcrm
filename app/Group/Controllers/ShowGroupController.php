@@ -23,12 +23,12 @@ use App\Ticket\Properties\ArchivedAt;
 use App\Ticket\Properties\DueOn;
 use App\Ticket\Properties\ParentId;
 use App\Ticket\Properties\ProjectId;
-use App\Ticket\Properties\Status;
+use App\Ticket\Properties\StatusId;
 use App\Ticket\Ticket;
 use App\Ticket\TicketDrawer;
 use App\Ticket\TicketEloquentModel;
 use App\Ticket\TicketRelationship;
-use App\Ticket\TicketStatusEnum;
+use App\Ticket\TicketStatusCategoryEnum;
 use App\User\UserEloquentModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -76,7 +76,7 @@ final class ShowGroupController
                 ->whereIn(ProjectId::getDatabaseTableColumnName(), $projects->map(fn (Project $project): string => $project->getId()->toString())->all())
                 ->whereNull(ArchivedAt::getDatabaseTableColumnName())
                 ->whereNull(ParentId::getDatabaseTableColumnName())
-                ->whereIn(Status::getDatabaseTableColumnName(), TicketStatusEnum::openValues())
+                ->whereIn(StatusId::getDatabaseTableColumnName(), TicketStatusCategoryEnum::Open->statusIds())
                 ->orderByRaw('due_on is null, due_on')
                 ->orderBy(DueOn::getDatabaseTableColumnName())
                 ->limit(15)

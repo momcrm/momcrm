@@ -52,7 +52,7 @@ it('closes a ticket from the drawer, stamping the closed time', function (): voi
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
     $ticket = patchableTicket($user);
 
-    actingAs($user)->patch(route('tickets.patch', $ticket->id), ['status' => 'closed']);
+    actingAs($user)->patch(route('tickets.patch', $ticket->id), ['status_id' => ticketStatusId($user->current_team_id, 'Closed')]);
 
     expect($ticket->fresh()->closed_at)->not->toBeNull();
 });
@@ -119,15 +119,17 @@ it('applies the close rules when an edit closes or reopens the ticket', function
     $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
     $member = UserEloquentModel::factory()->inTeam($owner->current_team_id)->create();
     AccessRuleEloquentModel::factory()->deny()->create(['team_id' => $owner->current_team_id, 'resources' => ['ticket'], 'actions' => ['close', 'reopen']]);
-    $open = patchableTicket($owner, ['status' => 'new']);
-    $closed = patchableTicket($owner, ['status' => 'closed']);
+    $new = ticketStatusId($owner->current_team_id, 'New');
+    $closedStatus = ticketStatusId($owner->current_team_id, 'Closed');
+    $open = patchableTicket($owner, ['status_id' => $new]);
+    $closed = patchableTicket($owner, ['status_id' => $closedStatus]);
 
     $urgent = teamPriorityId($owner, 'Urgent');
 
     actingAs($member)->patch(route('tickets.patch', $open->id), ['priority_id' => $urgent])->assertSessionHasNoErrors();
-    actingAs($member)->patch(route('tickets.patch', $open->id), ['status' => 'closed'])->assertForbidden();
-    actingAs($member)->patch(route('tickets.patch', $closed->id), ['status' => 'new'])->assertForbidden();
+    actingAs($member)->patch(route('tickets.patch', $open->id), ['status_id' => $closedStatus])->assertForbidden();
+    actingAs($member)->patch(route('tickets.patch', $closed->id), ['status_id' => $new])->assertForbidden();
 
-    expect($open->fresh())->priority_id->toBe($urgent)->status->toBe('new')
-        ->and($closed->fresh()->status)->toBe('closed');
+    expect($open->fresh())->priority_id->toBe($urgent)->status_id->toBe($new)
+        ->and($closed->fresh()->status_id)->toBe($closedStatus);
 });

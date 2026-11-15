@@ -17,49 +17,63 @@ import {
 import { useInitials } from '@/hooks/use-initials';
 import { colorDot, colorText } from '@/lib/colors';
 import { cn } from '@/lib/utils';
-import type {
-    ColorName,
-    TicketLabel,
-    Choice,
-    TicketStatus,
-    Tone,
-} from '@/types';
+import type { ColorName, TicketLabel, Choice } from '@/types';
 
-export const ticketStatuses: {
-    value: TicketStatus;
-    label: string;
-    tone: Tone;
-}[] = [
-    { value: 'new', label: 'New', tone: 'neutral' },
-    { value: 'in_progress', label: 'In progress', tone: 'primary' },
-    {
-        value: 'waiting_on_customer',
-        label: 'Waiting on customer',
-        tone: 'warning',
-    },
-    {
-        value: 'waiting_on_supplier',
-        label: 'Waiting on supplier',
-        tone: 'info',
-    },
-    { value: 'closed', label: 'Closed', tone: 'success' },
-];
-
-const statusByValue = Object.fromEntries(
-    ticketStatuses.map((status) => [status.value, status]),
-) as Record<TicketStatus, (typeof ticketStatuses)[number]>;
-
-export function statusLabel(status: TicketStatus): string {
-    return statusByValue[status].label;
+/**
+ * The team's ticket statuses, in board order.
+ */
+export function useTicketStatuses(): Choice[] {
+    return usePage().props.choices?.ticket_status ?? [];
 }
 
-export function statusTone(status: TicketStatus): Tone {
-    return statusByValue[status].tone;
+/**
+ * One of the team's statuses by id; undefined for none or an unknown id.
+ */
+export function useTicketStatus(statusId: string | null): Choice | undefined {
+    const statuses = useTicketStatuses();
+
+    return statuses.find((status) => status.id === statusId);
 }
 
-export function TicketStatusPill({ status }: { status: TicketStatus }) {
+/**
+ * Whether a status means the ticket is finished, from its category.
+ */
+export function isClosedStatus(statuses: Choice[], statusId: string | null) {
     return (
-        <StatusPill tone={statusTone(status)}>{statusLabel(status)}</StatusPill>
+        statuses.find((status) => status.id === statusId)?.category === 'closed'
+    );
+}
+
+/**
+ * A check for closed statuses, for components that look at many tickets.
+ */
+export function useIsClosedStatus(): (statusId: string | null) => boolean {
+    const statuses = useTicketStatuses();
+
+    return (statusId) => isClosedStatus(statuses, statusId);
+}
+
+/**
+ * The status a ticket moves to when it is reopened (`open`) or closed (`closed`).
+ */
+export function defaultStatusId(
+    statuses: Choice[],
+    category: 'open' | 'closed',
+): string | undefined {
+    return (
+        statuses.find(
+            (status) => status.category === category && status.is_default,
+        ) ?? statuses.find((status) => status.category === category)
+    )?.id;
+}
+
+export function TicketStatusPill({ statusId }: { statusId: string | null }) {
+    const status = useTicketStatus(statusId);
+
+    return (
+        <StatusPill dotClassName={colorDot[status?.color ?? 'slate']}>
+            {status?.name ?? 'No status'}
+        </StatusPill>
     );
 }
 

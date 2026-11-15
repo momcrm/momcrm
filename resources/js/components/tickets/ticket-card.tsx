@@ -6,6 +6,7 @@ import {
     PriorityIcon,
     ProjectTag,
     SubtaskProgress,
+    useIsClosedStatus,
 } from '@/components/tickets/ticket-meta';
 import { cn } from '@/lib/utils';
 import type { TicketListItem } from '@/types';
@@ -25,7 +26,7 @@ export default function TicketCard({
     isDragging?: boolean;
     onOpen: () => void;
 }) {
-    const isClosed = ticket.status === 'closed';
+    const isClosed = useIsClosedStatus()(ticket.status_id);
 
     return (
         <button

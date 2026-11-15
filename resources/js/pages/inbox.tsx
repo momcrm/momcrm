@@ -7,6 +7,7 @@ import {
     DueChip,
     ProjectTag,
     TicketStatusPill,
+    useIsClosedStatus,
 } from '@/components/tickets/ticket-meta';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -45,6 +46,7 @@ export default function Inbox({
     options: TicketPickerOptions;
     selected: TicketDrawerData | null;
 }) {
+    const isClosed = useIsClosedStatus();
     const open = (notification: NotificationItem) => {
         const go = () =>
             notification.subject_type === 'project'
@@ -233,11 +235,11 @@ export default function Inbox({
                                 </h2>
                                 <div className="flex items-center gap-3">
                                     <TicketStatusPill
-                                        status={selected.status}
+                                        statusId={selected.status_id}
                                     />
                                     <DueChip
                                         dueOn={selected.due_on}
-                                        isClosed={selected.status === 'closed'}
+                                        isClosed={isClosed(selected.status_id)}
                                     />
                                 </div>
                                 {selected.description && (

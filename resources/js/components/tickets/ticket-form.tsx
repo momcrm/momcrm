@@ -1,7 +1,10 @@
 import { Form, Link } from '@inertiajs/react';
 import { useState } from 'react';
 import FormField from '@/components/form-field';
-import { useTicketPriorities } from '@/components/tickets/ticket-meta';
+import {
+    useTicketPriorities,
+    useTicketStatuses,
+} from '@/components/tickets/ticket-meta';
 import NativeSelect from '@/components/native-select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,6 +30,7 @@ export default function TicketForm({
     cancelHref: string;
 }) {
     const priorities = useTicketPriorities();
+    const statuses = useTicketStatuses();
     const [selectedCustomer, setSelectedCustomer] = useState(
         ticket?.customer_id ?? customerId ?? '',
     );
@@ -256,21 +260,21 @@ export default function TicketForm({
                         </FormField>
                         {ticket && (
                             <FormField
-                                id="status"
+                                id="status_id"
                                 label="Status"
-                                error={errors.status}
+                                error={errors.status_id}
                             >
                                 <NativeSelect
-                                    id="status"
-                                    name="status"
-                                    defaultValue={ticket.status}
+                                    id="status_id"
+                                    name="status_id"
+                                    defaultValue={ticket.status_id ?? undefined}
                                 >
-                                    {options.statuses.map((status) => (
+                                    {statuses.map((status) => (
                                         <option
-                                            key={status.value}
-                                            value={status.value}
+                                            key={status.id}
+                                            value={status.id}
                                         >
-                                            {status.label}
+                                            {status.name}
                                         </option>
                                     ))}
                                 </NativeSelect>

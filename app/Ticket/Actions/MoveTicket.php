@@ -7,11 +7,10 @@ namespace App\Ticket\Actions;
 use App\Ticket\Properties\ArchivedAt;
 use App\Ticket\Properties\Id;
 use App\Ticket\Properties\Position;
-use App\Ticket\Properties\Status;
+use App\Ticket\Properties\StatusId;
 use App\Ticket\Properties\TeamId;
 use App\Ticket\Ticket;
 use App\Ticket\TicketEloquentModel;
-use App\Ticket\TicketStatusEnum;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -22,7 +21,7 @@ final readonly class MoveTicket
 {
     public function __construct(
         private Ticket $ticket,
-        private TicketStatusEnum $status,
+        private string $statusId,
         private int $position,
         private ?string $movedById = null,
     ) {}
@@ -30,14 +29,14 @@ final readonly class MoveTicket
     public function __invoke(): Ticket
     {
         return DB::transaction(function (): Ticket {
-            if ($this->ticket->getStatus()->toEnum() !== $this->status) {
-                UpdateTicket::fromTicket($this->ticket->setStatus($this->status), updatedById: $this->movedById);
+            if ($this->ticket->getStatusId()->toNullableString() !== $this->statusId) {
+                UpdateTicket::fromTicket($this->ticket->setStatusId($this->statusId), updatedById: $this->movedById);
             }
 
             $column = TicketEloquentModel::query()
                 ->withoutGlobalScopes()
                 ->where(TeamId::getDatabaseTableColumnName(), $this->ticket->getTeamId()->toString())
-                ->where(Status::getDatabaseTableColumnName(), $this->status->value)
+                ->where(StatusId::getDatabaseTableColumnName(), $this->statusId)
                 ->whereNull(ArchivedAt::getDatabaseTableColumnName())
                 ->whereKeyNot($this->ticket->getId()->toString())
                 ->orderBy(Position::getDatabaseTableColumnName())
@@ -64,9 +63,9 @@ final readonly class MoveTicket
         });
     }
 
-    public static function to(Ticket $ticket, TicketStatusEnum $status, int $position, ?string $movedById = null): Ticket
+    public static function to(Ticket $ticket, string $statusId, int $position, ?string $movedById = null): Ticket
     {
-        return new self($ticket, $status, $position, $movedById)->handle();
+        return new self($ticket, $statusId, $position, $movedById)->handle();
     }
 
     public function handle(): Ticket

@@ -5,7 +5,7 @@ import PageHeader from '@/components/page-header';
 import TicketDrawer from '@/components/tickets/ticket-drawer';
 import TicketGroups from '@/components/tickets/ticket-groups';
 import type { TicketGroup } from '@/components/tickets/ticket-groups';
-import { daysUntil } from '@/components/tickets/ticket-meta';
+import { daysUntil, useIsClosedStatus } from '@/components/tickets/ticket-meta';
 import { Button } from '@/components/ui/button';
 import { calendar } from '@/routes';
 import { mine } from '@/routes/tickets';
@@ -19,7 +19,10 @@ import type {
  * Puts someone's tickets in when-they-are-due order: overdue, today, the
  * coming week, later, no date, then what they finished recently.
  */
-function groupByDue(tickets: TicketListItem[]): TicketGroup[] {
+function groupByDue(
+    tickets: TicketListItem[],
+    isClosed: (statusId: string | null) => boolean,
+): TicketGroup[] {
     const groups: TicketGroup[] = [
         { key: 'overdue', label: 'Overdue', tone: 'destructive', tickets: [] },
         { key: 'today', label: 'Today', tone: 'warning', tickets: [] },
@@ -38,18 +41,17 @@ function groupByDue(tickets: TicketListItem[]): TicketGroup[] {
 
     for (const ticket of tickets) {
         const days = ticket.due_on === null ? null : daysUntil(ticket.due_on);
-        const key =
-            ticket.status === 'closed'
-                ? 'done'
-                : days === null
-                  ? 'undated'
-                  : days < 0
-                    ? 'overdue'
-                    : days === 0
-                      ? 'today'
-                      : days <= 7
-                        ? 'week'
-                        : 'later';
+        const key = isClosed(ticket.status_id)
+            ? 'done'
+            : days === null
+              ? 'undated'
+              : days < 0
+                ? 'overdue'
+                : days === 0
+                  ? 'today'
+                  : days <= 7
+                    ? 'week'
+                    : 'later';
 
         byKey[key].tickets.push(ticket);
     }
@@ -68,6 +70,8 @@ export default function MyTickets({
     options: TicketPickerOptions;
     drawer: TicketDrawerData | null;
 }) {
+    const isClosed = useIsClosedStatus();
+
     return (
         <>
             <Head title="My tickets" />
@@ -93,7 +97,7 @@ export default function MyTickets({
                     />
                 ) : (
                     <TicketGroups
-                        groups={groupByDue(tickets)}
+                        groups={groupByDue(tickets, isClosed)}
                         favoriteIds={favoriteTicketIds}
                     />
                 )}

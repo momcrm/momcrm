@@ -97,7 +97,9 @@ export default function ArchivePage({
                                         {ticket.project_name ??
                                             ticket.customer_name}
                                     </span>
-                                    <TicketStatusPill status={ticket.status} />
+                                    <TicketStatusPill
+                                        statusId={ticket.status_id}
+                                    />
                                     <span className="hidden w-24 text-xs text-subtle-foreground lg:block">
                                         {ticket.archived_at &&
                                             `Archived ${formatDay(ticket.archived_at.slice(0, 10))}`}

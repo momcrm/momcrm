@@ -5,7 +5,6 @@ import { visitWithQuery } from '@/lib/query';
 import { toggle as toggleFavorite } from '@/routes/favorites';
 import { archive, move, patch } from '@/routes/tickets';
 import { store as storeSubtask } from '@/routes/tickets/subtasks';
-import type { TicketStatus } from '@/types';
 
 /**
  * The props a page hosting ticket views reloads after a change.
@@ -45,10 +44,10 @@ export function useTicketActions() {
     );
 
     const moveTicket = useCallback(
-        (id: string, status: TicketStatus, position: number) => {
+        (id: string, statusId: string, position: number) => {
             router.put(
                 move.url(id),
-                { status, position },
+                { status_id: statusId, position },
                 {
                     only: RELOAD,
                     preserveScroll: true,
