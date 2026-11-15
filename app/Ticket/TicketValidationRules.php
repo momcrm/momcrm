@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Ticket;
 
+use App\Project\ProjectVisibility;
 use App\Shared\Table;
 use App\Ticket\Properties\AssigneeId;
 use App\Ticket\Properties\ContactId;
@@ -24,7 +25,8 @@ use Illuminate\Validation\Rule;
  * Rules shared by opening and editing a ticket. The customer must be in the
  * team, and can be left out only when the ticket belongs to a project; the
  * contact and location must belong to that customer; the project must be one
- * of the team's live projects (or the one the ticket is already in); the
+ * of the team's live projects the person may see (or the one the ticket is
+ * already in); the
  * assignee must be a member of the team.
  */
 final class TicketValidationRules
@@ -35,6 +37,7 @@ final class TicketValidationRules
     public static function for(FormRequest $request, string $teamId, ?string $currentProjectId = null): array
     {
         $customerId = (string) $request->input(CustomerId::getNameForValidation());
+        $userId = (string) $request->user()?->getAuthIdentifier();
 
         return [
             CustomerId::getNameForValidation() => [
@@ -57,7 +60,12 @@ final class TicketValidationRules
                 ...ProjectId::getValidationRulesForCreate($request),
                 Rule::exists(Table::Projects->value, 'id')
                     ->where('team_id', $teamId)
-                    ->where(fn (Builder $query) => $query->whereNull('archived_at')->orWhere('id', $currentProjectId)),
+                    ->where(fn (Builder $query) => $query
+                        ->where(function (Builder $live) use ($userId): void {
+                            $live->whereNull('archived_at');
+                            ProjectVisibility::constrainProjects($live, $userId);
+                        })
+                        ->orWhere('id', $currentProjectId)),
             ],
             StartsOn::getNameForValidation() => StartsOn::getValidationRulesForCreate($request),
             DueOn::getNameForValidation() => DueOn::getValidationRulesForCreate($request),

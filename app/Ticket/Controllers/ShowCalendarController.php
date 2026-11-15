@@ -27,7 +27,7 @@ final class ShowCalendarController
         return Inertia::render('calendar', [
             ...TicketCalendar::forRequest($request),
             'favoriteTicketIds' => FindFavorite::idsForUser($teamId, $user->id, FavoritableTypeEnum::Ticket),
-            ...TicketDrawer::options($teamId),
+            ...TicketDrawer::options($teamId, $user->id),
             'drawer' => TicketDrawer::forRequest($request),
         ]);
     }

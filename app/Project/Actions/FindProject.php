@@ -166,13 +166,14 @@ final class FindProject
     }
 
     /**
-     * The team's live projects as pickers need them: id, name, colour and customer.
+     * The team's live projects someone may see, as pickers need them: id, name,
+     * colour and customer.
      *
      * @return Collection<int, array{id: string, name: string, color: string, customer_id: ?string}>
      */
-    public static function optionsForTeam(string $teamId): Collection
+    public static function optionsForTeam(string $teamId, string $userId): Collection
     {
-        return self::query($teamId)
+        return self::visibleQuery($teamId, $userId)
             ->whereNull(ArchivedAt::getDatabaseTableColumnName())
             ->orderBy(Name::getDatabaseTableColumnName())
             ->get()

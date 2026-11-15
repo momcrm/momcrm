@@ -64,19 +64,19 @@ final class ShowProjectController
                         ->values()
                         ->all(),
                     'favoriteTicketIds' => [],
-                    ...TicketDrawer::options($teamId),
+                    ...TicketDrawer::options($teamId, $user->id),
                     'drawer' => null,
                 ],
                 'calendar', 'timeline' => [
                     ...($tab === 'calendar' ? TicketCalendar::forRequest($request, $model->id) : TicketTimeline::forRequest($request, $model->id)),
                     'favoriteTicketIds' => FindFavorite::idsForUser($teamId, $user->id, FavoritableTypeEnum::Ticket),
-                    ...TicketDrawer::options($teamId),
+                    ...TicketDrawer::options($teamId, $user->id),
                     'drawer' => TicketDrawer::forRequest($request),
                 ],
                 'overview' => [
                     ...ProjectOverview::for($model->id),
                     'favoriteTicketIds' => FindFavorite::idsForUser($teamId, $user->id, FavoritableTypeEnum::Ticket),
-                    ...TicketDrawer::options($teamId),
+                    ...TicketDrawer::options($teamId, $user->id),
                     'drawer' => TicketDrawer::forRequest($request),
                 ],
                 default => TicketViewProps::for($request, TicketListFilters::fromRequest($request)->forProject($model->id)),

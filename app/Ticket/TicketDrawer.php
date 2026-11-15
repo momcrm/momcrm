@@ -138,12 +138,12 @@ final class TicketDrawer
      *
      * @return array{options: array<string, mixed>}
      */
-    public static function options(string $teamId): array
+    public static function options(string $teamId, string $userId): array
     {
         return [
             'options' => [
                 'members' => FindTeamMembers::optionsForTeam($teamId),
-                'projects' => FindProject::optionsForTeam($teamId),
+                'projects' => FindProject::optionsForTeam($teamId, $userId),
                 'labels' => FindLabel::optionsForTeam($teamId),
                 'customers' => FindCustomer::optionsForTeam($teamId),
                 'statuses' => TicketStatusEnum::options(),

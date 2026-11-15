@@ -29,7 +29,7 @@ final class ShowInboxController
             'notifications' => FindNotifications::forUser($user, $kind, $unreadOnly),
             'counts' => FindNotifications::unreadCounts($user),
             'filters' => ['kind' => $kind?->value, 'unread' => $unreadOnly],
-            ...TicketDrawer::options((string) $user->current_team_id),
+            ...TicketDrawer::options((string) $user->current_team_id, $user->id),
             'selected' => TicketDrawer::forRequest($request),
         ]);
     }

@@ -45,7 +45,7 @@ final class ListFavoritesController
                 ->map(fn (Customer $customer): array => $customer->toSummary())
                 ->values(),
             'favoriteTicketIds' => $ticketIds,
-            ...TicketDrawer::options($teamId),
+            ...TicketDrawer::options($teamId, $user->id),
             'drawer' => TicketDrawer::forRequest($request),
         ]);
     }

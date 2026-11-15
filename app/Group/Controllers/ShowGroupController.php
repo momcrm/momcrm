@@ -87,7 +87,7 @@ final class ShowGroupController
             'teamMembers' => FindTeamMembers::optionsForTeam($teamId),
             'colors' => ColorEnum::values(),
             'favoriteTicketIds' => FindFavorite::idsForUser($teamId, $user->id, FavoritableTypeEnum::Ticket),
-            ...TicketDrawer::options($teamId),
+            ...TicketDrawer::options($teamId, $user->id),
             'drawer' => TicketDrawer::forRequest($request),
         ]);
     }

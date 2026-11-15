@@ -31,7 +31,7 @@ final class ListMyTicketsController
                 ->map(fn (TicketEloquentModel $model): array => ListTicketsController::listItem($model))
                 ->values(),
             'favoriteTicketIds' => FindFavorite::idsForUser($teamId, $user->id, FavoritableTypeEnum::Ticket),
-            ...TicketDrawer::options($teamId),
+            ...TicketDrawer::options($teamId, $user->id),
             'drawer' => TicketDrawer::forRequest($request),
         ]);
     }
