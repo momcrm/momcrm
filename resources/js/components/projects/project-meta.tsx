@@ -17,9 +17,9 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useInitials } from '@/hooks/use-initials';
-import { colorDot } from '@/lib/colors';
+import { hueStyle } from '@/lib/colors';
 import { cn } from '@/lib/utils';
-import type { ColorName, CustomerOption, ProjectStatus, Tone } from '@/types';
+import type { CustomerOption, ProjectStatus, Tone } from '@/types';
 
 export const projectStatuses: {
     value: ProjectStatus;
@@ -61,11 +61,11 @@ export const projectIcons: Record<string, LucideIcon> = {
 
 export function ProjectIcon({
     icon,
-    color,
+    hue,
     size = 'md',
 }: {
     icon: string | null;
-    color: ColorName;
+    hue: number | null;
     size?: 'sm' | 'md' | 'lg';
 }) {
     const Icon = projectIcons[icon ?? 'folder'] ?? FolderKanban;
@@ -74,12 +74,13 @@ export function ProjectIcon({
         <span
             aria-hidden
             className={cn(
+                'hue-dot',
                 'inline-flex shrink-0 items-center justify-center rounded-md text-white',
-                colorDot[color],
                 size === 'sm' && 'size-4 rounded-[4px] [&>svg]:size-2.5',
                 size === 'md' && 'size-7 [&>svg]:size-3.5',
                 size === 'lg' && 'size-9 rounded-lg [&>svg]:size-4.5',
             )}
+            style={hueStyle(hue)}
         >
             <Icon />
         </span>

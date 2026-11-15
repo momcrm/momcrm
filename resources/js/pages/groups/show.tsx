@@ -11,13 +11,12 @@ import { AssigneeAvatar } from '@/components/tickets/ticket-meta';
 import TicketRow from '@/components/tickets/ticket-row';
 import { Button } from '@/components/ui/button';
 import { useTicketActions } from '@/hooks/use-ticket-actions';
-import { colorDot } from '@/lib/colors';
+import { hueStyle } from '@/lib/colors';
 import { cn } from '@/lib/utils';
 import { members as membersRoute } from '@/routes';
 import { destroy, show } from '@/routes/groups';
 import type {
     Abilities,
-    ColorName,
     CustomerOption,
     ProjectListItem,
     TicketDrawerData,
@@ -29,7 +28,7 @@ type Group = {
     id: string;
     name: string;
     description: string | null;
-    color: ColorName;
+    hue: number | null;
     icon: string | null;
 };
 type GroupMember = {
@@ -49,7 +48,6 @@ export default function ShowGroup({
     projects,
     tickets,
     teamMembers,
-    colors,
     favoriteTicketIds,
     options,
     drawer,
@@ -61,7 +59,6 @@ export default function ShowGroup({
     projects: ProjectListItem[];
     tickets: TicketListItem[];
     teamMembers: CustomerOption[];
-    colors: ColorName[];
     favoriteTicketIds: string[];
     options: TicketPickerOptions;
     drawer: TicketDrawerData | null;
@@ -86,10 +83,8 @@ export default function ShowGroup({
             <div className="flex flex-col gap-5 p-4 md:p-6">
                 <header className="flex flex-wrap items-start gap-3">
                     <span
-                        className={cn(
-                            'mt-1 size-9 rounded-lg',
-                            colorDot[group.color],
-                        )}
+                        className={cn('hue-dot', 'mt-1 size-9 rounded-lg')}
+                        style={hueStyle(group.hue)}
                     />
                     <div className="min-w-0 flex-1">
                         <h1 className="text-xl font-semibold">{group.name}</h1>
@@ -209,12 +204,11 @@ export default function ShowGroup({
                 onOpenChange={setEditing}
                 canManageMembers={can.manageMembers ?? false}
                 members={teamMembers}
-                colors={colors}
                 group={{
                     id: group.id,
                     name: group.name,
                     description: group.description,
-                    color: group.color,
+                    hue: group.hue,
                     lead_id:
                         members.find((member) => member.role === 'lead')?.id ??
                         null,

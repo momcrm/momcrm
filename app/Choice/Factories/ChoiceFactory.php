@@ -7,13 +7,12 @@ namespace App\Choice\Factories;
 use App\Choice\ChoiceEloquentModel;
 use App\Choice\ChoiceListEnum;
 use App\Choice\Properties\Category;
-use App\Choice\Properties\Color;
+use App\Choice\Properties\Hue;
 use App\Choice\Properties\IsDefault;
 use App\Choice\Properties\ListName;
 use App\Choice\Properties\Name;
 use App\Choice\Properties\Position;
 use App\Choice\Properties\TeamId;
-use App\Shared\ColorEnum;
 use App\Team\TeamEloquentModel;
 use App\Ticket\TicketStatusCategoryEnum;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -36,7 +35,7 @@ final class ChoiceFactory extends Factory
             TeamId::getDatabaseTableColumnName() => TeamEloquentModel::factory(),
             ListName::getDatabaseTableColumnName() => ChoiceListEnum::TicketStatus->value,
             Name::getDatabaseTableColumnName() => fake()->unique()->words(2, true),
-            Color::getDatabaseTableColumnName() => fake()->randomElement(ColorEnum::values()),
+            Hue::getDatabaseTableColumnName() => fake()->numberBetween(0, 359),
             Category::getDatabaseTableColumnName() => TicketStatusCategoryEnum::Open->value,
             Position::getDatabaseTableColumnName() => 100,
             IsDefault::getDatabaseTableColumnName() => false,

@@ -10,10 +10,11 @@ use App\Choice\Choice;
 use App\Choice\ChoiceAccess;
 use App\Choice\ChoiceListEnum;
 use App\Choice\Properties\Category;
-use App\Choice\Properties\Color;
+use App\Choice\Properties\Hue;
 use App\Choice\Properties\Icon;
 use App\Choice\Properties\ListName;
 use App\Choice\Properties\Name;
+use App\Shared\HuePalette;
 use App\Shared\Table;
 use App\Team\Exceptions\CouldNotViewTeam;
 use Illuminate\Auth\Access\Response;
@@ -51,7 +52,7 @@ final class StoreChoiceFormRequest extends FormRequest
                     ->where('team_id', $this->user()?->current_team_id)
                     ->where('list', $list?->value),
             ],
-            Color::getNameForValidation() => Color::getValidationRulesForCreate($this),
+            Hue::getNameForValidation() => Hue::getValidationRulesForCreate($this),
             Icon::getNameForValidation() => ['nullable', Rule::in($list?->icons() ?? [])],
             Category::getNameForValidation() => $list?->categories() === []
                 ? ['prohibited']
@@ -77,12 +78,14 @@ final class StoreChoiceFormRequest extends FormRequest
             ->map(fn (Choice $choice): int => $choice->getPosition()->toInteger())
             ->max();
 
+        $name = $this->string(Name::getNameForValidation())->trim()->toString();
+
         $choice = CreateChoice::fromChoice(
             Choice::new()
                 ->setTeamId($teamId)
                 ->setListName($list)
-                ->setName($this->string(Name::getNameForValidation())->trim()->toString())
-                ->setColor($this->string(Color::getNameForValidation())->toString())
+                ->setName($name)
+                ->setHue($this->has(Hue::getNameForValidation()) ? $this->input(Hue::getNameForValidation()) : HuePalette::forName($list->value, $name))
                 ->setIcon($this->input(Icon::getNameForValidation()))
                 ->setCategory($this->input(Category::getNameForValidation()))
                 ->setPosition(is_int($lastPosition) ? $lastPosition + 1 : 0)

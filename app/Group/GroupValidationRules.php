@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Group;
 
-use App\Group\Properties\Color;
 use App\Group\Properties\Description;
+use App\Group\Properties\Hue;
 use App\Group\Properties\Icon;
 use App\Group\Properties\Name;
 use App\Shared\Table;
@@ -42,7 +42,7 @@ final class GroupValidationRules
             ],
             Description::getNameForValidation() => Description::getValidationRulesForCreate($request),
             Icon::getNameForValidation() => Icon::getValidationRulesForCreate($request),
-            Color::getNameForValidation() => Color::getValidationRulesForCreate($request),
+            Hue::getNameForValidation() => Hue::getValidationRulesForCreate($request),
             self::LEAD_ID => ['nullable', 'uuid', $teamMember],
             self::MEMBER_IDS => ['sometimes', 'array'],
             self::MEMBER_IDS.'.*' => ['uuid', $teamMember],

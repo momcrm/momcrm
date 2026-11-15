@@ -8,7 +8,6 @@ use App\Group\Group;
 use App\Group\GroupEloquentModel;
 use App\Group\GroupRoleEnum;
 use App\Group\Properties\Id;
-use App\Shared\ColorEnum;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -31,10 +30,6 @@ final readonly class CreateGroup
         return DB::transaction(function (): Group {
             if ($this->group->getId()->isNull()) {
                 $this->group->setId(Id::generate());
-            }
-
-            if ($this->group->getColor()->isNull()) {
-                $this->group->setColor(ColorEnum::Indigo);
             }
 
             $model = GroupEloquentModel::query()->create($this->group->forDatabaseCreate());

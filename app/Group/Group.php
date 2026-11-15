@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Group;
 
 use App\Group\Factories\GroupFactory;
-use App\Group\Properties\Color;
 use App\Group\Properties\CreatedAt;
 use App\Group\Properties\Description;
+use App\Group\Properties\Hue;
 use App\Group\Properties\Icon;
 use App\Group\Properties\Id;
 use App\Group\Properties\Name;
@@ -23,7 +23,7 @@ use Mom\Data\AbstractValue;
 final class Group extends AbstractData
 {
     public function __construct(
-        public Color $color,
+        public Hue $hue,
         public CreatedAt $createdAt,
         public Description $description,
         public Icon $icon,
@@ -55,14 +55,14 @@ final class Group extends AbstractData
         return GroupCollection::make(parent::collect($items, $method)->all());
     }
 
-    public function getColor(): Color
+    public function getHue(): Hue
     {
-        return $this->color;
+        return $this->hue;
     }
 
-    public function setColor(mixed $color): self
+    public function setHue(mixed $hue): self
     {
-        $this->color = new Color($color instanceof AbstractValue ? $color->toValue() : $color);
+        $this->hue = new Hue($hue instanceof AbstractValue ? $hue->toValue() : $hue);
 
         return $this;
     }

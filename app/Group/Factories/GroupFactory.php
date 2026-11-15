@@ -5,12 +5,11 @@ declare(strict_types=1);
 namespace App\Group\Factories;
 
 use App\Group\GroupEloquentModel;
-use App\Group\Properties\Color;
 use App\Group\Properties\Description;
+use App\Group\Properties\Hue;
 use App\Group\Properties\Icon;
 use App\Group\Properties\Name;
 use App\Group\Properties\TeamId;
-use App\Shared\ColorEnum;
 use App\Team\TeamEloquentModel;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -31,7 +30,7 @@ final class GroupFactory extends Factory
             Name::getDatabaseTableColumnName() => fake()->unique()->jobTitle(),
             Description::getDatabaseTableColumnName() => null,
             Icon::getDatabaseTableColumnName() => null,
-            Color::getDatabaseTableColumnName() => fake()->randomElement(ColorEnum::values()),
+            Hue::getDatabaseTableColumnName() => fake()->numberBetween(0, 359),
         ];
     }
 }

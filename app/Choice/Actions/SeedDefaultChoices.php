@@ -25,7 +25,7 @@ final readonly class SeedDefaultChoices
                         ->setTeamId($this->teamId)
                         ->setListName($list)
                         ->setName($default['name'])
-                        ->setColor($default['color'])
+                        ->setHue($default['hue'])
                         ->setIcon($default['icon'])
                         ->setCategory($default['category'])
                         ->setPosition($position)

@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Choice\Actions\FindChoice;
 use App\Choice\Choice;
 use App\Choice\ChoiceListEnum;
+use App\Shared\HuePalette;
 use App\User\UserEloquentModel;
 
 use function Pest\Laravel\actingAs;
@@ -13,7 +14,7 @@ it('adds a closed status to the bottom of the list', function (): void {
     $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
 
     actingAs($owner)
-        ->post(route('choices.store'), ['list' => 'ticket_status', 'name' => "Won't fix", 'color' => 'slate', 'category' => 'closed'])
+        ->post(route('choices.store'), ['list' => 'ticket_status', 'name' => "Won't fix", 'category' => 'closed'])
         ->assertSessionHasNoErrors()
         ->assertInertiaFlash('toast', ['type' => 'success', 'message' => "Won't fix added."]);
 
@@ -22,14 +23,15 @@ it('adds a closed status to the bottom of the list', function (): void {
         ->getName()->toString()->toBe("Won't fix")
         ->getCategory()->toString()->toBe('closed')
         ->getPosition()->toInteger()->toBe(5)
-        ->getIsDefault()->toBoolean()->toBeFalse();
+        ->getIsDefault()->toBoolean()->toBeFalse()
+        ->getHue()->toNullableInteger()->toBe(HuePalette::forName('ticket_status', "Won't fix"));
 });
 
 it('adds a priority with an icon and no category', function (): void {
     $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
 
     actingAs($owner)
-        ->post(route('choices.store'), ['list' => 'ticket_priority', 'name' => 'Someday', 'color' => 'teal', 'icon' => 'minus'])
+        ->post(route('choices.store'), ['list' => 'ticket_priority', 'name' => 'Someday', 'hue' => 180, 'icon' => 'minus'])
         ->assertSessionHasNoErrors();
 
     expect(FindChoice::listForTeam($owner->current_team_id, ChoiceListEnum::TicketPriority)->map(fn (Choice $choice): string => $choice->getName()->toString())->all())
@@ -40,7 +42,7 @@ it('needs a category for statuses, refuses one for priorities, and checks the ic
     $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
 
     actingAs($owner)
-        ->post(route('choices.store'), ['color' => 'slate', ...$input])
+        ->post(route('choices.store'), [...$input])
         ->assertSessionHasErrors($field);
 })->with([
     'status without category' => [['list' => 'ticket_status', 'name' => 'Parked'], 'category'],
@@ -54,6 +56,6 @@ it('forbids members', function (): void {
     $member = UserEloquentModel::factory()->inTeam($owner->current_team_id)->create();
 
     actingAs($member)
-        ->post(route('choices.store'), ['list' => 'ticket_status', 'name' => 'Parked', 'color' => 'slate', 'category' => 'open'])
+        ->post(route('choices.store'), ['list' => 'ticket_status', 'name' => 'Parked', 'category' => 'open'])
         ->assertForbidden();
 });

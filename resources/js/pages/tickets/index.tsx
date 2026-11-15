@@ -10,7 +10,7 @@ import { useTicketStatuses } from '@/components/tickets/ticket-meta';
 import TicketTable from '@/components/tickets/ticket-table';
 import TicketToolbar from '@/components/tickets/ticket-toolbar';
 import { Button } from '@/components/ui/button';
-import { colorDot } from '@/lib/colors';
+
 import { useCreateTicket } from '@/components/tickets/create-ticket-dialog';
 import { visitWithQuery } from '@/lib/query';
 import { index } from '@/routes/tickets';
@@ -121,7 +121,7 @@ export default function TicketsIndex({
                         groups={statuses.map((status) => ({
                             key: status.id,
                             label: status.name,
-                            dotClassName: colorDot[status.color],
+                            hue: status.hue,
                             collapsed:
                                 status.category === 'closed' &&
                                 filters.status === 'all',

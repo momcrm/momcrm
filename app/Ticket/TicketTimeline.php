@@ -35,7 +35,7 @@ final class TicketTimeline
     public const string MONTHS = 'months';
 
     /**
-     * @return array{timeline: array{zoom: string, from: string, to: string}, tickets: array<int, array<string, mixed>>, projects: array<int, array{id: string, name: string, color: string, icon: ?string, starts_on: ?string, due_on: ?string}>, milestones: array<int, array{id: string, project_id: string, name: string, due_on: string, completed_at: ?string}>}
+     * @return array{timeline: array{zoom: string, from: string, to: string}, tickets: array<int, array<string, mixed>>, projects: array<int, array{id: string, name: string, hue: ?int, icon: ?string, starts_on: ?string, due_on: ?string}>, milestones: array<int, array{id: string, project_id: string, name: string, due_on: string, completed_at: ?string}>}
      */
     public static function forRequest(Request $request, ?string $projectId = null): array
     {
@@ -84,7 +84,7 @@ final class TicketTimeline
                 ->map(fn (Project $project): array => [
                     'id' => $project->getId()->toString(),
                     'name' => $project->getName()->toString(),
-                    'color' => $project->getColor()->toString(),
+                    'hue' => $project->getHue()->toNullableInteger(),
                     'icon' => $project->getIcon()->toNullableString(),
                     'starts_on' => $project->getStartsOn()->toNullableCarbon()?->toDateString(),
                     'due_on' => $project->getDueOn()->toNullableCarbon()?->toDateString(),

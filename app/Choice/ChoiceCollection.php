@@ -19,7 +19,7 @@ final class ChoiceCollection extends AbstractDataCollection
     /**
      * Each choice as the frontend shows it, in order.
      *
-     * @return list<array{id: string, name: string, color: string, icon: ?string, category: ?string, position: int, is_default: bool, is_archived: bool}>
+     * @return list<array{id: string, name: string, hue: ?int, icon: ?string, category: ?string, position: int, is_default: bool, is_archived: bool}>
      */
     public function toSummaries(): array
     {
@@ -29,14 +29,14 @@ final class ChoiceCollection extends AbstractDataCollection
     /**
      * Each choice as a tag on a record, such as a ticket's labels.
      *
-     * @return list<array{id: string, name: string, color: string}>
+     * @return list<array{id: string, name: string, hue: ?int}>
      */
     public function toTags(): array
     {
         return array_values($this->map(fn (Choice $choice): array => [
             'id' => $choice->getId()->toString(),
             'name' => $choice->getName()->toString(),
-            'color' => $choice->getColor()->toEnum()->value,
+            'hue' => $choice->getHue()->toNullableInteger(),
         ])->all());
     }
 

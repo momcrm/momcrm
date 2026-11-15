@@ -139,7 +139,7 @@ final class FindProject
      * recently updated, up to a handful.
      *
      * @param  array<int, string>  $favoriteIds
-     * @return Collection<int, array{id: string, name: string, color: string, status: string, is_favorite: bool}>
+     * @return Collection<int, array{id: string, name: string, hue: ?int, status: string, is_favorite: bool}>
      */
     public static function forSidebar(string $teamId, string $userId, array $favoriteIds, int $limit = 6): Collection
     {
@@ -156,7 +156,7 @@ final class FindProject
             ->map(fn (ProjectEloquentModel $project): array => [
                 'id' => $project->id,
                 'name' => $project->name,
-                'color' => $project->color,
+                'hue' => $project->hue,
                 'status' => $project->status,
                 'is_favorite' => in_array($project->id, $favoriteIds, true),
             ])
@@ -167,7 +167,7 @@ final class FindProject
      * The team's live projects someone may see, as pickers need them: id, name,
      * colour and customer.
      *
-     * @return Collection<int, array{id: string, name: string, color: string, customer_id: ?string}>
+     * @return Collection<int, array{id: string, name: string, hue: ?int, customer_id: ?string}>
      */
     public static function optionsForTeam(string $teamId, string $userId): Collection
     {
@@ -178,7 +178,7 @@ final class FindProject
             ->map(fn (ProjectEloquentModel $project): array => [
                 'id' => $project->id,
                 'name' => $project->name,
-                'color' => $project->color,
+                'hue' => $project->hue,
                 'customer_id' => $project->customer_id,
             ]);
     }

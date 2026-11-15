@@ -36,7 +36,7 @@ use App\Project\ProjectVisibilityEnum;
 use App\Service\Actions\CreateService;
 use App\Service\Service;
 use App\Service\ServiceStatusEnum;
-use App\Shared\ColorEnum;
+use App\Shared\HuePalette;
 use App\Ticket\Actions\CreateTicket;
 use App\Ticket\Actions\MoveTicket;
 use App\Ticket\Ticket;
@@ -113,14 +113,14 @@ final readonly class SeedSampleData
      * Sample projects, keyed so tickets can point at them. A project's customer
      * is named; tickets listed here are internal (no customer).
      *
-     * @var array<string, array{name: string, customer: ?string, status: ProjectStatusEnum, color: ColorEnum, icon: string, description: string, starts: int, due: int, milestones: array<int, array{name: string, due: int, done?: bool}>, tickets: array<int, array{title: string, status: string, priority: string, due: int, labels: array<int, string>}>}>
+     * @var array<string, array{name: string, customer: ?string, status: ProjectStatusEnum, hue: int, icon: string, description: string, starts: int, due: int, milestones: array<int, array{name: string, due: int, done?: bool}>, tickets: array<int, array{title: string, status: string, priority: string, due: int, labels: array<int, string>}>}>
      */
     private const array PROJECTS = [
         'refit' => [
             'name' => 'Harbour Dental office refit',
             'customer' => 'Harbour Dental',
             'status' => ProjectStatusEnum::InProgress,
-            'color' => ColorEnum::Teal,
+            'hue' => HuePalette::TEAL,
             'icon' => 'building',
             'description' => 'New cabling, workstations and Wi-Fi for the Fremantle clinic.',
             'starts' => -14,
@@ -139,7 +139,7 @@ final readonly class SeedSampleData
             'name' => 'Coastal Logistics VPN upgrade',
             'customer' => 'Coastal Logistics',
             'status' => ProjectStatusEnum::AtRisk,
-            'color' => ColorEnum::Amber,
+            'hue' => HuePalette::AMBER,
             'icon' => 'shield',
             'description' => 'Replace the depot firewall and move remote staff to the new VPN.',
             'starts' => -7,
@@ -155,7 +155,7 @@ final readonly class SeedSampleData
             'name' => 'Documentation overhaul',
             'customer' => null,
             'status' => ProjectStatusEnum::Planning,
-            'color' => ColorEnum::Violet,
+            'hue' => HuePalette::VIOLET,
             'icon' => 'book',
             'description' => 'Write down how we onboard customers and look after their systems.',
             'starts' => 0,
@@ -171,13 +171,13 @@ final readonly class SeedSampleData
     ];
 
     /**
-     * @var array<string, ColorEnum>
+     * @var array<string, int>
      */
     private const array LABELS = [
-        'Billing' => ColorEnum::Violet,
-        'Hardware' => ColorEnum::Amber,
-        'Network' => ColorEnum::Blue,
-        'Onboarding' => ColorEnum::Green,
+        'Billing' => HuePalette::VIOLET,
+        'Hardware' => HuePalette::AMBER,
+        'Network' => HuePalette::BLUE,
+        'Onboarding' => HuePalette::GREEN,
     ];
 
     public function __construct(
@@ -191,7 +191,7 @@ final readonly class SeedSampleData
             $labels = $this->seedLabels();
             $groupId = FindGroup::optionsForTeam($this->teamId)->firstWhere('name', 'Service desk')['id']
                 ?? CreateGroup::fromGroup(
-                    Group::new()->setTeamId($this->teamId)->setName('Service desk')->setColor(ColorEnum::Teal)->setIcon('headset'),
+                    Group::new()->setTeamId($this->teamId)->setName('Service desk')->setHue(HuePalette::TEAL)->setIcon('headset'),
                     leadId: $this->userId,
                 )->getId()->toString();
 
@@ -343,7 +343,7 @@ final readonly class SeedSampleData
                     ->setTeamId($this->teamId)
                     ->setListName(ChoiceListEnum::TicketLabel)
                     ->setName($name)
-                    ->setColor(self::LABELS[$name])
+                    ->setHue(self::LABELS[$name])
                     ->setPosition($position))
                 : $label)->getId()->toString();
         }
@@ -352,7 +352,7 @@ final readonly class SeedSampleData
     }
 
     /**
-     * @param  array{name: string, customer: ?string, status: ProjectStatusEnum, color: ColorEnum, icon: string, description: string, starts: int, due: int, milestones: array<int, array{name: string, due: int, done?: bool}>, tickets: array<int, mixed>}  $sample
+     * @param  array{name: string, customer: ?string, status: ProjectStatusEnum, hue: int, icon: string, description: string, starts: int, due: int, milestones: array<int, array{name: string, due: int, done?: bool}>, tickets: array<int, mixed>}  $sample
      */
     private function seedProject(array $sample, ?string $customerId, string $groupId): string
     {
@@ -366,7 +366,7 @@ final readonly class SeedSampleData
             ->setName($sample['name'])
             ->setDescription($sample['description'])
             ->setIcon($sample['icon'])
-            ->setColor($sample['color'])
+            ->setHue($sample['hue'])
             ->setStatus($sample['status'])
             ->setVisibility(ProjectVisibilityEnum::Open)
             ->setStartsOn($today->addDays($sample['starts']))

@@ -7,6 +7,8 @@ namespace App\Group\FormRequests;
 use App\Group\Actions\CreateGroup;
 use App\Group\Group;
 use App\Group\GroupValidationRules;
+use App\Group\Properties\Hue;
+use App\Shared\HuePalette;
 use App\Shared\Types;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
@@ -42,10 +44,16 @@ final class StoreGroupFormRequest extends FormRequest
     {
         $validated = $this->validated();
 
+        $group = Group::new()
+            ->setPropertyIfExists(Types::stringKeyed(Arr::except($validated, [GroupValidationRules::LEAD_ID, GroupValidationRules::MEMBER_IDS])))
+            ->setTeamId((string) $this->user()?->current_team_id);
+
+        if (! array_key_exists(Hue::getNameForValidation(), $validated)) {
+            $group->setHue(HuePalette::forName('group', $group->getName()->toString()));
+        }
+
         $group = CreateGroup::fromGroup(
-            Group::new()
-                ->setPropertyIfExists(Types::stringKeyed(Arr::except($validated, [GroupValidationRules::LEAD_ID, GroupValidationRules::MEMBER_IDS])))
-                ->setTeamId((string) $this->user()?->current_team_id),
+            $group,
             leadId: Types::nullableString($validated[GroupValidationRules::LEAD_ID] ?? null),
             memberIds: Types::stringList($validated[GroupValidationRules::MEMBER_IDS] ?? []),
         );

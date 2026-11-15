@@ -7,7 +7,6 @@ namespace App\Project;
 use App\Project\Factories\ProjectFactory;
 use App\Project\Properties\ArchivedAt;
 use App\Project\Properties\ClosedTicketsCount;
-use App\Project\Properties\Color;
 use App\Project\Properties\CreatedAt;
 use App\Project\Properties\Customer;
 use App\Project\Properties\CustomerId;
@@ -15,6 +14,7 @@ use App\Project\Properties\Description;
 use App\Project\Properties\DueOn;
 use App\Project\Properties\Group;
 use App\Project\Properties\GroupId;
+use App\Project\Properties\Hue;
 use App\Project\Properties\Icon;
 use App\Project\Properties\Id;
 use App\Project\Properties\IsSample;
@@ -42,7 +42,7 @@ final class Project extends AbstractData
     public function __construct(
         public ArchivedAt $archivedAt,
         public ClosedTicketsCount $closedTicketsCount,
-        public Color $color,
+        public Hue $hue,
         public CreatedAt $createdAt,
         public Customer $customer,
         public CustomerId $customerId,
@@ -97,7 +97,7 @@ final class Project extends AbstractData
     /**
      * The fields project pages and pickers show.
      *
-     * @return array{id: string, number: int, name: string, description: ?string, icon: ?string, color: string, status: string, visibility: string, customer_id: ?string, lead_id: ?string, group_id: ?string, starts_on: ?string, due_on: ?string, archived_at: ?string}
+     * @return array{id: string, number: int, name: string, description: ?string, icon: ?string, hue: ?int, status: string, visibility: string, customer_id: ?string, lead_id: ?string, group_id: ?string, starts_on: ?string, due_on: ?string, archived_at: ?string}
      */
     public function toSummary(): array
     {
@@ -107,7 +107,7 @@ final class Project extends AbstractData
             'name' => $this->getName()->toString(),
             'description' => $this->getDescription()->toNullableString(),
             'icon' => $this->getIcon()->toNullableString(),
-            'color' => $this->getColor()->toString(),
+            'hue' => $this->getHue()->toNullableInteger(),
             'status' => $this->getStatus()->toString(),
             'visibility' => $this->getVisibility()->toString(),
             'customer_id' => $this->getCustomerId()->toNullableString(),
@@ -131,14 +131,14 @@ final class Project extends AbstractData
         return $this;
     }
 
-    public function getColor(): Color
+    public function getHue(): Hue
     {
-        return $this->color;
+        return $this->hue;
     }
 
-    public function setColor(mixed $color): self
+    public function setHue(mixed $hue): self
     {
-        $this->color = new Color($color instanceof AbstractValue ? $color->toValue() : $color);
+        $this->hue = new Hue($hue instanceof AbstractValue ? $hue->toValue() : $hue);
 
         return $this;
     }

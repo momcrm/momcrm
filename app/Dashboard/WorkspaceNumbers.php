@@ -134,7 +134,7 @@ final class WorkspaceNumbers
     /**
      * Unfinished milestones of live projects due in the next two months.
      *
-     * @return array<int, array{id: string, name: string, due_on: string, project_id: string, project_name: ?string, project_color: ?string}>
+     * @return array<int, array{id: string, name: string, due_on: string, project_id: string, project_name: ?string, project_hue: ?int}>
      */
     public static function upcomingMilestones(string $teamId): array
     {
@@ -154,7 +154,7 @@ final class WorkspaceNumbers
                 'due_on' => substr($milestone->due_on, 0, 10),
                 'project_id' => $milestone->project_id,
                 'project_name' => $milestone->project?->name,
-                'project_color' => $milestone->project?->color,
+                'project_hue' => $milestone->project?->hue,
             ])
             ->values()
             ->all();

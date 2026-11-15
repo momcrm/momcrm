@@ -4,6 +4,7 @@ import { useState } from 'react';
 import FormField from '@/components/form-field';
 import NativeSelect from '@/components/native-select';
 import { ProjectIcon, projectIcons } from '@/components/projects/project-meta';
+import HuePicker from '@/components/hue-picker';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -17,9 +18,8 @@ import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import StoreProjectController from '@/actions/App/Project/Controllers/StoreProjectController';
 import UpdateProjectController from '@/actions/App/Project/Controllers/UpdateProjectController';
-import { colorDot } from '@/lib/colors';
 import { cn } from '@/lib/utils';
-import type { ColorName, ProjectFormOptions, ProjectListItem } from '@/types';
+import type { ProjectFormOptions, ProjectListItem } from '@/types';
 
 /**
  * Creating a project, or editing one when `project` is given, in a dialog.
@@ -40,7 +40,9 @@ export default function ProjectFormDialog({
     canChangeVisibility?: boolean;
     canManageMembers?: boolean;
 }) {
-    const [color, setColor] = useState<ColorName>(project?.color ?? 'indigo');
+    const [hue, setHue] = useState<number | null | undefined>(
+        project ? project.hue : undefined,
+    );
     const [icon, setIcon] = useState(project?.icon ?? 'folder');
     const [memberIds, setMemberIds] = useState<string[]>(
         project?.members.map((member) => member.id) ?? [],
@@ -71,7 +73,7 @@ export default function ProjectFormDialog({
                             <div className="flex items-start gap-3">
                                 <ProjectIcon
                                     icon={icon}
-                                    color={color}
+                                    hue={hue ?? null}
                                     size="lg"
                                 />
                                 <div className="flex-1">
@@ -94,28 +96,11 @@ export default function ProjectFormDialog({
 
                             <div className="grid gap-5 sm:grid-cols-2">
                                 <Field label="Colour">
-                                    <input
-                                        type="hidden"
-                                        name="color"
-                                        value={color}
+                                    <HuePicker
+                                        name="hue"
+                                        value={hue}
+                                        onChange={setHue}
                                     />
-                                    <div className="flex flex-wrap gap-1.5">
-                                        {options.colors.map((option) => (
-                                            <button
-                                                key={option}
-                                                type="button"
-                                                aria-label={option}
-                                                aria-pressed={color === option}
-                                                onClick={() => setColor(option)}
-                                                className={cn(
-                                                    'size-6 rounded-md ring-offset-2 ring-offset-background',
-                                                    colorDot[option],
-                                                    color === option &&
-                                                        'ring-2 ring-ring',
-                                                )}
-                                            />
-                                        ))}
-                                    </div>
                                 </Field>
                                 <Field label="Icon">
                                     <input

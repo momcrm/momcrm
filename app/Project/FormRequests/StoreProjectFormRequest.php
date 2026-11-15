@@ -7,6 +7,8 @@ namespace App\Project\FormRequests;
 use App\Project\Actions\CreateProject;
 use App\Project\Project;
 use App\Project\ProjectValidationRules;
+use App\Project\Properties\Hue;
+use App\Shared\HuePalette;
 use App\Shared\Types;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
@@ -48,6 +50,10 @@ final class StoreProjectFormRequest extends FormRequest
 
         if ($project->getLeadId()->isNull()) {
             $project->setLeadId($userId);
+        }
+
+        if (! array_key_exists(Hue::getNameForValidation(), $validated)) {
+            $project->setHue(HuePalette::forName('project', $project->getName()->toString()));
         }
 
         $project = CreateProject::fromProject($project, createdById: $userId, memberIds: [$userId, ...Types::stringList($validated[ProjectValidationRules::MEMBER_IDS] ?? [])]);

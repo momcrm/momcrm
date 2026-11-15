@@ -24,7 +24,7 @@ const columns = column.columns([
             <span className="flex min-w-0 items-center gap-2.5">
                 <ProjectIcon
                     icon={info.row.original.icon}
-                    color={info.row.original.color}
+                    hue={info.row.original.hue}
                     size="sm"
                 />
                 <span className="truncate font-medium">{info.getValue()}</span>

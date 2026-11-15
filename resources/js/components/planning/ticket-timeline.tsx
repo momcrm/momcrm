@@ -11,7 +11,7 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useTicketActions } from '@/hooks/use-ticket-actions';
-import { colorDot } from '@/lib/colors';
+import { hueStyle } from '@/lib/colors';
 import {
     addDays,
     addMonths,
@@ -371,7 +371,7 @@ export default function TicketTimeline({
                                         <>
                                             <ProjectIcon
                                                 icon={group.project.icon}
-                                                color={group.project.color}
+                                                hue={group.project.hue}
                                                 size="sm"
                                             />
                                             <span className="truncate">
@@ -394,12 +394,13 @@ export default function TicketTimeline({
                                         group.project.due_on && (
                                             <span
                                                 className={cn(
+                                                    'hue-dot',
                                                     'absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full opacity-35',
-                                                    colorDot[
-                                                        group.project.color
-                                                    ],
                                                 )}
                                                 style={{
+                                                    ...hueStyle(
+                                                        group.project.hue,
+                                                    ),
                                                     left: Math.max(
                                                         0,
                                                         offset(
@@ -469,9 +470,6 @@ export default function TicketTimeline({
                                 const isClosed = isClosedStatus(
                                     ticket.status_id,
                                 );
-                                const color = ticket.project_color
-                                    ? colorDot[ticket.project_color]
-                                    : 'bg-slate-400';
 
                                 return (
                                     <div
@@ -537,7 +535,7 @@ export default function TicketTimeline({
                                                     }
                                                     className={cn(
                                                         'group absolute top-1.5 bottom-1.5 flex cursor-grab touch-none items-center rounded-md px-2 text-xs font-medium text-white shadow-xs select-none active:cursor-grabbing',
-                                                        color,
+                                                        'hue-dot',
                                                         isClosed &&
                                                             'opacity-45',
                                                         drag?.id ===
@@ -545,6 +543,9 @@ export default function TicketTimeline({
                                                             'ring-2 ring-ring/50',
                                                     )}
                                                     style={{
+                                                        ...hueStyle(
+                                                            ticket.project_hue,
+                                                        ),
                                                         left,
                                                         width: right - left,
                                                     }}

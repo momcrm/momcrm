@@ -17,8 +17,9 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { colorDot } from '@/lib/colors';
+
 import { visitWithQuery } from '@/lib/query';
+import { hueStyle } from '@/lib/colors';
 import { cn } from '@/lib/utils';
 import type { TicketFilters, TicketPickerOptions, TicketView } from '@/types';
 
@@ -214,7 +215,7 @@ export default function TicketToolbar({
                             more={options.projects.map((project) => ({
                                 value: project.id,
                                 label: project.name,
-                                dot: colorDot[project.color],
+                                hue: project.hue,
                             }))}
                         />
                     </FilterChip>
@@ -233,7 +234,7 @@ export default function TicketToolbar({
                             more={labels.map((label) => ({
                                 value: label.id,
                                 label: label.name,
-                                dot: colorDot[label.color],
+                                hue: label.hue,
                             }))}
                         />
                     </FilterChip>
@@ -328,7 +329,7 @@ function RadioChoices({
     value: string | null;
     onChange: (value: string | null) => void;
     choices: { value: string; label: string }[];
-    more: { value: string; label: string; dot?: string }[];
+    more: { value: string; label: string; hue?: number | null }[];
 }) {
     return (
         <DropdownMenuRadioGroup
@@ -344,10 +345,11 @@ function RadioChoices({
             {more.length > 0 && <DropdownMenuSeparator />}
             {more.map((choice) => (
                 <DropdownMenuRadioItem key={choice.value} value={choice.value}>
-                    {choice.dot && (
+                    {choice.hue !== undefined && (
                         <span
                             aria-hidden
-                            className={cn('size-2 rounded-[3px]', choice.dot)}
+                            className="size-2 rounded-[3px] hue-dot"
+                            style={hueStyle(choice.hue)}
                         />
                     )}
                     {choice.label}

@@ -12,16 +12,16 @@ it('renames a group and replaces its members', function (): void {
     $group = GroupEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'name' => 'Support']);
 
     actingAs($user)
-        ->put(route('groups.update', $group->id), ['name' => 'Service desk', 'color' => 'blue', 'member_ids' => [$user->id]])
+        ->put(route('groups.update', $group->id), ['name' => 'Service desk', 'hue' => 240, 'member_ids' => [$user->id]])
         ->assertSessionHasNoErrors();
 
-    expect($group->fresh())->name->toBe('Service desk')->color->toBe('blue')
+    expect($group->fresh())->name->toBe('Service desk')->hue->toBe(240)
         ->and($group->members()->pluck('users.id')->all())->toBe([$user->id]);
 });
 
 it("returns not found for another team's group", function (): void {
     actingAs(UserEloquentModel::factory()->withPersonalTeam()->create())
-        ->put(route('groups.update', GroupEloquentModel::factory()->create()->id), ['name' => 'X', 'color' => 'blue'])
+        ->put(route('groups.update', GroupEloquentModel::factory()->create()->id), ['name' => 'X', 'hue' => 240])
         ->assertNotFound();
 });
 
@@ -31,7 +31,7 @@ it('removes every member when none are picked', function (): void {
     $group->members()->attach($user->id, ['role' => 'member']);
 
     actingAs($user)
-        ->put(route('groups.update', $group->id), ['name' => 'Support', 'color' => 'teal', 'members_sent' => '1'])
+        ->put(route('groups.update', $group->id), ['name' => 'Support', 'hue' => 180, 'members_sent' => '1'])
         ->assertSessionHasNoErrors();
 
     expect($group->members()->count())->toBe(0);
@@ -40,14 +40,14 @@ it('removes every member when none are picked', function (): void {
 it('lets a member rename a group but not change its members', function (): void {
     $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
     $member = UserEloquentModel::factory()->inTeam($owner->current_team_id)->create();
-    $group = GroupEloquentModel::factory()->create(['team_id' => $owner->current_team_id, 'name' => 'Support', 'color' => 'blue']);
+    $group = GroupEloquentModel::factory()->create(['team_id' => $owner->current_team_id, 'name' => 'Support', 'hue' => 240]);
     $group->members()->attach($owner->id, ['role' => 'lead']);
 
     actingAs($member)
-        ->put(route('groups.update', $group->id), ['name' => 'Service desk', 'color' => 'blue', 'lead_id' => $owner->id, 'member_ids' => [$owner->id], 'members_sent' => '1'])
+        ->put(route('groups.update', $group->id), ['name' => 'Service desk', 'hue' => 240, 'lead_id' => $owner->id, 'member_ids' => [$owner->id], 'members_sent' => '1'])
         ->assertSessionHasNoErrors();
     actingAs($member)
-        ->put(route('groups.update', $group->id), ['name' => 'Service desk', 'color' => 'blue', 'lead_id' => $owner->id, 'member_ids' => [$owner->id, $member->id], 'members_sent' => '1'])
+        ->put(route('groups.update', $group->id), ['name' => 'Service desk', 'hue' => 240, 'lead_id' => $owner->id, 'member_ids' => [$owner->id, $member->id], 'members_sent' => '1'])
         ->assertForbidden();
 
     expect($group->fresh()->name)->toBe('Service desk')

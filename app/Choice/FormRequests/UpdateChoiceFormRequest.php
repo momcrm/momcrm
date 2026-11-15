@@ -10,7 +10,7 @@ use App\Choice\Actions\UpdateChoice;
 use App\Choice\Choice;
 use App\Choice\ChoiceAccess;
 use App\Choice\Exceptions\CouldNotFindChoice;
-use App\Choice\Properties\Color;
+use App\Choice\Properties\Hue;
 use App\Choice\Properties\Icon;
 use App\Choice\Properties\IsDefault;
 use App\Choice\Properties\Name;
@@ -67,7 +67,7 @@ final class UpdateChoiceFormRequest extends FormRequest
                     ->where('list', $this->choice->getListName()->toEnum()->value)
                     ->ignore($this->choice->getId()->toString()),
             ],
-            Color::getNameForValidation() => ['sometimes', ...Color::getValidationRulesForCreate($this)],
+            Hue::getNameForValidation() => ['sometimes', ...Hue::getValidationRulesForCreate($this)],
             Icon::getNameForValidation() => ['sometimes', 'nullable', Rule::in($this->choice->getListName()->toEnum()->icons())],
             IsDefault::getNameForValidation() => ['sometimes', 'accepted', ...($this->choice->isArchived() || $this->choice->getListName()->toEnum()->isOptional() ? ['prohibited'] : [])],
         ];
@@ -95,8 +95,8 @@ final class UpdateChoiceFormRequest extends FormRequest
             $this->choice->setName($this->string(Name::getNameForValidation())->trim()->toString());
         }
 
-        if (array_key_exists(Color::getNameForValidation(), $validated)) {
-            $this->choice->setColor($validated[Color::getNameForValidation()]);
+        if (array_key_exists(Hue::getNameForValidation(), $validated)) {
+            $this->choice->setHue($validated[Hue::getNameForValidation()]);
         }
 
         if (array_key_exists(Icon::getNameForValidation(), $validated)) {

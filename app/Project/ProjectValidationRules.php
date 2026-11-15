@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Project;
 
-use App\Project\Properties\Color;
 use App\Project\Properties\CustomerId;
 use App\Project\Properties\Description;
 use App\Project\Properties\DueOn;
 use App\Project\Properties\GroupId;
+use App\Project\Properties\Hue;
 use App\Project\Properties\Icon;
 use App\Project\Properties\LeadId;
 use App\Project\Properties\Name;
@@ -44,7 +44,7 @@ final class ProjectValidationRules
             Name::getNameForValidation() => Name::getValidationRulesForCreate($request),
             Description::getNameForValidation() => Description::getValidationRulesForCreate($request),
             Icon::getNameForValidation() => Icon::getValidationRulesForCreate($request),
-            Color::getNameForValidation() => Color::getValidationRulesForCreate($request),
+            Hue::getNameForValidation() => Hue::getValidationRulesForCreate($request),
             Status::getNameForValidation() => Status::getValidationRulesForCreate($request),
             Visibility::getNameForValidation() => Visibility::getValidationRulesForCreate($request),
             CustomerId::getNameForValidation() => [

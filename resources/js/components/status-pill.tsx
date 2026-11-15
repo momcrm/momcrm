@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { hueStyle } from '@/lib/colors';
 import { cn } from '@/lib/utils';
 import type { Tone } from '@/types';
 
@@ -14,16 +15,17 @@ const dotColors: Record<Tone, string> = {
 
 /**
  * A record's state: a coloured dot on a neutral outline, for tables and rows.
- * The dot takes a tone, or a class such as a team choice's colour.
+ * The dot takes a tone, or a hue such as a team choice's colour.
  */
 export default function StatusPill({
     tone = 'neutral',
-    dotClassName,
+    hue,
     className,
     children,
 }: {
     tone?: Tone;
-    dotClassName?: string;
+    /** A stored hue (null for grey); when given, it colours the dot instead of the tone. */
+    hue?: number | null;
     className?: string;
     children: ReactNode;
 }) {
@@ -36,8 +38,9 @@ export default function StatusPill({
                 aria-hidden
                 className={cn(
                     'size-1.5 rounded-full',
-                    dotClassName ?? dotColors[tone],
+                    hue === undefined ? dotColors[tone] : 'hue-dot',
                 )}
+                style={hue === undefined ? undefined : hueStyle(hue)}
             />
             {children}
         </Badge>
