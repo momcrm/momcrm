@@ -27,6 +27,7 @@ import {
 } from '@/components/tickets/ticket-meta';
 import TicketRow from '@/components/tickets/ticket-row';
 import { Button } from '@/components/ui/button';
+import { useCreateTicket } from '@/components/tickets/create-ticket-dialog';
 import { useTicketActions } from '@/hooks/use-ticket-actions';
 import { timeAgo } from '@/lib/format';
 import { formatCents } from '@/lib/money';
@@ -35,11 +36,7 @@ import { activity as activityRoute, dashboard, overview } from '@/routes';
 import { index as invoicesIndex } from '@/routes/invoices';
 import { index as projectsIndex, show as showProject } from '@/routes/projects';
 import { edit as teamEdit } from '@/routes/team';
-import {
-    create as createTicket,
-    index as ticketsIndex,
-    mine,
-} from '@/routes/tickets';
+import { index as ticketsIndex, mine } from '@/routes/tickets';
 import type {
     ActivityItem,
     ProjectListItem,
@@ -103,6 +100,7 @@ export default function Dashboard({
     options: TicketPickerOptions;
     drawer: TicketDrawerData | null;
 }) {
+    const { openCreateTicket } = useCreateTicket();
     const { gettingStarted, sidebarCounts } = usePage().props;
     const firstName = preferredName.split(' ')[0];
 
@@ -134,11 +132,9 @@ export default function Dashboard({
                                 New project
                             </Link>
                         </Button>
-                        <Button asChild>
-                            <Link href={createTicket()}>
-                                <Plus />
-                                New ticket
-                            </Link>
+                        <Button onClick={() => openCreateTicket()}>
+                            <Plus />
+                            New ticket
                         </Button>
                     </div>
                 </header>

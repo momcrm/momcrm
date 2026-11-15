@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import { UserMenuContent } from '@/components/user-menu-content';
+import { useCreateTicket } from '@/components/tickets/create-ticket-dialog';
 import { useInitials } from '@/hooks/use-initials';
 import { create as createContact } from '@/routes/contacts';
 import { create as createCustomer } from '@/routes/customers';
@@ -32,7 +33,6 @@ import { create as createInvoice } from '@/routes/invoices';
 import { index as notificationsIndex } from '@/routes/notifications';
 import { index as projectsIndex } from '@/routes/projects';
 import { edit as teamEdit } from '@/routes/team';
-import { create as createTicket } from '@/routes/tickets';
 import type { BreadcrumbItem as BreadcrumbItemType } from '@/types';
 
 const isMac =
@@ -40,8 +40,8 @@ const isMac =
     /Mac|iP(hone|ad)/.test(navigator.platform);
 
 function NewMenu() {
+    const { openCreateTicket } = useCreateTicket();
     const items = [
-        { label: 'Ticket', icon: CircleDashed, href: createTicket() },
         {
             label: 'Project',
             icon: FolderKanban,
@@ -65,6 +65,10 @@ function NewMenu() {
                 <DropdownMenuLabel className="text-[11px] font-medium tracking-wide text-subtle-foreground uppercase">
                     Create
                 </DropdownMenuLabel>
+                <DropdownMenuItem onSelect={() => openCreateTicket()}>
+                    <CircleDashed />
+                    Ticket
+                </DropdownMenuItem>
                 {items.map((item) => (
                     <DropdownMenuItem key={item.label} asChild>
                         <Link href={item.href}>

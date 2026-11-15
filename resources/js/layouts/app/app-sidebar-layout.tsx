@@ -4,6 +4,7 @@ import { AppSidebar } from '@/components/app-sidebar';
 import { AppSidebarHeader } from '@/components/app-sidebar-header';
 import { CommandPaletteProvider } from '@/components/command-palette';
 import SampleDataBanner from '@/components/sample-data-banner';
+import { CreateTicketProvider } from '@/components/tickets/create-ticket-dialog';
 import type { AppLayoutProps } from '@/types';
 
 export default function AppSidebarLayout({
@@ -12,17 +13,19 @@ export default function AppSidebarLayout({
 }: AppLayoutProps) {
     return (
         <AppShell variant="sidebar">
-            <CommandPaletteProvider>
-                <AppSidebar />
-                <AppContent
-                    variant="sidebar"
-                    className="min-w-0 overflow-x-clip"
-                >
-                    <AppSidebarHeader breadcrumbs={breadcrumbs} />
-                    <SampleDataBanner />
-                    {children}
-                </AppContent>
-            </CommandPaletteProvider>
+            <CreateTicketProvider>
+                <CommandPaletteProvider>
+                    <AppSidebar />
+                    <AppContent
+                        variant="sidebar"
+                        className="min-w-0 overflow-x-clip"
+                    >
+                        <AppSidebarHeader breadcrumbs={breadcrumbs} />
+                        <SampleDataBanner />
+                        {children}
+                    </AppContent>
+                </CommandPaletteProvider>
+            </CreateTicketProvider>
         </AppShell>
     );
 }

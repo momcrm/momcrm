@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 use App\Activity\ActivityEloquentModel;
 use App\Activity\ActivityTypeEnum;
+use App\Attachment\AttachmentEloquentModel;
 use App\Contact\ContactEloquentModel;
 use App\Customer\CustomerEloquentModel;
+use App\Label\LabelEloquentModel;
 use App\Project\ProjectEloquentModel;
 use App\TeamUser\TeamUserEloquentModel;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 use function Pest\Laravel\actingAs;
 
@@ -157,4 +161,54 @@ it('rejects a members-only project the person is not in', function (): void {
     actingAs($member)
         ->post(route('tickets.store'), ['project_id' => $project->id, 'title' => 'X', 'priority' => 'normal'])
         ->assertSessionHasNoErrors();
+});
+
+it('opens a ticket from the dialog with labels, subtasks and files, and stays on the page', function (): void {
+    Storage::fake('local');
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $project = ProjectEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
+    $label = LabelEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
+
+    actingAs($user)
+        ->from(route('dashboard'))
+        ->post(route('tickets.store'), [
+            'project_id' => $project->id,
+            'title' => 'Launch site',
+            'priority' => 'normal',
+            'quick' => '1',
+            'label_ids' => [$label->id],
+            'subtasks' => ['Point DNS', 'Check SSL'],
+            'files' => [UploadedFile::fake()->create('brief.pdf', 50, 'application/pdf')],
+        ])
+        ->assertRedirectToRoute('dashboard');
+
+    $ticket = TicketEloquentModel::query()->where('title', 'Launch site')->sole();
+    expect($ticket->labels->pluck('id')->all())->toBe([$label->id])
+        ->and($ticket->subtasks()->orderBy('number')->pluck('title')->all())->toBe(['Point DNS', 'Check SSL'])
+        ->and($ticket->subtasks()->pluck('project_id')->unique()->all())->toBe([$project->id])
+        ->and(AttachmentEloquentModel::query()->sole())
+        ->attachable_id->toBe($ticket->id)
+        ->name->toBe('brief.pdf');
+});
+
+it("rejects another team's label and opens nothing", function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $project = ProjectEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
+
+    actingAs($user)
+        ->post(route('tickets.store'), ['project_id' => $project->id, 'title' => 'X', 'priority' => 'normal', 'label_ids' => [LabelEloquentModel::factory()->create()->id]])
+        ->assertSessionHasErrors('label_ids.0');
+
+    expect(TicketEloquentModel::query()->exists())->toBeFalse();
+});
+
+it('accepts the dialog sending no labels, subtasks or files', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $project = ProjectEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
+
+    actingAs($user)
+        ->post(route('tickets.store'), ['project_id' => $project->id, 'title' => 'X', 'priority' => 'normal', 'label_ids' => [], 'subtasks' => [], 'files' => [], 'quick' => '1'])
+        ->assertSessionHasNoErrors();
+
+    expect(TicketEloquentModel::query()->count())->toBe(1);
 });
