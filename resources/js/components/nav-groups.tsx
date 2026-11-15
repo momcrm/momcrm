@@ -9,7 +9,7 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { useCurrentUrl } from '@/hooks/use-current-url';
-import { colorDot } from '@/lib/colors';
+import { hueStyle } from '@/lib/colors';
 import { cn } from '@/lib/utils';
 import { members } from '@/routes';
 import { show } from '@/routes/groups';
@@ -49,9 +49,10 @@ export function NavGroups() {
                                 <span
                                     aria-hidden
                                     className={cn(
+                                        'hue-dot',
                                         'ml-0.5 size-2.5 shrink-0 rounded-full',
-                                        colorDot[group.color],
                                     )}
+                                    style={hueStyle(group.hue)}
                                 />
                                 <span className="truncate">{group.name}</span>
                             </Link>

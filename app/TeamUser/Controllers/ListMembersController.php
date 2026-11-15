@@ -12,7 +12,6 @@ use App\Group\GroupRelationship;
 use App\Group\Properties\Name as GroupName;
 use App\Group\Properties\TeamId as GroupTeamId;
 use App\Project\ProjectStatusEnum;
-use App\Shared\ColorEnum;
 use App\Shared\Table;
 use App\Shared\Types;
 use App\Team\Actions\FindTeam;
@@ -64,7 +63,7 @@ final class ListMembersController
             ->get()
             ->each(function (GroupEloquentModel $group) use (&$groupsByUser): void {
                 foreach ($group->members as $member) {
-                    $groupsByUser[$member->id][] = ['id' => $group->id, 'name' => $group->name, 'color' => $group->color];
+                    $groupsByUser[$member->id][] = ['id' => $group->id, 'name' => $group->name, 'hue' => $group->hue];
                 }
             });
 
@@ -139,7 +138,7 @@ final class ListMembersController
                     'id' => $group->id,
                     'name' => $group->name,
                     'description' => $group->description,
-                    'color' => $group->color,
+                    'hue' => $group->hue,
                     'icon' => $group->icon,
                     'members_count' => Types::intOrZero($group->getAttribute('members_count')),
                     'projects_count' => Types::intOrZero($group->getAttribute('projects_count')),
@@ -148,7 +147,6 @@ final class ListMembersController
             'canInvite' => $canInvite,
             'canChangeRoles' => Gate::allows('update', $team),
             'roles' => array_map(fn (TeamRoleEnum $role): string => $role->value, TeamRoleEnum::cases()),
-            'colors' => ColorEnum::values(),
         ]);
     }
 }

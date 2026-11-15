@@ -210,7 +210,7 @@ export default function Inbox({
                                     </span>
                                     <ProjectTag
                                         name={selected.project_name}
-                                        color={selected.project_color}
+                                        hue={selected.project_hue}
                                     />
                                     {!selected.project_name &&
                                         selected.customer_name}

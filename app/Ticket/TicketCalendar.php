@@ -31,7 +31,7 @@ final class TicketCalendar
     public const string WEEK = 'week';
 
     /**
-     * @return array{calendar: array{view: string, date: string, from: string, to: string, mine: bool}, tickets: array<int, array<string, mixed>>, projects: array<int, array{id: string, name: string, color: string, customer_id: ?string}>}
+     * @return array{calendar: array{view: string, date: string, from: string, to: string, mine: bool}, tickets: array<int, array<string, mixed>>, projects: array<int, array{id: string, name: string, hue: ?int, customer_id: ?string}>}
      */
     public static function forRequest(Request $request, ?string $projectId = null): array
     {

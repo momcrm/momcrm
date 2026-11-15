@@ -9,11 +9,11 @@ import {
     formatDay,
     useTicketStatuses,
 } from '@/components/tickets/ticket-meta';
-import { colorDot } from '@/lib/colors';
+import { hueStyle } from '@/lib/colors';
 import { cn } from '@/lib/utils';
 import { overview } from '@/routes';
 import { show as showProject } from '@/routes/projects';
-import type { ColorName, ProjectListItem } from '@/types';
+import type { ProjectListItem } from '@/types';
 
 type Stats = {
     active_projects: number;
@@ -39,7 +39,7 @@ type UpcomingMilestone = {
     due_on: string;
     project_id: string;
     project_name: string | null;
-    project_color: ColorName | null;
+    project_hue: number | null;
 };
 
 /**
@@ -125,8 +125,9 @@ export default function Overview({
                                 (statusCounts[status.id] ?? 0) > 0 ? (
                                     <span
                                         key={status.id}
-                                        className={colorDot[status.color]}
+                                        className="hue-dot"
                                         style={{
+                                            ...hueStyle(status.hue),
                                             width: `${((statusCounts[status.id] ?? 0) / Math.max(1, stats.tickets)) * 100}%`,
                                         }}
                                     />
@@ -141,9 +142,10 @@ export default function Overview({
                                 >
                                     <span
                                         className={cn(
+                                            'hue-dot',
                                             'size-2.5 rounded-full',
-                                            colorDot[status.color],
                                         )}
+                                        style={hueStyle(status.hue)}
                                     />
                                     {status.name}
                                     <span className="ml-auto text-muted-foreground tabular-nums">
@@ -180,12 +182,11 @@ export default function Overview({
                                                     <span
                                                         key={status.id}
                                                         title={`${status.name}: ${member.statuses[status.id]}`}
-                                                        className={
-                                                            colorDot[
-                                                                status.color
-                                                            ]
-                                                        }
+                                                        className="hue-dot"
                                                         style={{
+                                                            ...hueStyle(
+                                                                status.hue,
+                                                            ),
                                                             width: `${((member.statuses[status.id] ?? 0) / busiest) * 100}%`,
                                                         }}
                                                     />
@@ -227,14 +228,14 @@ export default function Overview({
                                             )}
                                             className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
                                         >
-                                            {milestone.project_color && (
+                                            {milestone.project_hue && (
                                                 <span
                                                     className={cn(
+                                                        'hue-dot',
                                                         'size-2 rounded-[3px]',
-                                                        colorDot[
-                                                            milestone
-                                                                .project_color
-                                                        ],
+                                                    )}
+                                                    style={hueStyle(
+                                                        milestone.project_hue,
                                                     )}
                                                 />
                                             )}

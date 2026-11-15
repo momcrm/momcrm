@@ -15,12 +15,12 @@ it('renames and recolours a status but keeps its category', function (): void {
     $closed = ticketStatusId($owner->current_team_id, 'Closed');
 
     actingAs($owner)
-        ->patch(route('choices.update', $closed), ['name' => 'Done', 'color' => 'teal', 'category' => 'open'])
+        ->patch(route('choices.update', $closed), ['name' => 'Done', 'hue' => 180, 'category' => 'open'])
         ->assertSessionHasNoErrors();
 
     expect(ChoiceEloquentModel::query()->withoutGlobalScopes()->find($closed))
         ->name->toBe('Done')
-        ->color->toBe('teal')
+        ->hue->toBe(180)
         ->category->toBe('closed');
 });
 

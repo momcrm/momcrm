@@ -6,7 +6,7 @@ import QuickAddTicket from '@/components/tickets/quick-add-ticket';
 import TicketCard from '@/components/tickets/ticket-card';
 import { useTicketStatuses } from '@/components/tickets/ticket-meta';
 import { useTicketActions } from '@/hooks/use-ticket-actions';
-import { colorDot } from '@/lib/colors';
+
 import { cn } from '@/lib/utils';
 import type { TicketListItem, TicketPickerOptions } from '@/types';
 
@@ -120,9 +120,7 @@ export default function TicketBoard({
                     )}
                 >
                     <header className="flex items-center gap-2 px-1.5 pt-0.5 pb-2">
-                        <StatusPill dotClassName={colorDot[column.color]}>
-                            {column.name}
-                        </StatusPill>
+                        <StatusPill hue={column.hue}>{column.name}</StatusPill>
                         <span className="text-xs text-subtle-foreground">
                             {column.tickets.length}
                         </span>

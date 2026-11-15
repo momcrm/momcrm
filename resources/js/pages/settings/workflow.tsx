@@ -12,6 +12,7 @@ import {
 import { useState } from 'react';
 import { toast } from 'sonner';
 import Heading from '@/components/heading';
+import { HUE_CHOICES, hueLabel } from '@/components/hue-picker';
 import NativeSelect from '@/components/native-select';
 import SoftBadge from '@/components/soft-badge';
 import { priorityIcons } from '@/components/tickets/ticket-meta';
@@ -31,7 +32,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { colorDot, colorText } from '@/lib/colors';
+import { hueStyle } from '@/lib/colors';
 import { cn } from '@/lib/utils';
 import {
     archive,
@@ -41,7 +42,7 @@ import {
     store,
     update,
 } from '@/routes/choices';
-import type { Choice, ChoiceList, ColorName, Option } from '@/types';
+import type { Choice, ChoiceList, Option } from '@/types';
 
 type WorkflowChoice = Choice & { usage: number };
 
@@ -54,8 +55,6 @@ type WorkflowList = {
     is_optional: boolean;
     choices: WorkflowChoice[];
 };
-
-const colors = Object.keys(colorDot) as ColorName[];
 
 /**
  * What each category means, shown under its heading.
@@ -251,28 +250,26 @@ function ChoiceRow({
                     className="flex size-6 shrink-0 items-center justify-center rounded-md hover:bg-accent"
                 >
                     <span
-                        className={cn(
-                            'size-2.5 rounded-full',
-                            colorDot[choice.color],
-                        )}
+                        className={cn('hue-dot', 'size-2.5 rounded-full')}
+                        style={hueStyle(choice.hue)}
                     />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-auto p-1.5">
-                    <div className="grid grid-cols-4 gap-1">
-                        {colors.map((color) => (
+                    <div className="grid grid-cols-5 gap-1">
+                        {HUE_CHOICES.map((hue) => (
                             <DropdownMenuItem
-                                key={color}
-                                aria-label={color}
-                                onSelect={() => save({ color })}
+                                key={hue ?? 'grey'}
+                                aria-label={hueLabel(hue)}
+                                onSelect={() => save({ hue })}
                                 className="justify-center p-1.5"
                             >
                                 <span
                                     className={cn(
-                                        'size-4 rounded-full',
-                                        colorDot[color],
-                                        color === choice.color &&
+                                        'size-4 rounded-full hue-dot',
+                                        hue === choice.hue &&
                                             'ring-2 ring-ring ring-offset-2 ring-offset-popover',
                                     )}
+                                    style={hueStyle(hue)}
                                 />
                             </DropdownMenuItem>
                         ))}
@@ -288,10 +285,8 @@ function ChoiceRow({
                     >
                         {Icon ? (
                             <Icon
-                                className={cn(
-                                    'size-3.5',
-                                    colorText[choice.color],
-                                )}
+                                className={cn('hue-text', 'size-3.5')}
+                                style={hueStyle(choice.hue)}
                             />
                         ) : (
                             <span className="size-3.5 rounded-sm border border-dashed" />
@@ -535,9 +530,10 @@ function ArchivedChoiceRow({
             <span className="flex size-6 shrink-0 items-center justify-center">
                 <span
                     className={cn(
+                        'hue-dot',
                         'size-2.5 rounded-full opacity-60',
-                        colorDot[choice.color],
                     )}
+                    style={hueStyle(choice.hue)}
                 />
             </span>
             <span className="min-w-0 flex-1 truncate px-2 text-sm text-muted-foreground">
@@ -662,7 +658,6 @@ function AddChoice({
                         {
                             list: list.value,
                             name: name.trim(),
-                            color: 'slate',
                             icon: list.icons.length > 0 ? 'minus' : null,
                             category,
                         },

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Choice;
 
-use App\Shared\ColorEnum;
+use App\Shared\HuePalette;
 use App\Shared\Table;
 use App\Shared\Traits\Enum;
 use App\Shared\Traits\EnumOptions;
@@ -116,24 +116,24 @@ enum ChoiceListEnum: string
     /**
      * The choices a new team starts with, top to bottom.
      *
-     * @return array<int, array{name: string, color: ColorEnum, icon: ?string, category: ?string, is_default: bool}>
+     * @return array<int, array{name: string, hue: ?int, icon: ?string, category: ?string, is_default: bool}>
      */
     public function defaults(): array
     {
         return match ($this) {
             self::TicketLabel => [],
             self::TicketPriority => [
-                ['name' => 'Urgent', 'color' => ColorEnum::Rose, 'icon' => 'chevrons-up', 'category' => null, 'is_default' => false],
-                ['name' => 'High', 'color' => ColorEnum::Amber, 'icon' => 'chevron-up', 'category' => null, 'is_default' => false],
-                ['name' => 'Normal', 'color' => ColorEnum::Slate, 'icon' => 'equal', 'category' => null, 'is_default' => true],
-                ['name' => 'Low', 'color' => ColorEnum::Slate, 'icon' => 'chevron-down', 'category' => null, 'is_default' => false],
+                ['name' => 'Urgent', 'hue' => HuePalette::ROSE, 'icon' => 'chevrons-up', 'category' => null, 'is_default' => false],
+                ['name' => 'High', 'hue' => HuePalette::AMBER, 'icon' => 'chevron-up', 'category' => null, 'is_default' => false],
+                ['name' => 'Normal', 'hue' => null, 'icon' => 'equal', 'category' => null, 'is_default' => true],
+                ['name' => 'Low', 'hue' => null, 'icon' => 'chevron-down', 'category' => null, 'is_default' => false],
             ],
             self::TicketStatus => [
-                ['name' => 'New', 'color' => ColorEnum::Slate, 'icon' => null, 'category' => TicketStatusCategoryEnum::Open->value, 'is_default' => true],
-                ['name' => 'In progress', 'color' => ColorEnum::Indigo, 'icon' => null, 'category' => TicketStatusCategoryEnum::Open->value, 'is_default' => false],
-                ['name' => 'Waiting on customer', 'color' => ColorEnum::Amber, 'icon' => null, 'category' => TicketStatusCategoryEnum::Open->value, 'is_default' => false],
-                ['name' => 'Waiting on supplier', 'color' => ColorEnum::Blue, 'icon' => null, 'category' => TicketStatusCategoryEnum::Open->value, 'is_default' => false],
-                ['name' => 'Closed', 'color' => ColorEnum::Green, 'icon' => null, 'category' => TicketStatusCategoryEnum::Closed->value, 'is_default' => true],
+                ['name' => 'New', 'hue' => null, 'icon' => null, 'category' => TicketStatusCategoryEnum::Open->value, 'is_default' => true],
+                ['name' => 'In progress', 'hue' => HuePalette::INDIGO, 'icon' => null, 'category' => TicketStatusCategoryEnum::Open->value, 'is_default' => false],
+                ['name' => 'Waiting on customer', 'hue' => HuePalette::AMBER, 'icon' => null, 'category' => TicketStatusCategoryEnum::Open->value, 'is_default' => false],
+                ['name' => 'Waiting on supplier', 'hue' => HuePalette::BLUE, 'icon' => null, 'category' => TicketStatusCategoryEnum::Open->value, 'is_default' => false],
+                ['name' => 'Closed', 'hue' => HuePalette::GREEN, 'icon' => null, 'category' => TicketStatusCategoryEnum::Closed->value, 'is_default' => true],
             ],
         };
     }

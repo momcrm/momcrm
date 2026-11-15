@@ -15,7 +15,6 @@ use App\Group\Group;
 use App\Project\Actions\FindProject;
 use App\Project\Controllers\ListProjectsController;
 use App\Project\Project;
-use App\Shared\ColorEnum;
 use App\Team\Scopes\CurrentTeamScope;
 use App\TeamUser\Actions\FindTeamMembers;
 use App\Ticket\Controllers\ListTicketsController;
@@ -65,7 +64,7 @@ final class ShowGroupController
                 'id' => $groupId,
                 'name' => $found->getName()->toString(),
                 'description' => $found->getDescription()->toNullableString(),
-                'color' => $found->getColor()->toString(),
+                'hue' => $found->getHue()->toNullableInteger(),
                 'icon' => $found->getIcon()->toNullableString(),
             ],
             'members' => FindGroup::membersOf($groupId),
@@ -85,7 +84,6 @@ final class ShowGroupController
                 ->values(),
             'teamMembers' => FindTeamMembers::optionsForTeam($teamId),
             'can' => AccessAbilities::for($user, AccessResourceEnum::Group, $found),
-            'colors' => ColorEnum::values(),
             'favoriteTicketIds' => FindFavorite::idsForUser($teamId, $user->id, FavoritableTypeEnum::Ticket),
             ...TicketDrawer::options($teamId, $user->id),
             'drawer' => TicketDrawer::forRequest($request),

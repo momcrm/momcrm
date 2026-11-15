@@ -105,7 +105,7 @@ class HandleInertiaRequests extends Middleware
      * The current team's customisable lists, such as ticket priorities, keyed
      * by list, so any page can show a ticket's priority from its id.
      *
-     * @return array<string, list<array{id: string, name: string, color: string, icon: ?string, category: ?string, position: int, is_default: bool}>>|null
+     * @return array<string, list<array{id: string, name: string, hue: ?int, icon: ?string, category: ?string, position: int, is_default: bool}>>|null
      */
     private function choices(Request $request): ?array
     {

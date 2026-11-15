@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { useTicketActions } from '@/hooks/use-ticket-actions';
-import { colorDot } from '@/lib/colors';
+import { hueStyle } from '@/lib/colors';
 import {
     addDays,
     addMonths,
@@ -180,9 +180,10 @@ export default function TicketCalendar({
                             >
                                 <span
                                     className={cn(
+                                        'hue-dot',
                                         'size-2 rounded-[3px]',
-                                        colorDot[project.color],
                                     )}
+                                    style={hueStyle(project.hue)}
                                 />
                                 {project.name}
                             </li>
@@ -272,12 +273,17 @@ export default function TicketCalendar({
                                         <span
                                             className={cn(
                                                 'h-3 w-1 shrink-0 rounded-full',
-                                                ticket.project_color
-                                                    ? colorDot[
-                                                          ticket.project_color
-                                                      ]
+                                                ticket.project_id
+                                                    ? 'hue-dot'
                                                     : 'bg-border-strong',
                                             )}
+                                            style={
+                                                ticket.project_id
+                                                    ? hueStyle(
+                                                          ticket.project_hue,
+                                                      )
+                                                    : undefined
+                                            }
                                         />
                                         <span className="truncate">
                                             {favoriteIds.includes(ticket.id) &&

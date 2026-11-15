@@ -56,7 +56,7 @@ export default function TicketCard({
                 <span className="flex min-w-0 items-center gap-2">
                     <ProjectTag
                         name={ticket.project_name}
-                        color={ticket.project_color}
+                        hue={ticket.project_hue}
                     />
                     {!ticket.project_name && (
                         <span className="truncate text-xs text-muted-foreground">

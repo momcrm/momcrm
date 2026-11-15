@@ -47,7 +47,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 import { useInitials } from '@/hooks/use-initials';
-import { colorDot, colorText } from '@/lib/colors';
+import { hueStyle } from '@/lib/colors';
 import { addDays, addMonths, parseDay, toDay } from '@/lib/dates';
 import { formatBytes } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -375,7 +375,7 @@ function CreateTicketForm({
                         choices={options.projects.map((option) => ({
                             value: option.id,
                             label: option.name,
-                            dot: colorDot[option.color],
+                            hue: option.hue,
                         }))}
                         onChange={chooseProject}
                     >
@@ -384,9 +384,10 @@ function CreateTicketForm({
                                 <span
                                     aria-hidden
                                     className={cn(
+                                        'hue-dot',
                                         'size-2 shrink-0 rounded-[3px]',
-                                        colorDot[project.color],
                                     )}
+                                    style={hueStyle(project.hue)}
                                 />
                                 <span className="truncate">{project.name}</span>
                             </>
@@ -420,17 +421,16 @@ function CreateTicketForm({
                         choices={statuses.map((option) => ({
                             value: option.id,
                             label: option.name,
-                            dot: colorDot[option.color],
+                            hue: option.hue,
                         }))}
                         onChange={setStatusId}
                     >
                         <Circle
                             className={cn(
                                 'size-3.5 shrink-0',
-                                status
-                                    ? colorText[status.color]
-                                    : 'text-muted-foreground',
+                                status ? 'hue-text' : 'text-muted-foreground',
                             )}
+                            style={status ? hueStyle(status.hue) : undefined}
                         />
                         {status?.name ?? 'Status'}
                     </SearchPicker>
@@ -498,9 +498,10 @@ function CreateTicketForm({
                                         <span
                                             aria-hidden
                                             className={cn(
+                                                'hue-dot',
                                                 'size-1.5 rounded-full',
-                                                colorDot[label.color],
                                             )}
+                                            style={hueStyle(label.hue)}
                                         />
                                         {label.name}
                                     </span>
@@ -791,7 +792,7 @@ function SearchPicker({
     placeholder?: string;
     value: string;
     empty?: string;
-    choices: { value: string; label: string; dot?: string }[];
+    choices: { value: string; label: string; hue?: number | null }[];
     onChange: (value: string) => void;
     children: ReactNode;
 }) {
@@ -877,13 +878,11 @@ function SearchPicker({
                         className="justify-between"
                     >
                         <span className="flex min-w-0 items-center gap-2">
-                            {choice.dot && (
+                            {choice.hue !== undefined && (
                                 <span
                                     aria-hidden
-                                    className={cn(
-                                        'size-2 shrink-0 rounded-[3px]',
-                                        choice.dot,
-                                    )}
+                                    className="size-2 shrink-0 rounded-[3px] hue-dot"
+                                    style={hueStyle(choice.hue)}
                                 />
                             )}
                             <span className="truncate">{choice.label}</span>
@@ -935,10 +934,8 @@ function LabelPicker({
                     >
                         <span
                             aria-hidden
-                            className={cn(
-                                'size-2 rounded-full',
-                                colorDot[label.color],
-                            )}
+                            className={cn('hue-dot', 'size-2 rounded-full')}
+                            style={hueStyle(label.hue)}
                         />
                         {label.name}
                     </DropdownMenuCheckboxItem>

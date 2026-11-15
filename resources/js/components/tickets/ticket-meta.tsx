@@ -15,9 +15,9 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useInitials } from '@/hooks/use-initials';
-import { colorDot, colorText } from '@/lib/colors';
+import { hueStyle } from '@/lib/colors';
 import { cn } from '@/lib/utils';
-import type { ColorName, TicketLabel, Choice } from '@/types';
+import type { TicketLabel, Choice } from '@/types';
 
 /**
  * The live choices in a list, plus any archived ones still in use by the
@@ -98,7 +98,7 @@ export function TicketStatusPill({ statusId }: { statusId: string | null }) {
     const status = useTicketStatus(statusId);
 
     return (
-        <StatusPill dotClassName={colorDot[status?.color ?? 'slate']}>
+        <StatusPill hue={status?.hue ?? null}>
             {status?.name ?? 'No status'}
         </StatusPill>
     );
@@ -156,9 +156,10 @@ export function PriorityGlyph({
             aria-hidden
             className={cn(
                 'size-3.5 shrink-0',
-                priority ? colorText[priority.color] : 'text-subtle-foreground',
+                priority ? 'hue-text' : 'text-subtle-foreground',
                 className,
             )}
+            style={priority ? hueStyle(priority.hue) : undefined}
         />
     );
 }
@@ -283,10 +284,8 @@ export function LabelChips({
                 >
                     <span
                         aria-hidden
-                        className={cn(
-                            'size-1.5 rounded-full',
-                            colorDot[label.color],
-                        )}
+                        className="size-1.5 rounded-full hue-dot"
+                        style={hueStyle(label.hue)}
                     />
                     {label.name}
                 </span>
@@ -297,12 +296,12 @@ export function LabelChips({
 
 export function ProjectTag({
     name,
-    color,
+    hue,
 }: {
     name: string | null;
-    color: ColorName | null;
+    hue: number | null;
 }) {
-    if (!name || !color) {
+    if (!name) {
         return null;
     }
 
@@ -310,7 +309,8 @@ export function ProjectTag({
         <span className="inline-flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
             <span
                 aria-hidden
-                className={cn('size-2 shrink-0 rounded-[3px]', colorDot[color])}
+                className="size-2 shrink-0 rounded-[3px] hue-dot"
+                style={hueStyle(hue)}
             />
             <span className="truncate">{name}</span>
         </span>

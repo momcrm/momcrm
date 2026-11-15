@@ -21,7 +21,7 @@ import {
     SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
 import { useCurrentUrl } from '@/hooks/use-current-url';
-import { colorDot } from '@/lib/colors';
+import { hueStyle } from '@/lib/colors';
 import { cn } from '@/lib/utils';
 import { index, show } from '@/routes/projects';
 import type { SidebarProject, Tone } from '@/types';
@@ -79,9 +79,10 @@ export function NavProjects({ projects }: { projects: SidebarProject[] }) {
                                     <span
                                         aria-hidden
                                         className={cn(
+                                            'hue-dot',
                                             'ml-0.5 size-2.5 shrink-0 rounded-[3px]',
-                                            colorDot[project.color],
                                         )}
+                                        style={hueStyle(project.hue)}
                                     />
                                     <span className="truncate">
                                         {project.name}

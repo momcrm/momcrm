@@ -4,7 +4,7 @@ import {
     useTicketStatus,
 } from '@/components/tickets/ticket-meta';
 import { Badge } from '@/components/ui/badge';
-import { colorSoft } from '@/lib/colors';
+import { hueStyle } from '@/lib/colors';
 import { cn } from '@/lib/utils';
 
 export function TicketStatusBadge({ statusId }: { statusId: string | null }) {
@@ -38,7 +38,8 @@ export function TicketPriorityBadge({
     return (
         <Badge
             variant="outline"
-            className={cn('border-transparent', colorSoft[priority.color])}
+            className={cn('hue-soft', 'border-transparent')}
+            style={hueStyle(priority.hue)}
         >
             {priority.name}
         </Badge>

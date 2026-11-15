@@ -8,11 +8,11 @@ use App\Project\ProjectEloquentModel;
 use App\Project\ProjectStatusEnum;
 use App\Project\ProjectVisibilityEnum;
 use App\Project\Properties\ArchivedAt;
-use App\Project\Properties\Color;
 use App\Project\Properties\CustomerId;
 use App\Project\Properties\Description;
 use App\Project\Properties\DueOn;
 use App\Project\Properties\GroupId;
+use App\Project\Properties\Hue;
 use App\Project\Properties\Icon;
 use App\Project\Properties\IsSample;
 use App\Project\Properties\LeadId;
@@ -22,7 +22,6 @@ use App\Project\Properties\StartsOn;
 use App\Project\Properties\Status;
 use App\Project\Properties\TeamId;
 use App\Project\Properties\Visibility;
-use App\Shared\ColorEnum;
 use App\Team\TeamEloquentModel;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -47,7 +46,7 @@ final class ProjectFactory extends Factory
             Name::getDatabaseTableColumnName() => fake()->sentence(3, false),
             Description::getDatabaseTableColumnName() => fake()->sentence(),
             Icon::getDatabaseTableColumnName() => null,
-            Color::getDatabaseTableColumnName() => fake()->randomElement(ColorEnum::values()),
+            Hue::getDatabaseTableColumnName() => fake()->numberBetween(0, 359),
             Status::getDatabaseTableColumnName() => ProjectStatusEnum::InProgress->value,
             Visibility::getDatabaseTableColumnName() => ProjectVisibilityEnum::Open->value,
             StartsOn::getDatabaseTableColumnName() => null,

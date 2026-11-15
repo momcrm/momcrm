@@ -7,7 +7,6 @@ namespace App\Choice\Actions;
 use App\Choice\Choice;
 use App\Choice\ChoiceEloquentModel;
 use App\Choice\Properties\Id;
-use App\Shared\ColorEnum;
 
 final readonly class CreateChoice
 {
@@ -19,10 +18,6 @@ final readonly class CreateChoice
     {
         if ($this->choice->getId()->isNull()) {
             $this->choice->setId(Id::generate());
-        }
-
-        if ($this->choice->getColor()->isNull()) {
-            $this->choice->setColor(ColorEnum::Slate);
         }
 
         $model = ChoiceEloquentModel::query()->create($this->choice->forDatabaseCreate());

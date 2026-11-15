@@ -16,7 +16,7 @@ it('creates a project led by its creator, numbered within the team', function ()
 
     $response = actingAs($user)->post(route('projects.store'), [
         'name' => 'Office refit',
-        'color' => 'teal',
+        'hue' => 180,
         'status' => 'planning',
         'visibility' => 'open',
         'customer_id' => $customer->id,
@@ -40,7 +40,7 @@ it('rejects another team’s customer and members', function (): void {
 
     actingAs($user)
         ->post(route('projects.store'), [
-            'name' => 'X', 'color' => 'teal', 'status' => 'planning', 'visibility' => 'open',
+            'name' => 'X', 'hue' => 180, 'status' => 'planning', 'visibility' => 'open',
             'customer_id' => CustomerEloquentModel::factory()->create()->id,
             'member_ids' => [UserEloquentModel::factory()->create()->id],
         ])
@@ -49,6 +49,6 @@ it('rejects another team’s customer and members', function (): void {
 
 it('requires a name and a known status and colour', function (): void {
     actingAs(UserEloquentModel::factory()->withPersonalTeam()->create())
-        ->post(route('projects.store'), ['name' => '', 'color' => 'pink', 'status' => 'done', 'visibility' => 'open'])
-        ->assertSessionHasErrors(['name', 'color', 'status']);
+        ->post(route('projects.store'), ['name' => '', 'hue' => 400, 'status' => 'done', 'visibility' => 'open'])
+        ->assertSessionHasErrors(['name', 'hue', 'status']);
 });

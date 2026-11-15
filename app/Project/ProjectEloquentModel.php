@@ -35,7 +35,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property CarbonImmutable|null $archived_at
- * @property string $color
+ * @property int|null $hue
  * @property CarbonImmutable|null $created_at
  * @property string|null $customer_id
  * @property string|null $description

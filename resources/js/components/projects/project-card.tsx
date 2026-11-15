@@ -29,7 +29,7 @@ export default function ProjectCard({ project }: { project: ProjectListItem }) {
     return (
         <article className="group relative flex flex-col gap-3 rounded-xl border bg-card p-4 shadow-xs transition hover:border-border-strong">
             <div className="flex items-start gap-3">
-                <ProjectIcon icon={project.icon} color={project.color} />
+                <ProjectIcon icon={project.icon} hue={project.hue} />
                 <div className="min-w-0 flex-1">
                     <h3 className="flex items-center gap-1.5 font-medium">
                         <Link

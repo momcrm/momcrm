@@ -12,7 +12,7 @@ it('creates a group with its creator as lead', function (): void {
 
     $response = actingAs($user)->post(route('groups.store'), [
         'name' => 'Field techs',
-        'color' => 'teal',
+        'hue' => 180,
         'lead_id' => $user->id,
         'member_ids' => [$user->id],
     ]);
@@ -28,6 +28,6 @@ it('needs a name unique in the team', function (): void {
     GroupEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'name' => 'Support']);
 
     actingAs($user)
-        ->post(route('groups.store'), ['name' => 'Support', 'color' => 'teal'])
+        ->post(route('groups.store'), ['name' => 'Support', 'hue' => 180])
         ->assertSessionHasErrors(['name' => 'There is already a group with that name.']);
 });

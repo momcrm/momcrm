@@ -19,14 +19,13 @@ import {
 import { Input } from '@/components/ui/input';
 import StoreTeamInvitationController from '@/actions/App/TeamInvitation/Controllers/StoreTeamInvitationController';
 import NativeSelect from '@/components/native-select';
-import { colorDot, colorSoft } from '@/lib/colors';
+import { hueStyle } from '@/lib/colors';
 import { timeAgo } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { members as membersRoute } from '@/routes';
 import { index as accessRulesIndex } from '@/routes/access-rules';
 import { show as showGroup } from '@/routes/groups';
 import { update as updateRole } from '@/routes/members';
-import type { ColorName } from '@/types';
 
 type Role = 'owner' | 'admin' | 'member';
 
@@ -35,7 +34,7 @@ type Member = {
     name: string;
     email: string;
     role: Role;
-    groups: { id: string; name: string; color: ColorName }[];
+    groups: { id: string; name: string; hue: number | null }[];
     active_projects: number;
     open_tickets: number;
     last_active_at: string | null;
@@ -52,7 +51,7 @@ type Group = {
     id: string;
     name: string;
     description: string | null;
-    color: ColorName;
+    hue: number | null;
     icon: string | null;
     members_count: number;
     projects_count: number;
@@ -131,9 +130,10 @@ function memberColumns(canChangeRoles: boolean) {
                             <span
                                 key={group.id}
                                 className={cn(
+                                    'hue-soft',
                                     'rounded-sm px-1.5 py-px text-[11px] font-medium',
-                                    colorSoft[group.color],
                                 )}
+                                style={hueStyle(group.hue)}
                             >
                                 {group.name}
                             </span>
@@ -184,7 +184,6 @@ export default function Members({
     groups,
     canInvite,
     canChangeRoles,
-    colors,
 }: {
     tab: Tab;
     members: Member[];
@@ -193,7 +192,6 @@ export default function Members({
     canInvite: boolean;
     canChangeRoles: boolean;
     roles: Role[];
-    colors: ColorName[];
 }) {
     const { canManageAccessRules } = usePage().props;
     const [search, setSearch] = useState('');
@@ -354,9 +352,10 @@ export default function Members({
                                     <span className="flex items-center gap-2 font-medium">
                                         <span
                                             className={cn(
+                                                'hue-dot',
                                                 'size-3 rounded-[4px]',
-                                                colorDot[group.color],
                                             )}
+                                            style={hueStyle(group.hue)}
                                         />
                                         {group.name}
                                     </span>
@@ -499,7 +498,6 @@ export default function Members({
                     id: member.id,
                     name: member.name,
                 }))}
-                colors={colors}
             />
         </>
     );

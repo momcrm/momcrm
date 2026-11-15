@@ -53,7 +53,7 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useTicketActions } from '@/hooks/use-ticket-actions';
-import { colorDot } from '@/lib/colors';
+import { hueStyle } from '@/lib/colors';
 import { cn } from '@/lib/utils';
 import { show } from '@/routes/tickets';
 import { store as storeAttachment } from '@/routes/tickets/attachments';
@@ -246,7 +246,7 @@ function DrawerBody({
                             choices={statuses.map((status) => ({
                                 value: status.id,
                                 label: status.name,
-                                dot: colorDot[status.color],
+                                hue: status.hue,
                             }))}
                             onChange={(statusId) =>
                                 save({ status_id: statusId })
@@ -314,7 +314,7 @@ function DrawerBody({
                                 ...options.projects.map((project) => ({
                                     value: project.id,
                                     label: project.name,
-                                    dot: colorDot[project.color],
+                                    hue: project.hue,
                                 })),
                             ]}
                             onChange={(id) =>
@@ -324,7 +324,7 @@ function DrawerBody({
                             {ticket.project_name ? (
                                 <ProjectTag
                                     name={ticket.project_name}
-                                    color={ticket.project_color}
+                                    hue={ticket.project_hue}
                                 />
                             ) : (
                                 <span className="text-muted-foreground">
@@ -503,7 +503,7 @@ function Picker({
     children,
 }: {
     value: string;
-    choices: { value: string; label: string; dot?: string }[];
+    choices: { value: string; label: string; hue?: number | null }[];
     onChange: (value: string) => void;
     children: ReactNode;
 }) {
@@ -525,13 +525,11 @@ function Picker({
                             key={choice.value}
                             value={choice.value}
                         >
-                            {choice.dot && (
+                            {choice.hue !== undefined && (
                                 <span
                                     aria-hidden
-                                    className={cn(
-                                        'size-2 rounded-[3px]',
-                                        choice.dot,
-                                    )}
+                                    className="size-2 rounded-[3px] hue-dot"
+                                    style={hueStyle(choice.hue)}
                                 />
                             )}
                             {choice.label}
@@ -582,10 +580,8 @@ function LabelPicker({
                     >
                         <span
                             aria-hidden
-                            className={cn(
-                                'size-2 rounded-full',
-                                colorDot[label.color],
-                            )}
+                            className={cn('hue-dot', 'size-2 rounded-full')}
+                            style={hueStyle(label.hue)}
                         />
                         {label.name}
                     </DropdownMenuCheckboxItem>

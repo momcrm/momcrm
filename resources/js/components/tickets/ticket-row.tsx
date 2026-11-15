@@ -60,7 +60,7 @@ export default function TicketRow({
                     {ticket.project_name ? (
                         <ProjectTag
                             name={ticket.project_name}
-                            color={ticket.project_color}
+                            hue={ticket.project_hue}
                         />
                     ) : (
                         <span className="truncate text-xs text-muted-foreground">

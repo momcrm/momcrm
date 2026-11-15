@@ -20,7 +20,7 @@ use Illuminate\Database\Eloquent\Model;
 /**
  * @property CarbonImmutable|null $archived_at
  * @property string|null $category
- * @property string $color
+ * @property int|null $hue
  * @property CarbonImmutable|null $created_at
  * @property string|null $icon
  * @property string $id

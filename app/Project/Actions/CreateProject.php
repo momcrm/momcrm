@@ -12,7 +12,6 @@ use App\Project\ProjectStatusEnum;
 use App\Project\ProjectVisibilityEnum;
 use App\Project\Properties\Id;
 use App\Shared\Actions\NextTeamNumber;
-use App\Shared\ColorEnum;
 use App\Shared\Table;
 use Illuminate\Support\Facades\DB;
 
@@ -44,10 +43,6 @@ final readonly class CreateProject
 
             if ($this->project->getVisibility()->isNull()) {
                 $this->project->setVisibility(ProjectVisibilityEnum::Open);
-            }
-
-            if ($this->project->getColor()->isNull()) {
-                $this->project->setColor(ColorEnum::Indigo);
             }
 
             $teamId = $this->project->getTeamId()->toString();

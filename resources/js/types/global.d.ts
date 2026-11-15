@@ -25,7 +25,7 @@ declare module '@inertiajs/core' {
                 groups: {
                     id: string;
                     name: string;
-                    color: import('./crm').ColorName;
+                    hue: number | null;
                     icon: string | null;
                 }[];
             } | null;

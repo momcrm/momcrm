@@ -7,8 +7,8 @@ namespace App\Choice;
 use App\Choice\Factories\ChoiceFactory;
 use App\Choice\Properties\ArchivedAt;
 use App\Choice\Properties\Category;
-use App\Choice\Properties\Color;
 use App\Choice\Properties\CreatedAt;
+use App\Choice\Properties\Hue;
 use App\Choice\Properties\Icon;
 use App\Choice\Properties\Id;
 use App\Choice\Properties\IsDefault;
@@ -33,7 +33,7 @@ final class Choice extends AbstractData
     public function __construct(
         public ArchivedAt $archivedAt,
         public Category $category,
-        public Color $color,
+        public Hue $hue,
         public CreatedAt $createdAt,
         public Icon $icon,
         public Id $id,
@@ -70,14 +70,14 @@ final class Choice extends AbstractData
     /**
      * The fields the frontend needs to show the choice.
      *
-     * @return array{id: string, name: string, color: string, icon: ?string, category: ?string, position: int, is_default: bool, is_archived: bool}
+     * @return array{id: string, name: string, hue: ?int, icon: ?string, category: ?string, position: int, is_default: bool, is_archived: bool}
      */
     public function toSummary(): array
     {
         return [
             'id' => $this->getId()->toString(),
             'name' => $this->getName()->toString(),
-            'color' => $this->getColor()->toEnum()->value,
+            'hue' => $this->getHue()->toNullableInteger(),
             'icon' => $this->getIcon()->toNullableString(),
             'category' => $this->getCategory()->toNullableString(),
             'position' => $this->getPosition()->toInteger(),
@@ -123,14 +123,14 @@ final class Choice extends AbstractData
         return $this;
     }
 
-    public function getColor(): Color
+    public function getHue(): Hue
     {
-        return $this->color;
+        return $this->hue;
     }
 
-    public function setColor(mixed $color): self
+    public function setHue(mixed $hue): self
     {
-        $this->color = new Color($color instanceof AbstractValue ? $color->toValue() : $color);
+        $this->hue = new Hue($hue instanceof AbstractValue ? $hue->toValue() : $hue);
 
         return $this;
     }

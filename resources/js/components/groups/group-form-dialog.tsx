@@ -1,5 +1,6 @@
 import { Form } from '@inertiajs/react';
 import { useState } from 'react';
+import HuePicker from '@/components/hue-picker';
 import FormField from '@/components/form-field';
 import NativeSelect from '@/components/native-select';
 import { Button } from '@/components/ui/button';
@@ -15,15 +16,14 @@ import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import StoreGroupController from '@/actions/App/Group/Controllers/StoreGroupController';
 import UpdateGroupController from '@/actions/App/Group/Controllers/UpdateGroupController';
-import { colorDot } from '@/lib/colors';
 import { cn } from '@/lib/utils';
-import type { ColorName, CustomerOption } from '@/types';
+import type { CustomerOption } from '@/types';
 
 export type GroupFormValues = {
     id: string;
     name: string;
     description: string | null;
-    color: ColorName;
+    hue: number | null;
     lead_id: string | null;
     member_ids: string[];
 };
@@ -36,19 +36,19 @@ export default function GroupFormDialog({
     open,
     onOpenChange,
     members,
-    colors,
     group,
     canManageMembers = true,
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     members: CustomerOption[];
-    colors: ColorName[];
     group?: GroupFormValues;
     /** Without it the lead and members are left out, so they stay as they are. */
     canManageMembers?: boolean;
 }) {
-    const [color, setColor] = useState<ColorName>(group?.color ?? 'teal');
+    const [hue, setHue] = useState<number | null | undefined>(
+        group ? group.hue : undefined,
+    );
     const [memberIds, setMemberIds] = useState<string[]>(
         group?.member_ids ?? [],
     );
@@ -89,28 +89,11 @@ export default function GroupFormDialog({
                                 <span className="text-sm font-medium">
                                     Colour
                                 </span>
-                                <input
-                                    type="hidden"
-                                    name="color"
-                                    value={color}
+                                <HuePicker
+                                    name="hue"
+                                    value={hue}
+                                    onChange={setHue}
                                 />
-                                <div className="flex flex-wrap gap-1.5">
-                                    {colors.map((option) => (
-                                        <button
-                                            key={option}
-                                            type="button"
-                                            aria-label={option}
-                                            aria-pressed={color === option}
-                                            onClick={() => setColor(option)}
-                                            className={cn(
-                                                'size-6 rounded-md ring-offset-2 ring-offset-background',
-                                                colorDot[option],
-                                                color === option &&
-                                                    'ring-2 ring-ring',
-                                            )}
-                                        />
-                                    ))}
-                                </div>
                             </div>
                             <FormField
                                 id="group-description"

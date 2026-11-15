@@ -27,7 +27,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * belong to. Called "teams" in gr8r; renamed so it does not clash with the
  * workspace Team.
  *
- * @property string $color
+ * @property int|null $hue
  * @property CarbonImmutable|null $created_at
  * @property string|null $description
  * @property string|null $icon

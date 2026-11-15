@@ -36,7 +36,7 @@ final class ListTicketsController
             'customer_name' => $ticket->getCustomer()->toNullableData()?->getName()->toString(),
             'assignee_name' => $ticket->getAssignee()->toNullableData()?->getName()->toString(),
             'project_name' => $ticket->getProject()->toNullableData()?->getName()->toString(),
-            'project_color' => $ticket->getProject()->toNullableData()?->getColor()->toString(),
+            'project_hue' => $ticket->getProject()->toNullableData()?->getHue()->toNullableInteger(),
             'labels' => $ticket->getLabels()->toDataCollection()->toTags(),
             'subtasks_count' => $ticket->getSubtasksCount()->toInteger(),
             'closed_subtasks_count' => $ticket->getClosedSubtasksCount()->toInteger(),

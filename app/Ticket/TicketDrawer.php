@@ -102,7 +102,7 @@ final class TicketDrawer
             'customer_name' => $customer instanceof CustomerEloquentModel ? $customer->name : null,
             'assignee_name' => $assignee instanceof UserEloquentModel ? $assignee->name : null,
             'project_name' => $project instanceof ProjectEloquentModel ? $project->name : null,
-            'project_color' => $project instanceof ProjectEloquentModel ? $project->color : null,
+            'project_hue' => $project instanceof ProjectEloquentModel ? $project->hue : null,
             'labels' => Choice::collect($model->labels->all(), 'fromEloquentModel')->toTags(),
             'parent' => $parent instanceof TicketEloquentModel ? ['id' => $parent->id, 'number' => $parent->number, 'title' => $parent->title] : null,
             'subtasks' => $model->subtasks

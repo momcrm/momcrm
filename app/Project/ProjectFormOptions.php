@@ -6,7 +6,6 @@ namespace App\Project;
 
 use App\Customer\Actions\FindCustomer;
 use App\Group\Actions\FindGroup;
-use App\Shared\ColorEnum;
 use App\TeamUser\Actions\FindTeamMembers;
 
 /**
@@ -26,7 +25,6 @@ final class ProjectFormOptions
                 'groups' => FindGroup::optionsForTeam($teamId),
                 'statuses' => ProjectStatusEnum::options(),
                 'visibilities' => ProjectVisibilityEnum::options(),
-                'colors' => ColorEnum::values(),
             ],
         ];
     }

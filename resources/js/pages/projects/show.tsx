@@ -54,7 +54,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { useTicketActions } from '@/hooks/use-ticket-actions';
-import { colorDot } from '@/lib/colors';
+import { hueStyle } from '@/lib/colors';
 import { visitWithQuery } from '@/lib/query';
 import { cn } from '@/lib/utils';
 import {
@@ -167,7 +167,7 @@ export default function ShowProject(props: Props) {
                 <div className="flex flex-wrap items-center gap-3">
                     <ProjectIcon
                         icon={project.icon}
-                        color={project.color}
+                        hue={project.hue}
                         size="lg"
                     />
                     <div className="min-w-0">
@@ -401,7 +401,7 @@ function TicketTabs({
                     groups={statuses.map((status) => ({
                         key: status.id,
                         label: status.name,
-                        dotClassName: colorDot[status.color],
+                        hue: status.hue,
                         tickets: page.data.filter(
                             (ticket) => ticket.status_id === status.id,
                         ),
@@ -462,8 +462,9 @@ function Overview({
                             return count > 0 ? (
                                 <span
                                     key={status.id}
-                                    className={colorDot[status.color]}
+                                    className="hue-dot"
                                     style={{
+                                        ...hueStyle(status.hue),
                                         width: `${(count / total) * 100}%`,
                                     }}
                                 />
@@ -478,9 +479,10 @@ function Overview({
                             >
                                 <span
                                     className={cn(
+                                        'hue-dot',
                                         'size-2 rounded-full',
-                                        colorDot[status.color],
                                     )}
+                                    style={hueStyle(status.hue)}
                                 />
                                 {status.name}
                                 <span className="tabular-nums">

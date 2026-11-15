@@ -57,7 +57,7 @@ const columns = column.columns([
             info.row.original.project_name ? (
                 <ProjectTag
                     name={info.row.original.project_name}
-                    color={info.row.original.project_color}
+                    hue={info.row.original.project_hue}
                 />
             ) : (
                 <span className="truncate text-xs text-muted-foreground">

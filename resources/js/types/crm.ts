@@ -86,7 +86,7 @@ export type ChoiceList = 'ticket_label' | 'ticket_priority' | 'ticket_status';
 export type Choice = {
     id: string;
     name: string;
-    color: ColorName;
+    hue: number | null;
     icon: string | null;
     category: string | null;
     position: number;
@@ -121,13 +121,13 @@ export type TicketListItem = Ticket & {
     customer_name: string | null;
     assignee_name: string | null;
     project_name: string | null;
-    project_color: ColorName | null;
+    project_hue: number | null;
     labels: TicketLabel[];
     subtasks_count: number;
     closed_subtasks_count: number;
 };
 
-export type TicketLabel = { id: string; name: string; color: ColorName };
+export type TicketLabel = { id: string; name: string; hue: number | null };
 
 export type TicketDrawerData = Omit<
     TicketListItem,
@@ -208,16 +208,6 @@ export type TicketFilters = {
     direction: 'asc' | 'desc';
 };
 
-export type ColorName =
-    | 'amber'
-    | 'blue'
-    | 'green'
-    | 'indigo'
-    | 'rose'
-    | 'slate'
-    | 'teal'
-    | 'violet';
-
 export type ProjectStatus =
     | 'planning'
     | 'in_progress'
@@ -231,7 +221,7 @@ export type Project = {
     name: string;
     description: string | null;
     icon: string | null;
-    color: ColorName;
+    hue: number | null;
     status: ProjectStatus;
     visibility: 'open' | 'restricted';
     customer_id: string | null;
@@ -256,10 +246,9 @@ export type ProjectListItem = Project & {
 export type ProjectFormOptions = {
     members: CustomerOption[];
     customers: CustomerOption[];
-    groups: (CustomerOption & { color: ColorName; icon: string | null })[];
+    groups: (CustomerOption & { hue: number | null; icon: string | null })[];
     statuses: Option[];
     visibilities: Option[];
-    colors: ColorName[];
 };
 
 export type Milestone = {
@@ -272,7 +261,7 @@ export type Milestone = {
 export type SidebarProject = {
     id: string;
     name: string;
-    color: ColorName;
+    hue: number | null;
     status: ProjectStatus;
     is_favorite: boolean;
 };
@@ -280,7 +269,7 @@ export type SidebarProject = {
 export type ProjectOption = {
     id: string;
     name: string;
-    color: ColorName;
+    hue: number | null;
     customer_id: string | null;
 };
 
@@ -351,7 +340,7 @@ export type TimelineWindow = {
 export type TimelineProject = {
     id: string;
     name: string;
-    color: ColorName;
+    hue: number | null;
     icon: string | null;
     starts_on: string | null;
     due_on: string | null;

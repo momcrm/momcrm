@@ -241,3 +241,43 @@ html.dark[data-accent='green'] {
 html[data-density='compact'] {
     font-size: 15px;
 }
+
+/*
+ * Colours that records are tagged with (projects, groups, statuses, priorities,
+ * labels) are a stored OKLCH hue. Set --hue (0-359) and --hue-chroma (1, or 0
+ * for neutral grey) with hueStyle() in lib/colors.ts; these keep lightness and
+ * chroma fixed per theme so every hue stays readable.
+ */
+@utility hue-dot {
+    background-color: oklch(
+        0.65 calc(0.16 * var(--hue-chroma, 1)) var(--hue, 0)
+    );
+
+    &:is(.dark *) {
+        background-color: oklch(
+            0.7 calc(0.15 * var(--hue-chroma, 1)) var(--hue, 0)
+        );
+    }
+}
+
+@utility hue-text {
+    color: oklch(0.52 calc(0.15 * var(--hue-chroma, 1)) var(--hue, 0));
+
+    &:is(.dark *) {
+        color: oklch(0.78 calc(0.13 * var(--hue-chroma, 1)) var(--hue, 0));
+    }
+}
+
+@utility hue-soft {
+    background-color: oklch(
+        0.65 calc(0.16 * var(--hue-chroma, 1)) var(--hue, 0) / 0.12
+    );
+    color: oklch(0.45 calc(0.14 * var(--hue-chroma, 1)) var(--hue, 0));
+
+    &:is(.dark *) {
+        background-color: oklch(
+            0.7 calc(0.15 * var(--hue-chroma, 1)) var(--hue, 0) / 0.16
+        );
+        color: oklch(0.82 calc(0.12 * var(--hue-chroma, 1)) var(--hue, 0));
+    }
+}
