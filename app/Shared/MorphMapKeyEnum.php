@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Shared;
 
+use App\AccessRule\AccessRuleEloquentModel;
 use App\Activity\ActivityEloquentModel;
 use App\Asset\AssetEloquentModel;
 use App\Attachment\AttachmentEloquentModel;
@@ -42,6 +43,7 @@ enum MorphMapKeyEnum: string
 {
     use Enum;
 
+    case AccessRule = 'access_rule';
     case Activity = 'activity';
     case Asset = 'asset';
     case Attachment = 'attachment';
@@ -93,6 +95,7 @@ enum MorphMapKeyEnum: string
     public function modelClass(): string
     {
         return match ($this) {
+            self::AccessRule => AccessRuleEloquentModel::class,
             self::Activity => ActivityEloquentModel::class,
             self::Asset => AssetEloquentModel::class,
             self::Attachment => AttachmentEloquentModel::class,

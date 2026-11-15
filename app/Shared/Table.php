@@ -6,6 +6,7 @@ namespace App\Shared;
 
 enum Table: string
 {
+    case AccessRules = 'access_rules';
     case Activities = 'activities';
     case Assets = 'assets';
     case Attachments = 'attachments';
