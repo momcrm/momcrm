@@ -45,6 +45,8 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Inertia\ExceptionResponse;
+use Inertia\Inertia;
 use Laravel\Passkeys\Passkeys;
 use SocialiteProviders\Manager\SocialiteWasCalled;
 use SocialiteProviders\Microsoft\Provider as MicrosoftProvider;
@@ -72,6 +74,31 @@ class AppServiceProvider extends ServiceProvider
         $this->configureMorphMap();
         $this->configureListeners();
         $this->configureMail();
+        $this->configureErrorPages();
+    }
+
+    /**
+     * Shows not-found and forbidden errors, and in production server errors,
+     * as the app's own error page instead of Laravel's. JSON requests keep
+     * their JSON errors, and local debugging keeps the full error page.
+     */
+    protected function configureErrorPages(): void
+    {
+        Inertia::handleExceptionsUsing(function (ExceptionResponse $response): ?ExceptionResponse {
+            $status = $response->statusCode();
+            $request = $response->request;
+
+            if ($request->expectsJson() && $request->header('X-Inertia') === null) {
+                return null;
+            }
+
+            $isShown = in_array($status, [403, 404], true)
+                || (in_array($status, [500, 503], true) && ! config('app.debug'));
+
+            return $isShown
+                ? $response->render('error', ['status' => $status])->withSharedData()
+                : null;
+        });
     }
 
     /**

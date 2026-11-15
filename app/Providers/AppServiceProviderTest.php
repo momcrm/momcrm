@@ -3,11 +3,17 @@
 declare(strict_types=1);
 
 use App\Shared\MorphMapKeyEnum;
+use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Database\ClassMorphViolationException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Inertia\Testing\AssertableInertia as Assert;
+
+use function Pest\Laravel\actingAs;
+use function Pest\Laravel\get;
+use function Pest\Laravel\getJson;
 
 /**
  * Every Eloquent model class under app/, found from its *EloquentModel.php file.
@@ -58,4 +64,47 @@ it('sends the verification email in MomCRM copy', function (): void {
         ->and($mail->greeting)->toBe('Hi Jane Smith,')
         ->and($mail->actionText)->toBe('Confirm my email')
         ->and($mail->actionUrl)->toContain('/email/verify/'.$user->id);
+});
+
+it('shows the app error page inside the app for an unknown address', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+
+    actingAs($user)
+        ->get('/no-such-page')
+        ->assertNotFound()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('error')
+            ->where('status', 404)
+            ->where('auth.user.id', $user->id),
+        );
+});
+
+it('shows the error page to guests too', function (): void {
+    get('/no-such-page')
+        ->assertNotFound()
+        ->assertInertia(fn (Assert $page) => $page->component('error')->where('status', 404)->where('auth.user', null));
+});
+
+it("shows the error page for another team's record", function (): void {
+    actingAs(UserEloquentModel::factory()->withPersonalTeam()->create())
+        ->get(route('tickets.show', TicketEloquentModel::factory()->create()->id))
+        ->assertNotFound()
+        ->assertInertia(fn (Assert $page) => $page->component('error')->where('status', 404));
+});
+
+it('shows the error page when access is forbidden', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $member = UserEloquentModel::factory()->inTeam($owner->current_team_id)->create();
+
+    actingAs($member)
+        ->get(route('access-rules.index'))
+        ->assertForbidden()
+        ->assertInertia(fn (Assert $page) => $page->component('error')->where('status', 403));
+});
+
+it('keeps JSON errors for JSON requests', function (): void {
+    getJson('/no-such-page')
+        ->assertNotFound()
+        ->assertHeaderMissing('X-Inertia')
+        ->assertJsonStructure(['message']);
 });
