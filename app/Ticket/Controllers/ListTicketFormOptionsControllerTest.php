@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Customer\CustomerEloquentModel;
+use App\Group\GroupEloquentModel;
 use App\Project\ProjectEloquentModel;
 use App\TeamUser\TeamUserEloquentModel;
 use App\User\UserEloquentModel;
@@ -37,4 +38,21 @@ it('leaves members-only projects the person is not in out of the project picker'
 
     expect(collect(actingAs($outsider)->getJson(route('tickets.form-options'))->json('projects'))->pluck('name')->sort()->values()->all())->toBe(['Open'])
         ->and(collect(actingAs($member)->getJson(route('tickets.form-options'))->json('projects'))->pluck('name')->sort()->values()->all())->toBe(['Open', 'Secret']);
+});
+
+it("offers the team's groups with their members, so the assignee picker can list them first", function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $group = GroupEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'name' => 'Service desk']);
+    $group->members()->attach($user->id, ['role' => 'member']);
+    GroupEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'name' => 'Projects']);
+    GroupEloquentModel::factory()->create(['name' => 'Elsewhere']);
+
+    actingAs($user)
+        ->getJson(route('tickets.form-options'))
+        ->assertOk()
+        ->assertJsonPath('groups.0.name', 'Projects')
+        ->assertJsonPath('groups.0.member_ids', [])
+        ->assertJsonPath('groups.1.name', 'Service desk')
+        ->assertJsonPath('groups.1.member_ids', [$user->id])
+        ->assertJsonCount(2, 'groups');
 });

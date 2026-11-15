@@ -211,6 +211,7 @@ export type GroupOption = {
     name: string;
     hue: number | null;
     icon: string | null;
+    member_ids: string[];
 };
 
 export type TicketView = 'list' | 'board' | 'table';
