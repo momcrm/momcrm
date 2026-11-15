@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\AccessRule\AccessRuleEloquentModel;
+use App\Choice\Actions\FindChoice;
+use App\Choice\ChoiceListEnum;
 use App\Contact\ContactEloquentModel;
 use App\Customer\CustomerEloquentModel;
 use App\Label\LabelEloquentModel;
@@ -11,6 +13,11 @@ use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
 
 use function Pest\Laravel\actingAs;
+
+function teamPriorityId(UserEloquentModel $user, string $name): string
+{
+    return FindChoice::byNameForTeam($user->current_team_id, ChoiceListEnum::TicketPriority, $name)->getId()->toString();
+}
 
 function patchableTicket(UserEloquentModel $user, array $attributes = []): TicketEloquentModel
 {
@@ -23,18 +30,19 @@ function patchableTicket(UserEloquentModel $user, array $attributes = []): Ticke
 
 it('changes only the fields sent', function (): void {
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
-    $ticket = patchableTicket($user, ['title' => 'Printer', 'priority' => 'normal']);
+    $ticket = patchableTicket($user, ['title' => 'Printer']);
+    $urgent = teamPriorityId($user, 'Urgent');
     $customerId = $ticket->customer_id;
 
     actingAs($user)
         ->from(route('tickets.index'))
-        ->patch(route('tickets.patch', $ticket->id), ['priority' => 'urgent', 'due_on' => '2026-12-01', 'estimate_minutes' => 90])
+        ->patch(route('tickets.patch', $ticket->id), ['priority_id' => $urgent, 'due_on' => '2026-12-01', 'estimate_minutes' => 90])
         ->assertSessionHasNoErrors()
         ->assertRedirectToRoute('tickets.index');
 
     expect($ticket->fresh())
         ->title->toBe('Printer')
-        ->priority->toBe('urgent')
+        ->priority_id->toBe($urgent)
         ->due_on->toBe('2026-12-01')
         ->estimate_minutes->toBe(90)
         ->customer_id->toBe($customerId);
@@ -91,9 +99,19 @@ it('will not leave a ticket with neither customer nor project', function (): voi
         ->assertSessionHasErrors('customer_id');
 });
 
+it("rejects another team's priority", function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $ticket = patchableTicket($user);
+    $otherTeamsUrgent = teamPriorityId(UserEloquentModel::factory()->withPersonalTeam()->create(), 'Urgent');
+
+    actingAs($user)
+        ->patch(route('tickets.patch', $ticket->id), ['priority_id' => $otherTeamsUrgent])
+        ->assertSessionHasErrors(['priority_id' => "Choose one of your team's priorities."]);
+});
+
 it("returns not found for another team's ticket", function (): void {
     actingAs(UserEloquentModel::factory()->withPersonalTeam()->create())
-        ->patch(route('tickets.patch', TicketEloquentModel::factory()->create()->id), ['priority' => 'low'])
+        ->patch(route('tickets.patch', TicketEloquentModel::factory()->create()->id), ['title' => 'Mine'])
         ->assertNotFound();
 });
 
@@ -104,10 +122,12 @@ it('applies the close rules when an edit closes or reopens the ticket', function
     $open = patchableTicket($owner, ['status' => 'new']);
     $closed = patchableTicket($owner, ['status' => 'closed']);
 
-    actingAs($member)->patch(route('tickets.patch', $open->id), ['priority' => 'urgent'])->assertSessionHasNoErrors();
+    $urgent = teamPriorityId($owner, 'Urgent');
+
+    actingAs($member)->patch(route('tickets.patch', $open->id), ['priority_id' => $urgent])->assertSessionHasNoErrors();
     actingAs($member)->patch(route('tickets.patch', $open->id), ['status' => 'closed'])->assertForbidden();
     actingAs($member)->patch(route('tickets.patch', $closed->id), ['status' => 'new'])->assertForbidden();
 
-    expect($open->fresh())->priority->toBe('urgent')->status->toBe('new')
+    expect($open->fresh())->priority_id->toBe($urgent)->status->toBe('new')
         ->and($closed->fresh()->status)->toBe('closed');
 });

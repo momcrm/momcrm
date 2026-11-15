@@ -67,7 +67,7 @@ final readonly class TicketListFilters
                 : ($view === self::VIEW_BOARD ? FindTicket::FILTER_ALL : FindTicket::FILTER_OPEN),
             search: $request->string('search')->trim()->toString() ?: null,
             priorities: collect(explode(',', (string) $request->query('priority', '')))
-                ->filter(fn (string $priority): bool => TicketPriorityEnum::tryFrom($priority) !== null)
+                ->filter(fn (string $priority): bool => Str::isUuid($priority))
                 ->values()
                 ->all(),
             assignee: self::idOrKeyword($request->query('assignee'), [self::ASSIGNEE_ME, self::NONE]),

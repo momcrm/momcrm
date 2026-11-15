@@ -1,5 +1,6 @@
 import { Form, Head, Link, setLayoutProps } from '@inertiajs/react';
 import PageHeader from '@/components/page-header';
+import { usePriority } from '@/components/tickets/ticket-meta';
 import {
     TicketPriorityBadge,
     TicketStatusBadge,
@@ -34,7 +35,6 @@ export default function ShowTicket({
     contact,
     location,
     assigneeName,
-    priorities,
 }: {
     ticket: Ticket;
     customer: Customer | null;
@@ -43,7 +43,6 @@ export default function ShowTicket({
     location: Location | null;
     assigneeName: string | null;
     statuses: Option[];
-    priorities: Option[];
 }) {
     setLayoutProps({
         breadcrumbs: [
@@ -53,6 +52,7 @@ export default function ShowTicket({
     });
 
     const isClosed = ticket.status === 'closed';
+    const priority = usePriority(ticket.priority_id);
 
     const details = [
         {
@@ -81,9 +81,7 @@ export default function ShowTicket({
         { label: 'Assigned to', value: assigneeName ?? 'Unassigned' },
         {
             label: 'Priority',
-            value:
-                priorities.find((option) => option.value === ticket.priority)
-                    ?.label ?? ticket.priority,
+            value: priority?.name ?? '—',
         },
         {
             label: 'Due',
@@ -118,7 +116,9 @@ export default function ShowTicket({
                         <span className="flex items-center gap-2">
                             Ticket #{ticket.number}
                             <TicketStatusBadge status={ticket.status} />
-                            <TicketPriorityBadge priority={ticket.priority} />
+                            <TicketPriorityBadge
+                                priorityId={ticket.priority_id}
+                            />
                         </span>
                     }
                     actions={

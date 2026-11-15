@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\AccessRule;
 
+use App\Choice\Actions\FindChoice;
+use App\Choice\ChoiceListEnum;
 use App\Customer\CustomerStatusEnum;
 use App\Group\Actions\FindGroup;
 use App\Invoice\InvoiceStatusEnum;
@@ -13,7 +15,6 @@ use App\Project\ProjectStatusEnum;
 use App\Project\ProjectVisibilityEnum;
 use App\TeamUser\Actions\FindTeamMembers;
 use App\TeamUser\TeamRoleEnum;
-use App\Ticket\TicketPriorityEnum;
 use App\Ticket\TicketStatusEnum;
 use Illuminate\Support\Collection;
 
@@ -68,7 +69,7 @@ final class AccessRuleFormOptions
             AccessAttributeEnum::ProjectStatus => ProjectStatusEnum::options(),
             AccessAttributeEnum::ProjectVisibility => ProjectVisibilityEnum::options(),
             AccessAttributeEnum::TicketStatus => TicketStatusEnum::options(),
-            AccessAttributeEnum::TicketPriority => TicketPriorityEnum::options(),
+            AccessAttributeEnum::TicketPriority => FindChoice::listForTeam($teamId, ChoiceListEnum::TicketPriority)->toOptions(),
             AccessAttributeEnum::TicketProject => self::idNameOptions(FindProject::optionsForTeam($teamId, $userId)),
             AccessAttributeEnum::TicketLabel => self::idNameOptions(FindLabel::optionsForTeam($teamId)),
             AccessAttributeEnum::CustomerStatus => CustomerStatusEnum::options(),

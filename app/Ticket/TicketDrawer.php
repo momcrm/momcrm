@@ -147,7 +147,8 @@ final class TicketDrawer
     }
 
     /**
-     * The pickers' choices: members, projects, labels, customers, statuses and priorities.
+     * The pickers' choices: members, projects, labels, customers and statuses.
+     * Priorities come from the shared `choices` prop.
      *
      * @return array{options: array<string, mixed>}
      */
@@ -160,7 +161,6 @@ final class TicketDrawer
                 'labels' => FindLabel::optionsForTeam($teamId),
                 'customers' => FindCustomer::optionsForTeam($teamId),
                 'statuses' => TicketStatusEnum::options(),
-                'priorities' => TicketPriorityEnum::options(),
             ],
         ];
     }

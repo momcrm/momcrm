@@ -1,5 +1,11 @@
+import {
+    useTicketPriorities,
+    usePriority,
+} from '@/components/tickets/ticket-meta';
 import { Badge } from '@/components/ui/badge';
-import type { TicketPriority, TicketStatus } from '@/types';
+import { colorSoft } from '@/lib/colors';
+import { cn } from '@/lib/utils';
+import type { TicketStatus } from '@/types';
 
 const statusLabels: Record<TicketStatus, string> = {
     new: 'New',
@@ -7,13 +13,6 @@ const statusLabels: Record<TicketStatus, string> = {
     waiting_on_customer: 'Waiting on customer',
     waiting_on_supplier: 'Waiting on supplier',
     closed: 'Closed',
-};
-
-const priorityLabels: Record<TicketPriority, string> = {
-    low: 'Low',
-    normal: 'Normal',
-    high: 'High',
-    urgent: 'Urgent',
 };
 
 export function TicketStatusBadge({ status }: { status: TicketStatus }) {
@@ -25,20 +24,27 @@ export function TicketStatusBadge({ status }: { status: TicketStatus }) {
 }
 
 /**
- * Shown only for priorities above normal, so the list stays quiet.
+ * Shown only for priorities more urgent than the team's default, so the page
+ * stays quiet.
  */
 export function TicketPriorityBadge({
-    priority,
+    priorityId,
 }: {
-    priority: TicketPriority;
+    priorityId: string | null;
 }) {
-    if (priority === 'low' || priority === 'normal') {
+    const priority = usePriority(priorityId);
+    const standard = useTicketPriorities().find((choice) => choice.is_default);
+
+    if (!priority || !standard || priority.position >= standard.position) {
         return null;
     }
 
     return (
-        <Badge variant={priority === 'urgent' ? 'destructive' : 'default'}>
-            {priorityLabels[priority]}
+        <Badge
+            variant="outline"
+            className={cn('border-transparent', colorSoft[priority.color])}
+        >
+            {priority.name}
         </Badge>
     );
 }

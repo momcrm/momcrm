@@ -23,7 +23,7 @@ use App\Ticket\Properties\LocationId;
 use App\Ticket\Properties\Number;
 use App\Ticket\Properties\ParentId;
 use App\Ticket\Properties\Position;
-use App\Ticket\Properties\Priority;
+use App\Ticket\Properties\PriorityId;
 use App\Ticket\Properties\Project;
 use App\Ticket\Properties\ProjectId;
 use App\Ticket\Properties\StartsOn;
@@ -60,7 +60,7 @@ final class Ticket extends AbstractData
         public Number $number,
         public ParentId $parentId,
         public Position $position,
-        public Priority $priority,
+        public PriorityId $priorityId,
         public Project $project,
         public ProjectId $projectId,
         public StartsOn $startsOn,
@@ -106,7 +106,7 @@ final class Ticket extends AbstractData
     /**
      * The fields the ticket pages show.
      *
-     * @return array{id: string, number: int, title: string, description: ?string, status: string, priority: string, customer_id: ?string, project_id: ?string, parent_id: ?string, contact_id: ?string, location_id: ?string, assignee_id: ?string, starts_on: ?string, due_on: ?string, estimate_minutes: ?int, position: int, closed_at: ?string, archived_at: ?string, created_at: ?string}
+     * @return array{id: string, number: int, title: string, description: ?string, status: string, priority_id: ?string, customer_id: ?string, project_id: ?string, parent_id: ?string, contact_id: ?string, location_id: ?string, assignee_id: ?string, starts_on: ?string, due_on: ?string, estimate_minutes: ?int, position: int, closed_at: ?string, archived_at: ?string, created_at: ?string}
      */
     public function toSummary(): array
     {
@@ -116,7 +116,7 @@ final class Ticket extends AbstractData
             'title' => $this->getTitle()->toString(),
             'description' => $this->getDescription()->toNullableString(),
             'status' => $this->getStatus()->toString(),
-            'priority' => $this->getPriority()->toString(),
+            'priority_id' => $this->getPriorityId()->toNullableString(),
             'customer_id' => $this->getCustomerId()->toNullableString(),
             'project_id' => $this->getProjectId()->toNullableString(),
             'parent_id' => $this->getParentId()->toNullableString(),
@@ -234,14 +234,14 @@ final class Ticket extends AbstractData
         return $this;
     }
 
-    public function getPriority(): Priority
+    public function getPriorityId(): PriorityId
     {
-        return $this->priority;
+        return $this->priorityId;
     }
 
-    public function setPriority(mixed $priority): self
+    public function setPriorityId(mixed $priorityId): self
     {
-        $this->priority = new Priority($priority instanceof AbstractValue ? $priority->toValue() : $priority);
+        $this->priorityId = new PriorityId($priorityId instanceof AbstractValue ? $priorityId->toValue() : $priorityId);
 
         return $this;
     }

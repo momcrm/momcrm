@@ -49,7 +49,6 @@ final class TicketFormOptions
             'members' => FindTeamMembers::optionsForTeam($teamId),
             'projects' => FindProject::optionsForTeam($teamId, $userId),
             'labels' => FindLabel::optionsForTeam($teamId),
-            'priorities' => TicketPriorityEnum::options(),
             'statuses' => TicketStatusEnum::options(),
         ];
     }

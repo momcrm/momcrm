@@ -50,7 +50,6 @@ export default function QuickAddTicket({
             store.url(),
             {
                 title: title.trim(),
-                priority: 'normal',
                 status,
                 quick: 1,
                 [kind === 'project' ? 'project_id' : 'customer_id']: id,

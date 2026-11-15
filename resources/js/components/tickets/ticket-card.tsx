@@ -68,7 +68,7 @@ export default function TicketCard({
                 <span className="font-mono text-[11px] text-subtle-foreground">
                     #{ticket.number}
                 </span>
-                <PriorityIcon priority={ticket.priority} />
+                <PriorityIcon priorityId={ticket.priority_id} />
                 <DueChip dueOn={ticket.due_on} isClosed={isClosed} />
                 <SubtaskProgress
                     done={ticket.closed_subtasks_count}

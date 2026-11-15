@@ -112,7 +112,7 @@ final class PatchTicketFormRequest extends FormRequest
         }
 
         $this->merge(array_merge(
-            Arr::only($current, ['customer_id', 'project_id', 'contact_id', 'location_id', 'assignee_id', 'title', 'description', 'priority', 'status', 'starts_on', 'due_on', 'estimate_minutes']),
+            Arr::only($current, ['customer_id', 'project_id', 'contact_id', 'location_id', 'assignee_id', 'title', 'description', 'priority_id', 'status', 'starts_on', 'due_on', 'estimate_minutes']),
             $this->all(),
         ));
     }

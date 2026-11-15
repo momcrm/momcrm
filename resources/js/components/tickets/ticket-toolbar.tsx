@@ -2,7 +2,10 @@ import { Columns3, List, Plus, Table2, X } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import SearchInput from '@/components/search-input';
-import { ticketPriorities } from '@/components/tickets/ticket-meta';
+import {
+    PriorityGlyph,
+    useTicketPriorities,
+} from '@/components/tickets/ticket-meta';
 import {
     DropdownMenu,
     DropdownMenuCheckboxItem,
@@ -16,12 +19,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { colorDot } from '@/lib/colors';
 import { visitWithQuery } from '@/lib/query';
 import { cn } from '@/lib/utils';
-import type {
-    TicketFilters,
-    TicketPickerOptions,
-    TicketPriority,
-    TicketView,
-} from '@/types';
+import type { TicketFilters, TicketPickerOptions, TicketView } from '@/types';
 
 const views: { value: TicketView; label: string; icon: LucideIcon }[] = [
     { value: 'list', label: 'List', icon: List },
@@ -67,6 +65,7 @@ export default function TicketToolbar({
             : options.projects.find((project) => project.id === id)?.name;
     const labelName = (id: string | null) =>
         options.labels.find((label) => label.id === id)?.name;
+    const priorities = useTicketPriorities();
 
     const hasFilters =
         filters.priority.length > 0 ||
@@ -150,36 +149,33 @@ export default function TicketToolbar({
                             ? filters.priority
                                   .map(
                                       (value) =>
-                                          ticketPriorities.find(
+                                          priorities.find(
                                               (priority) =>
-                                                  priority.value === value,
-                                          )?.label,
+                                                  priority.id === value,
+                                          )?.name,
                                   )
                                   .join(', ')
                             : null
                     }
                     onClear={() => set({ priority: null })}
                 >
-                    {ticketPriorities.map((priority) => (
+                    {priorities.map((priority) => (
                         <DropdownMenuCheckboxItem
-                            key={priority.value}
-                            checked={filters.priority.includes(priority.value)}
+                            key={priority.id}
+                            checked={filters.priority.includes(priority.id)}
                             onSelect={(event) => event.preventDefault()}
                             onCheckedChange={(checked) =>
                                 set({
                                     priority: checked
-                                        ? [...filters.priority, priority.value]
+                                        ? [...filters.priority, priority.id]
                                         : filters.priority.filter(
-                                              (value: TicketPriority) =>
-                                                  value !== priority.value,
+                                              (value) => value !== priority.id,
                                           ),
                                 })
                             }
                         >
-                            <priority.icon
-                                className={cn('size-3.5', priority.className)}
-                            />
-                            {priority.label}
+                            <PriorityGlyph priority={priority} />
+                            {priority.name}
                         </DropdownMenuCheckboxItem>
                     ))}
                 </FilterChip>

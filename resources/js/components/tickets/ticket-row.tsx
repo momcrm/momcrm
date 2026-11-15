@@ -31,7 +31,7 @@ export default function TicketRow({
             onClick={onOpen}
             className="flex h-10 w-full items-center gap-3 px-3 text-left text-sm hover:bg-accent/50"
         >
-            <PriorityIcon priority={ticket.priority} />
+            <PriorityIcon priorityId={ticket.priority_id} />
             <span className="w-12 shrink-0 font-mono text-xs text-subtle-foreground">
                 #{ticket.number}
             </span>

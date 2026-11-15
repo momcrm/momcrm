@@ -5,6 +5,8 @@ declare(strict_types=1);
 use App\AccessRule\AccessAttributeEnum;
 use App\AccessRule\Engine\AccessAttributeResolver;
 use App\AccessRule\Engine\AccessSubject;
+use App\Choice\Actions\FindChoice;
+use App\Choice\ChoiceListEnum;
 use App\Customer\Customer;
 use App\Customer\CustomerEloquentModel;
 use App\Group\Group;
@@ -72,14 +74,15 @@ it("reads a ticket's attributes and the person's place in its project", function
     $project = ProjectEloquentModel::factory()->create(['team_id' => $teamId, 'lead_id' => $user->id]);
     $project->members()->attach($user->id);
     $label = LabelEloquentModel::factory()->create(['team_id' => $teamId]);
-    $model = TicketEloquentModel::factory()->create(['team_id' => $teamId, 'project_id' => $project->id, 'assignee_id' => $user->id, 'status' => 'in_progress', 'priority' => 'urgent']);
+    $urgent = FindChoice::byNameForTeam($teamId, ChoiceListEnum::TicketPriority, 'Urgent')->getId()->toString();
+    $model = TicketEloquentModel::factory()->create(['team_id' => $teamId, 'project_id' => $project->id, 'assignee_id' => $user->id, 'status' => 'in_progress', 'priority_id' => $urgent]);
     $model->labels()->attach($label->id);
     $ticket = Ticket::fromEloquentModel($model);
     $loose = Ticket::fromEloquentModel(TicketEloquentModel::factory()->archived()->create(['team_id' => $teamId]));
     $resolve = fn (AccessAttributeEnum $attribute, Ticket $ticket): mixed => AccessAttributeResolver::resolve($attribute, $subject(), $ticket);
 
     expect($resolve(AccessAttributeEnum::TicketStatus, $ticket))->toBe('in_progress')
-        ->and($resolve(AccessAttributeEnum::TicketPriority, $ticket))->toBe('urgent')
+        ->and($resolve(AccessAttributeEnum::TicketPriority, $ticket))->toBe($urgent)
         ->and($resolve(AccessAttributeEnum::TicketProject, $ticket))->toBe($project->id)
         ->and($resolve(AccessAttributeEnum::TicketLabel, $ticket))->toBe([$label->id])
         ->and($resolve(AccessAttributeEnum::TicketIsArchived, $ticket))->toBeFalse()

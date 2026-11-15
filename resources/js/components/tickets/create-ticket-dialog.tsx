@@ -23,9 +23,9 @@ import {
 } from 'react';
 import type { KeyboardEvent, ReactNode } from 'react';
 import {
-    priorityOf,
-    ticketPriorities,
+    PriorityGlyph,
     ticketStatuses,
+    useTicketPriorities,
 } from '@/components/tickets/ticket-meta';
 import { Button } from '@/components/ui/button';
 import {
@@ -51,7 +51,7 @@ import { formatBytes } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { create as createCustomer } from '@/routes/customers';
 import { formOptions, store } from '@/routes/tickets';
-import type { TicketFormOptions, TicketPriority, TicketStatus } from '@/types';
+import type { TicketFormOptions, TicketStatus } from '@/types';
 
 type Defaults = {
     customerId?: string | null;
@@ -201,7 +201,11 @@ function CreateTicketForm({
             ? (currentUserId ?? '')
             : '',
     );
-    const [priority, setPriority] = useState<TicketPriority>('normal');
+    const priorities = useTicketPriorities();
+    const [priorityId, setPriorityId] = useState(
+        priorities.find((option) => option.is_default)?.id ?? '',
+    );
+    const priority = priorities.find((option) => option.id === priorityId);
     const [startsOn, setStartsOn] = useState<string | null>(null);
     const [dueOn, setDueOn] = useState<string | null>(null);
     const [labelIds, setLabelIds] = useState<string[]>([]);
@@ -267,7 +271,7 @@ function CreateTicketForm({
                 location_id: locationId || null,
                 assignee_id: assigneeId || null,
                 status,
-                priority,
+                priority_id: priorityId || null,
                 starts_on: startsOn,
                 due_on: dueOn,
                 label_ids: labelIds,
@@ -443,15 +447,15 @@ function CreateTicketForm({
 
                     <SearchPicker
                         label="Priority"
-                        value={priority}
-                        choices={ticketPriorities.map((option) => ({
-                            value: option.value,
-                            label: option.label,
+                        value={priorityId}
+                        choices={priorities.map((option) => ({
+                            value: option.id,
+                            label: option.name,
                         }))}
-                        onChange={(next) => setPriority(next as TicketPriority)}
+                        onChange={setPriorityId}
                     >
                         <PriorityGlyph priority={priority} />
-                        {priorityOf(priority).label}
+                        {priority?.name ?? 'Priority'}
                     </SearchPicker>
 
                     <DatePicker
@@ -759,12 +763,6 @@ function Initials({ name }: { name: string | null }) {
             {getInitials(name)}
         </span>
     );
-}
-
-function PriorityGlyph({ priority }: { priority: TicketPriority }) {
-    const { icon: Icon, className } = priorityOf(priority);
-
-    return <Icon className={cn('size-3.5 shrink-0', className)} />;
 }
 
 /**

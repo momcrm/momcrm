@@ -4,8 +4,10 @@ import {
     ChevronUp,
     ChevronsUp,
     Equal,
+    Minus,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { usePage } from '@inertiajs/react';
 import StatusPill from '@/components/status-pill';
 import {
     Tooltip,
@@ -13,12 +15,12 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useInitials } from '@/hooks/use-initials';
-import { colorDot } from '@/lib/colors';
+import { colorDot, colorText } from '@/lib/colors';
 import { cn } from '@/lib/utils';
 import type {
     ColorName,
     TicketLabel,
-    TicketPriority,
+    Choice,
     TicketStatus,
     Tone,
 } from '@/types';
@@ -61,63 +63,71 @@ export function TicketStatusPill({ status }: { status: TicketStatus }) {
     );
 }
 
-export const ticketPriorities: {
-    value: TicketPriority;
-    label: string;
-    icon: LucideIcon;
-    className: string;
-}[] = [
-    {
-        value: 'urgent',
-        label: 'Urgent',
-        icon: ChevronsUp,
-        className: 'text-destructive',
-    },
-    {
-        value: 'high',
-        label: 'High',
-        icon: ChevronUp,
-        className: 'text-warning',
-    },
-    {
-        value: 'normal',
-        label: 'Normal',
-        icon: Equal,
-        className: 'text-subtle-foreground',
-    },
-    {
-        value: 'low',
-        label: 'Low',
-        icon: ChevronDown,
-        className: 'text-subtle-foreground',
-    },
-];
+const priorityIcons: Record<string, LucideIcon> = {
+    'chevrons-up': ChevronsUp,
+    'chevron-up': ChevronUp,
+    equal: Equal,
+    'chevron-down': ChevronDown,
+};
 
-export function priorityOf(priority: TicketPriority) {
+/**
+ * The team's ticket priorities, most urgent first.
+ */
+export function useTicketPriorities(): Choice[] {
+    return usePage().props.choices?.ticket_priority ?? [];
+}
+
+/**
+ * One of the team's priorities by id; undefined for none or an unknown id.
+ */
+export function usePriority(priorityId: string | null): Choice | undefined {
+    const priorities = useTicketPriorities();
+
+    return priorities.find((priority) => priority.id === priorityId);
+}
+
+/**
+ * A priority's icon in its colour, for menus and pickers that label it.
+ */
+export function PriorityGlyph({
+    priority,
+    className,
+}: {
+    priority: Choice | undefined;
+    className?: string;
+}) {
+    const Icon = (priority?.icon && priorityIcons[priority.icon]) || Minus;
+
     return (
-        ticketPriorities.find((option) => option.value === priority) ??
-        ticketPriorities[2]
+        <Icon
+            aria-hidden
+            className={cn(
+                'size-3.5 shrink-0',
+                priority ? colorText[priority.color] : 'text-subtle-foreground',
+                className,
+            )}
+        />
     );
 }
 
 export function PriorityIcon({
-    priority,
+    priorityId,
     className,
 }: {
-    priority: TicketPriority;
+    priorityId: string | null;
     className?: string;
 }) {
-    const { icon: Icon, label, className: color } = priorityOf(priority);
+    const priority = usePriority(priorityId);
+    const label = priority ? `${priority.name} priority` : 'No priority';
 
     return (
         <Tooltip>
             <TooltipTrigger asChild>
-                <Icon
-                    aria-label={`${label} priority`}
-                    className={cn('size-3.5 shrink-0', color, className)}
-                />
+                <span aria-label={label} className="inline-flex">
+                    <PriorityGlyph priority={priority} className={className} />
+                </span>
             </TooltipTrigger>
-            <TooltipContent>{label} priority</TooltipContent>
+            <TooltipContent>{label}</TooltipContent>
         </Tooltip>
     );
 }

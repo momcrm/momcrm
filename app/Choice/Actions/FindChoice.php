@@ -37,6 +37,17 @@ final class FindChoice
     }
 
     /**
+     * The choice with this name in one of a team's lists, archived or not;
+     * empty if there is none.
+     */
+    public static function byNameForTeam(string $teamId, ChoiceListEnum $list, string $name): Choice
+    {
+        $model = self::inList($teamId, $list)->where(Name::getDatabaseTableColumnName(), $name)->first();
+
+        return $model === null ? Choice::new() : Choice::fromEloquentModel($model);
+    }
+
+    /**
      * The choice a new record starts with, or the default of one category, such
      * as the status a ticket moves to when it is closed. Empty if there is none.
      */

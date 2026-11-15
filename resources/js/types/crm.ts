@@ -82,7 +82,23 @@ export type TicketStatus =
     | 'waiting_on_supplier'
     | 'closed';
 
-export type TicketPriority = 'low' | 'normal' | 'high' | 'urgent';
+/**
+ * The lists a team can customise, as keyed in the shared `choices` prop.
+ */
+export type ChoiceList = 'ticket_priority' | 'ticket_status';
+
+/**
+ * One entry in a team's customisable list, such as the priority "Urgent".
+ */
+export type Choice = {
+    id: string;
+    name: string;
+    color: ColorName;
+    icon: string | null;
+    category: string | null;
+    position: number;
+    is_default: boolean;
+};
 
 export type Ticket = {
     id: string;
@@ -90,7 +106,7 @@ export type Ticket = {
     title: string;
     description: string | null;
     status: TicketStatus;
-    priority: TicketPriority;
+    priority_id: string | null;
     customer_id: string | null;
     project_id: string | null;
     parent_id: string | null;
@@ -183,7 +199,6 @@ export type TicketPickerOptions = {
     labels: TicketLabel[];
     customers: CustomerOption[];
     statuses: Option[];
-    priorities: Option[];
 };
 
 export type TicketView = 'list' | 'board' | 'table';
@@ -192,7 +207,7 @@ export type TicketFilters = {
     view: TicketView;
     status: 'open' | 'closed' | 'all';
     search: string | null;
-    priority: TicketPriority[];
+    priority: string[];
     assignee: string | null;
     project: string | null;
     label: string | null;
@@ -289,7 +304,6 @@ export type TicketFormOptions = {
     members: CustomerOption[];
     projects: ProjectOption[];
     labels: TicketLabel[];
-    priorities: Option[];
     statuses: Option[];
 };
 

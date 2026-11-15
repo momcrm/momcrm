@@ -9,7 +9,6 @@ use App\Ticket\Actions\FindTicket;
 use App\Ticket\Exceptions\CouldNotFindTicket;
 use App\Ticket\Properties\Title;
 use App\Ticket\Ticket;
-use App\Ticket\TicketPriorityEnum;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
@@ -61,8 +60,7 @@ final class StoreSubtaskFormRequest extends FormRequest
                 ->setParentId($this->parent->getId())
                 ->setCustomerId($this->parent->getCustomerId())
                 ->setProjectId($this->parent->getProjectId())
-                ->setTitle($this->string(Title::getNameForValidation())->toString())
-                ->setPriority(TicketPriorityEnum::Normal),
+                ->setTitle($this->string(Title::getNameForValidation())->toString()),
             openedById: (string) $this->user()?->id,
         );
 

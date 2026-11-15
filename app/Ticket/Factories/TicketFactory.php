@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Ticket\Factories;
 
+use App\Choice\Actions\FindChoice;
+use App\Choice\ChoiceListEnum;
 use App\Customer\CustomerEloquentModel;
+use App\Shared\Types;
 use App\Team\TeamEloquentModel;
 use App\Ticket\Properties\ArchivedAt;
 use App\Ticket\Properties\AssigneeId;
@@ -18,14 +21,13 @@ use App\Ticket\Properties\LocationId;
 use App\Ticket\Properties\Number;
 use App\Ticket\Properties\ParentId;
 use App\Ticket\Properties\Position;
-use App\Ticket\Properties\Priority;
+use App\Ticket\Properties\PriorityId;
 use App\Ticket\Properties\ProjectId;
 use App\Ticket\Properties\StartsOn;
 use App\Ticket\Properties\Status;
 use App\Ticket\Properties\TeamId;
 use App\Ticket\Properties\Title;
 use App\Ticket\TicketEloquentModel;
-use App\Ticket\TicketPriorityEnum;
 use App\Ticket\TicketStatusEnum;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -51,7 +53,7 @@ final class TicketFactory extends Factory
             Title::getDatabaseTableColumnName() => fake()->sentence(4),
             Description::getDatabaseTableColumnName() => fake()->paragraph(),
             Status::getDatabaseTableColumnName() => TicketStatusEnum::New->value,
-            Priority::getDatabaseTableColumnName() => TicketPriorityEnum::Normal->value,
+            PriorityId::getDatabaseTableColumnName() => fn (array $attributes): ?string => FindChoice::defaultForTeam(Types::string($attributes[TeamId::getDatabaseTableColumnName()]), ChoiceListEnum::TicketPriority)->getId()->toNullableString(),
             ClosedAt::getDatabaseTableColumnName() => null,
             ProjectId::getDatabaseTableColumnName() => null,
             ParentId::getDatabaseTableColumnName() => null,

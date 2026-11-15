@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Choice\Actions\FindChoice;
+use App\Choice\ChoiceListEnum;
 use App\Favorite\Actions\FindFavorite;
 use App\Favorite\FavoritableTypeEnum;
 use App\Group\Actions\FindGroup;
@@ -60,6 +62,7 @@ class HandleInertiaRequests extends Middleware
             'canRemoveSampleData' => fn (): bool => $this->canRemoveSampleData($request),
             'canManageAccessRules' => fn (): bool => $this->allowsOnCurrentTeam($request, 'manageAccessRules'),
             'sidebarCounts' => fn (): ?array => $this->sidebarCounts($request),
+            'choices' => fn (): ?array => $this->choices($request),
             'gettingStarted' => fn (): ?array => $request->user() instanceof UserEloquentModel
                 ? GetGettingStartedProgress::forUser($request->user())
                 : null,
@@ -95,6 +98,25 @@ class HandleInertiaRequests extends Middleware
         $team = FindTeam::byIdForMember(id: $user->current_team_id, userId: $user->id);
 
         return $team->isNotNull() && Gate::forUser($user)->allows($ability, $team);
+    }
+
+    /**
+     * The current team's customisable lists, such as ticket priorities, keyed
+     * by list, so any page can show a ticket's priority from its id.
+     *
+     * @return array<string, list<array{id: string, name: string, color: string, icon: ?string, category: ?string, position: int, is_default: bool}>>|null
+     */
+    private function choices(Request $request): ?array
+    {
+        $teamId = $request->user()?->current_team_id;
+
+        if (! is_string($teamId)) {
+            return null;
+        }
+
+        return collect(ChoiceListEnum::cases())
+            ->mapWithKeys(fn (ChoiceListEnum $list): array => [$list->value => FindChoice::listForTeam($teamId, $list)->toSummaries()])
+            ->all();
     }
 
     /**
