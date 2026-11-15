@@ -2,7 +2,9 @@ import { Form, Link } from '@inertiajs/react';
 import { useState } from 'react';
 import FormField from '@/components/form-field';
 import {
+    useTicketDepartments,
     useTicketPriorities,
+    useTicketTypes,
     useTicketStatuses,
 } from '@/components/tickets/ticket-meta';
 import NativeSelect from '@/components/native-select';
@@ -31,6 +33,8 @@ export default function TicketForm({
 }) {
     const priorities = useTicketPriorities(ticket?.priority_id);
     const statuses = useTicketStatuses(ticket?.status_id);
+    const types = useTicketTypes(ticket?.type_id);
+    const departments = useTicketDepartments(ticket?.department_id);
     const [selectedCustomer, setSelectedCustomer] = useState(
         ticket?.customer_id ?? customerId ?? '',
     );
@@ -230,6 +234,42 @@ export default function TicketForm({
                                         value={priority.id}
                                     >
                                         {priority.name}
+                                    </option>
+                                ))}
+                            </NativeSelect>
+                        </FormField>
+                        <FormField
+                            id="type_id"
+                            label="Type"
+                            error={errors.type_id}
+                        >
+                            <NativeSelect
+                                id="type_id"
+                                name="type_id"
+                                defaultValue={ticket?.type_id ?? ''}
+                            >
+                                <option value="">No type</option>
+                                {types.map((choice) => (
+                                    <option key={choice.id} value={choice.id}>
+                                        {choice.name}
+                                    </option>
+                                ))}
+                            </NativeSelect>
+                        </FormField>
+                        <FormField
+                            id="department_id"
+                            label="Department"
+                            error={errors.department_id}
+                        >
+                            <NativeSelect
+                                id="department_id"
+                                name="department_id"
+                                defaultValue={ticket?.department_id ?? ''}
+                            >
+                                <option value="">No department</option>
+                                {departments.map((choice) => (
+                                    <option key={choice.id} value={choice.id}>
+                                        {choice.name}
                                     </option>
                                 ))}
                             </NativeSelect>

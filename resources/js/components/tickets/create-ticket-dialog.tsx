@@ -25,9 +25,11 @@ import type { KeyboardEvent, ReactNode } from 'react';
 import {
     defaultStatusId,
     PriorityGlyph,
+    useTicketDepartments,
     useTicketLabels,
     useTicketPriorities,
     useTicketStatuses,
+    useTicketTypes,
 } from '@/components/tickets/ticket-meta';
 import { Button } from '@/components/ui/button';
 import {
@@ -211,6 +213,12 @@ function CreateTicketForm({
         priorities.find((option) => option.is_default)?.id ?? '',
     );
     const priority = priorities.find((option) => option.id === priorityId);
+    const types = useTicketTypes();
+    const [typeId, setTypeId] = useState('');
+    const type = types.find((option) => option.id === typeId);
+    const departments = useTicketDepartments();
+    const [departmentId, setDepartmentId] = useState('');
+    const department = departments.find((option) => option.id === departmentId);
     const [startsOn, setStartsOn] = useState<string | null>(null);
     const [dueOn, setDueOn] = useState<string | null>(null);
     const [labelIds, setLabelIds] = useState<string[]>([]);
@@ -277,6 +285,8 @@ function CreateTicketForm({
                 assignee_id: assigneeId || null,
                 status_id: statusId || null,
                 priority_id: priorityId || null,
+                type_id: typeId || null,
+                department_id: departmentId || null,
                 starts_on: startsOn,
                 due_on: dueOn,
                 label_ids: labelIds,
@@ -466,6 +476,70 @@ function CreateTicketForm({
                         <PriorityGlyph priority={priority} />
                         {priority?.name ?? 'Priority'}
                     </SearchPicker>
+
+                    {types.length > 0 && (
+                        <SearchPicker
+                            label="Type"
+                            value={typeId}
+                            empty="No type"
+                            choices={types.map((option) => ({
+                                value: option.id,
+                                label: option.name,
+                                hue: option.hue,
+                            }))}
+                            onChange={setTypeId}
+                        >
+                            <span
+                                aria-hidden
+                                className={cn(
+                                    'size-2 shrink-0 rounded-full',
+                                    type ? 'hue-dot' : 'bg-muted-foreground/40',
+                                )}
+                                style={type ? hueStyle(type.hue) : undefined}
+                            />
+                            {type ? (
+                                <span className="truncate">{type.name}</span>
+                            ) : (
+                                <Placeholder>Type</Placeholder>
+                            )}
+                        </SearchPicker>
+                    )}
+
+                    {departments.length > 0 && (
+                        <SearchPicker
+                            label="Department"
+                            value={departmentId}
+                            empty="No department"
+                            choices={departments.map((option) => ({
+                                value: option.id,
+                                label: option.name,
+                                hue: option.hue,
+                            }))}
+                            onChange={setDepartmentId}
+                        >
+                            <span
+                                aria-hidden
+                                className={cn(
+                                    'size-2 shrink-0 rounded-full',
+                                    department
+                                        ? 'hue-dot'
+                                        : 'bg-muted-foreground/40',
+                                )}
+                                style={
+                                    department
+                                        ? hueStyle(department.hue)
+                                        : undefined
+                                }
+                            />
+                            {department ? (
+                                <span className="truncate">
+                                    {department.name}
+                                </span>
+                            ) : (
+                                <Placeholder>Department</Placeholder>
+                            )}
+                        </SearchPicker>
+                    )}
 
                     <DatePicker
                         label="Due date"

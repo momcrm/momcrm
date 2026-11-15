@@ -45,6 +45,8 @@ final class AccessAttributeResolver
 
             AccessAttributeEnum::TicketStatus => $record instanceof Ticket ? $record->getStatusId()->toNullableString() : null,
             AccessAttributeEnum::TicketPriority => $record instanceof Ticket ? $record->getPriorityId()->toNullableString() : null,
+            AccessAttributeEnum::TicketType => $record instanceof Ticket ? $record->getTypeId()->toNullableString() : null,
+            AccessAttributeEnum::TicketDepartment => $record instanceof Ticket ? $record->getDepartmentId()->toNullableString() : null,
             AccessAttributeEnum::TicketProject => $record instanceof Ticket ? $record->getProjectId()->toNullableString() : null,
             AccessAttributeEnum::TicketLabel => $record instanceof Ticket ? self::ticketLabelIds($record->getId()->toString()) : null,
             AccessAttributeEnum::TicketIsArchived => $record instanceof Ticket ? $record->getArchivedAt()->isNotNull() : null,

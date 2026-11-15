@@ -14,7 +14,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * The team's customisable lists (ticket statuses, priorities and labels), for owners
+ * The team's customisable lists (ticket statuses, priorities, types, departments and labels), for owners
  * and admins to edit, with how many records use each choice.
  */
 final class ShowWorkflowController
@@ -42,7 +42,7 @@ final class ShowWorkflowController
                         ->values()
                         ->all(),
                 ];
-            }, [ChoiceListEnum::TicketStatus, ChoiceListEnum::TicketPriority, ChoiceListEnum::TicketLabel]),
+            }, [ChoiceListEnum::TicketStatus, ChoiceListEnum::TicketPriority, ChoiceListEnum::TicketType, ChoiceListEnum::TicketDepartment, ChoiceListEnum::TicketLabel]),
         ]);
     }
 }

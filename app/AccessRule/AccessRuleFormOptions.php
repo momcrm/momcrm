@@ -68,6 +68,8 @@ final class AccessRuleFormOptions
             AccessAttributeEnum::ProjectVisibility => ProjectVisibilityEnum::options(),
             AccessAttributeEnum::TicketStatus => FindChoice::listForTeam($teamId, ChoiceListEnum::TicketStatus, withArchived: true)->toOptions(),
             AccessAttributeEnum::TicketPriority => FindChoice::listForTeam($teamId, ChoiceListEnum::TicketPriority, withArchived: true)->toOptions(),
+            AccessAttributeEnum::TicketType => FindChoice::listForTeam($teamId, ChoiceListEnum::TicketType, withArchived: true)->toOptions(),
+            AccessAttributeEnum::TicketDepartment => FindChoice::listForTeam($teamId, ChoiceListEnum::TicketDepartment, withArchived: true)->toOptions(),
             AccessAttributeEnum::TicketProject => self::idNameOptions(FindProject::optionsForTeam($teamId, $userId)),
             AccessAttributeEnum::TicketLabel => FindChoice::listForTeam($teamId, ChoiceListEnum::TicketLabel, withArchived: true)->toOptions(),
             AccessAttributeEnum::CustomerStatus => CustomerStatusEnum::options(),

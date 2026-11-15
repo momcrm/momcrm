@@ -15,6 +15,7 @@ import type { ReactNode } from 'react';
 import { toast } from 'sonner';
 import {
     AssigneeAvatar,
+    ChoiceTag,
     daysUntil,
     defaultStatusId,
     isClosedStatus,
@@ -24,8 +25,10 @@ import {
     ProjectTag,
     TicketStatusPill,
     usePriority,
+    useTicketDepartments,
     useTicketLabels,
     useTicketPriorities,
+    useTicketTypes,
     useTicketStatuses,
 } from '@/components/tickets/ticket-meta';
 import Attachments from '@/components/attachments';
@@ -58,6 +61,7 @@ import { cn } from '@/lib/utils';
 import { show } from '@/routes/tickets';
 import { store as storeAttachment } from '@/routes/tickets/attachments';
 import type {
+    Choice,
     TicketDrawerData,
     TicketLabel,
     TicketPickerOptions,
@@ -112,6 +116,8 @@ function DrawerBody({
     const priorities = useTicketPriorities(ticket.priority_id);
     const priority = usePriority(ticket.priority_id);
     const labels = useTicketLabels(...ticket.labels.map((label) => label.id));
+    const types = useTicketTypes(ticket.type_id);
+    const departments = useTicketDepartments(ticket.department_id);
     const overdueDays =
         ticket.due_on && !isClosed ? -daysUntil(ticket.due_on) : 0;
 
@@ -269,6 +275,24 @@ function DrawerBody({
                             <PriorityIcon priorityId={ticket.priority_id} />
                             {priority?.name ?? 'None'}
                         </Picker>
+                    </Property>
+                    <Property label="Type">
+                        <OptionalChoicePicker
+                            value={ticket.type_id}
+                            choices={types}
+                            none="No type"
+                            onChange={(type_id) => save({ type_id })}
+                        />
+                    </Property>
+                    <Property label="Department">
+                        <OptionalChoicePicker
+                            value={ticket.department_id}
+                            choices={departments}
+                            none="No department"
+                            onChange={(department_id) =>
+                                save({ department_id })
+                            }
+                        />
                     </Property>
                     <Property label="Assignee">
                         <Picker
@@ -538,6 +562,45 @@ function Picker({
                 </DropdownMenuRadioGroup>
             </DropdownMenuContent>
         </DropdownMenu>
+    );
+}
+
+/**
+ * A pick from one of the team's optional lists, such as the ticket's type,
+ * which can also be cleared.
+ */
+function OptionalChoicePicker({
+    value,
+    choices,
+    none,
+    onChange,
+}: {
+    value: string | null;
+    choices: Choice[];
+    none: string;
+    onChange: (value: string | null) => void;
+}) {
+    const current = choices.find((choice) => choice.id === value);
+
+    return (
+        <Picker
+            value={value ?? NONE}
+            choices={[
+                { value: NONE, label: none },
+                ...choices.map((choice) => ({
+                    value: choice.id,
+                    label: choice.name,
+                    hue: choice.hue,
+                })),
+            ]}
+            onChange={(id) => onChange(id === NONE ? null : id)}
+        >
+            {current ? (
+                <ChoiceTag choice={current} />
+            ) : (
+                <span className="text-muted-foreground">{none}</span>
+            )}
+        </Picker>
     );
 }
 

@@ -93,7 +93,7 @@ export default function Workflow({ lists }: { lists: WorkflowList[] }) {
                 <Heading
                     variant="small"
                     title="Workflow"
-                    description="The statuses, priorities and labels your team's tickets use. Changes apply to every ticket straight away."
+                    description="The statuses, priorities, types, departments and labels your team's tickets use. Changes apply to every ticket straight away."
                 />
 
                 <ToggleGroup
@@ -580,8 +580,8 @@ function ArchivedChoiceRow({
 }
 
 /**
- * Deletes a choice for good. Only a label can go while tickets have it, and
- * it comes off them.
+ * Deletes a choice for good. Only an optional one (a type, department or
+ * label) can go while tickets have it, and it comes off them.
  */
 function DeleteChoiceDialog({
     open,
@@ -637,9 +637,11 @@ function AddChoice({
 }) {
     const [name, setName] = useState('');
     const noun = {
+        ticket_department: 'department',
         ticket_label: 'label',
         ticket_priority: 'priority',
         ticket_status: 'status',
+        ticket_type: 'type',
     }[list.value];
 
     return (

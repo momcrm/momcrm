@@ -30,6 +30,7 @@ enum AccessAttributeEnum: string
     case SubjectLeadsGroup = 'subject.leads_group';
     case SubjectTeamRole = 'subject.team_role';
     case SubjectUser = 'subject.user';
+    case TicketDepartment = 'ticket.department';
     case TicketIsArchived = 'ticket.is_archived';
     case TicketLabel = 'ticket.label';
     case TicketPriority = 'ticket.priority';
@@ -38,6 +39,7 @@ enum AccessAttributeEnum: string
     case TicketSubjectIsAssignee = 'ticket.subject_is_assignee';
     case TicketSubjectIsProjectLead = 'ticket.subject_is_project_lead';
     case TicketSubjectIsProjectMember = 'ticket.subject_is_project_member';
+    case TicketType = 'ticket.type';
 
     public function label(): string
     {
@@ -56,6 +58,7 @@ enum AccessAttributeEnum: string
             self::SubjectLeadsGroup => 'They lead group',
             self::SubjectTeamRole => 'Their team role',
             self::SubjectUser => 'They are',
+            self::TicketDepartment => 'Ticket department',
             self::TicketIsArchived => 'Ticket is archived',
             self::TicketLabel => 'Ticket has label',
             self::TicketPriority => 'Ticket priority',
@@ -64,6 +67,7 @@ enum AccessAttributeEnum: string
             self::TicketSubjectIsAssignee => 'They are the assignee',
             self::TicketSubjectIsProjectLead => "They lead the ticket's project",
             self::TicketSubjectIsProjectMember => "They are a member of the ticket's project",
+            self::TicketType => 'Ticket type',
         };
     }
 
@@ -78,7 +82,7 @@ enum AccessAttributeEnum: string
             self::GroupSubjectIsLead, self::GroupSubjectIsMember => AccessResourceEnum::Group,
             self::InvoiceStatus => AccessResourceEnum::Invoice,
             self::ProjectGroup, self::ProjectIsArchived, self::ProjectStatus, self::ProjectSubjectIsLead, self::ProjectSubjectIsMember, self::ProjectVisibility => AccessResourceEnum::Project,
-            self::TicketIsArchived, self::TicketLabel, self::TicketPriority, self::TicketProject, self::TicketStatus, self::TicketSubjectIsAssignee, self::TicketSubjectIsProjectLead, self::TicketSubjectIsProjectMember => AccessResourceEnum::Ticket,
+            self::TicketDepartment, self::TicketIsArchived, self::TicketLabel, self::TicketPriority, self::TicketProject, self::TicketStatus, self::TicketSubjectIsAssignee, self::TicketSubjectIsProjectLead, self::TicketSubjectIsProjectMember, self::TicketType => AccessResourceEnum::Ticket,
             self::SubjectGroup, self::SubjectLeadsGroup, self::SubjectTeamRole, self::SubjectUser => null,
         };
     }
@@ -107,7 +111,7 @@ enum AccessAttributeEnum: string
     {
         return match ($this) {
             self::ProjectGroup, self::SubjectGroup, self::SubjectLeadsGroup => Table::Groups,
-            self::TicketLabel, self::TicketPriority, self::TicketStatus => Table::Choices,
+            self::TicketDepartment, self::TicketLabel, self::TicketPriority, self::TicketStatus, self::TicketType => Table::Choices,
             self::TicketProject => Table::Projects,
             default => null,
         };

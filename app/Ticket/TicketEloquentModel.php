@@ -53,6 +53,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $parent_id
  * @property int $position
  * @property string|null $priority_id
+ * @property string|null $type_id
+ * @property string|null $department_id
  * @property string|null $project_id
  * @property string|null $starts_on
  * @property string|null $status_id

@@ -78,7 +78,12 @@ export type Service = {
 /**
  * The lists a team can customise, as keyed in the shared `choices` prop.
  */
-export type ChoiceList = 'ticket_label' | 'ticket_priority' | 'ticket_status';
+export type ChoiceList =
+    | 'ticket_department'
+    | 'ticket_label'
+    | 'ticket_priority'
+    | 'ticket_status'
+    | 'ticket_type';
 
 /**
  * One entry in a team's customisable list, such as the priority "Urgent".
@@ -102,6 +107,8 @@ export type Ticket = {
     description: string | null;
     status_id: string | null;
     priority_id: string | null;
+    type_id: string | null;
+    department_id: string | null;
     customer_id: string | null;
     project_id: string | null;
     parent_id: string | null;
@@ -204,6 +211,8 @@ export type TicketFilters = {
     assignee: string | null;
     project: string | null;
     label: string | null;
+    type: string | null;
+    department: string | null;
     sort: string;
     direction: 'asc' | 'desc';
 };
