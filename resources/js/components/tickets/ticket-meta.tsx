@@ -197,19 +197,6 @@ export function useTicketTypes(
 }
 
 /**
- * The team's live ticket departments in order, plus any archived ones among
- * the given departments (such as the ticket's own).
- */
-export function useTicketDepartments(
-    ...inUseIds: (string | null | undefined)[]
-): Choice[] {
-    return liveOrInUse(
-        usePage().props.choices?.ticket_department ?? [],
-        inUseIds,
-    );
-}
-
-/**
  * One of the team's choices from a list by id, archived or not; undefined for
  * none or an unknown id.
  */
@@ -223,13 +210,14 @@ export function useChoice(
 }
 
 /**
- * A choice as a small dot in its colour and its name, such as a ticket's type.
+ * A choice or group as a small dot in its colour and its name, such as a
+ * ticket's type or group.
  */
 export function ChoiceTag({
     choice,
     className,
 }: {
-    choice: Choice;
+    choice: Pick<Choice, 'name' | 'hue'>;
     className?: string;
 }) {
     return (

@@ -14,7 +14,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * The team's customisable lists (ticket statuses, priorities, types, departments and labels), for owners
+ * The team's customisable lists (ticket statuses, priorities, types and labels), for owners
  * and admins to edit, with how many records use each choice. `?list=` opens
  * one list's editor; without it the page shows an overview of every list.
  */
@@ -28,7 +28,7 @@ final class ShowWorkflowController
         ChoiceAccess::authorize($request);
         $teamId = ChoiceAccess::team($request)->getId()->toString();
 
-        $lists = [ChoiceListEnum::TicketStatus, ChoiceListEnum::TicketPriority, ChoiceListEnum::TicketType, ChoiceListEnum::TicketDepartment, ChoiceListEnum::Label];
+        $lists = [ChoiceListEnum::TicketStatus, ChoiceListEnum::TicketPriority, ChoiceListEnum::TicketType, ChoiceListEnum::Label];
         $current = ChoiceListEnum::tryFrom($request->string('list')->toString());
 
         return Inertia::render('settings/workflow', [

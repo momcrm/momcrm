@@ -32,13 +32,15 @@ enum AccessAttributeEnum: string
     case SubjectLeadsGroup = 'subject.leads_group';
     case SubjectTeamRole = 'subject.team_role';
     case SubjectUser = 'subject.user';
-    case TicketDepartment = 'ticket.department';
+    case TicketGroup = 'ticket.group';
     case TicketIsArchived = 'ticket.is_archived';
     case TicketLabel = 'ticket.label';
     case TicketPriority = 'ticket.priority';
     case TicketProject = 'ticket.project';
     case TicketStatus = 'ticket.status';
     case TicketSubjectIsAssignee = 'ticket.subject_is_assignee';
+    case TicketSubjectIsGroupLead = 'ticket.subject_is_group_lead';
+    case TicketSubjectIsGroupMember = 'ticket.subject_is_group_member';
     case TicketSubjectIsProjectLead = 'ticket.subject_is_project_lead';
     case TicketSubjectIsProjectMember = 'ticket.subject_is_project_member';
     case TicketType = 'ticket.type';
@@ -62,13 +64,15 @@ enum AccessAttributeEnum: string
             self::SubjectLeadsGroup => 'They lead group',
             self::SubjectTeamRole => 'Their team role',
             self::SubjectUser => 'They are',
-            self::TicketDepartment => 'Ticket department',
+            self::TicketGroup => 'Ticket group',
             self::TicketIsArchived => 'Ticket is archived',
             self::TicketLabel => 'Ticket has label',
             self::TicketPriority => 'Ticket priority',
             self::TicketProject => 'Ticket project',
             self::TicketStatus => 'Ticket status',
             self::TicketSubjectIsAssignee => 'They are the assignee',
+            self::TicketSubjectIsGroupLead => "They lead the ticket's group",
+            self::TicketSubjectIsGroupMember => "They are in the ticket's group",
             self::TicketSubjectIsProjectLead => "They lead the ticket's project",
             self::TicketSubjectIsProjectMember => "They are a member of the ticket's project",
             self::TicketType => 'Ticket type',
@@ -87,7 +91,7 @@ enum AccessAttributeEnum: string
             self::GroupSubjectIsLead, self::GroupSubjectIsMember => AccessResourceEnum::Group,
             self::InvoiceStatus => AccessResourceEnum::Invoice,
             self::ProjectGroup, self::ProjectIsArchived, self::ProjectLabel, self::ProjectStatus, self::ProjectSubjectIsLead, self::ProjectSubjectIsMember, self::ProjectVisibility => AccessResourceEnum::Project,
-            self::TicketDepartment, self::TicketIsArchived, self::TicketLabel, self::TicketPriority, self::TicketProject, self::TicketStatus, self::TicketSubjectIsAssignee, self::TicketSubjectIsProjectLead, self::TicketSubjectIsProjectMember, self::TicketType => AccessResourceEnum::Ticket,
+            self::TicketGroup, self::TicketIsArchived, self::TicketLabel, self::TicketPriority, self::TicketProject, self::TicketStatus, self::TicketSubjectIsAssignee, self::TicketSubjectIsGroupLead, self::TicketSubjectIsGroupMember, self::TicketSubjectIsProjectLead, self::TicketSubjectIsProjectMember, self::TicketType => AccessResourceEnum::Ticket,
             self::SubjectGroup, self::SubjectLeadsGroup, self::SubjectTeamRole, self::SubjectUser => null,
         };
     }
@@ -102,6 +106,8 @@ enum AccessAttributeEnum: string
             self::ProjectSubjectIsMember,
             self::TicketIsArchived,
             self::TicketSubjectIsAssignee,
+            self::TicketSubjectIsGroupLead,
+            self::TicketSubjectIsGroupMember,
             self::TicketSubjectIsProjectLead,
             self::TicketSubjectIsProjectMember => AccessAttributeTypeEnum::Boolean,
             default => AccessAttributeTypeEnum::Choice,
@@ -115,8 +121,8 @@ enum AccessAttributeEnum: string
     public function referencedTable(): ?Table
     {
         return match ($this) {
-            self::ProjectGroup, self::SubjectGroup, self::SubjectLeadsGroup => Table::Groups,
-            self::AssetLabel, self::ProjectLabel, self::TicketDepartment, self::TicketLabel, self::TicketPriority, self::TicketStatus, self::TicketType => Table::Choices,
+            self::ProjectGroup, self::SubjectGroup, self::SubjectLeadsGroup, self::TicketGroup => Table::Groups,
+            self::AssetLabel, self::ProjectLabel, self::TicketLabel, self::TicketPriority, self::TicketStatus, self::TicketType => Table::Choices,
             self::TicketProject => Table::Projects,
             default => null,
         };

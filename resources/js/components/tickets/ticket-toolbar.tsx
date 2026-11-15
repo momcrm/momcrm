@@ -4,7 +4,6 @@ import type { ReactNode } from 'react';
 import SearchInput from '@/components/search-input';
 import {
     PriorityGlyph,
-    useTicketDepartments,
     useTicketPriorities,
     useTicketTypes,
 } from '@/components/tickets/ticket-meta';
@@ -74,11 +73,10 @@ export default function TicketToolbar({
     const types = useTicketTypes(filters.type);
     const typeName = (id: string | null) =>
         id === 'none' ? 'No type' : types.find((type) => type.id === id)?.name;
-    const departments = useTicketDepartments(filters.department);
-    const departmentName = (id: string | null) =>
+    const groupName = (id: string | null) =>
         id === 'none'
-            ? 'No department'
-            : departments.find((department) => department.id === id)?.name;
+            ? 'No group'
+            : options.groups.find((group) => group.id === id)?.name;
 
     const hasFilters =
         filters.priority.length > 0 ||
@@ -86,7 +84,7 @@ export default function TicketToolbar({
         (!inProject && filters.project !== null) ||
         filters.label !== null ||
         filters.type !== null ||
-        filters.department !== null;
+        filters.group !== null;
 
     return (
         <div className="flex flex-col gap-3">
@@ -252,19 +250,17 @@ export default function TicketToolbar({
                     </FilterChip>
                 )}
 
-                {departments.length > 0 && (
+                {options.groups.length > 0 && (
                     <FilterChip
-                        label="Department"
-                        value={departmentName(filters.department) ?? null}
-                        onClear={() => set({ department: null })}
+                        label="Group"
+                        value={groupName(filters.group) ?? null}
+                        onClear={() => set({ group: null })}
                     >
                         <RadioChoices
-                            value={filters.department}
-                            onChange={(department) => set({ department })}
-                            choices={[
-                                { value: 'none', label: 'No department' },
-                            ]}
-                            more={departments.map((choice) => ({
+                            value={filters.group}
+                            onChange={(group) => set({ group })}
+                            choices={[{ value: 'none', label: 'No group' }]}
+                            more={options.groups.map((choice) => ({
                                 value: choice.id,
                                 label: choice.name,
                                 hue: choice.hue,
@@ -301,7 +297,7 @@ export default function TicketToolbar({
                                 assignee: null,
                                 label: null,
                                 type: null,
-                                department: null,
+                                group: null,
                                 ...(inProject ? {} : { project: null }),
                             })
                         }

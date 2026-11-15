@@ -46,7 +46,7 @@ export default function TicketsIndex({
         filters.project !== null ||
         filters.label !== null ||
         filters.type !== null ||
-        filters.department !== null;
+        filters.group !== null;
 
     return (
         <>

@@ -8,13 +8,13 @@ use App\Shared\Abstracts\AbstractUuid;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
- * One of the team's ticket departments (App\Choice, list `ticket_department`).
+ * The team's group that handles the ticket (App\Group), if any.
  */
-final class DepartmentId extends AbstractUuid
+final class GroupId extends AbstractUuid
 {
     public static function getName(): string
     {
-        return 'department_id';
+        return 'group_id';
     }
 
     /**

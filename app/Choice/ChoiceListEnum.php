@@ -21,7 +21,6 @@ enum ChoiceListEnum: string
     use EnumOptions;
 
     case Label = 'label';
-    case TicketDepartment = 'ticket_department';
     case TicketPriority = 'ticket_priority';
     case TicketStatus = 'ticket_status';
     case TicketType = 'ticket_type';
@@ -29,7 +28,6 @@ enum ChoiceListEnum: string
     public function label(): string
     {
         return match ($this) {
-            self::TicketDepartment => 'Ticket departments',
             self::Label => 'Labels',
             self::TicketPriority => 'Ticket priorities',
             self::TicketStatus => 'Ticket statuses',
@@ -43,7 +41,6 @@ enum ChoiceListEnum: string
     public function description(): string
     {
         return match ($this) {
-            self::TicketDepartment => 'The team or desk a ticket belongs to.',
             self::Label => 'Tags for sorting and finding tickets, projects and assets. Each can have several.',
             self::TicketPriority => 'How urgent a ticket is, most urgent first.',
             self::TicketStatus => 'Where a ticket is in its life, grouped by whether it is still open.',
@@ -60,7 +57,7 @@ enum ChoiceListEnum: string
     public function categoryEnum(): ?string
     {
         return match ($this) {
-            self::TicketDepartment, self::Label, self::TicketPriority, self::TicketType => null,
+            self::Label, self::TicketPriority, self::TicketType => null,
             self::TicketStatus => TicketStatusCategoryEnum::class,
         };
     }
@@ -73,7 +70,7 @@ enum ChoiceListEnum: string
     public function categoryOptions(): array
     {
         return match ($this) {
-            self::TicketDepartment, self::Label, self::TicketPriority, self::TicketType => [],
+            self::Label, self::TicketPriority, self::TicketType => [],
             self::TicketStatus => TicketStatusCategoryEnum::options(),
         };
     }
@@ -87,7 +84,7 @@ enum ChoiceListEnum: string
     {
         return match ($this) {
             self::TicketPriority => ['chevrons-up', 'chevron-up', 'equal', 'chevron-down', 'minus'],
-            self::TicketDepartment, self::Label, self::TicketStatus, self::TicketType => [],
+            self::Label, self::TicketStatus, self::TicketType => [],
         };
     }
 
@@ -101,7 +98,6 @@ enum ChoiceListEnum: string
     public function usages(): array
     {
         return match ($this) {
-            self::TicketDepartment => [['table' => Table::Tickets, 'column' => 'department_id', 'isPivot' => false]],
             self::Label => array_values(array_map(
                 fn (LabelTargetEnum $target): array => ['table' => $target->table(), 'column' => 'label_id', 'isPivot' => true],
                 LabelTargetEnum::cases(),
@@ -114,14 +110,14 @@ enum ChoiceListEnum: string
 
     /**
      * Whether a record may have none of the list's choices, as a ticket may
-     * have no labels, type or department. Such a list has no default, any of
+     * have no labels or type. Such a list has no default, any of
      * its choices can be archived, and deleting one simply takes it off the
      * records that have it.
      */
     public function isOptional(): bool
     {
         return match ($this) {
-            self::TicketDepartment, self::Label, self::TicketType => true,
+            self::Label, self::TicketType => true,
             self::TicketPriority, self::TicketStatus => false,
         };
     }
@@ -148,11 +144,6 @@ enum ChoiceListEnum: string
     public function defaults(): array
     {
         return match ($this) {
-            self::TicketDepartment => [
-                ['name' => 'Support', 'hue' => HuePalette::BLUE, 'icon' => null, 'category' => null, 'is_default' => false],
-                ['name' => 'Projects', 'hue' => HuePalette::VIOLET, 'icon' => null, 'category' => null, 'is_default' => false],
-                ['name' => 'Accounts', 'hue' => HuePalette::TEAL, 'icon' => null, 'category' => null, 'is_default' => false],
-            ],
             self::Label => [
                 ['name' => 'Hardware', 'hue' => HuePalette::AMBER, 'icon' => null, 'category' => null, 'is_default' => false],
                 ['name' => 'Software', 'hue' => HuePalette::INDIGO, 'icon' => null, 'category' => null, 'is_default' => false],

@@ -10,10 +10,10 @@ use App\Shared\Table;
 use App\Ticket\Properties\AssigneeId;
 use App\Ticket\Properties\ContactId;
 use App\Ticket\Properties\CustomerId;
-use App\Ticket\Properties\DepartmentId;
 use App\Ticket\Properties\Description;
 use App\Ticket\Properties\DueOn;
 use App\Ticket\Properties\EstimateMinutes;
+use App\Ticket\Properties\GroupId;
 use App\Ticket\Properties\LocationId;
 use App\Ticket\Properties\PriorityId;
 use App\Ticket\Properties\ProjectId;
@@ -31,8 +31,8 @@ use Illuminate\Validation\Rules\Exists;
  * team, and can be left out only when the ticket belongs to a project; the
  * contact and location must belong to that customer; the project must be one
  * of the team's live projects the person may see (or the one the ticket is
- * already in); the assignee must be a member of the team. The priority, type
- * and department must be live, unless they are the ones the ticket already
+ * already in); the assignee must be a member of the team; the group must be
+ * one of the team's. The priority and type must be live, unless they are the ones the ticket already
  * has, so a ticket with an archived choice can still be edited.
  */
 final class TicketValidationRules
@@ -87,9 +87,9 @@ final class TicketValidationRules
                 ...TypeId::getValidationRulesForCreate($request),
                 self::choice($teamId, ChoiceListEnum::TicketType, $current?->getTypeId()->toNullableString()),
             ],
-            DepartmentId::getNameForValidation() => [
-                ...DepartmentId::getValidationRulesForCreate($request),
-                self::choice($teamId, ChoiceListEnum::TicketDepartment, $current?->getDepartmentId()->toNullableString()),
+            GroupId::getNameForValidation() => [
+                ...GroupId::getValidationRulesForCreate($request),
+                Rule::exists(Table::Groups->value, 'id')->where('team_id', $teamId),
             ],
         ];
     }
@@ -136,7 +136,7 @@ final class TicketValidationRules
             ProjectId::getNameForValidation().'.exists' => __('Choose one of your team\'s projects.'),
             PriorityId::getNameForValidation().'.exists' => __('Choose one of your team\'s priorities.'),
             TypeId::getNameForValidation().'.exists' => __('Choose one of your team\'s ticket types.'),
-            DepartmentId::getNameForValidation().'.exists' => __('Choose one of your team\'s departments.'),
+            GroupId::getNameForValidation().'.exists' => __('Choose one of your team\'s groups.'),
             StatusId::getNameForValidation().'.exists' => __('Choose one of your team\'s statuses.'),
             DueOn::getNameForValidation().'.after_or_equal' => __('The due date can\'t be before the start date.'),
         ];

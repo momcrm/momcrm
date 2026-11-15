@@ -92,8 +92,9 @@ it("reads a ticket's attributes and the person's place in its project", function
     $label = ChoiceEloquentModel::factory()->label()->create(['team_id' => $teamId]);
     $urgent = FindChoice::byNameForTeam($teamId, ChoiceListEnum::TicketPriority, 'Urgent')->getId()->toString();
     $incident = FindChoice::byNameForTeam($teamId, ChoiceListEnum::TicketType, 'Incident')->getId()->toString();
-    $support = FindChoice::byNameForTeam($teamId, ChoiceListEnum::TicketDepartment, 'Support')->getId()->toString();
-    $model = TicketEloquentModel::factory()->create(['team_id' => $teamId, 'project_id' => $project->id, 'assignee_id' => $user->id, 'status_id' => ticketStatusId($teamId, 'In progress'), 'priority_id' => $urgent, 'type_id' => $incident, 'department_id' => $support]);
+    $support = GroupEloquentModel::factory()->create(['team_id' => $teamId]);
+    $support->members()->attach($user->id, ['role' => 'member']);
+    $model = TicketEloquentModel::factory()->create(['team_id' => $teamId, 'project_id' => $project->id, 'assignee_id' => $user->id, 'status_id' => ticketStatusId($teamId, 'In progress'), 'priority_id' => $urgent, 'type_id' => $incident, 'group_id' => $support->id]);
     $model->labels()->attach($label->id);
     $ticket = Ticket::fromEloquentModel($model);
     $loose = Ticket::fromEloquentModel(TicketEloquentModel::factory()->archived()->create(['team_id' => $teamId]));
@@ -102,7 +103,10 @@ it("reads a ticket's attributes and the person's place in its project", function
     expect($resolve(AccessAttributeEnum::TicketStatus, $ticket))->toBe(ticketStatusId($teamId, 'In progress'))
         ->and($resolve(AccessAttributeEnum::TicketPriority, $ticket))->toBe($urgent)
         ->and($resolve(AccessAttributeEnum::TicketType, $ticket))->toBe($incident)
-        ->and($resolve(AccessAttributeEnum::TicketDepartment, $ticket))->toBe($support)
+        ->and($resolve(AccessAttributeEnum::TicketGroup, $ticket))->toBe($support->id)
+        ->and($resolve(AccessAttributeEnum::TicketSubjectIsGroupMember, $ticket))->toBeTrue()
+        ->and($resolve(AccessAttributeEnum::TicketSubjectIsGroupLead, $ticket))->toBeFalse()
+        ->and($resolve(AccessAttributeEnum::TicketSubjectIsGroupMember, $loose))->toBeFalse()
         ->and($resolve(AccessAttributeEnum::TicketType, $loose))->toBeNull()
         ->and($resolve(AccessAttributeEnum::TicketProject, $ticket))->toBe($project->id)
         ->and($resolve(AccessAttributeEnum::TicketLabel, $ticket))->toBe([$label->id])

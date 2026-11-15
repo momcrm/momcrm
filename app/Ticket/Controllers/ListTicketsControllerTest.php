@@ -6,6 +6,7 @@ use App\Choice\Actions\FindChoice;
 use App\Choice\ChoiceEloquentModel;
 use App\Choice\ChoiceListEnum;
 use App\Customer\CustomerEloquentModel;
+use App\Group\GroupEloquentModel;
 use App\Project\ProjectEloquentModel;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
@@ -104,22 +105,22 @@ it('filters by priority, assignee, project and label', function (): void {
         ->assertInertia(fn (Assert $page) => $page->where('tickets.total', 0));
 });
 
-it('filters by type and department, or by having none', function (): void {
+it('filters by type and group, or by having none', function (): void {
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
     $incident = FindChoice::byNameForTeam($user->current_team_id, ChoiceListEnum::TicketType, 'Incident')->getId()->toString();
-    $support = FindChoice::byNameForTeam($user->current_team_id, ChoiceListEnum::TicketDepartment, 'Support')->getId()->toString();
-    $match = ticketFor($user, ['number' => 1, 'type_id' => $incident, 'department_id' => $support]);
+    $support = GroupEloquentModel::factory()->create(['team_id' => $user->current_team_id])->id;
+    $match = ticketFor($user, ['number' => 1, 'type_id' => $incident, 'group_id' => $support]);
     ticketFor($user, ['number' => 2, 'type_id' => $incident]);
-    $untyped = ticketFor($user, ['number' => 3, 'department_id' => $support]);
+    $untyped = ticketFor($user, ['number' => 3, 'group_id' => $support]);
 
     actingAs($user)
-        ->get(route('tickets.index', ['type' => $incident, 'department' => $support]))
+        ->get(route('tickets.index', ['type' => $incident, 'group' => $support]))
         ->assertInertia(fn (Assert $page) => $page
             ->where('tickets.total', 1)
             ->where('tickets.data.0.id', $match->id)
             ->where('tickets.data.0.type_id', $incident)
             ->where('filters.type', $incident)
-            ->where('filters.department', $support),
+            ->where('filters.group', $support),
         );
 
     actingAs($user)

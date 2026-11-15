@@ -33,14 +33,11 @@ it("shows the owner the team's lists with how many tickets use each choice", fun
             ->where('lists.2.value', 'ticket_type')
             ->where('lists.2.is_optional', true)
             ->where('lists.2.choices.0.name', 'Incident')
-            ->where('lists.3.value', 'ticket_department')
+            ->where('lists.3.value', 'label')
             ->where('lists.3.is_optional', true)
-            ->where('lists.3.choices.0.name', 'Support')
-            ->where('lists.4.value', 'label')
-            ->where('lists.4.is_optional', true)
-            ->where('lists.4.choices.0.name', 'Hardware')
-            ->where('lists.4.choices.0.usage', 1)
-            ->where('lists.4.choices.1.usage', 0),
+            ->where('lists.3.choices.0.name', 'Hardware')
+            ->where('lists.3.choices.0.usage', 1)
+            ->where('lists.3.choices.1.usage', 0),
         );
 });
 

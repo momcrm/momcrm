@@ -10,7 +10,7 @@ use Inertia\Testing\AssertableInertia as Assert;
 
 use function Pest\Laravel\actingAs;
 
-it("shows a group's projects, their open tickets and its members", function (): void {
+it("shows a group's projects, its open tickets and those in its projects, and its members", function (): void {
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
     $team = ['team_id' => $user->current_team_id];
     $group = GroupEloquentModel::factory()->create([...$team, 'name' => 'Support']);
@@ -19,6 +19,8 @@ it("shows a group's projects, their open tickets and its members", function (): 
     ProjectEloquentModel::factory()->create($team);
     TicketEloquentModel::factory()->create([...$team, 'project_id' => $project->id, 'title' => 'Open one']);
     TicketEloquentModel::factory()->closed()->create([...$team, 'project_id' => $project->id]);
+    TicketEloquentModel::factory()->create([...$team, 'group_id' => $group->id, 'title' => 'Its own', 'due_on' => now()->addDays(3)->toDateString()]);
+    TicketEloquentModel::factory()->create($team);
 
     actingAs($user)
         ->get(route('groups.show', $group->id))
@@ -29,8 +31,8 @@ it("shows a group's projects, their open tickets and its members", function (): 
             ->where('members.0.role', 'lead')
             ->has('projects', 1)
             ->where('projects.0.name', 'Refit')
-            ->has('tickets', 1)
-            ->where('tickets.0.title', 'Open one'),
+            ->has('tickets', 2)
+            ->where('tickets', fn ($tickets): bool => collect($tickets)->pluck('title')->sort()->values()->all() === ['Its own', 'Open one']),
         );
 });
 

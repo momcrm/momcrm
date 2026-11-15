@@ -6,6 +6,7 @@ namespace App\Ticket\Controllers;
 
 use App\Contact\Actions\FindContact;
 use App\Customer\Actions\FindCustomer;
+use App\Group\Actions\FindGroupForTeam;
 use App\Location\Actions\FindLocation;
 use App\Project\Actions\FindProject;
 use App\Ticket\Actions\FindTicket;
@@ -32,6 +33,7 @@ final class ShowTicketController
         $contact = FindContact::byIdForTeam($found->getContactId()->toNullableString(), $teamId);
         $location = FindLocation::byIdForTeam($found->getLocationId()->toNullableString(), $teamId);
         $customer = FindCustomer::byIdForTeam($found->getCustomerId()->toNullableString(), $teamId);
+        $group = FindGroupForTeam::byId($found->getGroupId()->toNullableString(), $teamId);
         $project = FindProject::visibleByIdForTeam($found->getProjectId()->toNullableString(), $teamId, (string) $request->user()?->id);
 
         return Inertia::render('tickets/show', [
@@ -40,6 +42,7 @@ final class ShowTicketController
             'project' => $project->isNull() ? null : $project->toSummary(),
             'contact' => $contact->isNull() ? null : $contact->toSummary(),
             'location' => $location->isNull() ? null : $location->toSummary(),
+            'group' => $group->isNull() ? null : ['id' => $group->getId()->toString(), 'name' => $group->getName()->toString(), 'hue' => $group->getHue()->toNullableInteger()],
             'assigneeName' => FindUser::byId($found->getAssigneeId()->toNullableString())->getName()->toNullableString(),
         ]);
     }

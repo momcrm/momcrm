@@ -81,7 +81,6 @@ export type Service = {
  * The lists a team can customise, as keyed in the shared `choices` prop.
  */
 export type ChoiceList =
-    | 'ticket_department'
     | 'label'
     | 'ticket_priority'
     | 'ticket_status'
@@ -110,7 +109,7 @@ export type Ticket = {
     status_id: string | null;
     priority_id: string | null;
     type_id: string | null;
-    department_id: string | null;
+    group_id: string | null;
     customer_id: string | null;
     project_id: string | null;
     parent_id: string | null;
@@ -201,6 +200,17 @@ export type TicketPickerOptions = {
     members: CustomerOption[];
     projects: ProjectOption[];
     customers: CustomerOption[];
+    groups: GroupOption[];
+};
+
+/**
+ * One of the team's groups, as offered in pickers.
+ */
+export type GroupOption = {
+    id: string;
+    name: string;
+    hue: number | null;
+    icon: string | null;
 };
 
 export type TicketView = 'list' | 'board' | 'table';
@@ -214,7 +224,7 @@ export type TicketFilters = {
     project: string | null;
     label: string | null;
     type: string | null;
-    department: string | null;
+    group: string | null;
     sort: string;
     direction: 'asc' | 'desc';
 };
@@ -297,6 +307,7 @@ export type TicketFormOptions = {
     locations: CustomerChildOption[];
     members: CustomerOption[];
     projects: ProjectOption[];
+    groups: GroupOption[];
 };
 
 export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'void';

@@ -678,8 +678,7 @@ function ArchivedChoiceRow({
 }
 
 /**
- * Deletes a choice for good. Only an optional one (a type, department or
- * label) can go while records have it, and it comes off them.
+ * Deletes a choice for good. Only an optional one (a type or a label) can go while records have it, and it comes off them.
  */
 function DeleteChoiceDialog({
     open,
@@ -736,7 +735,6 @@ function AddChoice({
 }) {
     const [name, setName] = useState('');
     const noun = {
-        ticket_department: 'department',
         label: 'label',
         ticket_priority: 'priority',
         ticket_status: 'status',
