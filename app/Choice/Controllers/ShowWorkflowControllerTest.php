@@ -19,6 +19,7 @@ it("shows the owner the team's lists with how many tickets use each choice", fun
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('settings/workflow')
+            ->where('current', null)
             ->where('lists.0.value', 'ticket_status')
             ->where('lists.0.categories', [['value' => 'closed', 'label' => 'Closed'], ['value' => 'open', 'label' => 'Open']])
             ->where('lists.0.choices.0.name', 'New')
@@ -40,6 +41,17 @@ it("shows the owner the team's lists with how many tickets use each choice", fun
             ->where('lists.4.choices.0.usage', 1),
         );
 });
+
+it('opens the list named in the query, ignoring an unknown one', function (string $list, ?string $current): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+
+    actingAs($owner)
+        ->get(route('workflow.edit', ['list' => $list]))
+        ->assertInertia(fn (Assert $page) => $page->where('current', $current));
+})->with([
+    'a list' => ['ticket_type', 'ticket_type'],
+    'an unknown list' => ['nope', null],
+]);
 
 it('forbids members', function (): void {
     $owner = UserEloquentModel::factory()->withPersonalTeam()->create();

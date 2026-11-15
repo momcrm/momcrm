@@ -38,6 +38,20 @@ enum ChoiceListEnum: string
     }
 
     /**
+     * What the list is for, in a sentence, for the Workflow page.
+     */
+    public function description(): string
+    {
+        return match ($this) {
+            self::TicketDepartment => 'The team or desk a ticket belongs to.',
+            self::TicketLabel => 'Tags for sorting and finding tickets. A ticket can have several.',
+            self::TicketPriority => 'How urgent a ticket is, most urgent first.',
+            self::TicketStatus => 'Where a ticket is in its life, grouped by whether it is still open.',
+            self::TicketType => 'What kind of request a ticket is.',
+        };
+    }
+
+    /**
      * The enum of categories its choices are sorted into, or null when the list
      * has none. Every category needs at least one choice and a default.
      *

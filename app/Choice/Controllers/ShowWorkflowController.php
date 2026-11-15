@@ -15,7 +15,8 @@ use Inertia\Response;
 
 /**
  * The team's customisable lists (ticket statuses, priorities, types, departments and labels), for owners
- * and admins to edit, with how many records use each choice.
+ * and admins to edit, with how many records use each choice. `?list=` opens
+ * one list's editor; without it the page shows an overview of every list.
  */
 final class ShowWorkflowController
 {
@@ -27,13 +28,18 @@ final class ShowWorkflowController
         ChoiceAccess::authorize($request);
         $teamId = ChoiceAccess::team($request)->getId()->toString();
 
+        $lists = [ChoiceListEnum::TicketStatus, ChoiceListEnum::TicketPriority, ChoiceListEnum::TicketType, ChoiceListEnum::TicketDepartment, ChoiceListEnum::TicketLabel];
+        $current = ChoiceListEnum::tryFrom($request->string('list')->toString());
+
         return Inertia::render('settings/workflow', [
+            'current' => in_array($current, $lists, true) ? $current->value : null,
             'lists' => array_map(function (ChoiceListEnum $list) use ($teamId): array {
                 $usage = FindChoice::usageCountsForTeam($teamId, $list);
 
                 return [
                     'value' => $list->value,
                     'label' => $list->label(),
+                    'description' => $list->description(),
                     'categories' => $list->categoryOptions(),
                     'icons' => $list->icons(),
                     'is_optional' => $list->isOptional(),
@@ -42,7 +48,7 @@ final class ShowWorkflowController
                         ->values()
                         ->all(),
                 ];
-            }, [ChoiceListEnum::TicketStatus, ChoiceListEnum::TicketPriority, ChoiceListEnum::TicketType, ChoiceListEnum::TicketDepartment, ChoiceListEnum::TicketLabel]),
+            }, $lists),
         ]);
     }
 }

@@ -1,9 +1,11 @@
-import { Head, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import {
     Archive,
     ArchiveRestore,
     ArrowDown,
     ArrowUp,
+    ChevronLeft,
+    ChevronRight,
     MoreHorizontal,
     Plus,
     Star,
@@ -31,7 +33,6 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { hueStyle } from '@/lib/colors';
 import { cn } from '@/lib/utils';
 import {
@@ -42,6 +43,7 @@ import {
     store,
     update,
 } from '@/routes/choices';
+import { edit } from '@/routes/workflow';
 import type { Choice, ChoiceList, Option } from '@/types';
 
 type WorkflowChoice = Choice & { usage: number };
@@ -49,6 +51,7 @@ type WorkflowChoice = Choice & { usage: number };
 type WorkflowList = {
     value: ChoiceList;
     label: string;
+    description: string;
     categories: Option[];
     icons: string[];
     /** Records may have none, as tickets may have no labels: no default, and deleting takes it off them. */
@@ -76,49 +79,115 @@ const saveOptions = {
 };
 
 /**
- * The team's own ticket statuses and priorities: names, colours, order and
- * defaults. Statuses are grouped by whether they keep a ticket open.
+ * The team's own ticket lists: an overview of every list, and each list's
+ * editor (names, colours, order and defaults) opened from it. `?list=` keeps
+ * the open list in the URL, so the back button and shared links work.
  */
-export default function Workflow({ lists }: { lists: WorkflowList[] }) {
-    const [current, setCurrent] = useState<ChoiceList>('ticket_status');
-    const list = lists.find((option) => option.value === current) ?? lists[0];
+export default function Workflow({
+    lists,
+    current,
+}: {
+    lists: WorkflowList[];
+    current: ChoiceList | null;
+}) {
+    const list = lists.find((option) => option.value === current);
 
     return (
         <>
-            <Head title="Workflow" />
+            <Head title={list ? `${list.label} · Workflow` : 'Workflow'} />
 
             <h1 className="sr-only">Workflow</h1>
 
-            <div className="space-y-6">
-                <Heading
-                    variant="small"
-                    title="Workflow"
-                    description="The statuses, priorities, types, departments and labels your team's tickets use. Changes apply to every ticket straight away."
-                />
-
-                <ToggleGroup
-                    type="single"
-                    variant="outline"
-                    size="sm"
-                    value={current}
-                    onValueChange={(value) =>
-                        value && setCurrent(value as ChoiceList)
-                    }
-                >
-                    {lists.map((option) => (
-                        <ToggleGroupItem
-                            key={option.value}
-                            value={option.value}
-                            className="px-3"
+            {list ? (
+                <div className="space-y-6">
+                    <div className="space-y-2">
+                        <Link
+                            href={edit()}
+                            preserveScroll
+                            className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
                         >
-                            {option.label}
-                        </ToggleGroupItem>
-                    ))}
-                </ToggleGroup>
+                            <ChevronLeft className="size-4" />
+                            Workflow
+                        </Link>
+                        <Heading
+                            variant="small"
+                            title={list.label}
+                            description={list.description}
+                        />
+                    </div>
 
-                <ListEditor key={list.value} list={list} />
-            </div>
+                    <ListEditor key={list.value} list={list} />
+                </div>
+            ) : (
+                <div className="space-y-6">
+                    <Heading
+                        variant="small"
+                        title="Workflow"
+                        description="The lists your team's tickets choose from. Changes apply to every ticket straight away."
+                    />
+
+                    <ul className="divide-y rounded-lg border bg-card shadow-xs">
+                        {lists.map((option) => (
+                            <ListRow key={option.value} list={option} />
+                        ))}
+                    </ul>
+                </div>
+            )}
         </>
+    );
+}
+
+/**
+ * One list in the overview: its name and purpose, how many live choices it
+ * has and the first few of them.
+ */
+function ListRow({ list }: { list: WorkflowList }) {
+    const live = list.choices.filter((choice) => !choice.is_archived);
+    const preview = live.slice(0, 4);
+
+    return (
+        <li>
+            <Link
+                href={edit({ query: { list: list.value } })}
+                className="flex items-center gap-3 px-3 py-3 hover:bg-muted/50"
+            >
+                <div className="min-w-0 flex-1 space-y-1">
+                    <div className="flex items-center gap-2">
+                        <span className="font-medium">{list.label}</span>
+                        <span className="text-xs text-muted-foreground tabular-nums">
+                            {live.length}
+                        </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                        {list.description}
+                    </p>
+                    {preview.length > 0 ? (
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-0.5 text-xs text-muted-foreground">
+                            {preview.map((choice) => (
+                                <span
+                                    key={choice.id}
+                                    className="inline-flex items-center gap-1.5"
+                                    style={hueStyle(choice.hue)}
+                                >
+                                    <span className="size-2 rounded-full hue-dot" />
+                                    {choice.name}
+                                </span>
+                            ))}
+                            {live.length > preview.length && (
+                                <span>
+                                    +{live.length - preview.length} more
+                                </span>
+                            )}
+                        </div>
+                    ) : (
+                        <p className="pt-0.5 text-xs text-subtle-foreground">
+                            None yet
+                        </p>
+                    )}
+                </div>
+                <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+            </Link>
+        </li>
     );
 }
 
