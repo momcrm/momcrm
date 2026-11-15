@@ -14,6 +14,7 @@ import {
 import TicketTable from '@/components/tickets/ticket-table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useCreateTicket } from '@/components/tickets/create-ticket-dialog';
 import DeleteCustomerController from '@/actions/App/Customer/Controllers/DeleteCustomerController';
 import { create as createAsset, edit as editAsset } from '@/routes/assets';
 import { create as createContact } from '@/routes/contacts';
@@ -29,7 +30,7 @@ import {
 import { formatCents } from '@/lib/money';
 import { create as createInvoice } from '@/routes/invoices';
 import { show as showProject } from '@/routes/projects';
-import { create as createTicket, show as showTicket } from '@/routes/tickets';
+import { show as showTicket } from '@/routes/tickets';
 import type {
     Abilities,
     ProjectListItem,
@@ -88,6 +89,7 @@ export default function ShowCustomer({
     tickets: TicketListItem[];
     invoices: InvoiceListItem[];
 }) {
+    const { openCreateTicket } = useCreateTicket();
     setLayoutProps({
         breadcrumbs: [
             { title: 'Customers', href: index() },
@@ -208,14 +210,17 @@ export default function ShowCustomer({
                     title="Recent tickets"
                     action={
                         tickets.length > 0 && (
-                            <AddButton
-                                href={
-                                    createTicket({
-                                        query: { customer: customer.id },
-                                    }).url
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                    openCreateTicket({
+                                        customerId: customer.id,
+                                    })
                                 }
-                                label="Open ticket"
-                            />
+                            >
+                                Open ticket
+                            </Button>
                         )
                     }
                 >
@@ -231,14 +236,17 @@ export default function ShowCustomer({
                             title="Nothing in the queue"
                             description={`Open a ticket for every request or job for ${customer.name}.`}
                             action={
-                                <AddButton
-                                    href={
-                                        createTicket({
-                                            query: { customer: customer.id },
-                                        }).url
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() =>
+                                        openCreateTicket({
+                                            customerId: customer.id,
+                                        })
                                     }
-                                    label="Open ticket"
-                                />
+                                >
+                                    Open ticket
+                                </Button>
                             }
                         />
                     )}

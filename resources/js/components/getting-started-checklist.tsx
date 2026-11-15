@@ -1,5 +1,6 @@
 import { Form, Link } from '@inertiajs/react';
 import { Check } from 'lucide-react';
+import { useCreateTicket } from '@/components/tickets/create-ticket-dialog';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import DismissGettingStartedController from '@/actions/App/Onboarding/Controllers/DismissGettingStartedController';
@@ -33,6 +34,7 @@ export default function GettingStartedChecklist({
     gettingStarted: GettingStarted;
     preferredName: string;
 }) {
+    const { openCreateTicket } = useCreateTicket();
     const { steps, completed, total } = gettingStarted;
     const allDone = completed === total;
 
@@ -112,11 +114,20 @@ export default function GettingStartedChecklist({
                                 )}
                             </div>
                         </div>
-                        {!step.done && (
-                            <Button variant="outline" size="sm" asChild>
-                                <Link href={step.href}>{step.action}</Link>
-                            </Button>
-                        )}
+                        {!step.done &&
+                            (step.key === 'ticket' ? (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => openCreateTicket()}
+                                >
+                                    {step.action}
+                                </Button>
+                            ) : (
+                                <Button variant="outline" size="sm" asChild>
+                                    <Link href={step.href}>{step.action}</Link>
+                                </Button>
+                            ))}
                     </li>
                 ))}
             </ol>

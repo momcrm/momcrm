@@ -64,7 +64,7 @@ final class GetGettingStartedProgress
                 'title' => __('Open a ticket'),
                 'description' => __('Log a request or job so your team can pick it up.'),
                 'action' => __('Open ticket'),
-                'href' => route('tickets.create'),
+                'href' => route('tickets.index'),
                 'done' => self::forRealCustomers(TicketEloquentModel::query(), $teamId)->exists(),
             ],
         ];

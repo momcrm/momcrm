@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import { Plus } from 'lucide-react';
 import EmptyState from '@/components/empty-state';
 import PageHeader from '@/components/page-header';
@@ -10,8 +10,9 @@ import { ticketStatuses } from '@/components/tickets/ticket-meta';
 import TicketTable from '@/components/tickets/ticket-table';
 import TicketToolbar from '@/components/tickets/ticket-toolbar';
 import { Button } from '@/components/ui/button';
+import { useCreateTicket } from '@/components/tickets/create-ticket-dialog';
 import { visitWithQuery } from '@/lib/query';
-import { create, index } from '@/routes/tickets';
+import { index } from '@/routes/tickets';
 import type {
     Paginated,
     TicketDrawerData,
@@ -33,6 +34,7 @@ export default function TicketsIndex({
     options: TicketPickerOptions;
     drawer: TicketDrawerData | null;
 }) {
+    const { openCreateTicket } = useCreateTicket();
     const isFiltered =
         Boolean(filters.search) ||
         filters.priority.length > 0 ||
@@ -49,11 +51,9 @@ export default function TicketsIndex({
                     title="Tickets"
                     description="Every request and job, for customers and your own projects."
                     actions={
-                        <Button asChild>
-                            <Link href={create()}>
-                                <Plus />
-                                New ticket
-                            </Link>
+                        <Button onClick={() => openCreateTicket()}>
+                            <Plus />
+                            New ticket
                         </Button>
                     }
                 />
@@ -76,8 +76,8 @@ export default function TicketsIndex({
                             title="Nothing in the queue"
                             description="Open a ticket for every request or job, and your team can pick it up."
                             action={
-                                <Button asChild>
-                                    <Link href={create()}>Open ticket</Link>
+                                <Button onClick={() => openCreateTicket()}>
+                                    Open ticket
                                 </Button>
                             }
                         />

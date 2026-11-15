@@ -288,6 +288,7 @@ export type TicketFormOptions = {
     locations: CustomerChildOption[];
     members: CustomerOption[];
     projects: ProjectOption[];
+    labels: TicketLabel[];
     priorities: Option[];
     statuses: Option[];
 };

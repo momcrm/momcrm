@@ -27,6 +27,7 @@ import {
     DialogDescription,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { useCreateTicket } from '@/components/tickets/create-ticket-dialog';
 import { useAppearance } from '@/hooks/use-appearance';
 import { useShortcuts } from '@/hooks/use-shortcuts';
 import { cn, toUrl } from '@/lib/utils';
@@ -37,7 +38,6 @@ import {
 import { search } from '@/routes';
 import { create as createCustomer } from '@/routes/customers';
 import { index as projectsIndex } from '@/routes/projects';
-import { create as createTicket } from '@/routes/tickets';
 
 type SearchHit = {
     id: string;
@@ -140,6 +140,7 @@ function Palette({ onDone }: { onDone: () => void }) {
     const [activeIndex, setActiveIndex] = useState(0);
     const listRef = useRef<HTMLDivElement>(null);
     const http = useHttp<Record<string, never>, SearchResponse>();
+    const { openCreateTicket } = useCreateTicket();
     const { resolvedAppearance, updateAppearance } = useAppearance();
 
     const query = term.trim();
@@ -177,7 +178,10 @@ function Palette({ onDone }: { onDone: () => void }) {
                 group: 'Suggestions',
                 label: 'Create ticket',
                 icon: Plus,
-                onSelect: () => go(toUrl(createTicket())),
+                onSelect: () => {
+                    onDone();
+                    openCreateTicket();
+                },
             },
             {
                 id: 'create-project',

@@ -75,10 +75,10 @@ use App\TeamUser\Controllers\ListMembersController;
 use App\TeamUser\Controllers\UpdateMemberRoleController;
 use App\Ticket\Controllers\ArchiveTicketController;
 use App\Ticket\Controllers\CloseTicketController;
-use App\Ticket\Controllers\CreateTicketController;
 use App\Ticket\Controllers\DeleteTicketController;
 use App\Ticket\Controllers\EditTicketController;
 use App\Ticket\Controllers\ListMyTicketsController;
+use App\Ticket\Controllers\ListTicketFormOptionsController;
 use App\Ticket\Controllers\ListTicketsController;
 use App\Ticket\Controllers\MoveTicketController;
 use App\Ticket\Controllers\PatchTicketController;
@@ -131,7 +131,7 @@ Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function 
 
     Route::get('tickets', ListTicketsController::class)->name('tickets.index');
     Route::get('my-tickets', ListMyTicketsController::class)->name('tickets.mine');
-    Route::get('tickets/create', CreateTicketController::class)->name('tickets.create');
+    Route::get('tickets/form-options', ListTicketFormOptionsController::class)->name('tickets.form-options');
     Route::post('tickets', StoreTicketController::class)->name('tickets.store');
     Route::get('tickets/{ticket}', ShowTicketController::class)->whereUuid('ticket')->name('tickets.show');
     Route::get('tickets/{ticket}/edit', EditTicketController::class)->whereUuid('ticket')->name('tickets.edit');
