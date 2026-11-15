@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Choice;
 
 use App\Shared\ColorEnum;
+use App\Shared\Table;
 use App\Shared\Traits\Enum;
 use App\Shared\Traits\EnumOptions;
 use App\Ticket\TicketStatusCategoryEnum;
@@ -41,6 +42,45 @@ enum ChoiceListEnum: string
         return match ($this) {
             self::TicketPriority => null,
             self::TicketStatus => TicketStatusCategoryEnum::class,
+        };
+    }
+
+    /**
+     * The categories its choices may have, with labels, for pickers.
+     *
+     * @return list<array{value: string, label: string}>
+     */
+    public function categoryOptions(): array
+    {
+        return match ($this) {
+            self::TicketPriority => [],
+            self::TicketStatus => TicketStatusCategoryEnum::options(),
+        };
+    }
+
+    /**
+     * The icons its choices may show, or none when the list has no icons.
+     *
+     * @return list<string>
+     */
+    public function icons(): array
+    {
+        return match ($this) {
+            self::TicketPriority => ['chevrons-up', 'chevron-up', 'equal', 'chevron-down', 'minus'],
+            self::TicketStatus => [],
+        };
+    }
+
+    /**
+     * Where records point at the list's choices, so deleting one can move them.
+     *
+     * @return list<array{table: Table, column: string}>
+     */
+    public function usages(): array
+    {
+        return match ($this) {
+            self::TicketPriority => [['table' => Table::Tickets, 'column' => 'priority_id']],
+            self::TicketStatus => [['table' => Table::Tickets, 'column' => 'status_id']],
         };
     }
 

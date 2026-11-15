@@ -77,11 +77,15 @@ export function TicketStatusPill({ statusId }: { statusId: string | null }) {
     );
 }
 
-const priorityIcons: Record<string, LucideIcon> = {
+/**
+ * The icons a priority can show, by the name stored on the choice.
+ */
+export const priorityIcons: Record<string, LucideIcon> = {
     'chevrons-up': ChevronsUp,
     'chevron-up': ChevronUp,
     equal: Equal,
     'chevron-down': ChevronDown,
+    minus: Minus,
 };
 
 /**

@@ -63,6 +63,17 @@ final class TeamPolicy
             : Response::deny('Only team owners and admins can manage access rules.');
     }
 
+    /**
+     * Owners and admins edit the team's customisable lists, such as ticket
+     * statuses and priorities.
+     */
+    public function manageWorkflow(UserEloquentModel $user, Team $team): Response
+    {
+        return $this->isOwnerOrAdmin($user, $team)
+            ? Response::allow()
+            : Response::deny('Only team owners and admins can change ticket statuses and priorities.');
+    }
+
     private function isOwnerOrAdmin(UserEloquentModel $user, Team $team): bool
     {
         $role = FindTeamUser::byTeamAndUser(
