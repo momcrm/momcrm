@@ -55,11 +55,13 @@ function describeCondition(
         .join(', ');
 
     const label = attribute?.label ?? condition.attribute;
+    const takesValue = !['is_true', 'is_false'].includes(condition.operator);
 
     return [
         label.charAt(0).toLowerCase() + label.slice(1),
         labelFor(options.operators, condition.operator),
-        values,
+        // A value can be missing once the status or priority it named is deleted.
+        values || (takesValue ? '(choose a value)' : ''),
     ]
         .filter(Boolean)
         .join(' ');
