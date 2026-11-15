@@ -32,3 +32,9 @@ require __DIR__.'/auth.php';
 require __DIR__.'/crm.php';
 require __DIR__.'/onboarding.php';
 require __DIR__.'/settings.php';
+
+/**
+ * Unknown addresses get the 404 page through the web middleware, so it knows
+ * who is signed in and can show the app around it.
+ */
+Route::fallback(fn (): never => abort(404));

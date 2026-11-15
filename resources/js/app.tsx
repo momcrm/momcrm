@@ -12,10 +12,14 @@ const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
 void createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
-    layout: (name) => {
+    layout: (name, page) => {
         switch (true) {
             case name === 'welcome':
                 return null;
+            case name === 'error':
+                return (page.props as { auth?: { user?: unknown } }).auth?.user
+                    ? AppLayout
+                    : null;
             case name.startsWith('auth/'):
                 return AuthLayout;
             case name.startsWith('onboarding/'):
