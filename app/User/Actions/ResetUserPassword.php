@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\User\Actions;
 
+use App\Shared\Types;
 use App\User\Properties\Password;
 use App\User\User;
 use App\User\UserEloquentModel;
@@ -26,7 +27,7 @@ final readonly class ResetUserPassword implements ResetsUserPasswords
         ])->validate();
 
         UpdateUserPassword::fromUser(
-            User::fromEloquentModel($user)->setPassword($validated[Password::getNameForValidation()]),
+            User::fromEloquentModel($user)->setPassword(Types::string($validated[Password::getNameForValidation()])),
         );
     }
 }

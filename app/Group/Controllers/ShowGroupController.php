@@ -70,7 +70,7 @@ final class ShowGroupController
                     'id' => $member->id,
                     'name' => $member->name,
                     'email' => $member->email,
-                    'role' => $member->getRelationValue('pivot')?->getAttribute('role') ?? GroupRoleEnum::Member->value,
+                    'role' => GroupRoleEnum::ofMember($member)->value,
                 ])
                 ->values(),
             'projects' => $projects->map(fn (ProjectEloquentModel $project): array => ListProjectsController::listItem($project, $favoriteProjectIds))->values(),

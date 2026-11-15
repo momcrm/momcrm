@@ -11,6 +11,7 @@ use App\Favorite\Properties\TeamId;
 use App\Favorite\Properties\UserId;
 use App\Project\ProjectEloquentModel;
 use App\Shared\MorphMapKeyEnum;
+use App\Shared\Types;
 use App\User\UserEloquentModel;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Model;
@@ -30,10 +31,10 @@ final class FavoriteFactory extends Factory
         return [
             FavoritableType::getDatabaseTableColumnName() => MorphMapKeyEnum::Project->value,
             FavoritableId::getDatabaseTableColumnName() => ProjectEloquentModel::factory(),
-            TeamId::getDatabaseTableColumnName() => fn (array $attributes): string => (string) ProjectEloquentModel::query()
+            TeamId::getDatabaseTableColumnName() => fn (array $attributes): string => Types::string(ProjectEloquentModel::query()
                 ->withoutGlobalScopes()
                 ->whereKey($attributes[FavoritableId::getDatabaseTableColumnName()])
-                ->value('team_id'),
+                ->value('team_id')),
             UserId::getDatabaseTableColumnName() => UserEloquentModel::factory(),
         ];
     }

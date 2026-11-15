@@ -9,6 +9,7 @@ use App\Activity\ActivityEloquentModel;
 use App\Activity\ActivityTypeEnum;
 use App\Shared\MorphMapKeyEnum;
 use App\Shared\RequestContext;
+use App\Shared\Types;
 use Illuminate\Database\Eloquent\Model;
 
 final readonly class RecordActivity
@@ -47,7 +48,7 @@ final readonly class RecordActivity
                 ->setUserId($userId)
                 ->setTeamId($teamId)
                 ->setSubjectType($subject === null ? null : MorphMapKeyEnum::fromModel($subject))
-                ->setSubjectId($subject === null ? null : (string) $subject->getKey())
+                ->setSubjectId($subject === null ? null : Types::string($subject->getKey()))
                 ->setDetails($details === [] ? null : $details)
                 ->setRequestId(RequestContext::requestId())
                 ->setIpAddress(RequestContext::ipAddress())

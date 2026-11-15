@@ -35,7 +35,7 @@ final class DeleteAccessRuleFormRequest extends FormRequest
     {
         $team = FindTeam::byIdForMember(
             id: $this->user()?->current_team_id,
-            userId: (string) $this->user()?->getAuthIdentifier(),
+            userId: (string) $this->user()?->id,
         );
 
         if ($team->isNull()) {

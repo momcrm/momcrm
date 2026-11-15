@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Ticket\FormRequests;
 
 use App\Shared\Table;
+use App\Shared\Types;
 use App\Ticket\Actions\FindTicket;
 use App\Ticket\Actions\UpdateTicket;
 use App\Ticket\Exceptions\CouldNotFindTicket;
@@ -51,7 +52,7 @@ final class PatchTicketFormRequest extends FormRequest
     }
 
     /**
-     * @return array<string, array<int, mixed>>
+     * @return array<string, array<array-key, mixed>>
      */
     public function rules(): array
     {
@@ -78,15 +79,15 @@ final class PatchTicketFormRequest extends FormRequest
         $validated = $this->validated();
 
         UpdateTicket::fromTicket(
-            $this->ticket->setPropertyIfExists(Arr::except($validated, self::LABEL_IDS)),
-            updatedById: (string) $this->user()?->getAuthIdentifier(),
+            $this->ticket->setPropertyIfExists(Types::stringKeyed(Arr::except($validated, self::LABEL_IDS))),
+            updatedById: (string) $this->user()?->id,
         );
 
         if (array_key_exists(self::LABEL_IDS, $validated)) {
             TicketEloquentModel::query()
                 ->findOrFail($this->ticket->getId()->toString())
                 ->labels()
-                ->sync($validated[self::LABEL_IDS]);
+                ->sync(Types::stringList($validated[self::LABEL_IDS]));
         }
 
         return back();

@@ -12,6 +12,7 @@ use App\Invoice\Invoice;
 use App\Project\Project;
 use App\Shared\RequestMemo;
 use App\Shared\Table;
+use App\Shared\Types;
 use App\Ticket\Ticket;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -88,7 +89,7 @@ final class AccessAttributeResolver
         return RequestMemo::remember("access-ticket-labels.{$ticketId}", fn (): array => DB::table(Table::LabelTicket->value)
             ->where('ticket_id', $ticketId)
             ->pluck('label_id')
-            ->map(strval(...))
+            ->map(Types::string(...))
             ->values()
             ->all());
     }

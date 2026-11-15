@@ -7,6 +7,7 @@ namespace App\AccessRule\Engine;
 use App\Group\GroupRoleEnum;
 use App\Shared\RequestMemo;
 use App\Shared\Table;
+use App\Shared\Types;
 use App\TeamUser\Actions\FindTeamUser;
 use App\TeamUser\TeamRoleEnum;
 use Illuminate\Support\Facades\DB;
@@ -45,8 +46,8 @@ final readonly class AccessSubject
                 userId: $userId,
                 teamId: $teamId,
                 role: FindTeamUser::byTeamAndUser(teamId: $teamId, userId: $userId)->getRole()->toNullableEnum(),
-                groupIds: $memberships->pluck('group_id')->map(strval(...))->values()->all(),
-                leadGroupIds: $memberships->where('role', GroupRoleEnum::Lead->value)->pluck('group_id')->map(strval(...))->values()->all(),
+                groupIds: $memberships->pluck('group_id')->map(Types::string(...))->values()->all(),
+                leadGroupIds: $memberships->where('role', GroupRoleEnum::Lead->value)->pluck('group_id')->map(Types::string(...))->values()->all(),
             );
         });
     }

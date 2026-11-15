@@ -13,6 +13,7 @@ use App\Project\ProjectValidationRules;
 use App\Project\Properties\LeadId;
 use App\Project\Properties\Visibility;
 use App\Shared\Table;
+use App\Shared\Types;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
@@ -74,8 +75,8 @@ final class UpdateProjectFormRequest extends FormRequest
     {
         $validated = $this->validated();
         $project = UpdateProject::fromProject(
-            $this->project->setPropertyIfExists(Arr::except($validated, ProjectValidationRules::MEMBER_IDS)),
-            updatedById: (string) $this->user()?->getAuthIdentifier(),
+            $this->project->setPropertyIfExists(Types::stringKeyed(Arr::except($validated, ProjectValidationRules::MEMBER_IDS))),
+            updatedById: (string) $this->user()?->id,
         );
 
         $model = ProjectEloquentModel::query()->findOrFail($project->getId()->toString());
@@ -83,7 +84,7 @@ final class UpdateProjectFormRequest extends FormRequest
         if (array_key_exists(ProjectValidationRules::MEMBER_IDS, $validated)) {
             $model->members()->sync(array_values(array_unique(array_filter([
                 $project->getLeadId()->toNullableString(),
-                ...$validated[ProjectValidationRules::MEMBER_IDS],
+                ...Types::stringList($validated[ProjectValidationRules::MEMBER_IDS]),
             ]))));
         } elseif ($project->getLeadId()->isNotNull()) {
             $model->members()->syncWithoutDetaching([$project->getLeadId()->toString()]);
@@ -116,7 +117,7 @@ final class UpdateProjectFormRequest extends FormRequest
     private function loadProject(): bool
     {
         if ($this->project->isNull()) {
-            $this->project = FindProject::visibleByIdForTeam((string) $this->route('project'), $this->user()?->current_team_id, (string) $this->user()?->getAuthIdentifier());
+            $this->project = FindProject::visibleByIdForTeam((string) $this->route('project'), $this->user()?->current_team_id, (string) $this->user()?->id);
         }
 
         if ($this->project->isNull()) {
@@ -139,7 +140,7 @@ final class UpdateProjectFormRequest extends FormRequest
         $current = DB::table(Table::ProjectUser->value)
             ->where('project_id', $this->project->getId()->toString())
             ->pluck('user_id')
-            ->map(strval(...))
+            ->map(Types::string(...))
             ->sort()
             ->values()
             ->all();

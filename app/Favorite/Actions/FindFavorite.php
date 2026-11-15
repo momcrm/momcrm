@@ -10,6 +10,7 @@ use App\Favorite\Properties\FavoritableId;
 use App\Favorite\Properties\FavoritableType;
 use App\Favorite\Properties\TeamId;
 use App\Favorite\Properties\UserId;
+use App\Shared\Types;
 
 final class FindFavorite
 {
@@ -26,7 +27,8 @@ final class FindFavorite
             ->where(UserId::getDatabaseTableColumnName(), $userId)
             ->where(FavoritableType::getDatabaseTableColumnName(), $type->value)
             ->pluck(FavoritableId::getDatabaseTableColumnName())
-            ->map(fn (mixed $id): string => (string) $id)
+            ->map(Types::string(...))
+            ->values()
             ->all();
     }
 }

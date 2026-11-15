@@ -79,7 +79,7 @@ class AppServiceProvider extends ServiceProvider
      */
     protected function configureMail(): void
     {
-        VerifyEmail::toMailUsing(fn (object $notifiable, string $url): MailMessage => new MailMessage()
+        VerifyEmail::toMailUsing(fn (mixed $notifiable, string $url): MailMessage => new MailMessage()
             ->subject(__('Confirm your email to finish setting up MomCRM'))
             ->greeting($notifiable instanceof UserEloquentModel ? __('Hi :name,', ['name' => $notifiable->name]) : __('Hi,'))
             ->line(__("Thanks for signing up. Confirm your email address so we know it's really you."))

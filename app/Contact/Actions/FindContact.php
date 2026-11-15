@@ -60,7 +60,7 @@ final class FindContact
             ->orderBy(FirstName::getDatabaseTableColumnName())
             ->get();
 
-        return Contact::collect($contacts, 'fromEloquentModel');
+        return Contact::collect($contacts->all(), 'fromEloquentModel');
     }
 
     /**

@@ -25,7 +25,7 @@ final class FindAccessRules
     public static function enabledForTeam(string $teamId): Collection
     {
         return RequestMemo::remember(self::memoKey($teamId), fn (): Collection => AccessRule::collect(
-            self::query($teamId)->where(IsEnabled::getDatabaseTableColumnName(), true)->get(),
+            self::query($teamId)->where(IsEnabled::getDatabaseTableColumnName(), true)->get()->all(),
         ));
     }
 
@@ -36,7 +36,7 @@ final class FindAccessRules
      */
     public static function allForTeam(string $teamId): Collection
     {
-        return AccessRule::collect(self::query($teamId)->get());
+        return AccessRule::collect(self::query($teamId)->get()->all());
     }
 
     public static function byIdForTeam(?string $id, ?string $teamId): AccessRule

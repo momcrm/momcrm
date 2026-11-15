@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\User\Controllers;
 
 use App\User\FormRequests\EditSecurityFormRequest;
+use App\User\UserEloquentModel;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -14,12 +15,15 @@ final class EditSecurityController
 {
     public function __invoke(EditSecurityFormRequest $request): Response
     {
+        /** @var UserEloquentModel $user */
+        $user = $request->user();
+
         $props = [
-            'hasPassword' => $request->user()->hasPassword(),
+            'hasPassword' => $user->hasPassword(),
             'canManageTwoFactor' => Features::canManageTwoFactorAuthentication(),
             'canManagePasskeys' => Features::canManagePasskeys(),
             'passkeys' => Features::canManagePasskeys()
-                ? $request->user()
+                ? $user
                     ->passkeys()
                     ->select(['id', 'name', 'credential', 'created_at', 'last_used_at'])
                     ->latest()
@@ -28,7 +32,7 @@ final class EditSecurityController
                         'id' => $passkey->id,
                         'name' => $passkey->name,
                         'authenticator' => $passkey->authenticator,
-                        'created_at_diff' => $passkey->created_at->diffForHumans(),
+                        'created_at_diff' => $passkey->created_at?->diffForHumans(),
                         'last_used_at_diff' => $passkey->last_used_at?->diffForHumans(),
                     ])
                     ->values()
@@ -40,7 +44,7 @@ final class EditSecurityController
         if (Features::canManageTwoFactorAuthentication()) {
             $request->ensureStateIsValid();
 
-            $props['twoFactorEnabled'] = $request->user()->hasEnabledTwoFactorAuthentication();
+            $props['twoFactorEnabled'] = $user->hasEnabledTwoFactorAuthentication();
             $props['requiresConfirmation'] = Features::optionEnabled(Features::twoFactorAuthentication(), 'confirm');
         }
 

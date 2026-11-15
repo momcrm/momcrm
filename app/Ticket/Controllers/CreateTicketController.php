@@ -14,7 +14,7 @@ final class CreateTicketController
     public function __invoke(Request $request): Response
     {
         return Inertia::render('tickets/create', [
-            ...TicketFormOptions::forTeam((string) $request->user()?->current_team_id, (string) $request->user()?->getAuthIdentifier()),
+            ...TicketFormOptions::forTeam((string) $request->user()?->current_team_id, (string) $request->user()?->id),
             'customerId' => $request->string('customer')->toString() ?: null,
         ]);
     }

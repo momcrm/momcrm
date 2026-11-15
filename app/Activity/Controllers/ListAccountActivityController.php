@@ -22,7 +22,7 @@ final class ListAccountActivityController
      */
     public function __invoke(Request $request): Response
     {
-        $userId = (string) $request->user()?->getAuthIdentifier();
+        $userId = (string) $request->user()?->id;
 
         return Inertia::render('settings/activity', self::lists(
             FindActivities::forUser($userId, pageName: 'activity_page'),
@@ -33,7 +33,7 @@ final class ListAccountActivityController
     /**
      * @param  LengthAwarePaginator<int, ActivityEloquentModel>  $activities
      * @param  LengthAwarePaginator<int, AuditLogEloquentModel>  $auditLogs
-     * @return array{activities: LengthAwarePaginator<int, mixed>, auditLogs: LengthAwarePaginator<int, mixed>}
+     * @return array{activities: LengthAwarePaginator<int, covariant array<string, mixed>>, auditLogs: LengthAwarePaginator<int, covariant array<string, mixed>>}
      */
     private static function lists(LengthAwarePaginator $activities, LengthAwarePaginator $auditLogs): array
     {

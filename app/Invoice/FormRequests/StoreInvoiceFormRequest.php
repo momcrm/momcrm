@@ -33,7 +33,7 @@ final class StoreInvoiceFormRequest extends FormRequest
                 ...CustomerId::getValidationRulesForCreate($this),
                 Rule::exists(Table::Customers->value, 'id')->where('team_id', $this->user()?->current_team_id),
             ],
-            ...InvoiceValidationRules::for($this, (string) $this->input(CustomerId::getNameForValidation())),
+            ...InvoiceValidationRules::for($this, $this->string(CustomerId::getNameForValidation())->toString()),
         ];
     }
 

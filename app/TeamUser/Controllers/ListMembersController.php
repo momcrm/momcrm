@@ -14,6 +14,7 @@ use App\Group\Properties\TeamId as GroupTeamId;
 use App\Project\ProjectStatusEnum;
 use App\Shared\ColorEnum;
 use App\Shared\Table;
+use App\Shared\Types;
 use App\Team\Actions\FindTeam;
 use App\Team\Exceptions\CouldNotViewTeam;
 use App\TeamInvitation\Actions\FindTeamInvitation;
@@ -44,7 +45,7 @@ final class ListMembersController
      */
     public function __invoke(Request $request): Response
     {
-        $team = FindTeam::byIdForMember($request->user()?->current_team_id, (string) $request->user()?->getAuthIdentifier());
+        $team = FindTeam::byIdForMember($request->user()?->current_team_id, (string) $request->user()?->id);
 
         if ($team->isNull()) {
             throw CouldNotViewTeam::notFound();
@@ -112,9 +113,9 @@ final class ListMembersController
                     'email' => $member->email,
                     'role' => $member->getAttribute(Role::getDatabaseTableColumnName()),
                     'groups' => $groupsByUser[$member->id] ?? [],
-                    'active_projects' => (int) $activeProjects->get($member->id, 0),
-                    'open_tickets' => (int) $openTickets->get($member->id, 0),
-                    'last_active_at' => $lastActive->get($member->id) === null ? null : now()->parse((string) $lastActive->get($member->id))->toIso8601String(),
+                    'active_projects' => Types::intOrZero($activeProjects->get($member->id)),
+                    'open_tickets' => Types::intOrZero($openTickets->get($member->id)),
+                    'last_active_at' => $lastActive->get($member->id) === null ? null : now()->parse(Types::string($lastActive->get($member->id)))->toIso8601String(),
                 ])
                 ->values(),
             'invitations' => $canInvite
@@ -140,8 +141,8 @@ final class ListMembersController
                     'description' => $group->description,
                     'color' => $group->color,
                     'icon' => $group->icon,
-                    'members_count' => (int) $group->getAttribute('members_count'),
-                    'projects_count' => (int) $group->getAttribute('projects_count'),
+                    'members_count' => Types::intOrZero($group->getAttribute('members_count')),
+                    'projects_count' => Types::intOrZero($group->getAttribute('projects_count')),
                 ])
                 ->values(),
             'canInvite' => $canInvite,

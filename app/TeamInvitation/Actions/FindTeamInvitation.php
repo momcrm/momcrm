@@ -67,7 +67,7 @@ final class FindTeamInvitation
             ->latest()
             ->get();
 
-        return TeamInvitation::collect($invitations, 'fromEloquentModel');
+        return TeamInvitation::collect($invitations->all(), 'fromEloquentModel');
     }
 
     public static function hashToken(string $token): string

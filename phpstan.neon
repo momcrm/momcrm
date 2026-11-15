@@ -14,4 +14,4 @@ parameters:
         analyse:
             - app/*Test.php
 
-    level: 7
+    level: max

@@ -42,7 +42,7 @@ final class UpdateTicketFormRequest extends FormRequest
     }
 
     /**
-     * @return array<string, array<int, mixed>>
+     * @return array<string, array<array-key, mixed>>
      */
     public function rules(): array
     {
@@ -64,7 +64,7 @@ final class UpdateTicketFormRequest extends FormRequest
     {
         $ticket = UpdateTicket::fromTicket(
             $this->ticket->setPropertyIfExists($this->validated()),
-            updatedById: (string) $this->user()?->getAuthIdentifier(),
+            updatedById: (string) $this->user()?->id,
         );
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Ticket #:number saved.', ['number' => $ticket->getNumber()->toInteger()])]);

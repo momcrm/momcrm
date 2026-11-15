@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -19,7 +20,7 @@ return new class extends Migration
         $now = now();
 
         DB::table('teams')
-            ->whereNotExists(fn ($query) => $query->selectRaw('1')->from('access_rules')->whereColumn('access_rules.team_id', 'teams.id'))
+            ->whereNotExists(fn (Builder $query) => $query->selectRaw('1')->from('access_rules')->whereColumn('access_rules.team_id', 'teams.id'))
             ->orderBy('id')
             ->each(function (object $team) use ($now): void {
                 DB::table('access_rules')->insert([

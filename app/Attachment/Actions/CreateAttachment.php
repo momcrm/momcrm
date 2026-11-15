@@ -10,6 +10,7 @@ use App\Attachment\Attachment;
 use App\Attachment\AttachmentEloquentModel;
 use App\Attachment\Properties\Id;
 use App\Shared\MorphMapKeyEnum;
+use App\Shared\Types;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
 
@@ -29,7 +30,7 @@ final readonly class CreateAttachment
 
     public function __invoke(): Attachment
     {
-        $teamId = (string) $this->attachable->getAttribute('team_id');
+        $teamId = Types::string($this->attachable->getAttribute('team_id'));
         $id = Id::generate();
         $path = $this->file->storeAs("attachments/{$teamId}", $id->toString().'.'.($this->file->guessExtension() ?? 'bin'), self::DISK);
 
@@ -37,7 +38,7 @@ final readonly class CreateAttachment
             ->setId($id)
             ->setTeamId($teamId)
             ->setAttachableType(MorphMapKeyEnum::fromModel($this->attachable))
-            ->setAttachableId((string) $this->attachable->getKey())
+            ->setAttachableId(Types::string($this->attachable->getKey()))
             ->setUploadedById($this->uploadedById)
             ->setName($this->file->getClientOriginalName())
             ->setPath((string) $path)

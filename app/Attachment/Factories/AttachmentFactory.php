@@ -14,6 +14,7 @@ use App\Attachment\Properties\Size;
 use App\Attachment\Properties\TeamId;
 use App\Attachment\Properties\UploadedById;
 use App\Shared\MorphMapKeyEnum;
+use App\Shared\Types;
 use App\Ticket\TicketEloquentModel;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Model;
@@ -33,10 +34,10 @@ final class AttachmentFactory extends Factory
         return [
             AttachableType::getDatabaseTableColumnName() => MorphMapKeyEnum::Ticket->value,
             AttachableId::getDatabaseTableColumnName() => TicketEloquentModel::factory(),
-            TeamId::getDatabaseTableColumnName() => fn (array $attributes): string => (string) TicketEloquentModel::query()
+            TeamId::getDatabaseTableColumnName() => fn (array $attributes): string => Types::string(TicketEloquentModel::query()
                 ->withoutGlobalScopes()
                 ->whereKey($attributes[AttachableId::getDatabaseTableColumnName()])
-                ->value('team_id'),
+                ->value('team_id')),
             UploadedById::getDatabaseTableColumnName() => null,
             Name::getDatabaseTableColumnName() => 'invoice.pdf',
             Path::getDatabaseTableColumnName() => 'attachments/'.fake()->uuid().'.pdf',

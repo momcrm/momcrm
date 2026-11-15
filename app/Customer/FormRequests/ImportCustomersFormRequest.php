@@ -58,7 +58,7 @@ final class ImportCustomersFormRequest extends FormRequest
         $result = ImportCustomersFromCsv::fromFile(
             path: (string) $file->getRealPath(),
             teamId: (string) $this->user()?->current_team_id,
-            userId: (string) $this->user()?->getAuthIdentifier(),
+            userId: (string) $this->user()?->id,
         );
 
         if ($completesOnboarding) {

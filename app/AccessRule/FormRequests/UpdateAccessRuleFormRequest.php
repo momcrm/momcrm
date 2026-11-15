@@ -10,6 +10,7 @@ use App\AccessRule\Actions\FindAccessRules;
 use App\AccessRule\Actions\UpdateAccessRule;
 use App\AccessRule\Exceptions\CouldNotFindAccessRule;
 use App\AccessRule\Properties\Conditions;
+use App\Shared\Types;
 use App\Team\Actions\FindTeam;
 use App\Team\Exceptions\CouldNotViewTeam;
 use Closure;
@@ -40,7 +41,7 @@ final class UpdateAccessRuleFormRequest extends FormRequest
     {
         $team = FindTeam::byIdForMember(
             id: $this->user()?->current_team_id,
-            userId: (string) $this->user()?->getAuthIdentifier(),
+            userId: (string) $this->user()?->id,
         );
 
         if ($team->isNull()) {
@@ -80,7 +81,7 @@ final class UpdateAccessRuleFormRequest extends FormRequest
         return [fn (Validator $validator) => AccessRuleValidationRules::after(
             $validator,
             (string) $this->user()?->current_team_id,
-            (string) $this->user()?->getAuthIdentifier(),
+            (string) $this->user()?->id,
         )];
     }
 
@@ -90,7 +91,7 @@ final class UpdateAccessRuleFormRequest extends FormRequest
 
         UpdateAccessRule::fromAccessRule(
             $this->accessRule
-                ->setPropertyIfExists(Arr::except($validated, [Conditions::getNameForValidation()]))
+                ->setPropertyIfExists(Types::stringKeyed(Arr::except($validated, [Conditions::getNameForValidation()])))
                 ->setConditions(AccessRuleValidationRules::normalizeConditions($validated[Conditions::getNameForValidation()])),
         );
 

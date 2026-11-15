@@ -24,7 +24,7 @@ final class ListAccessRulesController
      */
     public function __invoke(Request $request): Response
     {
-        $userId = (string) $request->user()?->getAuthIdentifier();
+        $userId = (string) $request->user()?->id;
         $team = FindTeam::byIdForMember(id: $request->user()?->current_team_id, userId: $userId);
 
         if ($team->isNull()) {

@@ -63,7 +63,7 @@ final class ShowCustomerController
                 ->map(fn (Service $service): array => $service->toSummary())
                 ->values()
                 ->all(),
-            'projects' => FindProject::forCustomer($teamId, (string) $request->user()?->getAuthIdentifier(), $customerId)
+            'projects' => FindProject::forCustomer($teamId, (string) $request->user()?->id, $customerId)
                 ->map(fn (ProjectEloquentModel $model): array => ListProjectsController::listItem($model, []))
                 ->values()
                 ->all(),

@@ -30,7 +30,7 @@ final class DeleteProjectFormRequest extends FormRequest
      */
     public function authorize(): Response
     {
-        $this->project = FindProject::visibleByIdForTeam((string) $this->route('project'), $this->user()?->current_team_id, (string) $this->user()?->getAuthIdentifier());
+        $this->project = FindProject::visibleByIdForTeam((string) $this->route('project'), $this->user()?->current_team_id, (string) $this->user()?->id);
 
         if ($this->project->isNull() || ! $this->project->isArchived()) {
             throw CouldNotFindProject::notFound();

@@ -29,22 +29,22 @@ final class AccessRuleFormOptions
     public static function forTeam(string $teamId, string $userId): array
     {
         return [
-            'resources' => array_map(fn (AccessResourceEnum $resource): array => [
+            'resources' => array_values(array_map(fn (AccessResourceEnum $resource): array => [
                 'value' => $resource->value,
                 'label' => $resource->label(),
                 'actions' => array_map(fn (AccessActionEnum $action): string => $action->value, $resource->actions()),
-            ], AccessResourceEnum::cases()),
+            ], AccessResourceEnum::cases())),
             'actions' => AccessActionEnum::options(),
             'effects' => AccessEffectEnum::options(),
             'operators' => AccessOperatorEnum::options(),
-            'attributes' => array_map(fn (AccessAttributeEnum $attribute): array => [
+            'attributes' => array_values(array_map(fn (AccessAttributeEnum $attribute): array => [
                 'value' => $attribute->value,
                 'label' => $attribute->label(),
                 'resource' => $attribute->resource()?->value,
                 'type' => $attribute->type()->value,
                 'operators' => array_map(fn (AccessOperatorEnum $operator): string => $operator->value, $attribute->type()->operators()),
                 'options' => self::valuesFor($attribute, $teamId, $userId),
-            ], AccessAttributeEnum::cases()),
+            ], AccessAttributeEnum::cases())),
         ];
     }
 
@@ -57,10 +57,10 @@ final class AccessRuleFormOptions
     public static function valuesFor(AccessAttributeEnum $attribute, string $teamId, string $userId): array
     {
         return match ($attribute) {
-            AccessAttributeEnum::SubjectTeamRole => array_map(
+            AccessAttributeEnum::SubjectTeamRole => array_values(array_map(
                 fn (TeamRoleEnum $role): array => ['value' => $role->value, 'label' => ucfirst($role->value)],
                 TeamRoleEnum::cases(),
-            ),
+            )),
             AccessAttributeEnum::SubjectUser => self::idNameOptions(FindTeamMembers::optionsForTeam($teamId)),
             AccessAttributeEnum::SubjectGroup,
             AccessAttributeEnum::SubjectLeadsGroup,

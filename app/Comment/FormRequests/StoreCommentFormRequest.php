@@ -9,6 +9,7 @@ use App\Comment\Comment;
 use App\Comment\Properties\Body;
 use App\Comment\Properties\Mentions;
 use App\Shared\Table;
+use App\Shared\Types;
 use App\Ticket\Actions\FindTicket;
 use App\Ticket\Exceptions\CouldNotFindTicket;
 use App\Ticket\Ticket;
@@ -68,12 +69,12 @@ final class StoreCommentFormRequest extends FormRequest
 
     public function process(): RedirectResponse
     {
-        $mentions = array_values(array_unique($this->validated()[Mentions::getNameForValidation()] ?? []));
+        $mentions = array_values(array_unique(Types::stringList($this->validated()[Mentions::getNameForValidation()] ?? [])));
 
         CreateComment::fromComment(Comment::new()
             ->setTeamId($this->ticket->getTeamId())
             ->setTicketId($this->ticket->getId())
-            ->setUserId((string) $this->user()?->getAuthIdentifier())
+            ->setUserId((string) $this->user()?->id)
             ->setBody(trim($this->string(Body::getNameForValidation())->toString()))
             ->setMentions($mentions === [] ? null : $mentions));
 

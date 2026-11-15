@@ -11,6 +11,7 @@ use App\Milestone\Properties\Name;
 use App\Milestone\Properties\ProjectId;
 use App\Milestone\Properties\TeamId;
 use App\Project\ProjectEloquentModel;
+use App\Shared\Types;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -27,10 +28,10 @@ final class MilestoneFactory extends Factory
     {
         return [
             ProjectId::getDatabaseTableColumnName() => ProjectEloquentModel::factory(),
-            TeamId::getDatabaseTableColumnName() => fn (array $attributes): string => (string) ProjectEloquentModel::query()
+            TeamId::getDatabaseTableColumnName() => fn (array $attributes): string => Types::string(ProjectEloquentModel::query()
                 ->withoutGlobalScopes()
                 ->whereKey($attributes[ProjectId::getDatabaseTableColumnName()])
-                ->value('team_id'),
+                ->value('team_id')),
             Name::getDatabaseTableColumnName() => fake()->words(2, true),
             DueOn::getDatabaseTableColumnName() => fake()->dateTimeBetween('now', '+2 months')->format('Y-m-d'),
             CompletedAt::getDatabaseTableColumnName() => null,

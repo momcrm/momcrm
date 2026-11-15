@@ -60,7 +60,7 @@ final class StoreTicketAttachmentFormRequest extends FormRequest
         $files = $this->file(AttachmentValidationRules::FILES, []);
 
         foreach ($files as $file) {
-            CreateAttachment::for($file, $this->ticket ?? new TicketEloquentModel, (string) $this->user()?->getAuthIdentifier());
+            CreateAttachment::for($file, $this->ticket ?? new TicketEloquentModel, (string) $this->user()?->id);
         }
 
         return back();

@@ -29,7 +29,7 @@ final class ToggleMilestoneFormRequest extends FormRequest
      */
     public function authorize(): Response
     {
-        $this->milestone = FindMilestone::visibleByIdForTeam((string) $this->route('milestone'), $this->user()?->current_team_id, (string) $this->user()?->getAuthIdentifier());
+        $this->milestone = FindMilestone::visibleByIdForTeam((string) $this->route('milestone'), $this->user()?->current_team_id, (string) $this->user()?->id);
 
         if ($this->milestone->isNull()) {
             throw CouldNotFindMilestone::notFound();

@@ -10,6 +10,7 @@ use App\Invoice\Properties\Notes;
 use App\Invoice\Properties\PurchaseOrder;
 use App\Invoice\Properties\TaxRateBasisPoints;
 use App\Shared\Table;
+use App\Shared\Types;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -89,10 +90,10 @@ final class InvoiceValidationRules
         $items = $validated['items'] ?? [];
 
         return array_values(array_map(fn (array $item): array => [
-            'description' => (string) $item['description'],
-            'quantity' => (int) $item['quantity'],
-            'unit_price_in_cents' => (int) $item['unit_price_in_cents'],
-            'service_id' => isset($item['service_id']) ? (string) $item['service_id'] : null,
+            'description' => Types::string($item['description']),
+            'quantity' => Types::int($item['quantity']),
+            'unit_price_in_cents' => Types::int($item['unit_price_in_cents']),
+            'service_id' => Types::nullableString($item['service_id'] ?? null),
         ], $items));
     }
 }

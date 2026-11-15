@@ -62,7 +62,7 @@ final class FindInvoice
             ->orderBy(Position::getDatabaseTableColumnName())
             ->get();
 
-        return InvoiceItem::collect($items, 'fromEloquentModel');
+        return InvoiceItem::collect($items->all(), 'fromEloquentModel');
     }
 
     /**
@@ -73,13 +73,12 @@ final class FindInvoice
     public static function listItem(InvoiceEloquentModel $model): array
     {
         $invoice = Invoice::fromEloquentModel($model);
-        $items = InvoiceItem::collect($model->getRelationValue(InvoiceRelationship::Items->value), 'fromEloquentModel');
-        $customer = $model->getRelationValue(InvoiceRelationship::Customer->value);
+        $items = InvoiceItem::collect($model->items->all(), 'fromEloquentModel');
 
         return [
             ...$invoice->toSummary(),
             ...InvoiceTotals::fromItems($items, $invoice->getTaxRateBasisPoints()->toInteger())->toArray(),
-            'customer_name' => $customer?->getAttribute('name'),
+            'customer_name' => $model->customer?->name,
         ];
     }
 

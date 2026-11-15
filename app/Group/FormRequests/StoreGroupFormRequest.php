@@ -7,6 +7,7 @@ namespace App\Group\FormRequests;
 use App\Group\Actions\CreateGroup;
 use App\Group\Group;
 use App\Group\GroupValidationRules;
+use App\Shared\Types;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
@@ -43,10 +44,10 @@ final class StoreGroupFormRequest extends FormRequest
 
         $group = CreateGroup::fromGroup(
             Group::new()
-                ->setPropertyIfExists(Arr::except($validated, [GroupValidationRules::LEAD_ID, GroupValidationRules::MEMBER_IDS]))
+                ->setPropertyIfExists(Types::stringKeyed(Arr::except($validated, [GroupValidationRules::LEAD_ID, GroupValidationRules::MEMBER_IDS])))
                 ->setTeamId((string) $this->user()?->current_team_id),
-            leadId: $validated[GroupValidationRules::LEAD_ID] ?? null,
-            memberIds: $validated[GroupValidationRules::MEMBER_IDS] ?? [],
+            leadId: Types::nullableString($validated[GroupValidationRules::LEAD_ID] ?? null),
+            memberIds: Types::stringList($validated[GroupValidationRules::MEMBER_IDS] ?? []),
         );
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __(':name created.', ['name' => $group->getName()->toString()])]);

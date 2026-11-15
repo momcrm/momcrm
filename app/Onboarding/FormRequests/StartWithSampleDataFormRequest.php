@@ -30,7 +30,7 @@ final class StartWithSampleDataFormRequest extends FormRequest
     {
         SeedSampleData::forTeam(
             teamId: (string) $this->user()?->current_team_id,
-            userId: (string) $this->user()?->getAuthIdentifier(),
+            userId: (string) $this->user()?->id,
         );
 
         CompleteOnboarding::fromUser(User::fromEloquentModel($this->user()));

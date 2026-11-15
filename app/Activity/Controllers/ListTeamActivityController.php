@@ -29,7 +29,7 @@ final class ListTeamActivityController
     {
         $team = FindTeam::byIdForMember(
             id: $request->user()?->current_team_id,
-            userId: (string) $request->user()?->getAuthIdentifier(),
+            userId: (string) $request->user()?->id,
         );
 
         if ($team->isNull()) {
@@ -52,7 +52,7 @@ final class ListTeamActivityController
     /**
      * @param  LengthAwarePaginator<int, ActivityEloquentModel>  $activities
      * @param  LengthAwarePaginator<int, AuditLogEloquentModel>  $auditLogs
-     * @return array{activities: LengthAwarePaginator<int, mixed>, auditLogs: LengthAwarePaginator<int, mixed>}
+     * @return array{activities: LengthAwarePaginator<int, covariant array<string, mixed>>, auditLogs: LengthAwarePaginator<int, covariant array<string, mixed>>}
      */
     private static function lists(LengthAwarePaginator $activities, LengthAwarePaginator $auditLogs): array
     {

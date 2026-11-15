@@ -21,7 +21,7 @@ final class ShowAttachmentController
      */
     public function __invoke(Request $request, string $attachment): StreamedResponse
     {
-        $found = FindAttachment::visibleByIdForTeam($attachment, $request->user()?->current_team_id, (string) $request->user()?->getAuthIdentifier());
+        $found = FindAttachment::visibleByIdForTeam($attachment, $request->user()?->current_team_id, (string) $request->user()?->id);
 
         if ($found === null || ! Storage::disk(CreateAttachment::DISK)->exists($found->path)) {
             throw CouldNotFindAttachment::notFound();

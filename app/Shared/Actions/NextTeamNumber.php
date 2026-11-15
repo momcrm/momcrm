@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Shared\Actions;
 
 use App\Shared\Table;
+use App\Shared\Types;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -23,6 +24,6 @@ final class NextTeamNumber
             ->lockForUpdate()
             ->pluck('number');
 
-        return (int) $numbers->max() + 1;
+        return Types::intOrZero($numbers->max()) + 1;
     }
 }

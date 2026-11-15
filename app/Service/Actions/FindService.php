@@ -35,7 +35,7 @@ final class FindService
             ->orderBy(Name::getDatabaseTableColumnName())
             ->get();
 
-        return Service::collect($models, 'fromEloquentModel');
+        return Service::collect($models->all(), 'fromEloquentModel');
     }
 
     /**

@@ -59,7 +59,7 @@ final class MoveTicketFormRequest extends FormRequest
             $this->ticket,
             TicketStatusEnum::from($this->string(Status::getNameForValidation())->toString()),
             $this->integer(Position::getNameForValidation()),
-            movedById: (string) $this->user()?->getAuthIdentifier(),
+            movedById: (string) $this->user()?->id,
         );
 
         return back();

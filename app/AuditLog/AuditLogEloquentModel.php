@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\MassPrunable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Config;
 
 /**
  * Append-only: rows are never updated, and are pruned after the retention
@@ -62,7 +63,7 @@ final class AuditLogEloquentModel extends Model
         return self::query()->where(
             CreatedAt::getDatabaseTableColumnName(),
             '<=',
-            now()->subDays((int) config('audit.audit_log_retention_days')),
+            now()->subDays(Config::integer('audit.audit_log_retention_days')),
         );
     }
 

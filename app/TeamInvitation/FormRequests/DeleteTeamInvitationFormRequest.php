@@ -33,7 +33,7 @@ final class DeleteTeamInvitationFormRequest extends FormRequest
     {
         $team = FindTeam::byIdForMember(
             id: $this->user()?->current_team_id,
-            userId: (string) $this->user()?->getAuthIdentifier(),
+            userId: (string) $this->user()?->id,
         );
 
         $this->invitation = FindTeamInvitation::byIdForTeam(

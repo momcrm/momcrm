@@ -13,6 +13,7 @@ use App\Project\ProjectEloquentModel;
 use App\Project\ProjectFormOptions;
 use App\Project\ProjectRelationship;
 use App\Project\ProjectStatusEnum;
+use App\Shared\Types;
 use App\User\UserEloquentModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -65,9 +66,9 @@ final class ListProjectsController
                 ->map(fn (UserEloquentModel $member): array => ['id' => $member->id, 'name' => $member->name])
                 ->values()
                 ->all(),
-            'tickets_count' => (int) $model->getAttribute('tickets_count'),
-            'closed_tickets_count' => (int) $model->getAttribute('closed_tickets_count'),
-            'overdue_tickets_count' => (int) $model->getAttribute('overdue_tickets_count'),
+            'tickets_count' => Types::intOrZero($model->getAttribute('tickets_count')),
+            'closed_tickets_count' => Types::intOrZero($model->getAttribute('closed_tickets_count')),
+            'overdue_tickets_count' => Types::intOrZero($model->getAttribute('overdue_tickets_count')),
             'is_favorite' => in_array($model->id, $favoriteIds, true),
             'updated_at' => $model->updated_at?->toIso8601String(),
         ];

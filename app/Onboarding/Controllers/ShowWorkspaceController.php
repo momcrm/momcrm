@@ -19,7 +19,7 @@ final class ShowWorkspaceController
     {
         $team = FindTeam::byIdForMember(
             id: $request->user()?->current_team_id,
-            userId: (string) $request->user()?->getAuthIdentifier(),
+            userId: (string) $request->user()?->id,
         );
 
         if ($team->isNull()) {

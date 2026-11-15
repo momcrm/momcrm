@@ -19,7 +19,7 @@ final class RemoveSampleDataFormRequest extends FormRequest
     {
         $team = FindTeam::byIdForMember(
             id: $this->user()?->current_team_id,
-            userId: (string) $this->user()?->getAuthIdentifier(),
+            userId: (string) $this->user()?->id,
         );
 
         if ($team->isNull()) {
@@ -41,7 +41,7 @@ final class RemoveSampleDataFormRequest extends FormRequest
     {
         RemoveSampleData::forTeam(
             teamId: (string) $this->user()?->current_team_id,
-            userId: (string) $this->user()?->getAuthIdentifier(),
+            userId: (string) $this->user()?->id,
         );
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Sample data removed. The workspace is all yours.')]);
