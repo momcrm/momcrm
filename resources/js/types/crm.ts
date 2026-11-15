@@ -358,3 +358,32 @@ export type TimelineMilestone = {
     due_on: string;
     completed_at: string | null;
 };
+
+export type AccessCondition = {
+    attribute: string;
+    operator: string;
+    value: string | string[] | null;
+};
+
+export type AccessRuleItem = {
+    id: string;
+    name: string;
+    resources: string[];
+    actions: string[];
+    effect: 'allow' | 'deny';
+    conditions: AccessCondition[];
+    is_enabled: boolean;
+};
+
+export type AccessRuleOptions = {
+    resources: (Option & { actions: string[] })[];
+    actions: Option[];
+    effects: Option[];
+    operators: Option[];
+    attributes: (Option & {
+        resource: string | null;
+        type: 'choice' | 'boolean';
+        operators: string[];
+        options: Option[];
+    })[];
+};

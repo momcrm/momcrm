@@ -1,14 +1,28 @@
-import { Link } from '@inertiajs/react';
-import { Activity, Palette, Shield, UserRound, UsersRound } from 'lucide-react';
+import { Link, usePage } from '@inertiajs/react';
+import {
+    Activity,
+    KeyRound,
+    Palette,
+    Shield,
+    UserRound,
+    UsersRound,
+} from 'lucide-react';
 import type { PropsWithChildren } from 'react';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn, toUrl } from '@/lib/utils';
+import { index as accessRulesIndex } from '@/routes/access-rules';
 import { index as activityIndex } from '@/routes/activity';
 import { edit as editAppearance } from '@/routes/appearance';
 import { edit } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
 import { edit as editTeam } from '@/routes/team';
 import type { NavItem } from '@/types';
+
+const accessRulesItem: NavItem = {
+    title: 'Access rules',
+    href: accessRulesIndex(),
+    icon: KeyRound,
+};
 
 const sections: { title: string; items: NavItem[] }[] = [
     {
@@ -34,13 +48,19 @@ const sections: { title: string; items: NavItem[] }[] = [
  */
 export default function SettingsLayout({ children }: PropsWithChildren) {
     const { isCurrentOrParentUrl } = useCurrentUrl();
+    const { canManageAccessRules } = usePage().props;
+    const visibleSections = sections.map((section) =>
+        section.title === 'Workspace' && canManageAccessRules
+            ? { ...section, items: [...section.items, accessRulesItem] }
+            : section,
+    );
 
     return (
         <div className="flex flex-col gap-6 p-4 md:flex-row md:gap-10 md:p-6">
             <aside className="w-full shrink-0 md:w-52">
                 <h1 className="mb-4 text-xl font-semibold">Settings</h1>
                 <nav aria-label="Settings" className="flex flex-col gap-4">
-                    {sections.map((section) => (
+                    {visibleSections.map((section) => (
                         <div key={section.title} className="space-y-0.5">
                             <h2 className="px-2 pb-1 text-[11px] font-medium tracking-wide text-subtle-foreground uppercase">
                                 {section.title}
