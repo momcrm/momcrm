@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Contact\Actions;
 
 use App\Contact\Contact;
+use App\Contact\ContactCollection;
 use App\Contact\ContactEloquentModel;
 use App\Contact\ContactRelationship;
 use App\Contact\Properties\CustomerId;
@@ -17,7 +18,6 @@ use App\Contact\Properties\TeamId;
 use App\Team\Scopes\CurrentTeamScope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Collection;
 
 final class FindContact
 {
@@ -50,10 +50,8 @@ final class FindContact
 
     /**
      * A customer's contacts, the primary contact first.
-     *
-     * @return Collection<int, Contact>
      */
-    public static function forCustomer(string $customerId, string $teamId): Collection
+    public static function forCustomer(string $customerId, string $teamId): ContactCollection
     {
         $contacts = self::query($teamId)
             ->where(CustomerId::getDatabaseTableColumnName(), $customerId)

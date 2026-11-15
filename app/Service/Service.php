@@ -19,6 +19,7 @@ use App\Service\Properties\Status;
 use App\Service\Properties\TeamId;
 use App\Service\Properties\UnitPriceInCents;
 use App\Service\Properties\UpdatedAt;
+use Illuminate\Support\Collection;
 use Mom\Data\AbstractData;
 use Mom\Data\AbstractValue;
 
@@ -52,6 +53,18 @@ final class Service extends AbstractData
     public function getPrimaryKey(): AbstractValue
     {
         return $this->getId();
+    }
+
+    /**
+     * @param  Collection<int, mixed>|array<int, mixed>  $items
+     */
+    public static function collect(Collection|array $items, string $method = 'fromData'): ServiceCollection
+    {
+        if ($items instanceof ServiceCollection) {
+            return $items;
+        }
+
+        return ServiceCollection::make(parent::collect($items, $method)->all());
     }
 
     /**

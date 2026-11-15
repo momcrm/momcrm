@@ -12,6 +12,7 @@ use App\Team\Properties\IsPersonal;
 use App\Team\Properties\Name;
 use App\Team\Properties\OwnerId;
 use App\Team\Properties\UpdatedAt;
+use Illuminate\Support\Collection;
 use Mom\Data\AbstractBoolean;
 use Mom\Data\AbstractData;
 use Mom\Data\AbstractString;
@@ -39,6 +40,18 @@ final class Team extends AbstractData
     public function getPrimaryKey(): AbstractValue
     {
         return $this->getId();
+    }
+
+    /**
+     * @param  Collection<int, mixed>|array<int, mixed>  $items
+     */
+    public static function collect(Collection|array $items, string $method = 'fromData'): TeamCollection
+    {
+        if ($items instanceof TeamCollection) {
+            return $items;
+        }
+
+        return TeamCollection::make(parent::collect($items, $method)->all());
     }
 
     /**

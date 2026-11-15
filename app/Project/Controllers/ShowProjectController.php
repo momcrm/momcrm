@@ -55,7 +55,7 @@ final class ShowProjectController
         return Inertia::render('projects/show', [
             'project' => [
                 ...ListProjectsController::listItem($found, FindFavorite::idsForUser($teamId, $user->id, FavoritableTypeEnum::Project)),
-                'group_name' => $found->getGroupName()->toNullableString(),
+                'group_name' => $found->getGroup()->toNullableData()?->getName()->toString(),
             ],
             'tab' => $tab,
             'can' => AccessAbilities::for($user, AccessResourceEnum::Project, $found),

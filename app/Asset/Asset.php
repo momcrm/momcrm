@@ -15,6 +15,7 @@ use App\Asset\Properties\SerialNumber;
 use App\Asset\Properties\Status;
 use App\Asset\Properties\TeamId;
 use App\Asset\Properties\UpdatedAt;
+use Illuminate\Support\Collection;
 use Mom\Data\AbstractData;
 use Mom\Data\AbstractValue;
 
@@ -44,6 +45,18 @@ final class Asset extends AbstractData
     public function getPrimaryKey(): AbstractValue
     {
         return $this->getId();
+    }
+
+    /**
+     * @param  Collection<int, mixed>|array<int, mixed>  $items
+     */
+    public static function collect(Collection|array $items, string $method = 'fromData'): AssetCollection
+    {
+        if ($items instanceof AssetCollection) {
+            return $items;
+        }
+
+        return AssetCollection::make(parent::collect($items, $method)->all());
     }
 
     /**

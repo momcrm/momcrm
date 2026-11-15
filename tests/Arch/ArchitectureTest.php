@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Shared\Abstracts\AbstractDataCollection;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -216,4 +217,35 @@ test('finders return data objects, not Eloquent models or builders', function (R
     preg_match('/@return\s+([^\n*]+)/', (string) $method->getDocComment(), $docReturn);
 
     expect($docReturn[1] ?? '')->not->toMatch('/\w*(EloquentModel|EloquentCollection|Builder|DatabaseNotification)\b|\bModel\b/');
+
+    // A collection of data objects is the domain's typed collection, not a plain one.
+    if (namedReturnTypes($method) === [Illuminate\Support\Collection::class]) {
+        preg_match('/Collection<[^,>]+,\s*(\w+)>/', $docReturn[1] ?? '', $valueType);
+        $valueClass = $valueType[1] ?? '';
+
+        expect(in_array($valueClass, domainDataClassNames(), true))->toBeFalse("returns a plain Collection of {$valueClass}, use {$valueClass}Collection");
+    }
 })->with(fn (): array => finderMethods());
+
+/**
+ * Short names of the domain DTOs, e.g. "Project".
+ *
+ * @return array<int, string>
+ */
+function domainDataClassNames(): array
+{
+    return collect(domains())
+        ->filter(fn (string $domain): bool => class_exists("App\\{$domain}\\{$domain}") && is_a("App\\{$domain}\\{$domain}", AbstractData::class, true))
+        ->values()
+        ->all();
+}
+
+test('every domain DTO has a final typed collection that collect() returns', function (string $domain): void {
+    $collection = "App\\{$domain}\\{$domain}Collection";
+
+    expect(class_exists($collection))->toBeTrue("{$collection} is missing")
+        ->and((new ReflectionClass($collection))->isFinal())->toBeTrue("{$collection} is not final")
+        ->and(is_a($collection, AbstractDataCollection::class, true))->toBeTrue("{$collection} does not extend AbstractDataCollection")
+        ->and($collection::dataClass())->toBe("App\\{$domain}\\{$domain}")
+        ->and(namedReturnTypes(new ReflectionMethod("App\\{$domain}\\{$domain}", 'collect')))->toBe([$collection]);
+})->with(fn (): array => domainDataClassNames());

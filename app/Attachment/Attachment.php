@@ -16,7 +16,8 @@ use App\Attachment\Properties\Size;
 use App\Attachment\Properties\TeamId;
 use App\Attachment\Properties\UpdatedAt;
 use App\Attachment\Properties\UploadedById;
-use App\Attachment\Properties\UploaderName;
+use App\Attachment\Properties\Uploader;
+use Illuminate\Support\Collection;
 use Mom\Data\AbstractData;
 use Mom\Data\AbstractValue;
 
@@ -37,7 +38,7 @@ final class Attachment extends AbstractData
         public TeamId $teamId,
         public UpdatedAt $updatedAt,
         public UploadedById $uploadedById,
-        public UploaderName $uploaderName,
+        public Uploader $uploader,
     ) {}
 
     public static function getFactory(): AttachmentFactory
@@ -48,6 +49,18 @@ final class Attachment extends AbstractData
     public function getPrimaryKey(): AbstractValue
     {
         return $this->getId();
+    }
+
+    /**
+     * @param  Collection<int, mixed>|array<int, mixed>  $items
+     */
+    public static function collect(Collection|array $items, string $method = 'fromData'): AttachmentCollection
+    {
+        if ($items instanceof AttachmentCollection) {
+            return $items;
+        }
+
+        return AttachmentCollection::make(parent::collect($items, $method)->all());
     }
 
     public function getAttachableId(): AttachableId
@@ -168,8 +181,8 @@ final class Attachment extends AbstractData
         return $this;
     }
 
-    public function getUploaderName(): UploaderName
+    public function getUploader(): Uploader
     {
-        return $this->uploaderName;
+        return $this->uploader;
     }
 }

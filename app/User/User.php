@@ -20,6 +20,7 @@ use App\User\Properties\OnboardingUseCase;
 use App\User\Properties\Password;
 use App\User\Properties\UpdatedAt;
 use DateTimeInterface;
+use Illuminate\Support\Collection;
 use Mom\Data\AbstractData;
 use Mom\Data\AbstractDate;
 use Mom\Data\AbstractEnum;
@@ -55,6 +56,18 @@ final class User extends AbstractData
     public function getPrimaryKey(): AbstractValue
     {
         return $this->getId();
+    }
+
+    /**
+     * @param  Collection<int, mixed>|array<int, mixed>  $items
+     */
+    public static function collect(Collection|array $items, string $method = 'fromData'): UserCollection
+    {
+        if ($items instanceof UserCollection) {
+            return $items;
+        }
+
+        return UserCollection::make(parent::collect($items, $method)->all());
     }
 
     public function getCreatedAt(): CreatedAt

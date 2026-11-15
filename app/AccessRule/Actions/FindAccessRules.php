@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\AccessRule\Actions;
 
 use App\AccessRule\AccessRule;
+use App\AccessRule\AccessRuleCollection;
 use App\AccessRule\AccessRuleEloquentModel;
 use App\AccessRule\Properties\CreatedAt;
 use App\AccessRule\Properties\Id;
@@ -19,10 +20,8 @@ final class FindAccessRules
 {
     /**
      * The team's enabled rules, loaded once per request.
-     *
-     * @return Collection<int, AccessRule>
      */
-    public static function enabledForTeam(string $teamId): Collection
+    public static function enabledForTeam(string $teamId): AccessRuleCollection
     {
         return RequestMemo::remember(self::memoKey($teamId), fn (): Collection => AccessRule::collect(
             self::query($teamId)->where(IsEnabled::getDatabaseTableColumnName(), true)->get()->all(),
@@ -31,10 +30,8 @@ final class FindAccessRules
 
     /**
      * Every rule in the team, oldest first, for the settings page.
-     *
-     * @return Collection<int, AccessRule>
      */
-    public static function allForTeam(string $teamId): Collection
+    public static function allForTeam(string $teamId): AccessRuleCollection
     {
         return AccessRule::collect(self::query($teamId)->get()->all());
     }

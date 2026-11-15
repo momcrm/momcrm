@@ -11,6 +11,7 @@ use App\Label\Properties\Id;
 use App\Label\Properties\Name;
 use App\Label\Properties\TeamId;
 use App\Label\Properties\UpdatedAt;
+use Illuminate\Support\Collection;
 use Mom\Data\AbstractData;
 use Mom\Data\AbstractValue;
 
@@ -36,6 +37,18 @@ final class Label extends AbstractData
     public function getPrimaryKey(): AbstractValue
     {
         return $this->getId();
+    }
+
+    /**
+     * @param  Collection<int, mixed>|array<int, mixed>  $items
+     */
+    public static function collect(Collection|array $items, string $method = 'fromData'): LabelCollection
+    {
+        if ($items instanceof LabelCollection) {
+            return $items;
+        }
+
+        return LabelCollection::make(parent::collect($items, $method)->all());
     }
 
     public function getColor(): Color

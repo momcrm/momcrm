@@ -12,6 +12,7 @@ use App\TeamUser\Properties\TeamId;
 use App\TeamUser\Properties\UpdatedAt;
 use App\TeamUser\Properties\UserId;
 use BackedEnum;
+use Illuminate\Support\Collection;
 use Mom\Data\AbstractData;
 use Mom\Data\AbstractEnum;
 use Mom\Data\AbstractValue;
@@ -33,6 +34,18 @@ final class TeamUser extends AbstractData
     public function getPrimaryKey(): AbstractValue
     {
         return $this->getId();
+    }
+
+    /**
+     * @param  Collection<int, mixed>|array<int, mixed>  $items
+     */
+    public static function collect(Collection|array $items, string $method = 'fromData'): TeamUserCollection
+    {
+        if ($items instanceof TeamUserCollection) {
+            return $items;
+        }
+
+        return TeamUserCollection::make(parent::collect($items, $method)->all());
     }
 
     public function getCreatedAt(): CreatedAt

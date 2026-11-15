@@ -17,6 +17,7 @@ use App\AccessRule\Properties\Resources;
 use App\AccessRule\Properties\TeamId;
 use App\AccessRule\Properties\UpdatedAt;
 use App\Shared\Types;
+use Illuminate\Support\Collection;
 use Mom\Data\AbstractData;
 use Mom\Data\AbstractValue;
 
@@ -50,6 +51,18 @@ final class AccessRule extends AbstractData
     public function getPrimaryKey(): AbstractValue
     {
         return $this->getId();
+    }
+
+    /**
+     * @param  Collection<int, mixed>|array<int, mixed>  $items
+     */
+    public static function collect(Collection|array $items, string $method = 'fromData'): AccessRuleCollection
+    {
+        if ($items instanceof AccessRuleCollection) {
+            return $items;
+        }
+
+        return AccessRuleCollection::make(parent::collect($items, $method)->all());
     }
 
     public function getActions(): Actions

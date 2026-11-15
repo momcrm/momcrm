@@ -60,14 +60,14 @@ final class AccessEvaluator
         $denying = $rules->first(fn (AccessRule $rule): bool => $rule->getEffect()->toEnum() === AccessEffectEnum::Deny
             && self::matches($rule, $subject, $record, brokenHolds: true));
 
-        if ($denying !== null) {
+        if ($denying->isNotNull()) {
             return Response::deny(__('The access rule ":name" does not allow this.', ['name' => $denying->getName()->toString()]));
         }
 
         $allowing = $rules->first(fn (AccessRule $rule): bool => $rule->getEffect()->toEnum() === AccessEffectEnum::Allow
             && self::matches($rule, $subject, $record, brokenHolds: false));
 
-        return $allowing !== null
+        return $allowing->isNotNull()
             ? Response::allow()
             : Response::deny(__('No access rule allows you to do this.'));
     }

@@ -15,13 +15,13 @@ use App\Invoice\Properties\Number;
 use App\Invoice\Properties\Status;
 use App\Invoice\Properties\TeamId;
 use App\InvoiceItem\InvoiceItem;
+use App\InvoiceItem\InvoiceItemCollection;
 use App\InvoiceItem\InvoiceItemEloquentModel;
 use App\InvoiceItem\Properties\InvoiceId;
 use App\InvoiceItem\Properties\Position;
 use App\Team\Scopes\CurrentTeamScope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Collection;
 
 final class FindInvoice
 {
@@ -52,10 +52,7 @@ final class FindInvoice
             ->through(fn (InvoiceEloquentModel $model): Invoice => Invoice::fromEloquentModel($model));
     }
 
-    /**
-     * @return Collection<int, InvoiceItem>
-     */
-    public static function itemsFor(Invoice $invoice): Collection
+    public static function itemsFor(Invoice $invoice): InvoiceItemCollection
     {
         $items = InvoiceItemEloquentModel::query()
             ->withoutGlobalScope(CurrentTeamScope::class)
@@ -76,8 +73,8 @@ final class FindInvoice
     {
         return [
             ...$invoice->toSummary(),
-            ...InvoiceTotals::fromSubtotal($invoice->getItemsSubtotalInCents()->toInteger(), $invoice->getTaxRateBasisPoints()->toInteger())->toArray(),
-            'customer_name' => $invoice->getCustomerName()->toNullableString(),
+            ...InvoiceTotals::fromItems($invoice->getItems()->toDataCollection(), $invoice->getTaxRateBasisPoints()->toInteger())->toArray(),
+            'customer_name' => $invoice->getCustomer()->toNullableData()?->getName()->toString(),
         ];
     }
 

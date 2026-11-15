@@ -14,6 +14,7 @@ use App\EmailCode\Properties\ExpiresAt;
 use App\EmailCode\Properties\Id;
 use App\EmailCode\Properties\Purpose;
 use App\EmailCode\Properties\UpdatedAt;
+use Illuminate\Support\Collection;
 use Mom\Data\AbstractData;
 use Mom\Data\AbstractValue;
 
@@ -42,6 +43,18 @@ final class EmailCode extends AbstractData
     public function getPrimaryKey(): AbstractValue
     {
         return $this->getId();
+    }
+
+    /**
+     * @param  Collection<int, mixed>|array<int, mixed>  $items
+     */
+    public static function collect(Collection|array $items, string $method = 'fromData'): EmailCodeCollection
+    {
+        if ($items instanceof EmailCodeCollection) {
+            return $items;
+        }
+
+        return EmailCodeCollection::make(parent::collect($items, $method)->all());
     }
 
     public function getAttempts(): Attempts

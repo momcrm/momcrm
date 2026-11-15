@@ -4,39 +4,28 @@ declare(strict_types=1);
 
 namespace App\Ticket\Properties;
 
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\Model;
-use Mom\Data\AbstractCollection;
-use Mom\Data\AbstractData;
-use Mom\Data\AbstractValue;
+use App\Label\LabelCollection;
+use App\Shared\Abstracts\AbstractRelatedDataCollection;
 
 /**
- * The labels, as id, name and colour. Read from the eager-loaded relation when it is loaded; not a column.
+ * The ticket's labels, when loaded.
  */
-final class Labels extends AbstractCollection
+final class Labels extends AbstractRelatedDataCollection
 {
-    public static bool $hasDBColumn = false;
-
     public static function getName(): string
     {
         return 'labels';
     }
 
-    public static function fromEloquentModel(Model $model): static
+    public static function collectionClass(): string
     {
-        $related = $model->relationLoaded('labels') ? $model->getRelation('labels') : null;
-
-        return new self(value: $related instanceof Collection
-            ? $related->map(fn (Model $item): array => ['id' => $item->getAttribute('id'), 'name' => $item->getAttribute('name'), 'color' => $item->getAttribute('color')])->values()->all()
-            : [])->setData($model);
+        return LabelCollection::class;
     }
 
-    /**
-     * @param  AbstractData<Model>  $data
-     * @return array<int, mixed>
-     */
-    public static function forDatabaseCreateValue(AbstractValue $value, AbstractData $data): array
+    public function toDataCollection(): LabelCollection
     {
-        return [];
+        $collection = parent::toDataCollection();
+
+        return $collection instanceof LabelCollection ? $collection : new LabelCollection;
     }
 }

@@ -20,7 +20,7 @@ final class ListContactsController
             'contacts' => FindContact::paginateForTeam((string) $request->user()?->current_team_id, $search)
                 ->through(fn (Contact $contact): array => [
                     ...$contact->toSummary(),
-                    'customer_name' => $contact->getCustomerName()->toNullableString(),
+                    'customer_name' => $contact->getCustomer()->toNullableData()?->getName()->toString(),
                 ]),
             'filters' => ['search' => $search],
         ]);

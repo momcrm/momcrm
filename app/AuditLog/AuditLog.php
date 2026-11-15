@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\AuditLog;
 
-use App\AuditLog\Properties\ActorName;
+use App\AuditLog\Properties\Actor;
 use App\AuditLog\Properties\AuditableId;
 use App\AuditLog\Properties\AuditableType;
 use App\AuditLog\Properties\CreatedAt;
@@ -31,7 +31,7 @@ use Mom\Data\AbstractValue;
 final class AuditLog extends AbstractData
 {
     public function __construct(
-        public ActorName $actorName,
+        public Actor $actor,
         public AuditableId $auditableId,
         public AuditableType $auditableType,
         public CreatedAt $createdAt,
@@ -50,6 +50,18 @@ final class AuditLog extends AbstractData
     public function getPrimaryKey(): AbstractValue
     {
         return $this->getId();
+    }
+
+    /**
+     * @param  Collection<int, mixed>|array<int, mixed>  $items
+     */
+    public static function collect(Collection|array $items, string $method = 'fromData'): AuditLogCollection
+    {
+        if ($items instanceof AuditLogCollection) {
+            return $items;
+        }
+
+        return AuditLogCollection::make(parent::collect($items, $method)->all());
     }
 
     /**
@@ -76,7 +88,7 @@ final class AuditLog extends AbstractData
             'event' => $this->getEvent()->toString(),
             'subject' => $this->getAuditableType()->toString(),
             'changes' => $changes,
-            'actor' => $this->getActorName()->toNullableString(),
+            'actor' => $this->getActor()->toNullableData()?->getName()->toString(),
             'ip_address' => $this->getIpAddress()->toNullableString(),
             'created_at' => $this->getCreatedAt()->toNullableISOString(),
         ];
@@ -391,8 +403,8 @@ final class AuditLog extends AbstractData
         return $this;
     }
 
-    public function getActorName(): ActorName
+    public function getActor(): Actor
     {
-        return $this->actorName;
+        return $this->actor;
     }
 }

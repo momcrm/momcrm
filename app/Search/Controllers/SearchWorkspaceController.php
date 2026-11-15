@@ -46,7 +46,7 @@ final class SearchWorkspaceController
                 ->map(fn (Project $project): array => [
                     'id' => $project->getId()->toString(),
                     'title' => $project->getName()->toString(),
-                    'subtitle' => $project->getCustomerName()->toNullableString(),
+                    'subtitle' => $project->getCustomer()->toNullableData()?->getName()->toString(),
                     'url' => route('projects.show', $project->getId()->toString()),
                 ])
                 ->values()
@@ -65,7 +65,7 @@ final class SearchWorkspaceController
                 ->map(fn (Contact $contact): array => [
                     'id' => $contact->getId()->toString(),
                     'title' => $contact->getFullName(),
-                    'subtitle' => $contact->getCustomerName()->toNullableString(),
+                    'subtitle' => $contact->getCustomer()->toNullableData()?->getName()->toString(),
                     'url' => route('contacts.edit', $contact->getId()->toString()),
                 ])
                 ->all(),
@@ -75,7 +75,7 @@ final class SearchWorkspaceController
                     ->map(fn (Invoice $invoice): array => [
                         'id' => $invoice->getId()->toString(),
                         'title' => "Invoice #{$invoice->getNumber()->toInteger()}",
-                        'subtitle' => $invoice->getCustomerName()->toNullableString(),
+                        'subtitle' => $invoice->getCustomer()->toNullableData()?->getName()->toString(),
                         'url' => route('invoices.show', $invoice->getId()->toString()),
                     ])
                     ->all()
@@ -95,7 +95,7 @@ final class SearchWorkspaceController
                 'number' => $ticket->getNumber()->toInteger(),
                 'title' => $ticket->getTitle()->toString(),
                 'status' => $ticket->getStatus()->toString(),
-                'subtitle' => $ticket->getCustomerName()->toNullableString() ?? $ticket->getProjectName()->toNullableString(),
+                'subtitle' => $ticket->getCustomer()->toNullableData()?->getName()->toString() ?? $ticket->getProject()->toNullableData()?->getName()->toString(),
                 'url' => route('tickets.show', $ticket->getId()->toString()),
             ])
             ->values()

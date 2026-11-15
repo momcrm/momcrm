@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Ticket\Controllers;
 
-use App\Shared\Types;
+use App\Label\Label;
 use App\Ticket\Ticket;
 use App\Ticket\TicketListFilters;
 use App\Ticket\TicketViewProps;
@@ -34,16 +34,12 @@ final class ListTicketsController
     {
         return [
             ...$ticket->toSummary(),
-            'customer_name' => $ticket->getCustomerName()->toNullableString(),
-            'assignee_name' => $ticket->getAssigneeName()->toNullableString(),
-            'project_name' => $ticket->getProjectName()->toNullableString(),
-            'project_color' => $ticket->getProjectColor()->toNullableString(),
-            'labels' => $ticket->getLabels()->toCollection()
-                ->map(function (mixed $label): array {
-                    $label = Types::stringKeyed($label);
-
-                    return ['id' => Types::string($label['id'] ?? null), 'name' => Types::string($label['name'] ?? null), 'color' => Types::string($label['color'] ?? null)];
-                })
+            'customer_name' => $ticket->getCustomer()->toNullableData()?->getName()->toString(),
+            'assignee_name' => $ticket->getAssignee()->toNullableData()?->getName()->toString(),
+            'project_name' => $ticket->getProject()->toNullableData()?->getName()->toString(),
+            'project_color' => $ticket->getProject()->toNullableData()?->getColor()->toString(),
+            'labels' => $ticket->getLabels()->toDataCollection()
+                ->map(fn (Label $label): array => ['id' => $label->getId()->toString(), 'name' => $label->getName()->toString(), 'color' => $label->getColor()->toString()])
                 ->values()
                 ->all(),
             'subtasks_count' => $ticket->getSubtasksCount()->toInteger(),

@@ -15,6 +15,7 @@ use App\TeamInvitation\Properties\Role;
 use App\TeamInvitation\Properties\TeamId;
 use App\TeamInvitation\Properties\TokenHash;
 use App\TeamInvitation\Properties\UpdatedAt;
+use Illuminate\Support\Collection;
 use Mom\Data\AbstractData;
 use Mom\Data\AbstractValue;
 
@@ -44,6 +45,18 @@ final class TeamInvitation extends AbstractData
     public function getPrimaryKey(): AbstractValue
     {
         return $this->getId();
+    }
+
+    /**
+     * @param  Collection<int, mixed>|array<int, mixed>  $items
+     */
+    public static function collect(Collection|array $items, string $method = 'fromData'): TeamInvitationCollection
+    {
+        if ($items instanceof TeamInvitationCollection) {
+            return $items;
+        }
+
+        return TeamInvitationCollection::make(parent::collect($items, $method)->all());
     }
 
     /**

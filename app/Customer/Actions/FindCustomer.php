@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Customer\Actions;
 
 use App\Customer\Customer;
+use App\Customer\CustomerCollection;
 use App\Customer\CustomerEloquentModel;
 use App\Customer\CustomerRelationship;
 use App\Customer\Properties\Email;
@@ -47,15 +48,14 @@ final class FindCustomer
      * Some of the team's customers by id, by name.
      *
      * @param  array<int, string>  $ids
-     * @return Collection<int, Customer>
      */
-    public static function byIdsForTeam(string $teamId, array $ids): Collection
+    public static function byIdsForTeam(string $teamId, array $ids): CustomerCollection
     {
-        return self::query($teamId)
+        return Customer::collect(self::query($teamId)
             ->whereIn(Id::getDatabaseTableColumnName(), $ids)
             ->orderBy(Name::getDatabaseTableColumnName())
             ->get()
-            ->map(fn (CustomerEloquentModel $customer): Customer => Customer::fromEloquentModel($customer));
+            ->all());
     }
 
     /**

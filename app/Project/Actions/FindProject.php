@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Project\Actions;
 
 use App\Project\Project;
+use App\Project\ProjectCollection;
 use App\Project\ProjectEloquentModel;
 use App\Project\ProjectRelationship;
 use App\Project\ProjectVisibility;
@@ -72,10 +73,8 @@ final class FindProject
     /**
      * The team's live projects someone may see, with their lead, customer,
      * members and ticket counts.
-     *
-     * @return Collection<int, Project>
      */
-    public static function listForTeam(string $teamId, string $userId, ?string $search = null, ?string $status = null, string $sort = 'name', string $direction = 'asc'): Collection
+    public static function listForTeam(string $teamId, string $userId, ?string $search = null, ?string $status = null, string $sort = 'name', string $direction = 'asc'): ProjectCollection
     {
         $query = self::withListDetails(self::visibleQuery($teamId, $userId))
             ->whereNull(ArchivedAt::getDatabaseTableColumnName())
@@ -94,10 +93,8 @@ final class FindProject
 
     /**
      * A customer's live projects someone may see.
-     *
-     * @return Collection<int, Project>
      */
-    public static function forCustomer(string $teamId, string $userId, string $customerId): Collection
+    public static function forCustomer(string $teamId, string $userId, string $customerId): ProjectCollection
     {
         return Project::collect(self::withListDetails(self::visibleQuery($teamId, $userId))
             ->whereNull(ArchivedAt::getDatabaseTableColumnName())
@@ -109,10 +106,8 @@ final class FindProject
 
     /**
      * Archived projects someone may see, most recently archived first.
-     *
-     * @return Collection<int, Project>
      */
-    public static function archivedForTeam(string $teamId, string $userId): Collection
+    public static function archivedForTeam(string $teamId, string $userId): ProjectCollection
     {
         return Project::collect(self::withListDetails(self::visibleQuery($teamId, $userId))
             ->whereNotNull(ArchivedAt::getDatabaseTableColumnName())
@@ -125,9 +120,8 @@ final class FindProject
      * Some projects by id, in the order given, for favourites and the sidebar.
      *
      * @param  array<int, string>  $ids
-     * @return Collection<int, Project>
      */
-    public static function liveByIds(string $teamId, string $userId, array $ids): Collection
+    public static function liveByIds(string $teamId, string $userId, array $ids): ProjectCollection
     {
         $projects = self::withListDetails(self::visibleQuery($teamId, $userId))
             ->whereNull(ArchivedAt::getDatabaseTableColumnName())

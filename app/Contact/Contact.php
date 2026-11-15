@@ -6,8 +6,8 @@ namespace App\Contact;
 
 use App\Contact\Factories\ContactFactory;
 use App\Contact\Properties\CreatedAt;
+use App\Contact\Properties\Customer;
 use App\Contact\Properties\CustomerId;
-use App\Contact\Properties\CustomerName;
 use App\Contact\Properties\Email;
 use App\Contact\Properties\FirstName;
 use App\Contact\Properties\Id;
@@ -18,6 +18,7 @@ use App\Contact\Properties\Position;
 use App\Contact\Properties\TeamId;
 use App\Contact\Properties\UpdatedAt;
 use App\Contact\Properties\WorkPhone;
+use Illuminate\Support\Collection;
 use Mom\Data\AbstractData;
 use Mom\Data\AbstractValue;
 
@@ -28,8 +29,8 @@ final class Contact extends AbstractData
 {
     public function __construct(
         public CreatedAt $createdAt,
+        public Customer $customer,
         public CustomerId $customerId,
-        public CustomerName $customerName,
         public Email $email,
         public FirstName $firstName,
         public Id $id,
@@ -50,6 +51,18 @@ final class Contact extends AbstractData
     public function getPrimaryKey(): AbstractValue
     {
         return $this->getId();
+    }
+
+    /**
+     * @param  Collection<int, mixed>|array<int, mixed>  $items
+     */
+    public static function collect(Collection|array $items, string $method = 'fromData'): ContactCollection
+    {
+        if ($items instanceof ContactCollection) {
+            return $items;
+        }
+
+        return ContactCollection::make(parent::collect($items, $method)->all());
     }
 
     public function getFullName(): string
@@ -208,8 +221,8 @@ final class Contact extends AbstractData
         return $this;
     }
 
-    public function getCustomerName(): CustomerName
+    public function getCustomer(): Customer
     {
-        return $this->customerName;
+        return $this->customer;
     }
 }
