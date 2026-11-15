@@ -104,6 +104,29 @@ it('filters by priority, assignee, project and label', function (): void {
         ->assertInertia(fn (Assert $page) => $page->where('tickets.total', 0));
 });
 
+it('filters by type and department, or by having none', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $incident = FindChoice::byNameForTeam($user->current_team_id, ChoiceListEnum::TicketType, 'Incident')->getId()->toString();
+    $support = FindChoice::byNameForTeam($user->current_team_id, ChoiceListEnum::TicketDepartment, 'Support')->getId()->toString();
+    $match = ticketFor($user, ['number' => 1, 'type_id' => $incident, 'department_id' => $support]);
+    ticketFor($user, ['number' => 2, 'type_id' => $incident]);
+    $untyped = ticketFor($user, ['number' => 3, 'department_id' => $support]);
+
+    actingAs($user)
+        ->get(route('tickets.index', ['type' => $incident, 'department' => $support]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('tickets.total', 1)
+            ->where('tickets.data.0.id', $match->id)
+            ->where('tickets.data.0.type_id', $incident)
+            ->where('filters.type', $incident)
+            ->where('filters.department', $support),
+        );
+
+    actingAs($user)
+        ->get(route('tickets.index', ['type' => 'none']))
+        ->assertInertia(fn (Assert $page) => $page->where('tickets.total', 1)->where('tickets.data.0.id', $untyped->id));
+});
+
 it("sorts the table by priority, in the team's order", function (): void {
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
     [$urgent, $normal, $low] = array_map(fn (string $name): string => FindChoice::byNameForTeam($user->current_team_id, ChoiceListEnum::TicketPriority, $name)->getId()->toString(), ['Urgent', 'Normal', 'Low']);

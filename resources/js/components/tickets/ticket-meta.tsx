@@ -17,7 +17,7 @@ import {
 import { useInitials } from '@/hooks/use-initials';
 import { hueStyle } from '@/lib/colors';
 import { cn } from '@/lib/utils';
-import type { TicketLabel, Choice } from '@/types';
+import type { TicketLabel, Choice, ChoiceList } from '@/types';
 
 /**
  * The live choices in a list, plus any archived ones still in use by the
@@ -194,6 +194,63 @@ export function useTicketLabels(
     ...inUseIds: (string | null | undefined)[]
 ): Choice[] {
     return liveOrInUse(usePage().props.choices?.ticket_label ?? [], inUseIds);
+}
+
+/**
+ * The team's live ticket types in order, plus any archived ones among the
+ * given types (such as the ticket's own).
+ */
+export function useTicketTypes(
+    ...inUseIds: (string | null | undefined)[]
+): Choice[] {
+    return liveOrInUse(usePage().props.choices?.ticket_type ?? [], inUseIds);
+}
+
+/**
+ * The team's live ticket departments in order, plus any archived ones among
+ * the given departments (such as the ticket's own).
+ */
+export function useTicketDepartments(
+    ...inUseIds: (string | null | undefined)[]
+): Choice[] {
+    return liveOrInUse(
+        usePage().props.choices?.ticket_department ?? [],
+        inUseIds,
+    );
+}
+
+/**
+ * One of the team's choices from a list by id, archived or not; undefined for
+ * none or an unknown id.
+ */
+export function useChoice(
+    list: ChoiceList,
+    choiceId: string | null,
+): Choice | undefined {
+    return (usePage().props.choices?.[list] ?? []).find(
+        (choice) => choice.id === choiceId,
+    );
+}
+
+/**
+ * A choice as a small dot in its colour and its name, such as a ticket's type.
+ */
+export function ChoiceTag({
+    choice,
+    className,
+}: {
+    choice: Choice;
+    className?: string;
+}) {
+    return (
+        <span
+            className={cn('inline-flex items-center gap-1.5', className)}
+            style={hueStyle(choice.hue)}
+        >
+            <span className="size-2 shrink-0 rounded-full hue-dot" />
+            {choice.name}
+        </span>
+    );
 }
 
 const dayFormatter = new Intl.DateTimeFormat(undefined, {

@@ -50,6 +50,8 @@ final readonly class TicketListFilters
         public ?string $assignee = null,
         public ?string $project = null,
         public ?string $label = null,
+        public ?string $type = null,
+        public ?string $department = null,
         public string $sort = 'number',
         public string $direction = 'desc',
     ) {}
@@ -73,6 +75,8 @@ final readonly class TicketListFilters
             assignee: self::idOrKeyword($request->query('assignee'), [self::ASSIGNEE_ME, self::NONE]),
             project: self::idOrKeyword($request->query('project'), [self::NONE]),
             label: self::idOrKeyword($request->query('label'), []),
+            type: self::idOrKeyword($request->query('type'), [self::NONE]),
+            department: self::idOrKeyword($request->query('department'), [self::NONE]),
             sort: array_key_exists($sort, self::SORTS) ? $sort : 'number',
             direction: $request->query('direction') === 'asc' ? 'asc' : 'desc',
         );
@@ -91,13 +95,15 @@ final readonly class TicketListFilters
             assignee: $this->assignee,
             project: $projectId,
             label: $this->label,
+            type: $this->type,
+            department: $this->department,
             sort: $this->sort,
             direction: $this->direction,
         );
     }
 
     /**
-     * @return array{view: string, status: string, search: ?string, priority: array<int, string>, assignee: ?string, project: ?string, label: ?string, sort: string, direction: string}
+     * @return array{view: string, status: string, search: ?string, priority: array<int, string>, assignee: ?string, project: ?string, label: ?string, type: ?string, department: ?string, sort: string, direction: string}
      */
     public function toArray(): array
     {
@@ -109,6 +115,8 @@ final readonly class TicketListFilters
             'assignee' => $this->assignee,
             'project' => $this->project,
             'label' => $this->label,
+            'type' => $this->type,
+            'department' => $this->department,
             'sort' => $this->sort,
             'direction' => $this->direction,
         ];

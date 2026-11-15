@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Choice\Actions\FindChoice;
 use App\Choice\ChoiceEloquentModel;
+use App\Choice\ChoiceListEnum;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
 
@@ -69,4 +71,17 @@ it('deletes a label straight away, taking it off its tickets', function (): void
 
     expect(ChoiceEloquentModel::query()->withoutGlobalScopes()->find($label->id))->toBeNull()
         ->and($ticket->labels()->count())->toBe(0);
+});
+
+it('deletes a ticket type straight away, clearing it from its tickets', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $type = FindChoice::byNameForTeam($owner->current_team_id, ChoiceListEnum::TicketType, 'Question');
+    $ticket = TicketEloquentModel::factory()->create(['team_id' => $owner->current_team_id, 'type_id' => $type->getId()->toString()]);
+
+    actingAs($owner)
+        ->delete(route('choices.destroy', $type->getId()->toString()))
+        ->assertSessionHasNoErrors();
+
+    expect(ChoiceEloquentModel::query()->withoutGlobalScopes()->find($type->getId()->toString()))->toBeNull()
+        ->and($ticket->fresh()->type_id)->toBeNull();
 });

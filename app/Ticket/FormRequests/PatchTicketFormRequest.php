@@ -57,7 +57,7 @@ final class PatchTicketFormRequest extends FormRequest
         $teamId = (string) $this->user()?->current_team_id;
 
         return [
-            ...TicketValidationRules::for($this, $teamId, $this->ticket->getProjectId()->toNullableString(), $this->ticket->getPriorityId()->toNullableString()),
+            ...TicketValidationRules::for($this, $teamId, $this->ticket),
             ...TicketValidationRules::status($this, $teamId, currentStatusId: $this->ticket->getStatusId()->toNullableString()),
             self::LABEL_IDS => ['sometimes', 'array'],
             self::LABEL_IDS.'.*' => ['uuid', TicketValidationRules::label($teamId, $this->ticket->getId()->toString())],
@@ -110,7 +110,7 @@ final class PatchTicketFormRequest extends FormRequest
         }
 
         $this->merge(array_merge(
-            Arr::only($current, ['customer_id', 'project_id', 'contact_id', 'location_id', 'assignee_id', 'title', 'description', 'priority_id', 'status_id', 'starts_on', 'due_on', 'estimate_minutes']),
+            Arr::only($current, ['customer_id', 'project_id', 'contact_id', 'location_id', 'assignee_id', 'title', 'description', 'priority_id', 'type_id', 'department_id', 'status_id', 'starts_on', 'due_on', 'estimate_minutes']),
             $this->all(),
         ));
     }

@@ -2,6 +2,8 @@ import { Form, Head, Link, setLayoutProps } from '@inertiajs/react';
 import PageHeader from '@/components/page-header';
 import {
     useIsClosedStatus,
+    ChoiceTag,
+    useChoice,
     usePriority,
 } from '@/components/tickets/ticket-meta';
 import {
@@ -56,6 +58,8 @@ export default function ShowTicket({
 
     const isClosed = useIsClosedStatus()(ticket.status_id);
     const priority = usePriority(ticket.priority_id);
+    const type = useChoice('ticket_type', ticket.type_id);
+    const department = useChoice('ticket_department', ticket.department_id);
 
     const details = [
         {
@@ -85,6 +89,14 @@ export default function ShowTicket({
         {
             label: 'Priority',
             value: priority?.name ?? '—',
+        },
+        {
+            label: 'Type',
+            value: type ? <ChoiceTag choice={type} /> : '—',
+        },
+        {
+            label: 'Department',
+            value: department ? <ChoiceTag choice={department} /> : '—',
         },
         {
             label: 'Due',

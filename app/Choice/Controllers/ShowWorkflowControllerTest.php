@@ -19,6 +19,7 @@ it("shows the owner the team's lists with how many tickets use each choice", fun
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('settings/workflow')
+            ->where('current', null)
             ->where('lists.0.value', 'ticket_status')
             ->where('lists.0.categories', [['value' => 'closed', 'label' => 'Closed'], ['value' => 'open', 'label' => 'Open']])
             ->where('lists.0.choices.0.name', 'New')
@@ -28,12 +29,29 @@ it("shows the owner the team's lists with how many tickets use each choice", fun
             ->where('lists.1.icons.0', 'chevrons-up')
             ->where('lists.1.categories', [])
             ->where('lists.1.is_optional', false)
-            ->where('lists.2.value', 'ticket_label')
+            ->where('lists.2.value', 'ticket_type')
             ->where('lists.2.is_optional', true)
-            ->where('lists.2.choices.0.name', 'Bug')
-            ->where('lists.2.choices.0.usage', 1),
+            ->where('lists.2.choices.0.name', 'Incident')
+            ->where('lists.3.value', 'ticket_department')
+            ->where('lists.3.is_optional', true)
+            ->where('lists.3.choices.0.name', 'Support')
+            ->where('lists.4.value', 'ticket_label')
+            ->where('lists.4.is_optional', true)
+            ->where('lists.4.choices.0.name', 'Bug')
+            ->where('lists.4.choices.0.usage', 1),
         );
 });
+
+it('opens the list named in the query, ignoring an unknown one', function (string $list, ?string $current): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+
+    actingAs($owner)
+        ->get(route('workflow.edit', ['list' => $list]))
+        ->assertInertia(fn (Assert $page) => $page->where('current', $current));
+})->with([
+    'a list' => ['ticket_type', 'ticket_type'],
+    'an unknown list' => ['nope', null],
+]);
 
 it('forbids members', function (): void {
     $owner = UserEloquentModel::factory()->withPersonalTeam()->create();

@@ -4,8 +4,10 @@ import type { ReactNode } from 'react';
 import SearchInput from '@/components/search-input';
 import {
     PriorityGlyph,
+    useTicketDepartments,
     useTicketLabels,
     useTicketPriorities,
+    useTicketTypes,
 } from '@/components/tickets/ticket-meta';
 import {
     DropdownMenu,
@@ -69,12 +71,22 @@ export default function TicketToolbar({
     const labels = useTicketLabels(filters.label);
     const labelName = (id: string | null) =>
         labels.find((label) => label.id === id)?.name;
+    const types = useTicketTypes(filters.type);
+    const typeName = (id: string | null) =>
+        id === 'none' ? 'No type' : types.find((type) => type.id === id)?.name;
+    const departments = useTicketDepartments(filters.department);
+    const departmentName = (id: string | null) =>
+        id === 'none'
+            ? 'No department'
+            : departments.find((department) => department.id === id)?.name;
 
     const hasFilters =
         filters.priority.length > 0 ||
         filters.assignee !== null ||
         (!inProject && filters.project !== null) ||
-        filters.label !== null;
+        filters.label !== null ||
+        filters.type !== null ||
+        filters.department !== null;
 
     return (
         <div className="flex flex-col gap-3">
@@ -221,6 +233,46 @@ export default function TicketToolbar({
                     </FilterChip>
                 )}
 
+                {types.length > 0 && (
+                    <FilterChip
+                        label="Type"
+                        value={typeName(filters.type) ?? null}
+                        onClear={() => set({ type: null })}
+                    >
+                        <RadioChoices
+                            value={filters.type}
+                            onChange={(type) => set({ type })}
+                            choices={[{ value: 'none', label: 'No type' }]}
+                            more={types.map((choice) => ({
+                                value: choice.id,
+                                label: choice.name,
+                                hue: choice.hue,
+                            }))}
+                        />
+                    </FilterChip>
+                )}
+
+                {departments.length > 0 && (
+                    <FilterChip
+                        label="Department"
+                        value={departmentName(filters.department) ?? null}
+                        onClear={() => set({ department: null })}
+                    >
+                        <RadioChoices
+                            value={filters.department}
+                            onChange={(department) => set({ department })}
+                            choices={[
+                                { value: 'none', label: 'No department' },
+                            ]}
+                            more={departments.map((choice) => ({
+                                value: choice.id,
+                                label: choice.name,
+                                hue: choice.hue,
+                            }))}
+                        />
+                    </FilterChip>
+                )}
+
                 {labels.length > 0 && (
                     <FilterChip
                         label="Label"
@@ -248,6 +300,8 @@ export default function TicketToolbar({
                                 priority: null,
                                 assignee: null,
                                 label: null,
+                                type: null,
+                                department: null,
                                 ...(inProject ? {} : { project: null }),
                             })
                         }

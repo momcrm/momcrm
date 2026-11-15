@@ -46,7 +46,7 @@ final class UpdateTicketFormRequest extends FormRequest
     public function rules(): array
     {
         return [
-            ...TicketValidationRules::for($this, (string) $this->user()?->current_team_id, $this->ticket->getProjectId()->toNullableString(), $this->ticket->getPriorityId()->toNullableString()),
+            ...TicketValidationRules::for($this, (string) $this->user()?->current_team_id, $this->ticket),
             ...TicketValidationRules::status($this, (string) $this->user()?->current_team_id, currentStatusId: $this->ticket->getStatusId()->toNullableString()),
         ];
     }

@@ -170,3 +170,32 @@ it('keeps an archived label the ticket already has, but does not add one', funct
 
     expect($ticket->labels()->pluck('choices.id')->sort()->values()->all())->toBe(collect([$archived->id, $live->id])->sort()->values()->all());
 });
+
+it('sets the type and department, keeping archived ones the ticket has but not choosing one from another list', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $teamId = $user->current_team_id;
+    $incident = FindChoice::byNameForTeam($teamId, ChoiceListEnum::TicketType, 'Incident')->getId()->toString();
+    $support = FindChoice::byNameForTeam($teamId, ChoiceListEnum::TicketDepartment, 'Support')->getId()->toString();
+    $ticket = patchableTicket($user);
+    $other = patchableTicket($user);
+
+    actingAs($user)
+        ->patch(route('tickets.patch', $ticket->id), ['type_id' => $incident, 'department_id' => $support])
+        ->assertSessionHasNoErrors();
+
+    ChoiceEloquentModel::query()->withoutGlobalScopes()->whereKey($incident)->update(['archived_at' => now()]);
+
+    actingAs($user)
+        ->patch(route('tickets.patch', $ticket->id), ['title' => 'Renamed'])
+        ->assertSessionHasNoErrors();
+
+    actingAs($user)
+        ->patch(route('tickets.patch', $other->id), ['type_id' => $incident, 'department_id' => teamPriorityId($user, 'Urgent')])
+        ->assertSessionHasErrors([
+            'type_id' => "Choose one of your team's ticket types.",
+            'department_id' => "Choose one of your team's departments.",
+        ]);
+
+    expect($ticket->fresh())->type_id->toBe($incident)->department_id->toBe($support)->title->toBe('Renamed')
+        ->and($other->fresh())->type_id->toBeNull()->department_id->toBeNull();
+});

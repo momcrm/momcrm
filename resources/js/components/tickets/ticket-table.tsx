@@ -5,11 +5,13 @@ import DataTable, {
 import type { DataTableSort } from '@/components/data-table';
 import {
     AssigneeAvatar,
+    ChoiceTag,
     DueChip,
     LabelChips,
     PriorityIcon,
     ProjectTag,
     TicketStatusPill,
+    useChoice,
     useIsClosedStatus,
     usePriority,
 } from '@/components/tickets/ticket-meta';
@@ -48,6 +50,12 @@ const columns = column.columns([
         enableSorting: true,
         meta: { className: 'w-28' },
         cell: (info) => <PriorityCell priorityId={info.getValue()} />,
+    }),
+    column.accessor('type_id', {
+        id: 'type',
+        header: 'Type',
+        meta: { className: 'hidden w-36 xl:table-cell' },
+        cell: (info) => <TypeCell typeId={info.getValue()} />,
     }),
     column.display({
         id: 'project',
@@ -126,6 +134,16 @@ function PriorityCell({ priorityId }: { priorityId: string | null }) {
             <PriorityIcon priorityId={priorityId} />
             {priority?.name ?? 'None'}
         </span>
+    );
+}
+
+function TypeCell({ typeId }: { typeId: string | null }) {
+    const type = useChoice('ticket_type', typeId);
+
+    return type ? (
+        <ChoiceTag choice={type} className="truncate text-muted-foreground" />
+    ) : (
+        <span className="text-muted-foreground">—</span>
     );
 }
 
