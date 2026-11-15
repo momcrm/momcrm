@@ -72,14 +72,15 @@ final class FindProject
 
     /**
      * The team's live projects someone may see, with their lead, customer,
-     * members and ticket counts.
+     * members, labels and ticket counts, optionally only those with a label.
      */
-    public static function listForTeam(string $teamId, string $userId, ?string $search = null, ?string $status = null, string $sort = 'name', string $direction = 'asc'): ProjectCollection
+    public static function listForTeam(string $teamId, string $userId, ?string $search = null, ?string $status = null, string $sort = 'name', string $direction = 'asc', ?string $labelId = null): ProjectCollection
     {
         $query = self::withListDetails(self::visibleQuery($teamId, $userId))
             ->whereNull(ArchivedAt::getDatabaseTableColumnName())
             ->when($search, fn (Builder $query, string $search) => $query->where(Name::getDatabaseTableColumnName(), 'like', "%{$search}%"))
-            ->when($status, fn (Builder $query, string $status) => $query->where(Status::getDatabaseTableColumnName(), $status));
+            ->when($status, fn (Builder $query, string $status) => $query->where(Status::getDatabaseTableColumnName(), $status))
+            ->when($labelId, fn (Builder $query, string $labelId) => $query->whereHas(ProjectRelationship::Labels->value, fn (Builder $query) => $query->whereKey($labelId)));
 
         $query = match ($sort) {
             'due_on' => $query->orderByRaw($direction === 'asc' ? 'due_on is null, due_on asc' : 'due_on is null, due_on desc'),
@@ -196,6 +197,7 @@ final class FindProject
         return $query
             ->with([
                 ProjectRelationship::Customer->value,
+                ProjectRelationship::Labels->value,
                 ProjectRelationship::Lead->value,
                 ProjectRelationship::Members->value,
             ])

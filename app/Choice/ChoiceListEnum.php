@@ -20,8 +20,8 @@ enum ChoiceListEnum: string
     use Enum;
     use EnumOptions;
 
+    case Label = 'label';
     case TicketDepartment = 'ticket_department';
-    case TicketLabel = 'ticket_label';
     case TicketPriority = 'ticket_priority';
     case TicketStatus = 'ticket_status';
     case TicketType = 'ticket_type';
@@ -30,7 +30,7 @@ enum ChoiceListEnum: string
     {
         return match ($this) {
             self::TicketDepartment => 'Ticket departments',
-            self::TicketLabel => 'Ticket labels',
+            self::Label => 'Labels',
             self::TicketPriority => 'Ticket priorities',
             self::TicketStatus => 'Ticket statuses',
             self::TicketType => 'Ticket types',
@@ -44,7 +44,7 @@ enum ChoiceListEnum: string
     {
         return match ($this) {
             self::TicketDepartment => 'The team or desk a ticket belongs to.',
-            self::TicketLabel => 'Tags for sorting and finding tickets. A ticket can have several.',
+            self::Label => 'Tags for sorting and finding tickets, projects and assets. Each can have several.',
             self::TicketPriority => 'How urgent a ticket is, most urgent first.',
             self::TicketStatus => 'Where a ticket is in its life, grouped by whether it is still open.',
             self::TicketType => 'What kind of request a ticket is.',
@@ -60,7 +60,7 @@ enum ChoiceListEnum: string
     public function categoryEnum(): ?string
     {
         return match ($this) {
-            self::TicketDepartment, self::TicketLabel, self::TicketPriority, self::TicketType => null,
+            self::TicketDepartment, self::Label, self::TicketPriority, self::TicketType => null,
             self::TicketStatus => TicketStatusCategoryEnum::class,
         };
     }
@@ -73,7 +73,7 @@ enum ChoiceListEnum: string
     public function categoryOptions(): array
     {
         return match ($this) {
-            self::TicketDepartment, self::TicketLabel, self::TicketPriority, self::TicketType => [],
+            self::TicketDepartment, self::Label, self::TicketPriority, self::TicketType => [],
             self::TicketStatus => TicketStatusCategoryEnum::options(),
         };
     }
@@ -87,7 +87,7 @@ enum ChoiceListEnum: string
     {
         return match ($this) {
             self::TicketPriority => ['chevrons-up', 'chevron-up', 'equal', 'chevron-down', 'minus'],
-            self::TicketDepartment, self::TicketLabel, self::TicketStatus, self::TicketType => [],
+            self::TicketDepartment, self::Label, self::TicketStatus, self::TicketType => [],
         };
     }
 
@@ -102,7 +102,10 @@ enum ChoiceListEnum: string
     {
         return match ($this) {
             self::TicketDepartment => [['table' => Table::Tickets, 'column' => 'department_id', 'isPivot' => false]],
-            self::TicketLabel => [['table' => Table::LabelTicket, 'column' => 'label_id', 'isPivot' => true]],
+            self::Label => array_values(array_map(
+                fn (LabelTargetEnum $target): array => ['table' => $target->table(), 'column' => 'label_id', 'isPivot' => true],
+                LabelTargetEnum::cases(),
+            )),
             self::TicketPriority => [['table' => Table::Tickets, 'column' => 'priority_id', 'isPivot' => false]],
             self::TicketStatus => [['table' => Table::Tickets, 'column' => 'status_id', 'isPivot' => false]],
             self::TicketType => [['table' => Table::Tickets, 'column' => 'type_id', 'isPivot' => false]],
@@ -118,7 +121,7 @@ enum ChoiceListEnum: string
     public function isOptional(): bool
     {
         return match ($this) {
-            self::TicketDepartment, self::TicketLabel, self::TicketType => true,
+            self::TicketDepartment, self::Label, self::TicketType => true,
             self::TicketPriority, self::TicketStatus => false,
         };
     }
@@ -150,7 +153,7 @@ enum ChoiceListEnum: string
                 ['name' => 'Projects', 'hue' => HuePalette::VIOLET, 'icon' => null, 'category' => null, 'is_default' => false],
                 ['name' => 'Accounts', 'hue' => HuePalette::TEAL, 'icon' => null, 'category' => null, 'is_default' => false],
             ],
-            self::TicketLabel => [],
+            self::Label => [],
             self::TicketPriority => [
                 ['name' => 'Urgent', 'hue' => HuePalette::ROSE, 'icon' => 'chevrons-up', 'category' => null, 'is_default' => false],
                 ['name' => 'High', 'hue' => HuePalette::AMBER, 'icon' => 'chevron-up', 'category' => null, 'is_default' => false],

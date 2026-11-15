@@ -9,6 +9,7 @@ use App\Asset\Properties\CreatedAt;
 use App\Asset\Properties\CustomerId;
 use App\Asset\Properties\Description;
 use App\Asset\Properties\Id;
+use App\Asset\Properties\Labels;
 use App\Asset\Properties\LocationId;
 use App\Asset\Properties\Name;
 use App\Asset\Properties\SerialNumber;
@@ -29,6 +30,7 @@ final class Asset extends AbstractData
         public CustomerId $customerId,
         public Description $description,
         public Id $id,
+        public Labels $labels,
         public LocationId $locationId,
         public Name $name,
         public SerialNumber $serialNumber,
@@ -181,5 +183,10 @@ final class Asset extends AbstractData
     public function getUpdatedAt(): UpdatedAt
     {
         return $this->updatedAt;
+    }
+
+    public function getLabels(): Labels
+    {
+        return $this->labels;
     }
 }

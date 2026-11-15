@@ -1,4 +1,5 @@
 import { Form, Head, Link, router, setLayoutProps } from '@inertiajs/react';
+import { LabelChips } from '@/components/labels';
 import type { LucideIcon } from 'lucide-react';
 import {
     Archive,
@@ -193,6 +194,7 @@ export default function ShowProject(props: Props) {
                             {project.customer_name ?? 'Internal project'}
                             {project.group_name && ` · ${project.group_name}`}
                         </p>
+                        <LabelChips labels={project.labels} />
                     </div>
                     <div className="ml-auto flex items-center gap-2">
                         <DropdownMenu>

@@ -5,6 +5,7 @@ import FormField from '@/components/form-field';
 import NativeSelect from '@/components/native-select';
 import { ProjectIcon, projectIcons } from '@/components/projects/project-meta';
 import HuePicker from '@/components/hue-picker';
+import { LabelField } from '@/components/labels';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -46,6 +47,9 @@ export default function ProjectFormDialog({
     const [icon, setIcon] = useState(project?.icon ?? 'folder');
     const [memberIds, setMemberIds] = useState<string[]>(
         project?.members.map((member) => member.id) ?? [],
+    );
+    const [labelIds, setLabelIds] = useState<string[]>(
+        project?.labels.map((label) => label.id) ?? [],
     );
 
     return (
@@ -235,6 +239,14 @@ export default function ProjectFormDialog({
                                     />
                                 </FormField>
                             </div>
+
+                            <LabelField
+                                selected={labelIds}
+                                onChange={setLabelIds}
+                                error={
+                                    errors.label_ids ?? errors['label_ids.0']
+                                }
+                            />
 
                             {canManageMembers && options.members.length > 1 && (
                                 <Field label="Members">

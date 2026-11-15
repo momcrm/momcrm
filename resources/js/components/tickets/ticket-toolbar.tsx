@@ -5,10 +5,10 @@ import SearchInput from '@/components/search-input';
 import {
     PriorityGlyph,
     useTicketDepartments,
-    useTicketLabels,
     useTicketPriorities,
     useTicketTypes,
 } from '@/components/tickets/ticket-meta';
+import { useLabels } from '@/components/labels';
 import {
     DropdownMenu,
     DropdownMenuCheckboxItem,
@@ -68,7 +68,7 @@ export default function TicketToolbar({
             ? 'No project'
             : options.projects.find((project) => project.id === id)?.name;
     const priorities = useTicketPriorities(...filters.priority);
-    const labels = useTicketLabels(filters.label);
+    const labels = useLabels(filters.label);
     const labelName = (id: string | null) =>
         labels.find((label) => label.id === id)?.name;
     const types = useTicketTypes(filters.type);

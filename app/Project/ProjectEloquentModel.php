@@ -6,6 +6,8 @@ namespace App\Project;
 
 use App\AuditLog\AuditObserver;
 use App\AuditLog\Contracts\Auditable;
+use App\Choice\HasLabels;
+use App\Choice\LabelTargetEnum;
 use App\Customer\CustomerEloquentModel;
 use App\Group\GroupEloquentModel;
 use App\Milestone\MilestoneEloquentModel;
@@ -60,6 +62,7 @@ final class ProjectEloquentModel extends Model implements Auditable
     /** @use HasFactory<ProjectFactory> */
     use HasFactory;
 
+    use HasLabels;
     use HasUuids;
 
     protected $guarded = [];
@@ -77,6 +80,11 @@ final class ProjectEloquentModel extends Model implements Auditable
     public function getKeyName(): string
     {
         return Id::getDatabaseTableColumnName();
+    }
+
+    public static function labelTarget(): LabelTargetEnum
+    {
+        return LabelTargetEnum::Project;
     }
 
     /**

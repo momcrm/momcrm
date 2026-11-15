@@ -13,12 +13,13 @@ use App\Project\ProjectStatusEnum;
 use App\User\User;
 use App\User\UserEloquentModel;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * The team's projects as cards, a list or a table, with search, a status
- * filter and a sort.
+ * The team's projects as cards, a list or a table, with search, status and
+ * label filters and a sort.
  */
 final class ListProjectsController
 {
@@ -31,14 +32,15 @@ final class ListProjectsController
         $status = ProjectStatusEnum::tryFrom($request->string('status')->toString())?->value;
         $sort = in_array($request->query('sort'), FindProject::SORTS, true) ? (string) $request->query('sort') : 'name';
         $direction = $request->query('direction') === 'desc' ? 'desc' : 'asc';
+        $label = Str::isUuid($request->string('label')->toString()) ? $request->string('label')->toString() : null;
         $view = in_array($request->query('view'), ['list', 'table'], true) ? (string) $request->query('view') : 'grid';
         $favoriteIds = FindFavorite::idsForUser($teamId, $user->id, FavoritableTypeEnum::Project);
 
         return Inertia::render('projects/index', [
-            'projects' => FindProject::listForTeam($teamId, $user->id, $search, $status, $sort, $direction)
+            'projects' => FindProject::listForTeam($teamId, $user->id, $search, $status, $sort, $direction, $label)
                 ->map(fn (Project $project): array => self::listItem($project, $favoriteIds))
                 ->values(),
-            'filters' => ['search' => $search, 'status' => $status, 'sort' => $sort, 'direction' => $direction, 'view' => $view],
+            'filters' => ['search' => $search, 'status' => $status, 'label' => $label, 'sort' => $sort, 'direction' => $direction, 'view' => $view],
             ...ProjectFormOptions::forTeam($teamId),
         ]);
     }
@@ -56,6 +58,7 @@ final class ListProjectsController
             ...$project->toSummary(),
             'customer_name' => $project->getCustomer()->toNullableData()?->getName()->toString(),
             'lead_name' => $project->getLead()->toNullableData()?->getName()->toString(),
+            'labels' => $project->getLabels()->toDataCollection()->toTags(),
             'members' => $project->getMembers()->toDataCollection()
                 ->map(fn (User $member): array => ['id' => $member->getId()->toString(), 'name' => $member->getName()->toString()])
                 ->values()

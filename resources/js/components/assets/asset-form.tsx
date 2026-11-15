@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import FormField from '@/components/form-field';
+import { LabelField } from '@/components/labels';
 import NativeSelect from '@/components/native-select';
 import type { Asset, CustomerOption, Option } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -24,6 +26,10 @@ export default function AssetForm({
     submitLabel: string;
     cancelHref: string;
 }) {
+    const [labelIds, setLabelIds] = useState<string[]>(
+        asset?.labels?.map((label) => label.id) ?? [],
+    );
+
     return (
         <Form {...action} className="max-w-2xl space-y-6">
             {({ processing, errors }) => (
@@ -96,6 +102,11 @@ export default function AssetForm({
                             defaultValue={asset?.description ?? ''}
                         />
                     </FormField>
+                    <LabelField
+                        selected={labelIds}
+                        onChange={setLabelIds}
+                        error={errors.label_ids ?? errors['label_ids.0']}
+                    />
 
                     <div className="flex items-center gap-2">
                         <Button

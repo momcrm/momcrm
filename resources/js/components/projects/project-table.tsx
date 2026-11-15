@@ -1,4 +1,5 @@
 import { router } from '@inertiajs/react';
+import { LabelChips } from '@/components/labels';
 import DataTable, { dataTableColumns } from '@/components/data-table';
 import type { DataTableSort } from '@/components/data-table';
 import {
@@ -31,6 +32,10 @@ const columns = column.columns([
                 {info.row.original.visibility === 'restricted' && (
                     <RestrictedLock />
                 )}
+                <LabelChips
+                    labels={info.row.original.labels}
+                    className="hidden flex-nowrap lg:flex"
+                />
                 <button
                     type="button"
                     aria-label={

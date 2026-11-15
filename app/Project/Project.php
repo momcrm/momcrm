@@ -18,6 +18,7 @@ use App\Project\Properties\Hue;
 use App\Project\Properties\Icon;
 use App\Project\Properties\Id;
 use App\Project\Properties\IsSample;
+use App\Project\Properties\Labels;
 use App\Project\Properties\Lead;
 use App\Project\Properties\LeadId;
 use App\Project\Properties\Members;
@@ -52,6 +53,7 @@ final class Project extends AbstractData
         public GroupId $groupId,
         public Icon $icon,
         public Id $id,
+        public Labels $labels,
         public IsSample $isSample,
         public Lead $lead,
         public LeadId $leadId,
@@ -354,5 +356,10 @@ final class Project extends AbstractData
     public function getMembers(): Members
     {
         return $this->members;
+    }
+
+    public function getLabels(): Labels
+    {
+        return $this->labels;
     }
 }

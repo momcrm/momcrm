@@ -1,4 +1,5 @@
 import { Link, router } from '@inertiajs/react';
+import { LabelChips } from '@/components/labels';
 import { CalendarDays } from 'lucide-react';
 import { formatDay } from '@/components/tickets/ticket-meta';
 import {
@@ -58,8 +59,9 @@ export default function ProjectCard({ project }: { project: ProjectListItem }) {
                 </button>
             </div>
 
-            <div>
+            <div className="flex flex-wrap items-center gap-1.5">
                 <ProjectStatusPill status={project.status} />
+                <LabelChips labels={project.labels} />
             </div>
 
             <p className="line-clamp-2 min-h-10 text-sm text-muted-foreground">

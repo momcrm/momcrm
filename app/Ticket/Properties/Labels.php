@@ -8,7 +8,7 @@ use App\Choice\ChoiceCollection;
 use App\Shared\Abstracts\AbstractRelatedDataCollection;
 
 /**
- * The ticket's labels (its "ticket_label" choices), when loaded.
+ * The ticket's labels (its "label" choices), when loaded.
  */
 final class Labels extends AbstractRelatedDataCollection
 {

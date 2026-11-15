@@ -11,5 +11,6 @@ enum AssetRelationship: string
     use Enum;
 
     case Customer = 'customer';
+    case Labels = 'labels';
     case Location = 'location';
 }

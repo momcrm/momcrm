@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Asset\AssetEloquentModel;
+use App\Choice\ChoiceEloquentModel;
 use App\Customer\CustomerEloquentModel;
 use App\Location\LocationEloquentModel;
 use App\User\UserEloquentModel;
@@ -52,4 +53,16 @@ it('rejects a location that belongs to another customer', function (): void {
     actingAs($user)
         ->post(route('assets.store', $customer->id), ['name' => 'PC', 'status' => 'active', 'location_id' => $otherLocation->id])
         ->assertSessionHasErrors(['location_id' => 'The selected location id is invalid.']);
+});
+
+it('adds an asset with labels', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $customer = CustomerEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
+    $label = ChoiceEloquentModel::factory()->label()->create(['team_id' => $user->current_team_id]);
+
+    actingAs($user)
+        ->post(route('assets.store', $customer->id), ['name' => 'Reception PC', 'status' => 'active', 'label_ids' => [$label->id]])
+        ->assertSessionHasNoErrors();
+
+    expect(AssetEloquentModel::query()->sole()->labels->pluck('id')->all())->toBe([$label->id]);
 });

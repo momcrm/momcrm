@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Choice\ChoiceEloquentModel;
 use App\Project\ProjectEloquentModel;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
@@ -57,5 +58,22 @@ it('searches, filters by status and sorts', function (): void {
             ->has('projects', 2)
             ->where('projects.0.name', 'Beta refit')
             ->where('filters.status', 'in_progress'),
+        );
+});
+
+it('shows each project’s labels and filters by one', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $label = ChoiceEloquentModel::factory()->label()->create(['team_id' => $user->current_team_id, 'name' => 'Fit-out']);
+    $labelled = ProjectEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'name' => 'Refit']);
+    $labelled->labels()->attach($label);
+    ProjectEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'name' => 'Audit']);
+
+    actingAs($user)
+        ->get(route('projects.index', ['label' => $label->id]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('projects', 1)
+            ->where('projects.0.name', 'Refit')
+            ->where('projects.0.labels.0.name', 'Fit-out')
+            ->where('filters.label', $label->id),
         );
 });

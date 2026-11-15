@@ -56,7 +56,7 @@ final class ShowCustomerController
                 ->values()
                 ->all(),
             'assets' => FindAsset::forCustomer($customerId, $teamId)
-                ->map(fn (Asset $asset): array => $asset->toSummary())
+                ->map(fn (Asset $asset): array => [...$asset->toSummary(), 'labels' => $asset->getLabels()->toDataCollection()->toTags()])
                 ->values()
                 ->all(),
             'services' => FindService::forCustomer($customerId, $teamId)

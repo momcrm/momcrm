@@ -11,6 +11,7 @@ enum ProjectRelationship: string
     use Enum;
 
     case Customer = 'customer';
+    case Labels = 'labels';
     case Lead = 'lead';
     case Group = 'group';
     case Members = 'members';
