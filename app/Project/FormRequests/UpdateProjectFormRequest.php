@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Project\FormRequests;
 
+use App\Choice\LabelTargetEnum;
 use App\Project\Actions\FindProject;
 use App\Project\Actions\UpdateProject;
 use App\Project\Exceptions\CouldNotFindProject;
@@ -60,7 +61,7 @@ final class UpdateProjectFormRequest extends FormRequest
      */
     public function rules(): array
     {
-        return ProjectValidationRules::for($this, (string) $this->user()?->current_team_id);
+        return ProjectValidationRules::for($this, (string) $this->user()?->current_team_id, $this->project->getId()->toNullableString());
     }
 
     /**
@@ -75,7 +76,7 @@ final class UpdateProjectFormRequest extends FormRequest
     {
         $validated = $this->validated();
         $project = UpdateProject::fromProject(
-            $this->project->setPropertyIfExists(Types::stringKeyed(Arr::except($validated, ProjectValidationRules::MEMBER_IDS))),
+            $this->project->setPropertyIfExists(Types::stringKeyed(Arr::except($validated, [ProjectValidationRules::MEMBER_IDS, LabelTargetEnum::FIELD]))),
             updatedById: (string) $this->user()?->id,
         );
 
@@ -89,6 +90,8 @@ final class UpdateProjectFormRequest extends FormRequest
         } elseif ($project->getLeadId()->isNotNull()) {
             $model->members()->syncWithoutDetaching([$project->getLeadId()->toString()]);
         }
+
+        LabelTargetEnum::syncFrom($validated, $model->labels());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Project saved.')]);
 
@@ -107,6 +110,7 @@ final class UpdateProjectFormRequest extends FormRequest
         $this->merge(array_merge(
             Arr::except($this->project->toSummary(), ['id', 'number', 'archived_at']),
             $this->boolean(ProjectValidationRules::MEMBERS_SENT) ? [ProjectValidationRules::MEMBER_IDS => []] : [],
+            LabelTargetEnum::sentEmpty($this),
             $this->all(),
         ));
     }

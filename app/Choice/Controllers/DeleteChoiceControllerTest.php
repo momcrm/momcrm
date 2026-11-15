@@ -2,9 +2,11 @@
 
 declare(strict_types=1);
 
+use App\Asset\AssetEloquentModel;
 use App\Choice\Actions\FindChoice;
 use App\Choice\ChoiceEloquentModel;
 use App\Choice\ChoiceListEnum;
+use App\Project\ProjectEloquentModel;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
 
@@ -61,7 +63,7 @@ it('forbids members', function (): void {
 
 it('deletes a label straight away, taking it off its tickets', function (): void {
     $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
-    $label = ChoiceEloquentModel::factory()->ticketLabel()->create(['team_id' => $owner->current_team_id, 'name' => 'Bug']);
+    $label = ChoiceEloquentModel::factory()->label()->create(['team_id' => $owner->current_team_id, 'name' => 'Bug']);
     $ticket = TicketEloquentModel::factory()->create(['team_id' => $owner->current_team_id]);
     $ticket->labels()->attach($label);
 
@@ -84,4 +86,18 @@ it('deletes a ticket type straight away, clearing it from its tickets', function
 
     expect(ChoiceEloquentModel::query()->withoutGlobalScopes()->find($type->getId()->toString()))->toBeNull()
         ->and($ticket->fresh()->type_id)->toBeNull();
+});
+
+it('takes a deleted label off projects and assets too', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $label = ChoiceEloquentModel::factory()->label()->create(['team_id' => $owner->current_team_id]);
+    $project = ProjectEloquentModel::factory()->create(['team_id' => $owner->current_team_id]);
+    $asset = AssetEloquentModel::factory()->create(['team_id' => $owner->current_team_id]);
+    $project->labels()->attach($label);
+    $asset->labels()->attach($label);
+
+    actingAs($owner)->delete(route('choices.destroy', $label->id))->assertSessionHasNoErrors();
+
+    expect($project->labels()->count())->toBe(0)
+        ->and($asset->labels()->count())->toBe(0);
 });

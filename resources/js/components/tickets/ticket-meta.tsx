@@ -17,13 +17,13 @@ import {
 import { useInitials } from '@/hooks/use-initials';
 import { hueStyle } from '@/lib/colors';
 import { cn } from '@/lib/utils';
-import type { TicketLabel, Choice, ChoiceList } from '@/types';
+import type { Choice, ChoiceList } from '@/types';
 
 /**
  * The live choices in a list, plus any archived ones still in use by the
  * records on screen, so those records keep showing (and can keep) their value.
  */
-function liveOrInUse(
+export function liveOrInUse(
     choices: Choice[],
     inUseIds: (string | null | undefined)[],
 ): Choice[] {
@@ -187,16 +187,6 @@ export function PriorityIcon({
 }
 
 /**
- * The team's live ticket labels in order, plus any archived ones among the
- * given labels (such as the ticket's own).
- */
-export function useTicketLabels(
-    ...inUseIds: (string | null | undefined)[]
-): Choice[] {
-    return liveOrInUse(usePage().props.choices?.ticket_label ?? [], inUseIds);
-}
-
-/**
  * The team's live ticket types in order, plus any archived ones among the
  * given types (such as the ticket's own).
  */
@@ -317,36 +307,6 @@ export function DueChip({
         >
             <CalendarDays className="size-3" />
             {formatDay(dueOn)}
-        </span>
-    );
-}
-
-export function LabelChips({
-    labels,
-    className,
-}: {
-    labels: TicketLabel[];
-    className?: string;
-}) {
-    if (labels.length === 0) {
-        return null;
-    }
-
-    return (
-        <span className={cn('flex flex-wrap gap-1', className)}>
-            {labels.map((label) => (
-                <span
-                    key={label.id}
-                    className="inline-flex items-center gap-1 rounded-[5px] border bg-card px-1.5 py-px text-[11px] font-medium text-muted-foreground"
-                >
-                    <span
-                        aria-hidden
-                        className="size-1.5 rounded-full hue-dot"
-                        style={hueStyle(label.hue)}
-                    />
-                    {label.name}
-                </span>
-            ))}
         </span>
     );
 }

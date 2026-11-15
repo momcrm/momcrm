@@ -2,12 +2,12 @@ import { Star } from 'lucide-react';
 import {
     AssigneeAvatar,
     DueChip,
-    LabelChips,
     PriorityIcon,
     ProjectTag,
     SubtaskProgress,
     useIsClosedStatus,
 } from '@/components/tickets/ticket-meta';
+import { LabelChips } from '@/components/labels';
 import { cn } from '@/lib/utils';
 import type { TicketListItem } from '@/types';
 

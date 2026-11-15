@@ -20,17 +20,16 @@ import {
     defaultStatusId,
     isClosedStatus,
     useIsClosedStatus,
-    LabelChips,
     PriorityIcon,
     ProjectTag,
     TicketStatusPill,
     usePriority,
     useTicketDepartments,
-    useTicketLabels,
     useTicketPriorities,
     useTicketTypes,
     useTicketStatuses,
 } from '@/components/tickets/ticket-meta';
+import { LabelChips, useLabels } from '@/components/labels';
 import Attachments from '@/components/attachments';
 import TicketConversation from '@/components/tickets/ticket-conversation';
 import { Button } from '@/components/ui/button';
@@ -63,7 +62,7 @@ import { store as storeAttachment } from '@/routes/tickets/attachments';
 import type {
     Choice,
     TicketDrawerData,
-    TicketLabel,
+    LabelTag,
     TicketPickerOptions,
 } from '@/types';
 
@@ -115,7 +114,7 @@ function DrawerBody({
     const isClosed = isClosedStatus(statuses, ticket.status_id);
     const priorities = useTicketPriorities(ticket.priority_id);
     const priority = usePriority(ticket.priority_id);
-    const labels = useTicketLabels(...ticket.labels.map((label) => label.id));
+    const labels = useLabels(...ticket.labels.map((label) => label.id));
     const types = useTicketTypes(ticket.type_id);
     const departments = useTicketDepartments(ticket.department_id);
     const overdueDays =
@@ -611,7 +610,7 @@ function LabelPicker({
     children,
 }: {
     selected: string[];
-    options: TicketLabel[];
+    options: LabelTag[];
     onChange: (ids: string[]) => void;
     children: ReactNode;
 }) {

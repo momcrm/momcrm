@@ -16,12 +16,14 @@ enum AccessAttributeEnum: string
 {
     use Enum;
 
+    case AssetLabel = 'asset.label';
     case CustomerStatus = 'customer.status';
     case GroupSubjectIsLead = 'group.subject_is_lead';
     case GroupSubjectIsMember = 'group.subject_is_member';
     case InvoiceStatus = 'invoice.status';
     case ProjectGroup = 'project.group';
     case ProjectIsArchived = 'project.is_archived';
+    case ProjectLabel = 'project.label';
     case ProjectStatus = 'project.status';
     case ProjectSubjectIsLead = 'project.subject_is_lead';
     case ProjectSubjectIsMember = 'project.subject_is_member';
@@ -44,12 +46,14 @@ enum AccessAttributeEnum: string
     public function label(): string
     {
         return match ($this) {
+            self::AssetLabel => 'Asset has label',
             self::CustomerStatus => 'Customer status',
             self::GroupSubjectIsLead => 'They lead the group',
             self::GroupSubjectIsMember => 'They are in the group',
             self::InvoiceStatus => 'Invoice status',
             self::ProjectGroup => 'Project group',
             self::ProjectIsArchived => 'Project is archived',
+            self::ProjectLabel => 'Project has label',
             self::ProjectStatus => 'Project status',
             self::ProjectSubjectIsLead => 'They lead the project',
             self::ProjectSubjectIsMember => 'They are a project member',
@@ -78,10 +82,11 @@ enum AccessAttributeEnum: string
     public function resource(): ?AccessResourceEnum
     {
         return match ($this) {
+            self::AssetLabel => AccessResourceEnum::Asset,
             self::CustomerStatus => AccessResourceEnum::Customer,
             self::GroupSubjectIsLead, self::GroupSubjectIsMember => AccessResourceEnum::Group,
             self::InvoiceStatus => AccessResourceEnum::Invoice,
-            self::ProjectGroup, self::ProjectIsArchived, self::ProjectStatus, self::ProjectSubjectIsLead, self::ProjectSubjectIsMember, self::ProjectVisibility => AccessResourceEnum::Project,
+            self::ProjectGroup, self::ProjectIsArchived, self::ProjectLabel, self::ProjectStatus, self::ProjectSubjectIsLead, self::ProjectSubjectIsMember, self::ProjectVisibility => AccessResourceEnum::Project,
             self::TicketDepartment, self::TicketIsArchived, self::TicketLabel, self::TicketPriority, self::TicketProject, self::TicketStatus, self::TicketSubjectIsAssignee, self::TicketSubjectIsProjectLead, self::TicketSubjectIsProjectMember, self::TicketType => AccessResourceEnum::Ticket,
             self::SubjectGroup, self::SubjectLeadsGroup, self::SubjectTeamRole, self::SubjectUser => null,
         };
@@ -111,7 +116,7 @@ enum AccessAttributeEnum: string
     {
         return match ($this) {
             self::ProjectGroup, self::SubjectGroup, self::SubjectLeadsGroup => Table::Groups,
-            self::TicketDepartment, self::TicketLabel, self::TicketPriority, self::TicketStatus, self::TicketType => Table::Choices,
+            self::AssetLabel, self::ProjectLabel, self::TicketDepartment, self::TicketLabel, self::TicketPriority, self::TicketStatus, self::TicketType => Table::Choices,
             self::TicketProject => Table::Projects,
             default => null,
         };
@@ -122,7 +127,7 @@ enum AccessAttributeEnum: string
      */
     public function isList(): bool
     {
-        return in_array($this, [self::SubjectGroup, self::SubjectLeadsGroup, self::TicketLabel], true);
+        return in_array($this, [self::AssetLabel, self::ProjectLabel, self::SubjectGroup, self::SubjectLeadsGroup, self::TicketLabel], true);
     }
 
     /**

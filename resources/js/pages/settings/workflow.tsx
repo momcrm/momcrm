@@ -11,7 +11,7 @@ import {
     Star,
     Trash2,
 } from 'lucide-react';
-import { useState } from 'react';
+import { createContext, useContext, useState } from 'react';
 import { toast } from 'sonner';
 import Heading from '@/components/heading';
 import { HUE_CHOICES, hueLabel } from '@/components/hue-picker';
@@ -54,7 +54,7 @@ type WorkflowList = {
     description: string;
     categories: Option[];
     icons: string[];
-    /** Records may have none, as tickets may have no labels: no default, and deleting takes it off them. */
+    /** Records may have none, as a ticket may have no labels: no default, and deleting takes it off them. */
     is_optional: boolean;
     choices: WorkflowChoice[];
 };
@@ -66,6 +66,18 @@ const categoryHints: Record<string, string> = {
     open: 'Tickets still being worked on. New tickets start in the default.',
     closed: 'Finished tickets. Moving a ticket here closes it, and Close uses the default.',
 };
+
+/**
+ * What a list's choices are used by, for counts and messages: labels are
+ * shared by tickets, projects and assets, so they count records.
+ */
+const UsageNoun = createContext({ one: 'ticket', many: 'tickets' });
+
+function useUsageCount(): (count: number) => string {
+    const noun = useContext(UsageNoun);
+
+    return (count) => `${count} ${count === 1 ? noun.one : noun.many}`;
+}
 
 const saveOptions = {
     preserveScroll: true,
@@ -123,7 +135,7 @@ export default function Workflow({
                     <Heading
                         variant="small"
                         title="Workflow"
-                        description="The lists your team's tickets choose from. Changes apply to every ticket straight away."
+                        description="The lists your team's tickets, projects and assets choose from. Changes apply straight away."
                     />
 
                     <ul className="divide-y rounded-lg border bg-card shadow-xs">
@@ -230,63 +242,77 @@ function ListEditor({ list }: { list: WorkflowList }) {
     };
 
     return (
-        <div className="space-y-6">
-            {groups.map((group) => (
-                <section key={group.category ?? 'all'} className="space-y-2">
-                    {group.label && group.category && (
+        <UsageNoun.Provider
+            value={
+                list.value === 'label'
+                    ? { one: 'record', many: 'records' }
+                    : { one: 'ticket', many: 'tickets' }
+            }
+        >
+            <div className="space-y-6">
+                {groups.map((group) => (
+                    <section
+                        key={group.category ?? 'all'}
+                        className="space-y-2"
+                    >
+                        {group.label && group.category && (
+                            <div>
+                                <h2 className="text-sm font-medium">
+                                    {group.label}
+                                </h2>
+                                <p className="text-xs text-muted-foreground">
+                                    {categoryHints[group.category]}
+                                </p>
+                            </div>
+                        )}
+                        <ul className="divide-y rounded-lg border bg-card shadow-xs">
+                            {group.choices.map((choice, index) => (
+                                <ChoiceRow
+                                    key={choice.id}
+                                    choice={choice}
+                                    list={list}
+                                    siblings={group.choices}
+                                    isFirst={index === 0}
+                                    isLast={index === group.choices.length - 1}
+                                    onMove={(direction) =>
+                                        move(choice, direction)
+                                    }
+                                />
+                            ))}
+                            <AddChoice list={list} category={group.category} />
+                        </ul>
+                    </section>
+                ))}
+
+                {archived.length > 0 && (
+                    <section className="space-y-2">
                         <div>
-                            <h2 className="text-sm font-medium">
-                                {group.label}
-                            </h2>
+                            <h2 className="text-sm font-medium">Archived</h2>
                             <p className="text-xs text-muted-foreground">
-                                {categoryHints[group.category]}
+                                No longer offered. Anything that uses one keeps
+                                it until you change it.
                             </p>
                         </div>
-                    )}
-                    <ul className="divide-y rounded-lg border bg-card shadow-xs">
-                        {group.choices.map((choice, index) => (
-                            <ChoiceRow
-                                key={choice.id}
-                                choice={choice}
-                                list={list}
-                                siblings={group.choices}
-                                isFirst={index === 0}
-                                isLast={index === group.choices.length - 1}
-                                onMove={(direction) => move(choice, direction)}
-                            />
-                        ))}
-                        <AddChoice list={list} category={group.category} />
-                    </ul>
-                </section>
-            ))}
-
-            {archived.length > 0 && (
-                <section className="space-y-2">
-                    <div>
-                        <h2 className="text-sm font-medium">Archived</h2>
-                        <p className="text-xs text-muted-foreground">
-                            No longer offered. Tickets that use one keep it
-                            until you change them.
-                        </p>
-                    </div>
-                    <ul className="divide-y rounded-lg border bg-card shadow-xs">
-                        {archived.map((choice) => (
-                            <ArchivedChoiceRow
-                                key={choice.id}
-                                choice={choice}
-                                category={
-                                    list.categories.find(
-                                        (category) =>
-                                            category.value === choice.category,
-                                    )?.label
-                                }
-                                isOptional={list.is_optional}
-                            />
-                        ))}
-                    </ul>
-                </section>
-            )}
-        </div>
+                        <ul className="divide-y rounded-lg border bg-card shadow-xs">
+                            {archived.map((choice) => (
+                                <ArchivedChoiceRow
+                                    key={choice.id}
+                                    choice={choice}
+                                    category={
+                                        list.categories.find(
+                                            (category) =>
+                                                category.value ===
+                                                choice.category,
+                                        )?.label
+                                    }
+                                    isOptional={list.is_optional}
+                                />
+                            ))}
+                        </ul>
+                    </section>
+                )}
+            </div>
+        </UsageNoun.Provider>
     );
 }
 
@@ -305,6 +331,7 @@ function ChoiceRow({
     isLast: boolean;
     onMove: (direction: -1 | 1) => void;
 }) {
+    const usageCount = useUsageCount();
     const [archiving, setArchiving] = useState(false);
     const [deleting, setDeleting] = useState(false);
     const save = (fields: Record<string, unknown>) =>
@@ -416,7 +443,7 @@ function ChoiceRow({
 
             {choice.is_default && <SoftBadge tone="primary">Default</SoftBadge>}
             <span className="w-20 text-right text-xs text-subtle-foreground tabular-nums">
-                {choice.usage === 1 ? '1 ticket' : `${choice.usage} tickets`}
+                {usageCount(choice.usage)}
             </span>
 
             <span className="flex">
@@ -522,6 +549,7 @@ function ArchiveChoiceDialog({
     choice: WorkflowChoice;
     replacements: WorkflowChoice[];
 }) {
+    const usageCount = useUsageCount();
     const [replacementId, setReplacementId] = useState('');
     const [processing, setProcessing] = useState(false);
 
@@ -531,8 +559,8 @@ function ArchiveChoiceDialog({
                 <DialogTitle>Archive {choice.name}?</DialogTitle>
                 <DialogDescription>
                     {choice.usage === 0
-                        ? "It won't be offered for tickets any more. You can restore it later."
-                        : `It won't be offered for tickets any more. ${choice.usage === 1 ? 'The 1 ticket that uses it keeps' : `The ${choice.usage} tickets that use it keep`} it${replacements.length > 0 ? `, unless you move ${choice.usage === 1 ? 'it' : 'them'}` : ''}.`}
+                        ? "It won't be offered any more. You can restore it later."
+                        : `It won't be offered any more. The ${usageCount(choice.usage)} that ${choice.usage === 1 ? 'uses it keeps' : 'use it keep'} it${replacements.length > 0 ? `, unless you move ${choice.usage === 1 ? 'it' : 'them'}` : ''}.`}
                 </DialogDescription>
                 {choice.usage > 0 && replacements.length > 0 && (
                     <NativeSelect
@@ -591,6 +619,7 @@ function ArchivedChoiceRow({
     category?: string;
     isOptional: boolean;
 }) {
+    const usageCount = useUsageCount();
     const [deleting, setDeleting] = useState(false);
     const canDelete = isOptional || choice.usage === 0;
 
@@ -610,7 +639,7 @@ function ArchivedChoiceRow({
             </span>
             {category && <SoftBadge tone="neutral">{category}</SoftBadge>}
             <span className="w-20 text-right text-xs text-subtle-foreground tabular-nums">
-                {choice.usage === 1 ? '1 ticket' : `${choice.usage} tickets`}
+                {usageCount(choice.usage)}
             </span>
             <Button
                 variant="ghost"
@@ -650,7 +679,7 @@ function ArchivedChoiceRow({
 
 /**
  * Deletes a choice for good. Only an optional one (a type, department or
- * label) can go while tickets have it, and it comes off them.
+ * label) can go while records have it, and it comes off them.
  */
 function DeleteChoiceDialog({
     open,
@@ -661,6 +690,7 @@ function DeleteChoiceDialog({
     onOpenChange: (open: boolean) => void;
     choice: WorkflowChoice;
 }) {
+    const usageCount = useUsageCount();
     const [processing, setProcessing] = useState(false);
 
     return (
@@ -669,8 +699,8 @@ function DeleteChoiceDialog({
                 <DialogTitle>Delete {choice.name}?</DialogTitle>
                 <DialogDescription>
                     {choice.usage === 0
-                        ? 'No tickets use it.'
-                        : `It comes off the ${choice.usage === 1 ? '1 ticket that has it' : `${choice.usage} tickets that have it`}.`}{' '}
+                        ? 'Nothing uses it.'
+                        : `It comes off the ${usageCount(choice.usage)} that ${choice.usage === 1 ? 'has' : 'have'} it.`}{' '}
                     It will be gone for good, and can&apos;t be restored.
                 </DialogDescription>
                 <DialogFooter className="gap-2">
@@ -707,7 +737,7 @@ function AddChoice({
     const [name, setName] = useState('');
     const noun = {
         ticket_department: 'department',
-        ticket_label: 'label',
+        label: 'label',
         ticket_priority: 'priority',
         ticket_status: 'status',
         ticket_type: 'type',

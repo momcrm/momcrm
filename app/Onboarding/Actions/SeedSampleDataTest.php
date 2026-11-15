@@ -39,7 +39,7 @@ it('adds sample projects with milestones, labelled tickets with due dates and a 
         ->and($projects->every(fn (ProjectEloquentModel $project): bool => $project->is_sample && $project->lead_id === $user->id))->toBeTrue()
         ->and($projects->last()->customer_id)->toBeNull();
     expect(MilestoneEloquentModel::query()->withoutGlobalScopes()->count())->toBe(4);
-    expect(ChoiceEloquentModel::query()->withoutGlobalScopes()->where('list', 'ticket_label')->pluck('name')->sort()->values()->all())->toBe(['Billing', 'Hardware', 'Network', 'Onboarding']);
+    expect(ChoiceEloquentModel::query()->withoutGlobalScopes()->where('list', 'label')->pluck('name')->sort()->values()->all())->toBe(['Billing', 'Hardware', 'Network', 'Onboarding']);
     expect(GroupEloquentModel::query()->withoutGlobalScopes()->sole()->name)->toBe('Service desk');
 
     $internal = TicketEloquentModel::query()->withoutGlobalScopes()->where('project_id', $projects->last()->id)->get();
@@ -54,6 +54,6 @@ it('reuses the labels and group when sample data is added again', function (): v
     SeedSampleData::forTeam(teamId: $user->current_team_id, userId: $user->id);
     SeedSampleData::forTeam(teamId: $user->current_team_id, userId: $user->id);
 
-    expect(ChoiceEloquentModel::query()->withoutGlobalScopes()->where('list', 'ticket_label')->count())->toBe(4)
+    expect(ChoiceEloquentModel::query()->withoutGlobalScopes()->where('list', 'label')->count())->toBe(4)
         ->and(GroupEloquentModel::query()->withoutGlobalScopes()->count())->toBe(1);
 });

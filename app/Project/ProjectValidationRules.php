@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Project;
 
+use App\Choice\LabelTargetEnum;
 use App\Project\Properties\CustomerId;
 use App\Project\Properties\Description;
 use App\Project\Properties\DueOn;
@@ -21,7 +22,8 @@ use Illuminate\Validation\Rule;
 
 /**
  * Rules shared by creating and editing a project. The customer and group must
- * be the team's; the lead and members must be in the team.
+ * be the team's; the lead and members must be in the team; labels must be the
+ * team's live ones, or ones the project already has.
  */
 final class ProjectValidationRules
 {
@@ -36,7 +38,7 @@ final class ProjectValidationRules
     /**
      * @return array<string, array<int, mixed>>
      */
-    public static function for(FormRequest $request, string $teamId): array
+    public static function for(FormRequest $request, string $teamId, ?string $projectId = null): array
     {
         $teamMember = Rule::exists(Table::TeamUser->value, 'user_id')->where('team_id', $teamId);
 
@@ -60,6 +62,7 @@ final class ProjectValidationRules
             DueOn::getNameForValidation() => DueOn::getValidationRulesForCreate($request),
             self::MEMBER_IDS => ['sometimes', 'array'],
             self::MEMBER_IDS.'.*' => ['uuid', $teamMember],
+            ...LabelTargetEnum::Project->rules($teamId, $projectId),
         ];
     }
 
@@ -73,6 +76,7 @@ final class ProjectValidationRules
             GroupId::getNameForValidation().'.exists' => __('Choose one of your groups.'),
             LeadId::getNameForValidation().'.exists' => __('Choose someone in your team.'),
             self::MEMBER_IDS.'.*.exists' => __('Choose people in your team.'),
+            LabelTargetEnum::FIELD.'.*.exists' => __('Choose your team\'s labels.'),
             DueOn::getNameForValidation().'.after_or_equal' => __('The due date can\'t be before the start date.'),
         ];
     }

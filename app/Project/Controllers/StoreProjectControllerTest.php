@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Activity\ActivityEloquentModel;
 use App\Activity\ActivityTypeEnum;
+use App\Choice\ChoiceEloquentModel;
 use App\Customer\CustomerEloquentModel;
 use App\Project\ProjectEloquentModel;
 use App\User\UserEloquentModel;
@@ -51,4 +52,18 @@ it('requires a name and a known status and colour', function (): void {
     actingAs(UserEloquentModel::factory()->withPersonalTeam()->create())
         ->post(route('projects.store'), ['name' => '', 'hue' => 400, 'status' => 'done', 'visibility' => 'open'])
         ->assertSessionHasErrors(['name', 'hue', 'status']);
+});
+
+it("creates a project with labels, rejecting another team's", function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $label = ChoiceEloquentModel::factory()->label()->create(['team_id' => $user->current_team_id]);
+    $fields = ['name' => 'Office refit', 'status' => 'planning', 'visibility' => 'open'];
+
+    actingAs($user)
+        ->post(route('projects.store'), [...$fields, 'label_ids' => [ChoiceEloquentModel::factory()->label()->create()->id]])
+        ->assertSessionHasErrors(['label_ids.0' => "Choose your team's labels."]);
+
+    actingAs($user)->post(route('projects.store'), [...$fields, 'label_ids' => [$label->id]])->assertSessionHasNoErrors();
+
+    expect(ProjectEloquentModel::query()->sole()->labels->pluck('id')->all())->toBe([$label->id]);
 });

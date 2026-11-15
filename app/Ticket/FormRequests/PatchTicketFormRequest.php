@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Ticket\FormRequests;
 
+use App\Choice\LabelTargetEnum;
 use App\Shared\Types;
 use App\Ticket\Actions\FindTicket;
 use App\Ticket\Actions\UpdateTicket;
@@ -60,7 +61,7 @@ final class PatchTicketFormRequest extends FormRequest
             ...TicketValidationRules::for($this, $teamId, $this->ticket),
             ...TicketValidationRules::status($this, $teamId, currentStatusId: $this->ticket->getStatusId()->toNullableString()),
             self::LABEL_IDS => ['sometimes', 'array'],
-            self::LABEL_IDS.'.*' => ['uuid', TicketValidationRules::label($teamId, $this->ticket->getId()->toString())],
+            self::LABEL_IDS.'.*' => ['uuid', LabelTargetEnum::Ticket->rule($teamId, $this->ticket->getId()->toString())],
         ];
     }
 

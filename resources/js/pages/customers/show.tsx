@@ -1,4 +1,5 @@
 import { Head, Link, router, setLayoutProps } from '@inertiajs/react';
+import { LabelChips } from '@/components/labels';
 import ConfirmDelete from '@/components/confirm-delete';
 import ContactTable from '@/components/contacts/contact-table';
 import RecordList from '@/components/customers/record-list';
@@ -378,8 +379,18 @@ export default function ShowCustomer({
                                 ]
                                     .filter(Boolean)
                                     .join(' · '),
-                                badge: asset.status === 'retired' && (
-                                    <Badge variant="secondary">Retired</Badge>
+                                badge: (
+                                    <span className="flex items-center gap-1.5">
+                                        <LabelChips
+                                            labels={asset.labels ?? []}
+                                            className="hidden flex-nowrap sm:flex"
+                                        />
+                                        {asset.status === 'retired' && (
+                                            <Badge variant="secondary">
+                                                Retired
+                                            </Badge>
+                                        )}
+                                    </span>
                                 ),
                             }))}
                         />

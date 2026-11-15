@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Choice\ChoiceEloquentModel;
 use App\Project\ProjectEloquentModel;
 use App\TeamUser\TeamUserEloquentModel;
 use App\User\UserEloquentModel;
@@ -74,4 +75,31 @@ it("lets a member edit a project but not change who can see it or who's in it", 
 
     expect($project->fresh())->status->toBe('at_risk')->visibility->toBe('open')
         ->and($project->fresh()->members->pluck('id')->all())->toBe([$owner->id]);
+});
+
+it('sets the labels, keeping an archived one the project has but not adding one', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $project = ProjectEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
+    $other = ProjectEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
+    $live = ChoiceEloquentModel::factory()->label()->create(['team_id' => $user->current_team_id]);
+    $archived = ChoiceEloquentModel::factory()->label()->create(['team_id' => $user->current_team_id, 'archived_at' => now()]);
+    $project->labels()->attach($archived);
+
+    actingAs($user)->put(route('projects.update', $project->id), ['label_ids' => [$archived->id, $live->id]])->assertSessionHasNoErrors();
+    actingAs($user)->put(route('projects.update', $other->id), ['label_ids' => [$archived->id]])->assertSessionHasErrors('label_ids.0');
+
+    expect($project->labels()->pluck('choices.id')->sort()->values()->all())->toBe(collect([$archived->id, $live->id])->sort()->values()->all())
+        ->and($other->labels()->count())->toBe(0);
+});
+
+it('clears the labels when the form sends none, and keeps them when it leaves them out', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $project = ProjectEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
+    $project->labels()->attach(ChoiceEloquentModel::factory()->label()->create(['team_id' => $user->current_team_id]));
+
+    actingAs($user)->put(route('projects.update', $project->id), ['status' => 'at_risk'])->assertSessionHasNoErrors();
+    expect($project->labels()->count())->toBe(1);
+
+    actingAs($user)->put(route('projects.update', $project->id), ['labels_sent' => '1'])->assertSessionHasNoErrors();
+    expect($project->labels()->count())->toBe(0);
 });

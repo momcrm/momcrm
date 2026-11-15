@@ -59,6 +59,8 @@ export type Asset = {
     location_id: string | null;
     status: 'active' | 'retired';
     description: string | null;
+    /** Sent with the customer's assets and the edit form. */
+    labels?: LabelTag[];
 };
 
 export type Service = {
@@ -80,7 +82,7 @@ export type Service = {
  */
 export type ChoiceList =
     | 'ticket_department'
-    | 'ticket_label'
+    | 'label'
     | 'ticket_priority'
     | 'ticket_status'
     | 'ticket_type';
@@ -129,12 +131,12 @@ export type TicketListItem = Ticket & {
     assignee_name: string | null;
     project_name: string | null;
     project_hue: number | null;
-    labels: TicketLabel[];
+    labels: LabelTag[];
     subtasks_count: number;
     closed_subtasks_count: number;
 };
 
-export type TicketLabel = { id: string; name: string; hue: number | null };
+export type LabelTag = { id: string; name: string; hue: number | null };
 
 export type TicketDrawerData = Omit<
     TicketListItem,
@@ -244,6 +246,7 @@ export type Project = {
 export type ProjectListItem = Project & {
     customer_name: string | null;
     lead_name: string | null;
+    labels: LabelTag[];
     members: CustomerOption[];
     tickets_count: number;
     closed_tickets_count: number;

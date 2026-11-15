@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Project\FormRequests;
 
+use App\Choice\LabelTargetEnum;
 use App\Project\Actions\CreateProject;
 use App\Project\Project;
+use App\Project\ProjectEloquentModel;
 use App\Project\ProjectValidationRules;
 use App\Project\Properties\Hue;
 use App\Shared\HuePalette;
@@ -45,7 +47,7 @@ final class StoreProjectFormRequest extends FormRequest
         $validated = $this->validated();
         $userId = (string) $this->user()?->id;
         $project = Project::new()
-            ->setPropertyIfExists(Types::stringKeyed(Arr::except($validated, ProjectValidationRules::MEMBER_IDS)))
+            ->setPropertyIfExists(Types::stringKeyed(Arr::except($validated, [ProjectValidationRules::MEMBER_IDS, LabelTargetEnum::FIELD])))
             ->setTeamId((string) $this->user()?->current_team_id);
 
         if ($project->getLeadId()->isNull()) {
@@ -57,6 +59,8 @@ final class StoreProjectFormRequest extends FormRequest
         }
 
         $project = CreateProject::fromProject($project, createdById: $userId, memberIds: [$userId, ...Types::stringList($validated[ProjectValidationRules::MEMBER_IDS] ?? [])]);
+
+        LabelTargetEnum::syncFrom($validated, ProjectEloquentModel::query()->findOrFail($project->getId()->toString())->labels());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __(':name created.', ['name' => $project->getName()->toString()])]);
 

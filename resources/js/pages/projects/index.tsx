@@ -17,6 +17,7 @@ import {
 import ProjectTable from '@/components/projects/project-table';
 import SearchInput from '@/components/search-input';
 import { Button } from '@/components/ui/button';
+import { LabelChips, useLabels } from '@/components/labels';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { visitWithQuery } from '@/lib/query';
 import { index, show } from '@/routes/projects';
@@ -25,6 +26,7 @@ import type { ProjectFormOptions, ProjectListItem } from '@/types';
 type Filters = {
     search: string | null;
     status: string | null;
+    label: string | null;
     sort: string;
     direction: 'asc' | 'desc';
     view: 'grid' | 'list' | 'table';
@@ -59,7 +61,10 @@ export default function ProjectsIndex({
             typeof window !== 'undefined' &&
             new URLSearchParams(window.location.search).has('new'),
     );
-    const isFiltered = Boolean(filters.search || filters.status);
+    const isFiltered = Boolean(
+        filters.search || filters.status || filters.label,
+    );
+    const labels = useLabels(filters.label);
 
     return (
         <>
@@ -123,6 +128,26 @@ export default function ProjectsIndex({
                             </option>
                         ))}
                     </NativeSelect>
+                    {labels.length > 0 && (
+                        <NativeSelect
+                            aria-label="Label"
+                            value={filters.label ?? ''}
+                            onChange={(event) =>
+                                visitWithQuery(
+                                    { label: event.target.value },
+                                    { only },
+                                )
+                            }
+                            className="h-8 w-40"
+                        >
+                            <option value="">Any label</option>
+                            {labels.map((label) => (
+                                <option key={label.id} value={label.id}>
+                                    {label.name}
+                                </option>
+                            ))}
+                        </NativeSelect>
+                    )}
                     {filters.view !== 'table' && (
                         <NativeSelect
                             aria-label="Sort by"
@@ -201,8 +226,14 @@ export default function ProjectsIndex({
                                         hue={project.hue}
                                         size="sm"
                                     />
-                                    <span className="min-w-0 flex-1 truncate font-medium">
-                                        {project.name}
+                                    <span className="flex min-w-0 flex-1 items-center gap-2">
+                                        <span className="truncate font-medium">
+                                            {project.name}
+                                        </span>
+                                        <LabelChips
+                                            labels={project.labels}
+                                            className="hidden flex-nowrap sm:flex"
+                                        />
                                     </span>
                                     <span className="hidden w-40 truncate text-xs text-muted-foreground md:block">
                                         {project.customer_name ?? 'Internal'}

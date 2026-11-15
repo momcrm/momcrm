@@ -12,7 +12,7 @@ use function Pest\Laravel\actingAs;
 it("shows the owner the team's lists with how many tickets use each choice", function (): void {
     $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
     [$ticket] = TicketEloquentModel::factory()->count(2)->create(['team_id' => $owner->current_team_id])->all();
-    $ticket->labels()->attach(ChoiceEloquentModel::factory()->ticketLabel()->create(['team_id' => $owner->current_team_id, 'name' => 'Bug']));
+    $ticket->labels()->attach(ChoiceEloquentModel::factory()->label()->create(['team_id' => $owner->current_team_id, 'name' => 'Bug']));
 
     actingAs($owner)
         ->get(route('workflow.edit'))
@@ -35,7 +35,7 @@ it("shows the owner the team's lists with how many tickets use each choice", fun
             ->where('lists.3.value', 'ticket_department')
             ->where('lists.3.is_optional', true)
             ->where('lists.3.choices.0.name', 'Support')
-            ->where('lists.4.value', 'ticket_label')
+            ->where('lists.4.value', 'label')
             ->where('lists.4.is_optional', true)
             ->where('lists.4.choices.0.name', 'Bug')
             ->where('lists.4.choices.0.usage', 1),

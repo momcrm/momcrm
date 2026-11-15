@@ -7,7 +7,6 @@ import {
     AssigneeAvatar,
     ChoiceTag,
     DueChip,
-    LabelChips,
     PriorityIcon,
     ProjectTag,
     TicketStatusPill,
@@ -15,6 +14,7 @@ import {
     useIsClosedStatus,
     usePriority,
 } from '@/components/tickets/ticket-meta';
+import { LabelChips } from '@/components/labels';
 import { useTicketActions } from '@/hooks/use-ticket-actions';
 import { cn } from '@/lib/utils';
 import type { TicketListItem } from '@/types';

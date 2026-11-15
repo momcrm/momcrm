@@ -42,10 +42,10 @@ final class ChoiceFactory extends Factory
         ];
     }
 
-    public function ticketLabel(): self
+    public function label(): self
     {
         return $this->state([
-            ListName::getDatabaseTableColumnName() => ChoiceListEnum::TicketLabel->value,
+            ListName::getDatabaseTableColumnName() => ChoiceListEnum::Label->value,
             Category::getDatabaseTableColumnName() => null,
         ]);
     }

@@ -71,7 +71,7 @@ it('forbids members', function (): void {
 
 it('archives any label, keeping it on its tickets, and never moves them', function (): void {
     $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
-    [$bug, $feature] = ChoiceEloquentModel::factory()->ticketLabel()->count(2)->create(['team_id' => $owner->current_team_id])->all();
+    [$bug, $feature] = ChoiceEloquentModel::factory()->label()->count(2)->create(['team_id' => $owner->current_team_id])->all();
     $ticket = TicketEloquentModel::factory()->create(['team_id' => $owner->current_team_id]);
     $ticket->labels()->attach($bug);
 

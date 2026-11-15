@@ -30,7 +30,7 @@ it('sums up a project on its overview', function (): void {
             ->where('statusCounts', fn ($counts): bool => collect($counts)->sortKeys()->all() === collect([ticketStatusId($user->current_team_id, 'Closed') => 1, ticketStatusId($user->current_team_id, 'New') => 1])->sortKeys()->all())
             ->where('upcoming.0.title', 'Due soon')
             ->where('milestones.0.name', 'Go live')
-            ->has('choices.ticket_label'),
+            ->has('choices.label'),
         );
 });
 

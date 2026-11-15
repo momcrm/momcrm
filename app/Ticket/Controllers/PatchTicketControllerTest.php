@@ -60,8 +60,8 @@ it('closes a ticket from the drawer, stamping the closed time', function (): voi
 it('sets the labels', function (): void {
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
     $ticket = patchableTicket($user);
-    [$keep, $add] = ChoiceEloquentModel::factory()->ticketLabel()->count(2)->create(['team_id' => $user->current_team_id]);
-    $drop = ChoiceEloquentModel::factory()->ticketLabel()->create(['team_id' => $user->current_team_id]);
+    [$keep, $add] = ChoiceEloquentModel::factory()->label()->count(2)->create(['team_id' => $user->current_team_id]);
+    $drop = ChoiceEloquentModel::factory()->label()->create(['team_id' => $user->current_team_id]);
     $ticket->labels()->attach([$keep->id, $drop->id]);
 
     actingAs($user)->patch(route('tickets.patch', $ticket->id), ['label_ids' => [$keep->id, $add->id]]);
@@ -74,7 +74,7 @@ it("rejects another team's label", function (): void {
     $ticket = patchableTicket($user);
 
     actingAs($user)
-        ->patch(route('tickets.patch', $ticket->id), ['label_ids' => [ChoiceEloquentModel::factory()->ticketLabel()->create()->id]])
+        ->patch(route('tickets.patch', $ticket->id), ['label_ids' => [ChoiceEloquentModel::factory()->label()->create()->id]])
         ->assertSessionHasErrors('label_ids.0');
 });
 
@@ -156,8 +156,8 @@ it('keeps an archived label the ticket already has, but does not add one', funct
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
     $ticket = patchableTicket($user);
     $other = patchableTicket($user);
-    $live = ChoiceEloquentModel::factory()->ticketLabel()->create(['team_id' => $user->current_team_id]);
-    $archived = ChoiceEloquentModel::factory()->ticketLabel()->create(['team_id' => $user->current_team_id, 'archived_at' => now()]);
+    $live = ChoiceEloquentModel::factory()->label()->create(['team_id' => $user->current_team_id]);
+    $archived = ChoiceEloquentModel::factory()->label()->create(['team_id' => $user->current_team_id, 'archived_at' => now()]);
     $ticket->labels()->attach($archived);
 
     actingAs($user)

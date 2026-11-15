@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\AccessRule\Engine;
 
 use App\AccessRule\AccessAttributeEnum;
+use App\Asset\Asset;
+use App\Choice\LabelTargetEnum;
 use App\Customer\Customer;
 use App\Group\Group;
 use App\Group\GroupRoleEnum;
@@ -39,6 +41,7 @@ final class AccessAttributeResolver
             AccessAttributeEnum::ProjectStatus => $record instanceof Project ? $record->getStatus()->toNullableString() : null,
             AccessAttributeEnum::ProjectVisibility => $record instanceof Project ? $record->getVisibility()->toNullableString() : null,
             AccessAttributeEnum::ProjectGroup => $record instanceof Project ? $record->getGroupId()->toNullableString() : null,
+            AccessAttributeEnum::ProjectLabel => $record instanceof Project ? self::labelIds(LabelTargetEnum::Project, $record->getId()->toString()) : null,
             AccessAttributeEnum::ProjectIsArchived => $record instanceof Project ? $record->getArchivedAt()->isNotNull() : null,
             AccessAttributeEnum::ProjectSubjectIsLead => $record instanceof Project ? $record->getLeadId()->equalsTo($subject->userId) : null,
             AccessAttributeEnum::ProjectSubjectIsMember => $record instanceof Project ? self::isProjectMember($record->getId()->toString(), $subject->userId) : null,
@@ -48,7 +51,7 @@ final class AccessAttributeResolver
             AccessAttributeEnum::TicketType => $record instanceof Ticket ? $record->getTypeId()->toNullableString() : null,
             AccessAttributeEnum::TicketDepartment => $record instanceof Ticket ? $record->getDepartmentId()->toNullableString() : null,
             AccessAttributeEnum::TicketProject => $record instanceof Ticket ? $record->getProjectId()->toNullableString() : null,
-            AccessAttributeEnum::TicketLabel => $record instanceof Ticket ? self::ticketLabelIds($record->getId()->toString()) : null,
+            AccessAttributeEnum::TicketLabel => $record instanceof Ticket ? self::labelIds(LabelTargetEnum::Ticket, $record->getId()->toString()) : null,
             AccessAttributeEnum::TicketIsArchived => $record instanceof Ticket ? $record->getArchivedAt()->isNotNull() : null,
             AccessAttributeEnum::TicketSubjectIsAssignee => $record instanceof Ticket ? $record->getAssigneeId()->equalsTo($subject->userId) : null,
             AccessAttributeEnum::TicketSubjectIsProjectLead => $record instanceof Ticket
@@ -58,6 +61,7 @@ final class AccessAttributeResolver
                 ? $record->getProjectId()->isNotNull() && self::isProjectMember($record->getProjectId()->toString(), $subject->userId)
                 : null,
 
+            AccessAttributeEnum::AssetLabel => $record instanceof Asset ? self::labelIds(LabelTargetEnum::Asset, $record->getId()->toString()) : null,
             AccessAttributeEnum::CustomerStatus => $record instanceof Customer ? $record->getStatus()->toNullableString() : null,
             AccessAttributeEnum::InvoiceStatus => $record instanceof Invoice ? $record->getStatus()->toNullableString() : null,
 
@@ -84,16 +88,11 @@ final class AccessAttributeResolver
     }
 
     /**
-     * @return array<int, string>
+     * @return list<string>
      */
-    private static function ticketLabelIds(string $ticketId): array
+    private static function labelIds(LabelTargetEnum $target, string $recordId): array
     {
-        return RequestMemo::remember("access-ticket-labels.{$ticketId}", fn (): array => DB::table(Table::LabelTicket->value)
-            ->where('ticket_id', $ticketId)
-            ->pluck('label_id')
-            ->map(Types::string(...))
-            ->values()
-            ->all());
+        return Types::stringList(RequestMemo::remember("access-labels.{$target->value}.{$recordId}", fn (): array => $target->labelIds($recordId)));
     }
 
     private static function groupRole(string $groupId, string $userId): ?string

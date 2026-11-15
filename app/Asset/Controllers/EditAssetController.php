@@ -32,7 +32,7 @@ final class EditAssetController
         $customer = FindCustomer::byIdForTeam($found->getCustomerId()->toString(), $teamId);
 
         return Inertia::render('assets/edit', [
-            'asset' => $found->toSummary(),
+            'asset' => [...$found->toSummary(), 'labels' => $found->getLabels()->toDataCollection()->toTags()],
             'customer' => $customer->toSummary(),
             'locations' => FindLocation::optionsForCustomer($customer->getId()->toString(), (string) $customer->getTeamId()->toString()),
             'statuses' => AssetStatusEnum::options(),

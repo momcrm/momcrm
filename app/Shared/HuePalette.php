@@ -39,7 +39,7 @@ final class HuePalette
 
     /**
      * A hue picked from a name, so the same name (in the same kind of record,
-     * such as "ticket_label:Bug") always gets the same colour.
+     * such as "label:Bug") always gets the same colour.
      */
     public static function forName(string $kind, string $name): int
     {

@@ -7,6 +7,7 @@ namespace App\Asset\Actions;
 use App\Asset\Asset;
 use App\Asset\AssetCollection;
 use App\Asset\AssetEloquentModel;
+use App\Asset\AssetRelationship;
 use App\Asset\Properties\CustomerId;
 use App\Asset\Properties\Id;
 use App\Asset\Properties\Name;
@@ -42,6 +43,7 @@ final class FindAsset
     {
         return AssetEloquentModel::query()
             ->withoutGlobalScope(CurrentTeamScope::class)
+            ->with(AssetRelationship::Labels->value)
             ->where(TeamId::getDatabaseTableColumnName(), $teamId);
     }
 }

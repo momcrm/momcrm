@@ -336,12 +336,12 @@ final readonly class SeedSampleData
         $ids = [];
 
         foreach (array_keys(self::LABELS) as $position => $name) {
-            $label = FindChoice::byNameForTeam($this->teamId, ChoiceListEnum::TicketLabel, $name);
+            $label = FindChoice::byNameForTeam($this->teamId, ChoiceListEnum::Label, $name);
 
             $ids[$name] = ($label->isNull()
                 ? CreateChoice::fromChoice(Choice::new()
                     ->setTeamId($this->teamId)
-                    ->setListName(ChoiceListEnum::TicketLabel)
+                    ->setListName(ChoiceListEnum::Label)
                     ->setName($name)
                     ->setHue(self::LABELS[$name])
                     ->setPosition($position))

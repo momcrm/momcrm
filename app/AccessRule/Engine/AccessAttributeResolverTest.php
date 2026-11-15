@@ -5,6 +5,8 @@ declare(strict_types=1);
 use App\AccessRule\AccessAttributeEnum;
 use App\AccessRule\Engine\AccessAttributeResolver;
 use App\AccessRule\Engine\AccessSubject;
+use App\Asset\Asset;
+use App\Asset\AssetEloquentModel;
 use App\Choice\Actions\FindChoice;
 use App\Choice\ChoiceEloquentModel;
 use App\Choice\ChoiceListEnum;
@@ -54,6 +56,8 @@ it("reads a project's attributes and the person's place in it", function (): voi
     $group = GroupEloquentModel::factory()->create(['team_id' => $teamId]);
     $model = ProjectEloquentModel::factory()->archived()->create(['team_id' => $teamId, 'status' => 'at_risk', 'visibility' => 'restricted', 'group_id' => $group->id, 'lead_id' => $user->id]);
     $model->members()->attach($user->id);
+    $label = ChoiceEloquentModel::factory()->label()->create(['team_id' => $teamId]);
+    $model->labels()->attach($label->id);
     $project = Project::fromEloquentModel($model);
     $other = Project::fromEloquentModel(ProjectEloquentModel::factory()->create(['team_id' => $teamId]));
     $resolve = fn (AccessAttributeEnum $attribute, Project $project): mixed => AccessAttributeResolver::resolve($attribute, $subject(), $project);
@@ -66,14 +70,26 @@ it("reads a project's attributes and the person's place in it", function (): voi
         ->and($resolve(AccessAttributeEnum::ProjectSubjectIsMember, $project))->toBeTrue()
         ->and($resolve(AccessAttributeEnum::ProjectIsArchived, $other))->toBeFalse()
         ->and($resolve(AccessAttributeEnum::ProjectSubjectIsLead, $other))->toBeFalse()
-        ->and($resolve(AccessAttributeEnum::ProjectSubjectIsMember, $other))->toBeFalse();
+        ->and($resolve(AccessAttributeEnum::ProjectSubjectIsMember, $other))->toBeFalse()
+        ->and($resolve(AccessAttributeEnum::ProjectLabel, $project))->toBe([$label->id])
+        ->and($resolve(AccessAttributeEnum::ProjectLabel, $other))->toBe([]);
+});
+
+it("reads an asset's labels", function (): void {
+    ['teamId' => $teamId, 'subject' => $subject] = resolverSetup();
+    $label = ChoiceEloquentModel::factory()->label()->create(['team_id' => $teamId]);
+    $model = AssetEloquentModel::factory()->create(['team_id' => $teamId]);
+    $model->labels()->attach($label->id);
+
+    expect(AccessAttributeResolver::resolve(AccessAttributeEnum::AssetLabel, $subject(), Asset::fromEloquentModel($model)))->toBe([$label->id])
+        ->and(AccessAttributeResolver::resolve(AccessAttributeEnum::AssetLabel, $subject(), Project::fromEloquentModel(ProjectEloquentModel::factory()->create(['team_id' => $teamId]))))->toBeNull();
 });
 
 it("reads a ticket's attributes and the person's place in its project", function (): void {
     ['user' => $user, 'teamId' => $teamId, 'subject' => $subject] = resolverSetup();
     $project = ProjectEloquentModel::factory()->create(['team_id' => $teamId, 'lead_id' => $user->id]);
     $project->members()->attach($user->id);
-    $label = ChoiceEloquentModel::factory()->ticketLabel()->create(['team_id' => $teamId]);
+    $label = ChoiceEloquentModel::factory()->label()->create(['team_id' => $teamId]);
     $urgent = FindChoice::byNameForTeam($teamId, ChoiceListEnum::TicketPriority, 'Urgent')->getId()->toString();
     $incident = FindChoice::byNameForTeam($teamId, ChoiceListEnum::TicketType, 'Incident')->getId()->toString();
     $support = FindChoice::byNameForTeam($teamId, ChoiceListEnum::TicketDepartment, 'Support')->getId()->toString();

@@ -6,18 +6,22 @@ namespace App\Asset\FormRequests;
 
 use App\Asset\Actions\CreateAsset;
 use App\Asset\Asset;
+use App\Asset\AssetEloquentModel;
 use App\Asset\Properties\Description;
 use App\Asset\Properties\LocationId;
 use App\Asset\Properties\Name;
 use App\Asset\Properties\SerialNumber;
 use App\Asset\Properties\Status;
+use App\Choice\LabelTargetEnum;
 use App\Customer\Actions\FindCustomer;
 use App\Customer\Customer;
 use App\Customer\Exceptions\CouldNotFindCustomer;
 use App\Shared\Table;
+use App\Shared\Types;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -61,17 +65,22 @@ final class StoreAssetFormRequest extends FormRequest
             ],
             Status::getNameForValidation() => Status::getValidationRulesForCreate($this),
             Description::getNameForValidation() => Description::getValidationRulesForCreate($this),
+            ...LabelTargetEnum::Asset->rules($this->customer->getTeamId()->toString()),
         ];
     }
 
     public function process(): RedirectResponse
     {
+        $validated = $this->validated();
+
         $asset = CreateAsset::fromAsset(
             Asset::new()
-                ->setPropertyIfExists($this->validated())
+                ->setPropertyIfExists(Types::stringKeyed(Arr::except($validated, LabelTargetEnum::FIELD)))
                 ->setCustomerId($this->customer->getId())
                 ->setTeamId($this->customer->getTeamId()),
         );
+
+        LabelTargetEnum::syncFrom($validated, AssetEloquentModel::query()->findOrFail($asset->getId()->toString())->labels());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __(':name added.', ['name' => $asset->getName()->toString()])]);
 

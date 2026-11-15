@@ -26,11 +26,11 @@ import {
     defaultStatusId,
     PriorityGlyph,
     useTicketDepartments,
-    useTicketLabels,
     useTicketPriorities,
     useTicketStatuses,
     useTicketTypes,
 } from '@/components/tickets/ticket-meta';
+import { useLabels } from '@/components/labels';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -55,7 +55,7 @@ import { formatBytes } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { create as createCustomer } from '@/routes/customers';
 import { formOptions, store } from '@/routes/tickets';
-import type { TicketFormOptions, TicketLabel } from '@/types';
+import type { TicketFormOptions, LabelTag } from '@/types';
 
 type Defaults = {
     customerId?: string | null;
@@ -208,7 +208,7 @@ function CreateTicketForm({
             : '',
     );
     const priorities = useTicketPriorities();
-    const labels = useTicketLabels();
+    const labels = useLabels();
     const [priorityId, setPriorityId] = useState(
         priorities.find((option) => option.is_default)?.id ?? '',
     );
@@ -977,7 +977,7 @@ function LabelPicker({
     onChange,
     children,
 }: {
-    options: TicketLabel[];
+    options: LabelTag[];
     selected: string[];
     onChange: (ids: string[]) => void;
     children: ReactNode;

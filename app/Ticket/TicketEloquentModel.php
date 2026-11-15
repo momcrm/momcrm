@@ -6,8 +6,8 @@ namespace App\Ticket;
 
 use App\AuditLog\AuditObserver;
 use App\AuditLog\Contracts\Auditable;
-use App\Choice\ChoiceEloquentModel;
-use App\Choice\Properties\Position as ChoicePosition;
+use App\Choice\HasLabels;
+use App\Choice\LabelTargetEnum;
 use App\Contact\ContactEloquentModel;
 use App\Customer\CustomerEloquentModel;
 use App\Project\ProjectEloquentModel;
@@ -34,7 +34,6 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
@@ -69,6 +68,7 @@ final class TicketEloquentModel extends Model implements Auditable
     /** @use HasFactory<TicketFactory> */
     use HasFactory;
 
+    use HasLabels;
     use HasUuids;
 
     protected $guarded = [];
@@ -158,20 +158,9 @@ final class TicketEloquentModel extends Model implements Auditable
         return $this->hasMany(self::class, ParentId::getDatabaseTableColumnName());
     }
 
-    /**
-     * The ticket's labels: choices from the team's "ticket_label" list, in its order.
-     *
-     * @return BelongsToMany<ChoiceEloquentModel, $this>
-     */
-    public function labels(): BelongsToMany
+    public static function labelTarget(): LabelTargetEnum
     {
-        return $this->belongsToMany(
-            related: ChoiceEloquentModel::class,
-            table: Table::LabelTicket->value,
-            foreignPivotKey: 'ticket_id',
-            relatedPivotKey: 'label_id',
-            relation: TicketRelationship::Labels->value,
-        )->orderBy(ChoicePosition::getDatabaseTableColumnNameWithTable(Table::Choices->value));
+        return LabelTargetEnum::Ticket;
     }
 
     /**

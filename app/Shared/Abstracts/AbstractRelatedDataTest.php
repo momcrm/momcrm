@@ -24,7 +24,7 @@ it('reads a loaded relation as its data object, and leaves an unloaded one empty
 
 it('reads a loaded has-many relation as the domain collection', function (): void {
     $model = TicketEloquentModel::factory()->create();
-    $model->labels()->attach(ChoiceEloquentModel::factory()->ticketLabel()->count(2)->create(['team_id' => $model->team_id])->modelKeys());
+    $model->labels()->attach(ChoiceEloquentModel::factory()->label()->count(2)->create(['team_id' => $model->team_id])->modelKeys());
 
     $labels = Ticket::fromEloquentModel($model->load('labels'))->getLabels()->toDataCollection();
 
