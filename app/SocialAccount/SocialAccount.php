@@ -12,6 +12,7 @@ use App\SocialAccount\Properties\Provider;
 use App\SocialAccount\Properties\ProviderUserId;
 use App\SocialAccount\Properties\UpdatedAt;
 use App\SocialAccount\Properties\UserId;
+use Illuminate\Support\Collection;
 use Mom\Data\AbstractData;
 use Mom\Data\AbstractValue;
 
@@ -38,6 +39,18 @@ final class SocialAccount extends AbstractData
     public function getPrimaryKey(): AbstractValue
     {
         return $this->getId();
+    }
+
+    /**
+     * @param  Collection<int, mixed>|array<int, mixed>  $items
+     */
+    public static function collect(Collection|array $items, string $method = 'fromData'): SocialAccountCollection
+    {
+        if ($items instanceof SocialAccountCollection) {
+            return $items;
+        }
+
+        return SocialAccountCollection::make(parent::collect($items, $method)->all());
     }
 
     public function getCreatedAt(): CreatedAt

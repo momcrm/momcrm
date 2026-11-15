@@ -19,13 +19,13 @@ use App\Ticket\Properties\Status;
 use App\Ticket\Properties\TeamId;
 use App\Ticket\Properties\Title;
 use App\Ticket\Ticket;
+use App\Ticket\TicketCollection;
 use App\Ticket\TicketEloquentModel;
 use App\Ticket\TicketListFilters;
 use App\Ticket\TicketRelationship;
 use App\Ticket\TicketStatusEnum;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Collection;
 
 final class FindTicket
 {
@@ -130,10 +130,8 @@ final class FindTicket
 
     /**
      * Live tickets assigned to someone, with a due date or still open, for My Tickets.
-     *
-     * @return Collection<int, Ticket>
      */
-    public static function assignedTo(string $teamId, string $userId): Collection
+    public static function assignedTo(string $teamId, string $userId): TicketCollection
     {
         return Ticket::collect(self::query($teamId)
             ->with([TicketRelationship::Customer->value, TicketRelationship::Assignee->value, TicketRelationship::Project->value, TicketRelationship::Labels->value])
@@ -153,9 +151,8 @@ final class FindTicket
      * Some tickets by id, live or archived, with what list rows show.
      *
      * @param  array<int, string>  $ids
-     * @return Collection<int, Ticket>
      */
-    public static function byIdsForTeam(string $teamId, array $ids, bool $archived = false): Collection
+    public static function byIdsForTeam(string $teamId, array $ids, bool $archived = false): TicketCollection
     {
         return Ticket::collect(self::query($teamId)
             ->with([TicketRelationship::Customer->value, TicketRelationship::Assignee->value, TicketRelationship::Project->value, TicketRelationship::Labels->value])
@@ -168,10 +165,8 @@ final class FindTicket
 
     /**
      * The team's archived tickets, most recently archived first.
-     *
-     * @return Collection<int, Ticket>
      */
-    public static function archivedForTeam(string $teamId): Collection
+    public static function archivedForTeam(string $teamId): TicketCollection
     {
         return Ticket::collect(self::query($teamId)
             ->with([TicketRelationship::Customer->value, TicketRelationship::Assignee->value, TicketRelationship::Project->value, TicketRelationship::Labels->value])

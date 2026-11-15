@@ -18,6 +18,7 @@ use App\Location\Properties\StreetTwo;
 use App\Location\Properties\Suburb;
 use App\Location\Properties\TeamId;
 use App\Location\Properties\UpdatedAt;
+use Illuminate\Support\Collection;
 use Mom\Data\AbstractData;
 use Mom\Data\AbstractValue;
 
@@ -50,6 +51,18 @@ final class Location extends AbstractData
     public function getPrimaryKey(): AbstractValue
     {
         return $this->getId();
+    }
+
+    /**
+     * @param  Collection<int, mixed>|array<int, mixed>  $items
+     */
+    public static function collect(Collection|array $items, string $method = 'fromData'): LocationCollection
+    {
+        if ($items instanceof LocationCollection) {
+            return $items;
+        }
+
+        return LocationCollection::make(parent::collect($items, $method)->all());
     }
 
     /**

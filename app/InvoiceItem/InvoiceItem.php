@@ -15,6 +15,7 @@ use App\InvoiceItem\Properties\ServiceId;
 use App\InvoiceItem\Properties\TeamId;
 use App\InvoiceItem\Properties\UnitPriceInCents;
 use App\InvoiceItem\Properties\UpdatedAt;
+use Illuminate\Support\Collection;
 use Mom\Data\AbstractData;
 use Mom\Data\AbstractValue;
 
@@ -44,6 +45,18 @@ final class InvoiceItem extends AbstractData
     public function getPrimaryKey(): AbstractValue
     {
         return $this->getId();
+    }
+
+    /**
+     * @param  Collection<int, mixed>|array<int, mixed>  $items
+     */
+    public static function collect(Collection|array $items, string $method = 'fromData'): InvoiceItemCollection
+    {
+        if ($items instanceof InvoiceItemCollection) {
+            return $items;
+        }
+
+        return InvoiceItemCollection::make(parent::collect($items, $method)->all());
     }
 
     public function getLineTotalInCents(): int

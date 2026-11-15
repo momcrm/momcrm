@@ -12,8 +12,8 @@ use App\TeamInvitation\Properties\Id;
 use App\TeamInvitation\Properties\TeamId;
 use App\TeamInvitation\Properties\TokenHash;
 use App\TeamInvitation\TeamInvitation;
+use App\TeamInvitation\TeamInvitationCollection;
 use App\TeamInvitation\TeamInvitationEloquentModel;
-use Illuminate\Support\Collection;
 
 final class FindTeamInvitation
 {
@@ -54,10 +54,8 @@ final class FindTeamInvitation
 
     /**
      * Invitations that have not been accepted and have not expired, newest first.
-     *
-     * @return Collection<int, TeamInvitation>
      */
-    public static function pendingForTeam(string $teamId): Collection
+    public static function pendingForTeam(string $teamId): TeamInvitationCollection
     {
         $invitations = TeamInvitationEloquentModel::query()
             ->withoutGlobalScope(CurrentTeamScope::class)

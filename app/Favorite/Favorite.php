@@ -11,6 +11,7 @@ use App\Favorite\Properties\FavoritableType;
 use App\Favorite\Properties\Id;
 use App\Favorite\Properties\TeamId;
 use App\Favorite\Properties\UserId;
+use Illuminate\Support\Collection;
 use Mom\Data\AbstractData;
 use Mom\Data\AbstractValue;
 
@@ -36,6 +37,18 @@ final class Favorite extends AbstractData
     public function getPrimaryKey(): AbstractValue
     {
         return $this->getId();
+    }
+
+    /**
+     * @param  Collection<int, mixed>|array<int, mixed>  $items
+     */
+    public static function collect(Collection|array $items, string $method = 'fromData'): FavoriteCollection
+    {
+        if ($items instanceof FavoriteCollection) {
+            return $items;
+        }
+
+        return FavoriteCollection::make(parent::collect($items, $method)->all());
     }
 
     public function getCreatedAt(): CreatedAt

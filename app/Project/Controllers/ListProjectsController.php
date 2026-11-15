@@ -10,7 +10,7 @@ use App\Project\Actions\FindProject;
 use App\Project\Project;
 use App\Project\ProjectFormOptions;
 use App\Project\ProjectStatusEnum;
-use App\Shared\Types;
+use App\User\User;
 use App\User\UserEloquentModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -54,13 +54,10 @@ final class ListProjectsController
     {
         return [
             ...$project->toSummary(),
-            'customer_name' => $project->getCustomerName()->toNullableString(),
-            'lead_name' => $project->getLeadName()->toNullableString(),
-            'members' => $project->getMembers()->toCollection()
-                ->map(fn (mixed $member): array => [
-                    'id' => Types::string(Types::stringKeyed($member)['id'] ?? null),
-                    'name' => Types::string(Types::stringKeyed($member)['name'] ?? null),
-                ])
+            'customer_name' => $project->getCustomer()->toNullableData()?->getName()->toString(),
+            'lead_name' => $project->getLead()->toNullableData()?->getName()->toString(),
+            'members' => $project->getMembers()->toDataCollection()
+                ->map(fn (User $member): array => ['id' => $member->getId()->toString(), 'name' => $member->getName()->toString()])
                 ->values()
                 ->all(),
             'tickets_count' => $project->getTicketsCount()->toInteger(),

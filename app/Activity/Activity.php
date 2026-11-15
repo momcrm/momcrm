@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Activity;
 
-use App\Activity\Properties\ActorName;
+use App\Activity\Properties\Actor;
 use App\Activity\Properties\CreatedAt;
 use App\Activity\Properties\Details;
 use App\Activity\Properties\Id;
@@ -29,7 +29,7 @@ use Mom\Data\AbstractValue;
 final class Activity extends AbstractData
 {
     public function __construct(
-        public ActorName $actorName,
+        public Actor $actor,
         public CreatedAt $createdAt,
         public Details $details,
         public Id $id,
@@ -49,6 +49,18 @@ final class Activity extends AbstractData
     }
 
     /**
+     * @param  Collection<int, mixed>|array<int, mixed>  $items
+     */
+    public static function collect(Collection|array $items, string $method = 'fromData'): ActivityCollection
+    {
+        if ($items instanceof ActivityCollection) {
+            return $items;
+        }
+
+        return ActivityCollection::make(parent::collect($items, $method)->all());
+    }
+
+    /**
      * The row as shown in activity lists.
      *
      * @return array{id: string, type: string, label: string, details: array<array-key, mixed>|null, actor: string|null, ip_address: string|null, created_at: string|null}
@@ -60,7 +72,7 @@ final class Activity extends AbstractData
             'type' => $this->getType()->toString(),
             'label' => $this->getType()->toEnum()->label(),
             'details' => $this->getDetails()->toNullableArray(),
-            'actor' => $this->getActorName()->toNullableString(),
+            'actor' => $this->getActor()->toNullableData()?->getName()->toString(),
             'ip_address' => $this->getIpAddress()->toNullableString(),
             'created_at' => $this->getCreatedAt()->toNullableISOString(),
         ];
@@ -314,8 +326,8 @@ final class Activity extends AbstractData
         return $this;
     }
 
-    public function getActorName(): ActorName
+    public function getActor(): Actor
     {
-        return $this->actorName;
+        return $this->actor;
     }
 }

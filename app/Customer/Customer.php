@@ -19,6 +19,7 @@ use App\Customer\Properties\Status;
 use App\Customer\Properties\TeamId;
 use App\Customer\Properties\UpdatedAt;
 use App\Customer\Properties\Website;
+use Illuminate\Support\Collection;
 use Mom\Data\AbstractData;
 use Mom\Data\AbstractValue;
 
@@ -52,6 +53,18 @@ final class Customer extends AbstractData
     public function getPrimaryKey(): AbstractValue
     {
         return $this->getId();
+    }
+
+    /**
+     * @param  Collection<int, mixed>|array<int, mixed>  $items
+     */
+    public static function collect(Collection|array $items, string $method = 'fromData'): CustomerCollection
+    {
+        if ($items instanceof CustomerCollection) {
+            return $items;
+        }
+
+        return CustomerCollection::make(parent::collect($items, $method)->all());
     }
 
     /**

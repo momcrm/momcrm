@@ -8,13 +8,13 @@ use App\Shared\Table;
 use App\Team\Properties\Id;
 use App\Team\Properties\Name;
 use App\Team\Team;
+use App\Team\TeamCollection;
 use App\Team\TeamEloquentModel;
 use App\TeamUser\Properties\CreatedAt;
 use App\TeamUser\Properties\Id as TeamUserId;
 use App\TeamUser\Properties\TeamId;
 use App\TeamUser\Properties\UserId;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Collection;
 
 final class FindTeam
 {
@@ -56,10 +56,7 @@ final class FindTeam
         return Team::fromEloquentModel($team);
     }
 
-    /**
-     * @return Collection<int, Team>
-     */
-    public static function allForMember(string $userId): Collection
+    public static function allForMember(string $userId): TeamCollection
     {
         $teams = self::memberOf($userId)
             ->orderBy(Name::getDatabaseTableColumnNameWithTable(Table::Teams))

@@ -13,6 +13,7 @@ use App\Comment\Properties\TeamId;
 use App\Comment\Properties\TicketId;
 use App\Comment\Properties\UpdatedAt;
 use App\Comment\Properties\UserId;
+use Illuminate\Support\Collection;
 use Mom\Data\AbstractData;
 use Mom\Data\AbstractValue;
 
@@ -40,6 +41,18 @@ final class Comment extends AbstractData
     public function getPrimaryKey(): AbstractValue
     {
         return $this->getId();
+    }
+
+    /**
+     * @param  Collection<int, mixed>|array<int, mixed>  $items
+     */
+    public static function collect(Collection|array $items, string $method = 'fromData'): CommentCollection
+    {
+        if ($items instanceof CommentCollection) {
+            return $items;
+        }
+
+        return CommentCollection::make(parent::collect($items, $method)->all());
     }
 
     public function getBody(): Body

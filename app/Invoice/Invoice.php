@@ -6,12 +6,12 @@ namespace App\Invoice;
 
 use App\Invoice\Factories\InvoiceFactory;
 use App\Invoice\Properties\CreatedAt;
+use App\Invoice\Properties\Customer;
 use App\Invoice\Properties\CustomerId;
-use App\Invoice\Properties\CustomerName;
 use App\Invoice\Properties\DueOn;
 use App\Invoice\Properties\Id;
 use App\Invoice\Properties\IssuedOn;
-use App\Invoice\Properties\ItemsSubtotalInCents;
+use App\Invoice\Properties\Items;
 use App\Invoice\Properties\Notes;
 use App\Invoice\Properties\Number;
 use App\Invoice\Properties\PaidAt;
@@ -21,6 +21,7 @@ use App\Invoice\Properties\Status;
 use App\Invoice\Properties\TaxRateBasisPoints;
 use App\Invoice\Properties\TeamId;
 use App\Invoice\Properties\UpdatedAt;
+use Illuminate\Support\Collection;
 use Mom\Data\AbstractData;
 use Mom\Data\AbstractValue;
 
@@ -31,12 +32,12 @@ final class Invoice extends AbstractData
 {
     public function __construct(
         public CreatedAt $createdAt,
+        public Customer $customer,
         public CustomerId $customerId,
-        public CustomerName $customerName,
         public DueOn $dueOn,
         public Id $id,
         public IssuedOn $issuedOn,
-        public ItemsSubtotalInCents $itemsSubtotalInCents,
+        public Items $items,
         public Notes $notes,
         public Number $number,
         public PaidAt $paidAt,
@@ -56,6 +57,18 @@ final class Invoice extends AbstractData
     public function getPrimaryKey(): AbstractValue
     {
         return $this->getId();
+    }
+
+    /**
+     * @param  Collection<int, mixed>|array<int, mixed>  $items
+     */
+    public static function collect(Collection|array $items, string $method = 'fromData'): InvoiceCollection
+    {
+        if ($items instanceof InvoiceCollection) {
+            return $items;
+        }
+
+        return InvoiceCollection::make(parent::collect($items, $method)->all());
     }
 
     /**
@@ -257,13 +270,13 @@ final class Invoice extends AbstractData
         return $this->updatedAt;
     }
 
-    public function getCustomerName(): CustomerName
+    public function getCustomer(): Customer
     {
-        return $this->customerName;
+        return $this->customer;
     }
 
-    public function getItemsSubtotalInCents(): ItemsSubtotalInCents
+    public function getItems(): Items
     {
-        return $this->itemsSubtotalInCents;
+        return $this->items;
     }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Location\Actions;
 
 use App\Location\Location;
+use App\Location\LocationCollection;
 use App\Location\LocationEloquentModel;
 use App\Location\Properties\CustomerId;
 use App\Location\Properties\Id;
@@ -25,10 +26,7 @@ final class FindLocation
         return Location::fromEloquentModel(self::query($teamId)->where(Id::getDatabaseTableColumnName(), $id)->first());
     }
 
-    /**
-     * @return Collection<int, Location>
-     */
-    public static function forCustomer(string $customerId, string $teamId): Collection
+    public static function forCustomer(string $customerId, string $teamId): LocationCollection
     {
         $models = self::query($teamId)
             ->where(CustomerId::getDatabaseTableColumnName(), $customerId)

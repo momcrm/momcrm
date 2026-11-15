@@ -13,6 +13,7 @@ use App\Milestone\Properties\Name;
 use App\Milestone\Properties\ProjectId;
 use App\Milestone\Properties\TeamId;
 use App\Milestone\Properties\UpdatedAt;
+use Illuminate\Support\Collection;
 use Mom\Data\AbstractData;
 use Mom\Data\AbstractValue;
 
@@ -40,6 +41,18 @@ final class Milestone extends AbstractData
     public function getPrimaryKey(): AbstractValue
     {
         return $this->getId();
+    }
+
+    /**
+     * @param  Collection<int, mixed>|array<int, mixed>  $items
+     */
+    public static function collect(Collection|array $items, string $method = 'fromData'): MilestoneCollection
+    {
+        if ($items instanceof MilestoneCollection) {
+            return $items;
+        }
+
+        return MilestoneCollection::make(parent::collect($items, $method)->all());
     }
 
     public function getCompletedAt(): CompletedAt

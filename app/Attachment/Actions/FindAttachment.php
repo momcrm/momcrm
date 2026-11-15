@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Attachment\Actions;
 
 use App\Attachment\Attachment;
+use App\Attachment\AttachmentCollection;
 use App\Attachment\AttachmentEloquentModel;
 use App\Attachment\AttachmentRelationship;
 use App\Attachment\Properties\AttachableId;
@@ -18,7 +19,6 @@ use App\Shared\Table;
 use App\Ticket\Properties\Id as TicketId;
 use App\Ticket\Properties\TeamId as TicketTeamId;
 use App\Ticket\TicketEloquentModel;
-use Illuminate\Support\Collection;
 
 final class FindAttachment
 {
@@ -69,10 +69,8 @@ final class FindAttachment
 
     /**
      * A ticket's or project's files, newest first, with who uploaded them.
-     *
-     * @return Collection<int, Attachment>
      */
-    public static function forAttachable(MorphMapKeyEnum $type, string $id): Collection
+    public static function forAttachable(MorphMapKeyEnum $type, string $id): AttachmentCollection
     {
         return Attachment::collect(AttachmentEloquentModel::query()
             ->withoutGlobalScopes()
@@ -94,7 +92,7 @@ final class FindAttachment
             'name' => $attachment->getName()->toString(),
             'size' => $attachment->getSize()->toInteger(),
             'mime_type' => $attachment->getMimeType()->toString(),
-            'uploaded_by' => $attachment->getUploaderName()->toNullableString(),
+            'uploaded_by' => $attachment->getUploader()->toNullableData()?->getName()->toString(),
             'created_at' => $attachment->getCreatedAt()->toNullableISOString(),
             'url' => route('attachments.show', $attachment->getId()->toString()),
         ];

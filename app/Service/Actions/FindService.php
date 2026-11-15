@@ -9,10 +9,10 @@ use App\Service\Properties\Id;
 use App\Service\Properties\Name;
 use App\Service\Properties\TeamId;
 use App\Service\Service;
+use App\Service\ServiceCollection;
 use App\Service\ServiceEloquentModel;
 use App\Team\Scopes\CurrentTeamScope;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Collection;
 
 final class FindService
 {
@@ -25,10 +25,7 @@ final class FindService
         return Service::fromEloquentModel(self::query($teamId)->where(Id::getDatabaseTableColumnName(), $id)->first());
     }
 
-    /**
-     * @return Collection<int, Service>
-     */
-    public static function forCustomer(string $customerId, string $teamId): Collection
+    public static function forCustomer(string $customerId, string $teamId): ServiceCollection
     {
         $models = self::query($teamId)
             ->where(CustomerId::getDatabaseTableColumnName(), $customerId)

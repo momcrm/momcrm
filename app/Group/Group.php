@@ -13,6 +13,7 @@ use App\Group\Properties\Id;
 use App\Group\Properties\Name;
 use App\Group\Properties\TeamId;
 use App\Group\Properties\UpdatedAt;
+use Illuminate\Support\Collection;
 use Mom\Data\AbstractData;
 use Mom\Data\AbstractValue;
 
@@ -40,6 +41,18 @@ final class Group extends AbstractData
     public function getPrimaryKey(): AbstractValue
     {
         return $this->getId();
+    }
+
+    /**
+     * @param  Collection<int, mixed>|array<int, mixed>  $items
+     */
+    public static function collect(Collection|array $items, string $method = 'fromData'): GroupCollection
+    {
+        if ($items instanceof GroupCollection) {
+            return $items;
+        }
+
+        return GroupCollection::make(parent::collect($items, $method)->all());
     }
 
     public function getColor(): Color

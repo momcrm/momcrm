@@ -9,17 +9,17 @@ use App\Project\Properties\ArchivedAt;
 use App\Project\Properties\ClosedTicketsCount;
 use App\Project\Properties\Color;
 use App\Project\Properties\CreatedAt;
+use App\Project\Properties\Customer;
 use App\Project\Properties\CustomerId;
-use App\Project\Properties\CustomerName;
 use App\Project\Properties\Description;
 use App\Project\Properties\DueOn;
+use App\Project\Properties\Group;
 use App\Project\Properties\GroupId;
-use App\Project\Properties\GroupName;
 use App\Project\Properties\Icon;
 use App\Project\Properties\Id;
 use App\Project\Properties\IsSample;
+use App\Project\Properties\Lead;
 use App\Project\Properties\LeadId;
-use App\Project\Properties\LeadName;
 use App\Project\Properties\Members;
 use App\Project\Properties\Name;
 use App\Project\Properties\Number;
@@ -30,6 +30,7 @@ use App\Project\Properties\TeamId;
 use App\Project\Properties\TicketsCount;
 use App\Project\Properties\UpdatedAt;
 use App\Project\Properties\Visibility;
+use Illuminate\Support\Collection;
 use Mom\Data\AbstractData;
 use Mom\Data\AbstractValue;
 
@@ -43,17 +44,17 @@ final class Project extends AbstractData
         public ClosedTicketsCount $closedTicketsCount,
         public Color $color,
         public CreatedAt $createdAt,
+        public Customer $customer,
         public CustomerId $customerId,
-        public CustomerName $customerName,
         public Description $description,
         public DueOn $dueOn,
+        public Group $group,
         public GroupId $groupId,
-        public GroupName $groupName,
         public Icon $icon,
         public Id $id,
         public IsSample $isSample,
+        public Lead $lead,
         public LeadId $leadId,
-        public LeadName $leadName,
         public Members $members,
         public Name $name,
         public Number $number,
@@ -74,6 +75,18 @@ final class Project extends AbstractData
     public function getPrimaryKey(): AbstractValue
     {
         return $this->getId();
+    }
+
+    /**
+     * @param  Collection<int, mixed>|array<int, mixed>  $items
+     */
+    public static function collect(Collection|array $items, string $method = 'fromData'): ProjectCollection
+    {
+        if ($items instanceof ProjectCollection) {
+            return $items;
+        }
+
+        return ProjectCollection::make(parent::collect($items, $method)->all());
     }
 
     public function isArchived(): bool
@@ -308,26 +321,6 @@ final class Project extends AbstractData
         return $this;
     }
 
-    public function getCustomerName(): CustomerName
-    {
-        return $this->customerName;
-    }
-
-    public function getLeadName(): LeadName
-    {
-        return $this->leadName;
-    }
-
-    public function getGroupName(): GroupName
-    {
-        return $this->groupName;
-    }
-
-    public function getMembers(): Members
-    {
-        return $this->members;
-    }
-
     public function getTicketsCount(): TicketsCount
     {
         return $this->ticketsCount;
@@ -341,5 +334,25 @@ final class Project extends AbstractData
     public function getOverdueTicketsCount(): OverdueTicketsCount
     {
         return $this->overdueTicketsCount;
+    }
+
+    public function getCustomer(): Customer
+    {
+        return $this->customer;
+    }
+
+    public function getLead(): Lead
+    {
+        return $this->lead;
+    }
+
+    public function getGroup(): Group
+    {
+        return $this->group;
+    }
+
+    public function getMembers(): Members
+    {
+        return $this->members;
     }
 }
