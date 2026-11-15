@@ -13,15 +13,17 @@ use App\Customer\Properties\Notes;
 use App\Customer\Properties\Phone;
 use App\Customer\Properties\Status;
 use App\Customer\Properties\Website;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 
 final class StoreCustomerFormRequest extends FormRequest
 {
-    public function authorize(): bool
+    public function authorize(): Response
     {
-        return $this->user()?->current_team_id !== null;
+        return Gate::authorize('create', Customer::class);
     }
 
     /**

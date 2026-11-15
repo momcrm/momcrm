@@ -8,14 +8,22 @@ import {
     index as customersIndex,
     show as showCustomer,
 } from '@/routes/customers';
-import type { Customer, CustomerOption, Option, Service } from '@/types';
+import type {
+    Abilities,
+    Customer,
+    CustomerOption,
+    Option,
+    Service,
+} from '@/types';
 
 export default function EditService({
+    can,
     service,
     customer,
     statuses,
     locations,
 }: {
+    can: Abilities;
     service: Service;
     customer: Customer;
     statuses: Option[];
@@ -38,11 +46,15 @@ export default function EditService({
                     title="Edit service"
                     description={`For ${customer.name}`}
                     actions={
-                        <ConfirmDelete
-                            action={DeleteServiceController.form(service.id)}
-                            title="Delete this service?"
-                            description="This can't be undone."
-                        />
+                        can.delete && (
+                            <ConfirmDelete
+                                action={DeleteServiceController.form(
+                                    service.id,
+                                )}
+                                title="Delete this service?"
+                                description="This can't be undone."
+                            />
+                        )
                     }
                 />
                 <ServiceForm

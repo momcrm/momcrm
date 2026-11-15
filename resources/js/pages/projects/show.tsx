@@ -64,22 +64,23 @@ import {
 import { archive, index, restore, show, update } from '@/routes/projects';
 import { store as storeAttachment } from '@/routes/projects/attachments';
 import type {
+    Abilities,
     ActivityItem,
     AttachmentItem,
     CalendarWindow,
-    ProjectOption,
-    TimelineMilestone,
-    TimelineProject,
-    TimelineWindow,
     Milestone,
     Paginated,
     ProjectFormOptions,
     ProjectListItem,
+    ProjectOption,
     TicketDrawerData,
     TicketFilters,
     TicketListItem,
     TicketPickerOptions,
     TicketStatus,
+    TimelineMilestone,
+    TimelineProject,
+    TimelineWindow,
 } from '@/types';
 
 type Tab =
@@ -93,6 +94,8 @@ type Tab =
 
 type Props = {
     project: ProjectListItem & { group_name: string | null };
+    can: Abilities;
+    milestoneCan: Abilities;
     tab: Tab;
     projectOptions: ProjectFormOptions;
     options: TicketPickerOptions;
@@ -106,6 +109,7 @@ type Props = {
     tickets?: Paginated<TicketListItem> | TicketListItem[];
     filters?: TicketFilters;
     attachments?: AttachmentItem[];
+    attachmentCan?: Abilities;
     calendar?: CalendarWindow;
     timeline?: TimelineWindow;
     projects?: (ProjectOption & TimelineProject)[];
@@ -122,7 +126,7 @@ const tabs: { value: Tab; label: string; icon: LucideIcon }[] = [
 ];
 
 export default function ShowProject(props: Props) {
-    const { project, tab, projectOptions, options, drawer } = props;
+    const { project, tab, projectOptions, options, drawer, can } = props;
 
     setLayoutProps({
         breadcrumbs: [
@@ -141,19 +145,21 @@ export default function ShowProject(props: Props) {
                 <div className="flex items-center gap-3 border-b bg-warning/10 px-4 py-2 text-sm md:px-6">
                     <Archive className="size-4 text-warning" />
                     <span className="flex-1">This project is archived.</span>
-                    <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() =>
-                            router.post(
-                                restore.url(project.id),
-                                {},
-                                { preserveScroll: true },
-                            )
-                        }
-                    >
-                        Restore
-                    </Button>
+                    {can.restore && (
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() =>
+                                router.post(
+                                    restore.url(project.id),
+                                    {},
+                                    { preserveScroll: true },
+                                )
+                            }
+                        >
+                            Restore
+                        </Button>
+                    )}
                 </div>
             )}
 
@@ -219,15 +225,17 @@ export default function ShowProject(props: Props) {
                             </DropdownMenuContent>
                         </DropdownMenu>
                         <MemberAvatars members={project.members} />
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setEditing(true)}
-                        >
-                            <Settings2 />
-                            Settings
-                        </Button>
-                        {!isArchived && (
+                        {can.update && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setEditing(true)}
+                            >
+                                <Settings2 />
+                                Settings
+                            </Button>
+                        )}
+                        {!isArchived && can.archive && (
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button
@@ -313,6 +321,7 @@ export default function ShowProject(props: Props) {
                             attachments={props.attachments ?? []}
                             uploadUrl={storeAttachment.url(project.id)}
                             reload={['attachments']}
+                            can={props.attachmentCan ?? {}}
                         />
                     </div>
                 ) : (
@@ -327,6 +336,8 @@ export default function ShowProject(props: Props) {
                 onOpenChange={setEditing}
                 options={projectOptions}
                 project={project}
+                canChangeVisibility={can.changeVisibility ?? false}
+                canManageMembers={can.manageMembers ?? false}
             />
         </>
     );
@@ -410,6 +421,7 @@ function Overview({
     milestones = [],
     activity = [],
     favoriteTicketIds,
+    milestoneCan,
 }: Props) {
     const { openTicket } = useTicketActions();
     const total = project.tickets_count;
@@ -563,7 +575,11 @@ function Overview({
                         <Detail label="Project">#{project.number}</Detail>
                     </dl>
                 </Panel>
-                <Milestones projectId={project.id} milestones={milestones} />
+                <Milestones
+                    projectId={project.id}
+                    milestones={milestones}
+                    can={milestoneCan}
+                />
             </div>
         </div>
     );
@@ -572,9 +588,11 @@ function Overview({
 function Milestones({
     projectId,
     milestones,
+    can,
 }: {
     projectId: string;
     milestones: Milestone[];
+    can: Abilities;
 }) {
     const [adding, setAdding] = useState(false);
 
@@ -582,15 +600,17 @@ function Milestones({
         <Panel
             title="Milestones"
             action={
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-7"
-                    aria-label="Add milestone"
-                    onClick={() => setAdding(true)}
-                >
-                    <Plus />
-                </Button>
+                can.create && (
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-7"
+                        aria-label="Add milestone"
+                        onClick={() => setAdding(true)}
+                    >
+                        <Plus />
+                    </Button>
+                )
             }
         >
             {milestones.length === 0 && !adding && (
@@ -615,6 +635,7 @@ function Milestones({
                                         ? `Reopen ${milestone.name}`
                                         : `Complete ${milestone.name}`
                                 }
+                                disabled={!can.update}
                                 onClick={() =>
                                     router.post(
                                         toggleMilestone.url(milestone.id),
@@ -652,19 +673,21 @@ function Milestones({
                             >
                                 {formatDay(milestone.due_on)}
                             </span>
-                            <button
-                                type="button"
-                                aria-label={`Delete ${milestone.name}`}
-                                onClick={() =>
-                                    router.delete(
-                                        destroyMilestone.url(milestone.id),
-                                        { preserveScroll: true },
-                                    )
-                                }
-                                className="text-subtle-foreground opacity-0 group-hover:opacity-100 hover:text-destructive focus-visible:opacity-100"
-                            >
-                                <Trash2 className="size-3.5" />
-                            </button>
+                            {can.delete && (
+                                <button
+                                    type="button"
+                                    aria-label={`Delete ${milestone.name}`}
+                                    onClick={() =>
+                                        router.delete(
+                                            destroyMilestone.url(milestone.id),
+                                            { preserveScroll: true },
+                                        )
+                                    }
+                                    className="text-subtle-foreground opacity-0 group-hover:opacity-100 hover:text-destructive focus-visible:opacity-100"
+                                >
+                                    <Trash2 className="size-3.5" />
+                                </button>
+                            )}
                         </li>
                     );
                 })}

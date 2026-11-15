@@ -6,12 +6,14 @@ import DeleteContactController from '@/actions/App/Contact/Controllers/DeleteCon
 import UpdateContactController from '@/actions/App/Contact/Controllers/UpdateContactController';
 import { edit, index } from '@/routes/contacts';
 import { show as showCustomer } from '@/routes/customers';
-import type { Contact, CustomerOption } from '@/types';
+import type { Abilities, Contact, CustomerOption } from '@/types';
 
 export default function EditContact({
+    can,
     contact,
     customers,
 }: {
+    can: Abilities;
     contact: Contact;
     customers: CustomerOption[];
 }) {
@@ -30,11 +32,15 @@ export default function EditContact({
                 <PageHeader
                     title={`Edit ${contact.full_name}`}
                     actions={
-                        <ConfirmDelete
-                            action={DeleteContactController.form(contact.id)}
-                            title={`Delete ${contact.full_name}?`}
-                            description="This can't be undone."
-                        />
+                        can.delete && (
+                            <ConfirmDelete
+                                action={DeleteContactController.form(
+                                    contact.id,
+                                )}
+                                title={`Delete ${contact.full_name}?`}
+                                description="This can't be undone."
+                            />
+                        )
                     }
                 />
                 <ContactForm

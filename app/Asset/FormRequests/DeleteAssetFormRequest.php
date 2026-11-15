@@ -8,8 +8,10 @@ use App\Asset\Actions\DeleteAsset;
 use App\Asset\Actions\FindAsset;
 use App\Asset\Asset;
 use App\Asset\Exceptions\CouldNotFindAsset;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 
 final class DeleteAssetFormRequest extends FormRequest
@@ -26,7 +28,7 @@ final class DeleteAssetFormRequest extends FormRequest
     /**
      * @throws CouldNotFindAsset
      */
-    public function authorize(): bool
+    public function authorize(): Response
     {
         $this->asset = FindAsset::byIdForTeam((string) $this->route('asset'), $this->user()?->current_team_id);
 
@@ -34,7 +36,7 @@ final class DeleteAssetFormRequest extends FormRequest
             throw CouldNotFindAsset::notFound();
         }
 
-        return true;
+        return Gate::authorize('delete', $this->asset);
     }
 
     /**

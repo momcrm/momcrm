@@ -10,8 +10,10 @@ use App\Ticket\Exceptions\CouldNotFindTicket;
 use App\Ticket\Properties\Title;
 use App\Ticket\Ticket;
 use App\Ticket\TicketPriorityEnum;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 
 /**
  * Adds a subtask under a ticket. It belongs to the same customer and project.
@@ -30,7 +32,7 @@ final class StoreSubtaskFormRequest extends FormRequest
     /**
      * @throws CouldNotFindTicket
      */
-    public function authorize(): bool
+    public function authorize(): Response
     {
         $this->parent = FindTicket::byIdForTeam((string) $this->route('ticket'), $this->user()?->current_team_id);
 
@@ -38,7 +40,7 @@ final class StoreSubtaskFormRequest extends FormRequest
             throw CouldNotFindTicket::notFound();
         }
 
-        return true;
+        return Gate::authorize('create', Ticket::class);
     }
 
     /**

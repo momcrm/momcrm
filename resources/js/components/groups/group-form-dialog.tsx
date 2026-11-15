@@ -38,12 +38,15 @@ export default function GroupFormDialog({
     members,
     colors,
     group,
+    canManageMembers = true,
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     members: CustomerOption[];
     colors: ColorName[];
     group?: GroupFormValues;
+    /** Without it the lead and members are left out, so they stay as they are. */
+    canManageMembers?: boolean;
 }) {
     const [color, setColor] = useState<ColorName>(group?.color ?? 'teal');
     const [memberIds, setMemberIds] = useState<string[]>(
@@ -121,91 +124,100 @@ export default function GroupFormDialog({
                                     defaultValue={group?.description ?? ''}
                                 />
                             </FormField>
-                            <FormField
-                                id="group-lead"
-                                label="Lead"
-                                error={errors.lead_id}
-                            >
-                                <NativeSelect
-                                    id="group-lead"
-                                    name="lead_id"
-                                    value={leadId}
-                                    onChange={(event) =>
-                                        setLeadId(event.target.value)
-                                    }
-                                >
-                                    <option value="">No lead</option>
-                                    {members.map((member) => (
-                                        <option
-                                            key={member.id}
-                                            value={member.id}
+                            {canManageMembers && (
+                                <>
+                                    <FormField
+                                        id="group-lead"
+                                        label="Lead"
+                                        error={errors.lead_id}
+                                    >
+                                        <NativeSelect
+                                            id="group-lead"
+                                            name="lead_id"
+                                            value={leadId}
+                                            onChange={(event) =>
+                                                setLeadId(event.target.value)
+                                            }
                                         >
-                                            {member.name}
-                                        </option>
-                                    ))}
-                                </NativeSelect>
-                            </FormField>
-                            <div className="grid gap-2">
-                                <span className="text-sm font-medium">
-                                    Members
-                                </span>
-                                <div className="flex flex-wrap gap-1.5">
-                                    {members.map((member) => {
-                                        const isMember =
-                                            memberIds.includes(member.id) ||
-                                            member.id === leadId;
+                                            <option value="">No lead</option>
+                                            {members.map((member) => (
+                                                <option
+                                                    key={member.id}
+                                                    value={member.id}
+                                                >
+                                                    {member.name}
+                                                </option>
+                                            ))}
+                                        </NativeSelect>
+                                    </FormField>
+                                    <div className="grid gap-2">
+                                        <span className="text-sm font-medium">
+                                            Members
+                                        </span>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {members.map((member) => {
+                                                const isMember =
+                                                    memberIds.includes(
+                                                        member.id,
+                                                    ) || member.id === leadId;
 
-                                        return (
-                                            <button
-                                                key={member.id}
-                                                type="button"
-                                                aria-pressed={isMember}
-                                                disabled={member.id === leadId}
-                                                onClick={() =>
-                                                    setMemberIds(
-                                                        isMember
-                                                            ? memberIds.filter(
-                                                                  (id) =>
-                                                                      id !==
-                                                                      member.id,
-                                                              )
-                                                            : [
-                                                                  ...memberIds,
-                                                                  member.id,
-                                                              ],
-                                                    )
-                                                }
-                                                className={cn(
-                                                    'rounded-full border px-2.5 py-0.5 text-xs',
-                                                    isMember
-                                                        ? 'border-primary/30 bg-primary/8 text-foreground'
-                                                        : 'text-muted-foreground',
-                                                )}
-                                            >
-                                                {member.name}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                                <input
-                                    type="hidden"
-                                    name="members_sent"
-                                    value="1"
-                                />
-                                {[
-                                    ...new Set([
-                                        ...memberIds,
-                                        ...(leadId ? [leadId] : []),
-                                    ]),
-                                ].map((id) => (
-                                    <input
-                                        key={id}
-                                        type="hidden"
-                                        name="member_ids[]"
-                                        value={id}
-                                    />
-                                ))}
-                            </div>
+                                                return (
+                                                    <button
+                                                        key={member.id}
+                                                        type="button"
+                                                        aria-pressed={isMember}
+                                                        disabled={
+                                                            member.id === leadId
+                                                        }
+                                                        onClick={() =>
+                                                            setMemberIds(
+                                                                isMember
+                                                                    ? memberIds.filter(
+                                                                          (
+                                                                              id,
+                                                                          ) =>
+                                                                              id !==
+                                                                              member.id,
+                                                                      )
+                                                                    : [
+                                                                          ...memberIds,
+                                                                          member.id,
+                                                                      ],
+                                                            )
+                                                        }
+                                                        className={cn(
+                                                            'rounded-full border px-2.5 py-0.5 text-xs',
+                                                            isMember
+                                                                ? 'border-primary/30 bg-primary/8 text-foreground'
+                                                                : 'text-muted-foreground',
+                                                        )}
+                                                    >
+                                                        {member.name}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                        <input
+                                            type="hidden"
+                                            name="members_sent"
+                                            value="1"
+                                        />
+                                        {[
+                                            ...new Set([
+                                                ...memberIds,
+                                                ...(leadId ? [leadId] : []),
+                                            ]),
+                                        ].map((id) => (
+                                            <input
+                                                key={id}
+                                                type="hidden"
+                                                name="member_ids[]"
+                                                value={id}
+                                            />
+                                        ))}
+                                    </div>
+                                </>
+                            )}
                             <DialogFooter>
                                 <Button
                                     type="button"

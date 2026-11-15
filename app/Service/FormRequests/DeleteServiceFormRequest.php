@@ -8,8 +8,10 @@ use App\Service\Actions\DeleteService;
 use App\Service\Actions\FindService;
 use App\Service\Exceptions\CouldNotFindService;
 use App\Service\Service;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 
 final class DeleteServiceFormRequest extends FormRequest
@@ -26,7 +28,7 @@ final class DeleteServiceFormRequest extends FormRequest
     /**
      * @throws CouldNotFindService
      */
-    public function authorize(): bool
+    public function authorize(): Response
     {
         $this->service = FindService::byIdForTeam((string) $this->route('service'), $this->user()?->current_team_id);
 
@@ -34,7 +36,7 @@ final class DeleteServiceFormRequest extends FormRequest
             throw CouldNotFindService::notFound();
         }
 
-        return true;
+        return Gate::authorize('delete', $this->service);
     }
 
     /**

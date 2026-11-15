@@ -12,8 +12,10 @@ use App\Shared\Table;
 use App\Ticket\Actions\FindTicket;
 use App\Ticket\Exceptions\CouldNotFindTicket;
 use App\Ticket\Ticket;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 
 final class StoreCommentFormRequest extends FormRequest
@@ -30,7 +32,7 @@ final class StoreCommentFormRequest extends FormRequest
     /**
      * @throws CouldNotFindTicket
      */
-    public function authorize(): bool
+    public function authorize(): Response
     {
         $this->ticket = FindTicket::byIdForTeam((string) $this->route('ticket'), $this->user()?->current_team_id);
 
@@ -38,7 +40,7 @@ final class StoreCommentFormRequest extends FormRequest
             throw CouldNotFindTicket::notFound();
         }
 
-        return true;
+        return Gate::authorize('create', Comment::class);
     }
 
     /**

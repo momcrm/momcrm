@@ -10,9 +10,15 @@ use App\Project\Exceptions\CouldNotFindProject;
 use App\Project\Project;
 use App\Project\ProjectEloquentModel;
 use App\Project\ProjectValidationRules;
+use App\Project\Properties\LeadId;
+use App\Project\Properties\Visibility;
+use App\Shared\Table;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 
 /**
@@ -34,9 +40,18 @@ final class UpdateProjectFormRequest extends FormRequest
     /**
      * @throws CouldNotFindProject
      */
-    public function authorize(): bool
+    public function authorize(): Response
     {
-        return $this->loadProject();
+        $this->loadProject();
+        Gate::authorize('update', $this->project);
+
+        if ($this->input(Visibility::getNameForValidation()) !== $this->project->getVisibility()->toNullableString()) {
+            Gate::authorize('changeVisibility', $this->project);
+        }
+
+        return $this->changesMembers()
+            ? Gate::authorize('manageMembers', $this->project)
+            : Response::allow();
     }
 
     /**
@@ -109,5 +124,35 @@ final class UpdateProjectFormRequest extends FormRequest
         }
 
         return true;
+    }
+
+    /**
+     * Whether the request changes who is in the project. The lead is always a
+     * member, so they count as one of the requested members.
+     */
+    private function changesMembers(): bool
+    {
+        if (! $this->has(ProjectValidationRules::MEMBER_IDS)) {
+            return false;
+        }
+
+        $current = DB::table(Table::ProjectUser->value)
+            ->where('project_id', $this->project->getId()->toString())
+            ->pluck('user_id')
+            ->map(strval(...))
+            ->sort()
+            ->values()
+            ->all();
+
+        $leadId = $this->input(LeadId::getNameForValidation());
+        $requested = collect((array) $this->input(ProjectValidationRules::MEMBER_IDS))
+            ->push($leadId)
+            ->filter(fn (mixed $id): bool => is_string($id) && $id !== '')
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
+
+        return $current !== $requested;
     }
 }

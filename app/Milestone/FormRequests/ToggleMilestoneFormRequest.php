@@ -8,8 +8,10 @@ use App\Milestone\Actions\FindMilestone;
 use App\Milestone\Exceptions\CouldNotFindMilestone;
 use App\Milestone\Milestone;
 use App\Milestone\MilestoneEloquentModel;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 
 final class ToggleMilestoneFormRequest extends FormRequest
 {
@@ -25,7 +27,7 @@ final class ToggleMilestoneFormRequest extends FormRequest
     /**
      * @throws CouldNotFindMilestone
      */
-    public function authorize(): bool
+    public function authorize(): Response
     {
         $this->milestone = FindMilestone::visibleByIdForTeam((string) $this->route('milestone'), $this->user()?->current_team_id, (string) $this->user()?->getAuthIdentifier());
 
@@ -33,7 +35,7 @@ final class ToggleMilestoneFormRequest extends FormRequest
             throw CouldNotFindMilestone::notFound();
         }
 
-        return true;
+        return Gate::authorize('update', $this->milestone);
     }
 
     /**

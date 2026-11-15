@@ -20,8 +20,10 @@ use App\Service\Properties\Status;
 use App\Service\Properties\UnitPriceInCents;
 use App\Service\Service;
 use App\Shared\Table;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
@@ -42,7 +44,7 @@ final class UpdateServiceFormRequest extends FormRequest
     /**
      * @throws CouldNotFindService
      */
-    public function authorize(): bool
+    public function authorize(): Response
     {
         $teamId = $this->user()?->current_team_id;
         $this->service = FindService::byIdForTeam((string) $this->route('service'), $teamId);
@@ -53,7 +55,7 @@ final class UpdateServiceFormRequest extends FormRequest
 
         $this->customer = FindCustomer::byIdForTeam($this->service->getCustomerId()->toString(), $teamId);
 
-        return true;
+        return Gate::authorize('update', $this->service);
     }
 
     /**

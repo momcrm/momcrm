@@ -31,6 +31,7 @@ import { create as createInvoice } from '@/routes/invoices';
 import { show as showProject } from '@/routes/projects';
 import { create as createTicket, show as showTicket } from '@/routes/tickets';
 import type {
+    Abilities,
     ProjectListItem,
     Asset,
     Contact,
@@ -75,7 +76,9 @@ export default function ShowCustomer({
     projects,
     tickets,
     invoices,
+    can,
 }: {
+    can: Abilities;
     customer: Customer;
     contacts: Contact[];
     locations: Location[];
@@ -130,13 +133,15 @@ export default function ShowCustomer({
                             <Button variant="outline" asChild>
                                 <Link href={edit(customer.id)}>Edit</Link>
                             </Button>
-                            <ConfirmDelete
-                                action={DeleteCustomerController.form(
-                                    customer.id,
-                                )}
-                                title={`Delete ${customer.name}?`}
-                                description="Their contacts, locations, assets, services, tickets and invoices are deleted too. This can't be undone."
-                            />
+                            {can.delete && (
+                                <ConfirmDelete
+                                    action={DeleteCustomerController.form(
+                                        customer.id,
+                                    )}
+                                    title={`Delete ${customer.name}?`}
+                                    description="Their contacts, locations, assets, services, tickets and invoices are deleted too. This can't be undone."
+                                />
+                            )}
                         </>
                     }
                 />

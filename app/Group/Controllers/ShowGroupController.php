@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Group\Controllers;
 
+use App\AccessRule\AccessResourceEnum;
+use App\AccessRule\Engine\AccessAbilities;
 use App\Favorite\Actions\FindFavorite;
 use App\Favorite\FavoritableTypeEnum;
 use App\Group\Actions\FindGroupForTeam;
 use App\Group\Exceptions\CouldNotFindGroup;
+use App\Group\Group;
 use App\Group\GroupRoleEnum;
 use App\Project\Actions\FindProject;
 use App\Project\Controllers\ListProjectsController;
@@ -85,6 +88,7 @@ final class ShowGroupController
                 ->map(fn (TicketEloquentModel $ticket): array => ListTicketsController::listItem($ticket))
                 ->values(),
             'teamMembers' => FindTeamMembers::optionsForTeam($teamId),
+            'can' => AccessAbilities::for($user, AccessResourceEnum::Group, Group::fromEloquentModel($model)),
             'colors' => ColorEnum::values(),
             'favoriteTicketIds' => FindFavorite::idsForUser($teamId, $user->id, FavoritableTypeEnum::Ticket),
             ...TicketDrawer::options($teamId, $user->id),

@@ -13,8 +13,10 @@ use App\Ticket\Properties\CustomerId;
 use App\Ticket\Properties\LocationId;
 use App\Ticket\Properties\Status;
 use App\Ticket\Ticket;
+use App\Ticket\TicketAccess;
 use App\Ticket\TicketEloquentModel;
 use App\Ticket\TicketValidationRules;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Arr;
@@ -41,9 +43,11 @@ final class PatchTicketFormRequest extends FormRequest
     /**
      * @throws CouldNotFindTicket
      */
-    public function authorize(): bool
+    public function authorize(): Response
     {
-        return $this->loadTicket();
+        $this->loadTicket();
+
+        return TicketAccess::authorizeStatusChange('update', $this->ticket, $this->input(Status::getNameForValidation()));
     }
 
     /**

@@ -17,8 +17,10 @@ use App\Contact\Properties\MobilePhone;
 use App\Contact\Properties\Position;
 use App\Contact\Properties\WorkPhone;
 use App\Shared\Table;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
@@ -36,7 +38,7 @@ final class UpdateContactFormRequest extends FormRequest
     /**
      * @throws CouldNotFindContact
      */
-    public function authorize(): bool
+    public function authorize(): Response
     {
         $this->contact = FindContact::byIdForTeam((string) $this->route('contact'), $this->user()?->current_team_id);
 
@@ -44,7 +46,7 @@ final class UpdateContactFormRequest extends FormRequest
             throw CouldNotFindContact::notFound();
         }
 
-        return true;
+        return Gate::authorize('update', $this->contact);
     }
 
     /**

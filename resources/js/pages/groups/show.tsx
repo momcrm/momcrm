@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { members as membersRoute } from '@/routes';
 import { destroy, show } from '@/routes/groups';
 import type {
+    Abilities,
     ColorName,
     CustomerOption,
     ProjectListItem,
@@ -52,7 +53,9 @@ export default function ShowGroup({
     favoriteTicketIds,
     options,
     drawer,
+    can,
 }: {
+    can: Abilities;
     group: Group;
     members: GroupMember[];
     projects: ProjectListItem[];
@@ -94,15 +97,22 @@ export default function ShowGroup({
                             {group.description ?? `${members.length} members`}
                         </p>
                     </div>
-                    <Button variant="outline" onClick={() => setEditing(true)}>
-                        <Settings2 />
-                        Edit group
-                    </Button>
-                    <ConfirmDelete
-                        action={destroy.form(group.id)}
-                        title={`Delete ${group.name}?`}
-                        description="Its projects stay, without a group. This can't be undone."
-                    />
+                    {can.update && (
+                        <Button
+                            variant="outline"
+                            onClick={() => setEditing(true)}
+                        >
+                            <Settings2 />
+                            Edit group
+                        </Button>
+                    )}
+                    {can.delete && (
+                        <ConfirmDelete
+                            action={destroy.form(group.id)}
+                            title={`Delete ${group.name}?`}
+                            description="Its projects stay, without a group. This can't be undone."
+                        />
+                    )}
                 </header>
 
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -197,6 +207,7 @@ export default function ShowGroup({
                 key={String(editing)}
                 open={editing}
                 onOpenChange={setEditing}
+                canManageMembers={can.manageMembers ?? false}
                 members={teamMembers}
                 colors={colors}
                 group={{

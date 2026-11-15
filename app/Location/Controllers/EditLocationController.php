@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Location\Controllers;
 
+use App\AccessRule\AccessResourceEnum;
+use App\AccessRule\Engine\AccessAbilities;
 use App\Customer\Actions\FindCustomer;
 use App\Location\Actions\FindLocation;
 use App\Location\Exceptions\CouldNotFindLocation;
@@ -30,6 +32,7 @@ final class EditLocationController
         return Inertia::render('locations/edit', [
             'location' => $found->toSummary(),
             'customer' => $customer->toSummary(),
+            'can' => AccessAbilities::for($request->user(), AccessResourceEnum::Location, $found),
         ]);
     }
 }

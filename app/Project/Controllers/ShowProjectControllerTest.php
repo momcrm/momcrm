@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Attachment\AttachmentEloquentModel;
 use App\Milestone\MilestoneEloquentModel;
 use App\Project\ProjectEloquentModel;
+use App\TeamUser\TeamRoleEnum;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -64,3 +65,20 @@ it("lists a project's files", function (): void {
         ->get(route('projects.show', ['project' => $project->id, 'view' => 'files']))
         ->assertInertia(fn (Assert $page) => $page->where('tab', 'files')->where('attachments.0.name', 'plan.pdf'));
 });
+
+it('tells the page what the person may do to the project', function (TeamRoleEnum $role, bool $canArchive): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $person = UserEloquentModel::factory()->inTeam($owner->current_team_id, $role)->create();
+    $project = ProjectEloquentModel::factory()->create(['team_id' => $owner->current_team_id]);
+
+    actingAs($person)
+        ->get(route('projects.show', $project->id))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('can.update', true)
+            ->where('can.archive', $canArchive)
+            ->where('can.changeVisibility', $canArchive)
+            ->where('milestoneCan.delete', $canArchive));
+})->with([
+    'member' => [TeamRoleEnum::Member, false],
+    'admin' => [TeamRoleEnum::Admin, true],
+]);

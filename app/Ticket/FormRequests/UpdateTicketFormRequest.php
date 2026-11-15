@@ -10,8 +10,10 @@ use App\Ticket\Exceptions\CouldNotFindTicket;
 use App\Ticket\Properties\Status;
 use App\Ticket\Ticket;
 use App\Ticket\TicketValidationRules;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 
 final class UpdateTicketFormRequest extends FormRequest
@@ -28,7 +30,7 @@ final class UpdateTicketFormRequest extends FormRequest
     /**
      * @throws CouldNotFindTicket
      */
-    public function authorize(): bool
+    public function authorize(): Response
     {
         $this->ticket = FindTicket::byIdForTeam((string) $this->route('ticket'), $this->user()?->current_team_id);
 
@@ -36,7 +38,7 @@ final class UpdateTicketFormRequest extends FormRequest
             throw CouldNotFindTicket::notFound();
         }
 
-        return true;
+        return Gate::authorize('update', $this->ticket);
     }
 
     /**

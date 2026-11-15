@@ -4,13 +4,16 @@ declare(strict_types=1);
 
 namespace App\Comment\FormRequests;
 
+use App\Comment\Comment;
 use App\Comment\CommentEloquentModel;
 use App\Comment\Exceptions\CouldNotFindComment;
 use App\Comment\Properties\Id;
 use App\Comment\Properties\TeamId;
 use App\Comment\Properties\UserId;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 
 /**
  * Deletes a comment. Only its author may.
@@ -22,7 +25,7 @@ final class DeleteCommentFormRequest extends FormRequest
     /**
      * @throws CouldNotFindComment
      */
-    public function authorize(): bool
+    public function authorize(): Response
     {
         $this->comment = CommentEloquentModel::query()
             ->withoutGlobalScopes()
@@ -35,7 +38,7 @@ final class DeleteCommentFormRequest extends FormRequest
             throw CouldNotFindComment::notFound();
         }
 
-        return true;
+        return Gate::authorize('delete', Comment::fromEloquentModel($this->comment));
     }
 
     /**

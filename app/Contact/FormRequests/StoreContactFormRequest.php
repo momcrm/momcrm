@@ -15,16 +15,18 @@ use App\Contact\Properties\MobilePhone;
 use App\Contact\Properties\Position;
 use App\Contact\Properties\WorkPhone;
 use App\Shared\Table;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 final class StoreContactFormRequest extends FormRequest
 {
-    public function authorize(): bool
+    public function authorize(): Response
     {
-        return $this->user()?->current_team_id !== null;
+        return Gate::authorize('create', Contact::class);
     }
 
     /**

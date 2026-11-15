@@ -36,3 +36,20 @@ it('removes every member when none are picked', function (): void {
 
     expect($group->members()->count())->toBe(0);
 });
+
+it('lets a member rename a group but not change its members', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $member = UserEloquentModel::factory()->inTeam($owner->current_team_id)->create();
+    $group = GroupEloquentModel::factory()->create(['team_id' => $owner->current_team_id, 'name' => 'Support', 'color' => 'blue']);
+    $group->members()->attach($owner->id, ['role' => 'lead']);
+
+    actingAs($member)
+        ->put(route('groups.update', $group->id), ['name' => 'Service desk', 'color' => 'blue', 'lead_id' => $owner->id, 'member_ids' => [$owner->id], 'members_sent' => '1'])
+        ->assertSessionHasNoErrors();
+    actingAs($member)
+        ->put(route('groups.update', $group->id), ['name' => 'Service desk', 'color' => 'blue', 'lead_id' => $owner->id, 'member_ids' => [$owner->id, $member->id], 'members_sent' => '1'])
+        ->assertForbidden();
+
+    expect($group->fresh()->name)->toBe('Service desk')
+        ->and($group->members()->pluck('users.id')->all())->toBe([$owner->id]);
+});

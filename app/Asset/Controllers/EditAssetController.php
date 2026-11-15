@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Asset\Controllers;
 
+use App\AccessRule\AccessResourceEnum;
+use App\AccessRule\Engine\AccessAbilities;
 use App\Asset\Actions\FindAsset;
 use App\Asset\AssetStatusEnum;
 use App\Asset\Exceptions\CouldNotFindAsset;
@@ -34,6 +36,7 @@ final class EditAssetController
             'customer' => $customer->toSummary(),
             'locations' => FindLocation::optionsForCustomer($customer->getId()->toString(), (string) $customer->getTeamId()->toString()),
             'statuses' => AssetStatusEnum::options(),
+            'can' => AccessAbilities::for($request->user(), AccessResourceEnum::Asset, $found),
         ]);
     }
 }

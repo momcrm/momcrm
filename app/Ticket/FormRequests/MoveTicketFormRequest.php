@@ -10,7 +10,9 @@ use App\Ticket\Exceptions\CouldNotFindTicket;
 use App\Ticket\Properties\Position;
 use App\Ticket\Properties\Status;
 use App\Ticket\Ticket;
+use App\Ticket\TicketAccess;
 use App\Ticket\TicketStatusEnum;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Validation\Rule;
@@ -29,7 +31,7 @@ final class MoveTicketFormRequest extends FormRequest
     /**
      * @throws CouldNotFindTicket
      */
-    public function authorize(): bool
+    public function authorize(): Response
     {
         $this->ticket = FindTicket::byIdForTeam((string) $this->route('ticket'), $this->user()?->current_team_id);
 
@@ -37,7 +39,7 @@ final class MoveTicketFormRequest extends FormRequest
             throw CouldNotFindTicket::notFound();
         }
 
-        return true;
+        return TicketAccess::authorizeStatusChange('move', $this->ticket, $this->input(Status::getNameForValidation()));
     }
 
     /**

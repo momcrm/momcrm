@@ -128,17 +128,19 @@ function DrawerBody({
                     <span className="font-mono text-xs">#{ticket.number}</span>
                 </span>
                 <div className="ml-auto flex items-center gap-0.5">
-                    <Button
-                        variant={isClosed ? 'outline' : 'ghost'}
-                        size="sm"
-                        className="h-7 gap-1.5"
-                        onClick={() =>
-                            save({ status: isClosed ? 'new' : 'closed' })
-                        }
-                    >
-                        {isClosed ? <RotateCcw /> : <Check />}
-                        {isClosed ? 'Reopen' : 'Mark complete'}
-                    </Button>
+                    {(isClosed ? ticket.can.reopen : ticket.can.close) && (
+                        <Button
+                            variant={isClosed ? 'outline' : 'ghost'}
+                            size="sm"
+                            className="h-7 gap-1.5"
+                            onClick={() =>
+                                save({ status: isClosed ? 'new' : 'closed' })
+                            }
+                        >
+                            {isClosed ? <RotateCcw /> : <Check />}
+                            {isClosed ? 'Reopen' : 'Mark complete'}
+                        </Button>
+                    )}
                     <IconAction
                         label={ticket.is_favorite ? 'Unstar' : 'Star'}
                         onClick={() => toggleStar(ticket.id)}
@@ -153,15 +155,17 @@ function DrawerBody({
                     <IconAction label="Copy link" onClick={copyLink}>
                         <Link2 />
                     </IconAction>
-                    <IconAction
-                        label="Archive"
-                        onClick={() => {
-                            archiveTicket(ticket.id);
-                            closeTicket();
-                        }}
-                    >
-                        <Archive />
-                    </IconAction>
+                    {ticket.can.archive && (
+                        <IconAction
+                            label="Archive"
+                            onClick={() => {
+                                archiveTicket(ticket.id);
+                                closeTicket();
+                            }}
+                        >
+                            <Archive />
+                        </IconAction>
+                    )}
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <Button
@@ -382,6 +386,7 @@ function DrawerBody({
                         attachments={ticket.attachments}
                         uploadUrl={storeAttachment.url(ticket.id)}
                         reload={['drawer']}
+                        can={ticket.attachment_can}
                     />
                 </section>
 
