@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Project\Actions;
 
+use App\AccessRule\Actions\PruneDeletedRecordsFromAccessRules;
 use App\Attachment\Actions\DeleteAttachments;
 use App\Project\Project;
 use App\Project\ProjectEloquentModel;
@@ -15,7 +16,8 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Deletes a project for good, with its tickets, milestones and files. Each
- * ticket is deleted on its own so the audit trail records it.
+ * ticket is deleted on its own so the audit trail records it. Access rule
+ * conditions that named the project are tidied up.
  */
 final readonly class DeleteProject
 {
@@ -41,6 +43,8 @@ final readonly class DeleteProject
                 ->withoutGlobalScope(CurrentTeamScope::class)
                 ->find($this->project->getId()->toString())
                 ?->delete();
+
+            PruneDeletedRecordsFromAccessRules::forTeam($this->project->getTeamId()->toString());
         });
     }
 

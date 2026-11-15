@@ -3,10 +3,16 @@
 declare(strict_types=1);
 
 use App\AccessRule\AccessRuleEloquentModel;
-use App\AccessRule\Actions\PruneDeletedChoicesFromAccessRules;
+use App\AccessRule\Actions\PruneDeletedRecordsFromAccessRules;
 use App\Choice\Actions\DeleteChoice;
 use App\Choice\Actions\FindChoice;
 use App\Choice\ChoiceEloquentModel;
+use App\Group\Actions\DeleteGroup;
+use App\Group\Group;
+use App\Group\GroupEloquentModel;
+use App\Project\Actions\DeleteProject;
+use App\Project\Project;
+use App\Project\ProjectEloquentModel;
 use App\Team\TeamEloquentModel;
 
 /**
@@ -24,7 +30,7 @@ function ticketRuleWith(string $teamId, string $attribute, string $operator, str
     ]);
 }
 
-it('takes a deleted status out of rule conditions when it is deleted, without changing what the rules do', function (): void {
+it('takes a status out of rule conditions when it is deleted, without changing what the rules do', function (): void {
     $team = TeamEloquentModel::factory()->create();
     $deleted = ticketStatusId($team->id, 'Waiting on supplier');
     $new = ticketStatusId($team->id, 'New');
@@ -62,6 +68,35 @@ it('leaves archived choices and other conditions alone', function (): void {
     ChoiceEloquentModel::query()->withoutGlobalScopes()->whereKey($archived)->update(['archived_at' => now()]);
     $rule = ticketRuleWith($team->id, 'ticket.status', 'equals', $archived);
 
-    expect(PruneDeletedChoicesFromAccessRules::forTeam($team->id))->toBe(0)
+    expect(PruneDeletedRecordsFromAccessRules::forTeam($team->id))->toBe(0)
         ->and($rule->fresh()->is_enabled)->toBeTrue();
+});
+
+it('takes a group out of rule conditions when it is deleted', function (): void {
+    $team = TeamEloquentModel::factory()->create();
+    [$kept, $deleted] = GroupEloquentModel::factory()->count(2)->create(['team_id' => $team->id])->all();
+    $memberOf = ticketRuleWith($team->id, 'subject.group', 'in', [$kept->id, $deleted->id]);
+    $projectGroup = AccessRuleEloquentModel::factory()->create([
+        'team_id' => $team->id,
+        'resources' => ['project'],
+        'conditions' => [['attribute' => 'project.group', 'operator' => 'equals', 'value' => $deleted->id]],
+    ]);
+
+    DeleteGroup::fromGroup(Group::fromEloquentModel($deleted));
+
+    expect($memberOf->fresh()->conditions[1]['value'])->toBe([$kept->id])
+        ->and($memberOf->fresh()->is_enabled)->toBeTrue()
+        ->and($projectGroup->fresh())
+        ->conditions->toEqual([['attribute' => 'project.group', 'operator' => 'equals', 'value' => null]])
+        ->is_enabled->toBeFalse();
+});
+
+it('takes a project out of rule conditions when it is deleted', function (): void {
+    $team = TeamEloquentModel::factory()->create();
+    $project = ProjectEloquentModel::factory()->create(['team_id' => $team->id]);
+    $rule = ticketRuleWith($team->id, 'ticket.project', 'not_in', [$project->id]);
+
+    DeleteProject::fromProject(Project::fromEloquentModel($project));
+
+    expect($rule->fresh()->conditions)->toEqual([['attribute' => 'subject.team_role', 'operator' => 'in', 'value' => ['member']]]);
 });
