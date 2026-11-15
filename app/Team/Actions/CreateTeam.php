@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Team\Actions;
 
 use App\AccessRule\Actions\SeedDefaultAccessRules;
+use App\Choice\Actions\SeedDefaultChoices;
 use App\Team\Properties\Id;
 use App\Team\Team;
 use App\Team\TeamEloquentModel;
@@ -21,7 +22,7 @@ final readonly class CreateTeam
 
     /**
      * Create the team, add its owner as a member with the owner role and give
-     * it the default access rules.
+     * it the default access rules and choices.
      *
      * @throws Throwable
      */
@@ -41,6 +42,7 @@ final readonly class CreateTeam
             );
 
             SeedDefaultAccessRules::forTeam($model->id);
+            SeedDefaultChoices::forTeam($model->id);
 
             return Team::fromEloquentModel($model);
         });
