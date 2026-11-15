@@ -9,7 +9,6 @@ use App\Attachment\Attachment;
 use App\Attachment\AttachmentValidationRules;
 use App\Customer\Actions\FindCustomer;
 use App\Project\Actions\FindProject;
-use App\Shared\Table;
 use App\Shared\Types;
 use App\Ticket\Actions\CreateTicket;
 use App\Ticket\Ticket;
@@ -21,7 +20,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 /**
@@ -61,7 +59,7 @@ final class StoreTicketFormRequest extends FormRequest
             ...TicketValidationRules::status($this, $teamId),
             self::QUICK => ['sometimes', 'boolean'],
             self::LABEL_IDS => ['sometimes', 'array'],
-            self::LABEL_IDS.'.*' => ['uuid', Rule::exists(Table::Labels->value, 'id')->where('team_id', $teamId)],
+            self::LABEL_IDS.'.*' => ['uuid', TicketValidationRules::label($teamId)],
             self::SUBTASKS => ['sometimes', 'array', 'max:50'],
             self::SUBTASKS.'.*' => ['required', 'string', 'max:255'],
             AttachmentValidationRules::FILES => ['sometimes', ...array_values(array_diff($fileRules[AttachmentValidationRules::FILES], ['required', 'min:1']))],

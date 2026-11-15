@@ -78,7 +78,7 @@ export type Service = {
 /**
  * The lists a team can customise, as keyed in the shared `choices` prop.
  */
-export type ChoiceList = 'ticket_priority' | 'ticket_status';
+export type ChoiceList = 'ticket_label' | 'ticket_priority' | 'ticket_status';
 
 /**
  * One entry in a team's customisable list, such as the priority "Urgent".
@@ -191,7 +191,6 @@ export type NotificationItem = {
 export type TicketPickerOptions = {
     members: CustomerOption[];
     projects: ProjectOption[];
-    labels: TicketLabel[];
     customers: CustomerOption[];
 };
 
@@ -297,7 +296,6 @@ export type TicketFormOptions = {
     locations: CustomerChildOption[];
     members: CustomerOption[];
     projects: ProjectOption[];
-    labels: TicketLabel[];
 };
 
 export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'void';

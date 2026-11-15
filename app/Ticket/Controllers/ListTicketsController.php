@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Ticket\Controllers;
 
-use App\Label\Label;
 use App\Ticket\Ticket;
 use App\Ticket\TicketListFilters;
 use App\Ticket\TicketViewProps;
@@ -38,10 +37,7 @@ final class ListTicketsController
             'assignee_name' => $ticket->getAssignee()->toNullableData()?->getName()->toString(),
             'project_name' => $ticket->getProject()->toNullableData()?->getName()->toString(),
             'project_color' => $ticket->getProject()->toNullableData()?->getColor()->toString(),
-            'labels' => $ticket->getLabels()->toDataCollection()
-                ->map(fn (Label $label): array => ['id' => $label->getId()->toString(), 'name' => $label->getName()->toString(), 'color' => $label->getColor()->toString()])
-                ->values()
-                ->all(),
+            'labels' => $ticket->getLabels()->toDataCollection()->toTags(),
             'subtasks_count' => $ticket->getSubtasksCount()->toInteger(),
             'closed_subtasks_count' => $ticket->getClosedSubtasksCount()->toInteger(),
         ];

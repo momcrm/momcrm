@@ -43,6 +43,14 @@ final class ChoiceFactory extends Factory
         ];
     }
 
+    public function ticketLabel(): self
+    {
+        return $this->state([
+            ListName::getDatabaseTableColumnName() => ChoiceListEnum::TicketLabel->value,
+            Category::getDatabaseTableColumnName() => null,
+        ]);
+    }
+
     public function closedTicketStatus(): self
     {
         return $this->state([Category::getDatabaseTableColumnName() => TicketStatusCategoryEnum::Closed->value]);

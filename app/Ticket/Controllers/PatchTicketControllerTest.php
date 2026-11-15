@@ -8,7 +8,6 @@ use App\Choice\ChoiceEloquentModel;
 use App\Choice\ChoiceListEnum;
 use App\Contact\ContactEloquentModel;
 use App\Customer\CustomerEloquentModel;
-use App\Label\LabelEloquentModel;
 use App\Project\ProjectEloquentModel;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
@@ -61,8 +60,8 @@ it('closes a ticket from the drawer, stamping the closed time', function (): voi
 it('sets the labels', function (): void {
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
     $ticket = patchableTicket($user);
-    [$keep, $add] = LabelEloquentModel::factory()->count(2)->create(['team_id' => $user->current_team_id]);
-    $drop = LabelEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
+    [$keep, $add] = ChoiceEloquentModel::factory()->ticketLabel()->count(2)->create(['team_id' => $user->current_team_id]);
+    $drop = ChoiceEloquentModel::factory()->ticketLabel()->create(['team_id' => $user->current_team_id]);
     $ticket->labels()->attach([$keep->id, $drop->id]);
 
     actingAs($user)->patch(route('tickets.patch', $ticket->id), ['label_ids' => [$keep->id, $add->id]]);
@@ -75,7 +74,7 @@ it("rejects another team's label", function (): void {
     $ticket = patchableTicket($user);
 
     actingAs($user)
-        ->patch(route('tickets.patch', $ticket->id), ['label_ids' => [LabelEloquentModel::factory()->create()->id]])
+        ->patch(route('tickets.patch', $ticket->id), ['label_ids' => [ChoiceEloquentModel::factory()->ticketLabel()->create()->id]])
         ->assertSessionHasErrors('label_ids.0');
 });
 
@@ -151,4 +150,23 @@ it('keeps an archived status the ticket already has, but does not move tickets i
         ->assertSessionHasErrors(['status_id' => "Choose one of your team's statuses."]);
 
     expect($ticket->fresh()->title)->toBe('Renamed');
+});
+
+it('keeps an archived label the ticket already has, but does not add one', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $ticket = patchableTicket($user);
+    $other = patchableTicket($user);
+    $live = ChoiceEloquentModel::factory()->ticketLabel()->create(['team_id' => $user->current_team_id]);
+    $archived = ChoiceEloquentModel::factory()->ticketLabel()->create(['team_id' => $user->current_team_id, 'archived_at' => now()]);
+    $ticket->labels()->attach($archived);
+
+    actingAs($user)
+        ->patch(route('tickets.patch', $ticket->id), ['label_ids' => [$archived->id, $live->id]])
+        ->assertSessionHasNoErrors();
+
+    actingAs($user)
+        ->patch(route('tickets.patch', $other->id), ['label_ids' => [$archived->id]])
+        ->assertSessionHasErrors('label_ids.0');
+
+    expect($ticket->labels()->pluck('choices.id')->sort()->values()->all())->toBe(collect([$archived->id, $live->id])->sort()->values()->all());
 });

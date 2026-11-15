@@ -28,6 +28,10 @@ final readonly class ArchiveChoice
                 $id = $this->choice->getId()->toString();
 
                 foreach ($this->choice->getListName()->toEnum()->usages() as $usage) {
+                    if ($usage['isPivot']) {
+                        continue;
+                    }
+
                     DB::table($usage['table']->value)
                         ->where('team_id', $this->choice->getTeamId()->toString())
                         ->where($usage['column'], $id)

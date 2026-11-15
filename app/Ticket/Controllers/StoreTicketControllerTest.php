@@ -10,7 +10,6 @@ use App\Choice\ChoiceEloquentModel;
 use App\Choice\ChoiceListEnum;
 use App\Contact\ContactEloquentModel;
 use App\Customer\CustomerEloquentModel;
-use App\Label\LabelEloquentModel;
 use App\Project\ProjectEloquentModel;
 use App\TeamUser\TeamUserEloquentModel;
 use App\Ticket\TicketEloquentModel;
@@ -172,7 +171,7 @@ it('opens a ticket from the dialog with labels, subtasks and files, and stays on
     Storage::fake('local');
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
     $project = ProjectEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
-    $label = LabelEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
+    $label = ChoiceEloquentModel::factory()->ticketLabel()->create(['team_id' => $user->current_team_id]);
 
     actingAs($user)
         ->from(route('dashboard'))
@@ -200,7 +199,7 @@ it("rejects another team's label and opens nothing", function (): void {
     $project = ProjectEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
 
     actingAs($user)
-        ->post(route('tickets.store'), ['project_id' => $project->id, 'title' => 'X', 'label_ids' => [LabelEloquentModel::factory()->create()->id]])
+        ->post(route('tickets.store'), ['project_id' => $project->id, 'title' => 'X', 'label_ids' => [ChoiceEloquentModel::factory()->ticketLabel()->create()->id]])
         ->assertSessionHasErrors('label_ids.0');
 
     expect(TicketEloquentModel::query()->exists())->toBeFalse();

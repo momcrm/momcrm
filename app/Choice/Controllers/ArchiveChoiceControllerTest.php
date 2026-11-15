@@ -68,3 +68,24 @@ it('forbids members', function (): void {
         ->post(route('choices.archive', ticketStatusId($owner->current_team_id, 'Waiting on supplier')))
         ->assertForbidden();
 });
+
+it('archives any label, keeping it on its tickets, and never moves them', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    [$bug, $feature] = ChoiceEloquentModel::factory()->ticketLabel()->count(2)->create(['team_id' => $owner->current_team_id])->all();
+    $ticket = TicketEloquentModel::factory()->create(['team_id' => $owner->current_team_id]);
+    $ticket->labels()->attach($bug);
+
+    actingAs($owner)
+        ->post(route('choices.archive', $bug->id), ['replacement_id' => $feature->id])
+        ->assertSessionHasErrors('replacement_id');
+
+    actingAs($owner)
+        ->post(route('choices.archive', $bug->id))
+        ->assertSessionHasNoErrors();
+
+    actingAs($owner)
+        ->post(route('choices.archive', $feature->id))
+        ->assertSessionHasNoErrors();
+
+    expect($ticket->labels()->pluck('choices.id')->all())->toBe([$bug->id]);
+});

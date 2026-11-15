@@ -4,8 +4,14 @@ declare(strict_types=1);
 
 use App\Choice\ChoiceListEnum;
 
-it('starts every list with at least one choice and exactly one default per category', function (ChoiceListEnum $list): void {
+it('starts every required list with at least one choice and exactly one default per category', function (ChoiceListEnum $list): void {
     $defaults = collect($list->defaults());
+
+    if ($list->isOptional()) {
+        expect($defaults->where('is_default', true))->toBeEmpty("{$list->value}: an optional list has no default");
+
+        return;
+    }
     $categories = $list->categories() === [] ? [null] : $list->categories();
 
     foreach ($categories as $category) {

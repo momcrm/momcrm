@@ -9,7 +9,9 @@ use App\Activity\ActivityTypeEnum;
 use App\Asset\Actions\CreateAsset;
 use App\Asset\Asset;
 use App\Asset\AssetStatusEnum;
+use App\Choice\Actions\CreateChoice;
 use App\Choice\Actions\FindChoice;
+use App\Choice\Choice;
 use App\Choice\ChoiceListEnum;
 use App\Contact\Actions\CreateContact;
 use App\Contact\Contact;
@@ -23,9 +25,6 @@ use App\Invoice\Actions\ChangeInvoiceStatus;
 use App\Invoice\Actions\CreateInvoice;
 use App\Invoice\Invoice;
 use App\Invoice\InvoiceStatusEnum;
-use App\Label\Actions\CreateLabel;
-use App\Label\Actions\FindLabel;
-use App\Label\Label;
 use App\Location\Actions\CreateLocation;
 use App\Location\Location;
 use App\Milestone\Actions\CreateMilestone;
@@ -334,15 +333,22 @@ final readonly class SeedSampleData
      */
     private function seedLabels(): array
     {
-        $existing = FindLabel::optionsForTeam($this->teamId)->mapWithKeys(fn (array $label): array => [$label['name'] => $label['id']])->all();
+        $ids = [];
 
-        foreach (self::LABELS as $name => $color) {
-            $existing[$name] ??= CreateLabel::fromLabel(Label::new()->setTeamId($this->teamId)->setName($name)->setColor($color))
-                ->getId()
-                ->toString();
+        foreach (array_keys(self::LABELS) as $position => $name) {
+            $label = FindChoice::byNameForTeam($this->teamId, ChoiceListEnum::TicketLabel, $name);
+
+            $ids[$name] = ($label->isNull()
+                ? CreateChoice::fromChoice(Choice::new()
+                    ->setTeamId($this->teamId)
+                    ->setListName(ChoiceListEnum::TicketLabel)
+                    ->setName($name)
+                    ->setColor(self::LABELS[$name])
+                    ->setPosition($position))
+                : $label)->getId()->toString();
         }
 
-        return $existing;
+        return $ids;
     }
 
     /**

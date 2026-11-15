@@ -10,9 +10,9 @@ use App\Choice\ChoiceEloquentModel;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Deletes a choice for good. Only archived choices that nothing uses are
- * deleted, so no record is left pointing at a missing choice, and access
- * rule conditions that named it are tidied up in the same step.
+ * Deletes a choice for good, and tidies the access rule conditions that named
+ * it. Records that still use it lose it: a ticket's label is taken off. (Only
+ * optional lists, such as labels, allow deleting a choice that is in use.)
  */
 final readonly class DeleteChoice
 {
@@ -23,6 +23,14 @@ final readonly class DeleteChoice
     public function __invoke(): void
     {
         DB::transaction(function (): void {
+            $id = $this->choice->getId()->toString();
+
+            foreach ($this->choice->getListName()->toEnum()->usages() as $usage) {
+                $records = DB::table($usage['table']->value)->where($usage['column'], $id);
+
+                $usage['isPivot'] ? $records->delete() : $records->update([$usage['column'] => null]);
+            }
+
             ChoiceEloquentModel::query()->withoutGlobalScopes()->findOrFail($this->choice->getId()->toString())->delete();
 
             PruneDeletedRecordsFromAccessRules::forTeam($this->choice->getTeamId()->toString());

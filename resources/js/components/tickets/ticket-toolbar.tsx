@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import SearchInput from '@/components/search-input';
 import {
     PriorityGlyph,
+    useTicketLabels,
     useTicketPriorities,
 } from '@/components/tickets/ticket-meta';
 import {
@@ -63,9 +64,10 @@ export default function TicketToolbar({
         id === 'none'
             ? 'No project'
             : options.projects.find((project) => project.id === id)?.name;
-    const labelName = (id: string | null) =>
-        options.labels.find((label) => label.id === id)?.name;
     const priorities = useTicketPriorities(...filters.priority);
+    const labels = useTicketLabels(filters.label);
+    const labelName = (id: string | null) =>
+        labels.find((label) => label.id === id)?.name;
 
     const hasFilters =
         filters.priority.length > 0 ||
@@ -218,7 +220,7 @@ export default function TicketToolbar({
                     </FilterChip>
                 )}
 
-                {options.labels.length > 0 && (
+                {labels.length > 0 && (
                     <FilterChip
                         label="Label"
                         value={labelName(filters.label) ?? null}
@@ -228,7 +230,7 @@ export default function TicketToolbar({
                             value={filters.label}
                             onChange={(label) => set({ label })}
                             choices={[]}
-                            more={options.labels.map((label) => ({
+                            more={labels.map((label) => ({
                                 value: label.id,
                                 label: label.name,
                                 dot: colorDot[label.color],

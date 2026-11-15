@@ -23,7 +23,8 @@ use Inertia\Inertia;
  * Archives a choice so it is no longer offered. Records that use it keep it,
  * or move to a replacement from the same list and category, so no ticket
  * quietly changes from open to closed. The default, and the last live choice
- * in a list or category, can't be archived.
+ * in a list or category, can't be archived, except in an optional list such
+ * as labels, where records simply keep the archived choice.
  */
 final class ArchiveChoiceFormRequest extends FormRequest
 {
@@ -61,6 +62,7 @@ final class ArchiveChoiceFormRequest extends FormRequest
     {
         return [
             self::REPLACEMENT_ID => [
+                ...($this->choice->getListName()->toEnum()->isOptional() ? ['prohibited'] : []),
                 'nullable',
                 'uuid',
                 Rule::notIn([$this->choice->getId()->toString()]),
@@ -90,6 +92,10 @@ final class ArchiveChoiceFormRequest extends FormRequest
     public function after(): array
     {
         return [function (Validator $validator): void {
+            if ($this->choice->getListName()->toEnum()->isOptional()) {
+                return;
+            }
+
             $category = $this->choice->getCategory()->toNullableString();
             $siblings = FindChoice::listForTeam($this->choice->getTeamId()->toString(), $this->choice->getListName()->toEnum())
                 ->filter(fn (Choice $choice): bool => $choice->getCategory()->toNullableString() === $category);

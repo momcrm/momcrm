@@ -6,9 +6,10 @@ namespace App\Ticket;
 
 use App\AuditLog\AuditObserver;
 use App\AuditLog\Contracts\Auditable;
+use App\Choice\ChoiceEloquentModel;
+use App\Choice\Properties\Position as ChoicePosition;
 use App\Contact\ContactEloquentModel;
 use App\Customer\CustomerEloquentModel;
-use App\Label\LabelEloquentModel;
 use App\Project\ProjectEloquentModel;
 use App\Shared\Table;
 use App\Team\Scopes\CurrentTeamScope;
@@ -156,17 +157,19 @@ final class TicketEloquentModel extends Model implements Auditable
     }
 
     /**
-     * @return BelongsToMany<LabelEloquentModel, $this>
+     * The ticket's labels: choices from the team's "ticket_label" list, in its order.
+     *
+     * @return BelongsToMany<ChoiceEloquentModel, $this>
      */
     public function labels(): BelongsToMany
     {
         return $this->belongsToMany(
-            related: LabelEloquentModel::class,
+            related: ChoiceEloquentModel::class,
             table: Table::LabelTicket->value,
             foreignPivotKey: 'ticket_id',
             relatedPivotKey: 'label_id',
             relation: TicketRelationship::Labels->value,
-        );
+        )->orderBy(ChoicePosition::getDatabaseTableColumnNameWithTable(Table::Choices->value));
     }
 
     /**

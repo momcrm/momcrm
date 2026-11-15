@@ -107,8 +107,7 @@ enum AccessAttributeEnum: string
     {
         return match ($this) {
             self::ProjectGroup, self::SubjectGroup, self::SubjectLeadsGroup => Table::Groups,
-            self::TicketLabel => Table::Labels,
-            self::TicketPriority, self::TicketStatus => Table::Choices,
+            self::TicketLabel, self::TicketPriority, self::TicketStatus => Table::Choices,
             self::TicketProject => Table::Projects,
             default => null,
         };

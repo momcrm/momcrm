@@ -25,6 +25,7 @@ import type { KeyboardEvent, ReactNode } from 'react';
 import {
     defaultStatusId,
     PriorityGlyph,
+    useTicketLabels,
     useTicketPriorities,
     useTicketStatuses,
 } from '@/components/tickets/ticket-meta';
@@ -52,7 +53,7 @@ import { formatBytes } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { create as createCustomer } from '@/routes/customers';
 import { formOptions, store } from '@/routes/tickets';
-import type { TicketFormOptions } from '@/types';
+import type { TicketFormOptions, TicketLabel } from '@/types';
 
 type Defaults = {
     customerId?: string | null;
@@ -205,6 +206,7 @@ function CreateTicketForm({
             : '',
     );
     const priorities = useTicketPriorities();
+    const labels = useTicketLabels();
     const [priorityId, setPriorityId] = useState(
         priorities.find((option) => option.is_default)?.id ?? '',
     );
@@ -324,7 +326,7 @@ function CreateTicketForm({
     const customer = options.customers.find(
         (option) => option.id === customerId,
     );
-    const selectedLabels = options.labels.filter((label) =>
+    const selectedLabels = labels.filter((label) =>
         labelIds.includes(label.id),
     );
 
@@ -479,7 +481,7 @@ function CreateTicketForm({
                     />
 
                     <LabelPicker
-                        options={options.labels}
+                        options={labels}
                         selected={labelIds}
                         onChange={setLabelIds}
                     >
@@ -902,7 +904,7 @@ function LabelPicker({
     onChange,
     children,
 }: {
-    options: TicketFormOptions['labels'];
+    options: TicketLabel[];
     selected: string[];
     onChange: (ids: string[]) => void;
     children: ReactNode;

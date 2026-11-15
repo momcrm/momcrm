@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use App\Customer\CustomerEloquentModel;
-use App\Label\LabelEloquentModel;
 use App\Project\ProjectEloquentModel;
 use App\TeamUser\TeamUserEloquentModel;
 use App\User\UserEloquentModel;
@@ -14,16 +13,14 @@ use function Pest\Laravel\getJson;
 it("returns the team's choices for the new-ticket dialog", function (): void {
     $user = UserEloquentModel::factory()->withPersonalTeam()->create(['name' => 'Jane Smith']);
     $customer = CustomerEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'name' => 'Acme IT']);
-    $label = LabelEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'name' => 'Bug']);
     CustomerEloquentModel::factory()->create();
-    LabelEloquentModel::factory()->create();
 
     actingAs($user)
         ->getJson(route('tickets.form-options'))
         ->assertOk()
         ->assertJsonPath('customers', [['id' => $customer->id, 'name' => 'Acme IT']])
         ->assertJsonPath('members', [['id' => $user->id, 'name' => 'Jane Smith']])
-        ->assertJsonPath('labels', [['id' => $label->id, 'name' => 'Bug', 'color' => $label->color]]);
+        ->assertJsonMissingPath('labels');
 });
 
 it('needs a signed-in person', function (): void {
