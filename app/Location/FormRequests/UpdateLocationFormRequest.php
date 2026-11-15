@@ -18,8 +18,10 @@ use App\Location\Properties\State;
 use App\Location\Properties\StreetOne;
 use App\Location\Properties\StreetTwo;
 use App\Location\Properties\Suburb;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 
 final class UpdateLocationFormRequest extends FormRequest
@@ -39,7 +41,7 @@ final class UpdateLocationFormRequest extends FormRequest
     /**
      * @throws CouldNotFindLocation
      */
-    public function authorize(): bool
+    public function authorize(): Response
     {
         $teamId = $this->user()?->current_team_id;
         $this->location = FindLocation::byIdForTeam((string) $this->route('location'), $teamId);
@@ -50,7 +52,7 @@ final class UpdateLocationFormRequest extends FormRequest
 
         $this->customer = FindCustomer::byIdForTeam($this->location->getCustomerId()->toString(), $teamId);
 
-        return true;
+        return Gate::authorize('update', $this->location);
     }
 
     /**

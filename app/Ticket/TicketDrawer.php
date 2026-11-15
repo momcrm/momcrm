@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Ticket;
 
+use App\AccessRule\AccessActionEnum;
+use App\AccessRule\AccessResourceEnum;
+use App\AccessRule\Engine\AccessAbilities;
+use App\AccessRule\Engine\AccessEvaluator;
 use App\Activity\Activity;
 use App\Activity\ActivityEloquentModel;
 use App\Activity\ActivityRelationship;
@@ -11,6 +15,7 @@ use App\Activity\Properties\SubjectId;
 use App\Activity\Properties\SubjectType;
 use App\Attachment\Actions\FindAttachment;
 use App\Attachment\AttachmentEloquentModel;
+use App\Comment\Comment;
 use App\Comment\CommentEloquentModel;
 use App\Comment\CommentRelationship;
 use App\Comment\Properties\TicketId as CommentTicketId;
@@ -56,14 +61,17 @@ final class TicketDrawer
         /** @var UserEloquentModel $user */
         $user = $request->user();
 
-        return self::forTicket($id, (string) $user->current_team_id, $user->id);
+        return self::forTicket($id, $user);
     }
 
     /**
      * @return array<string, mixed>|null
      */
-    public static function forTicket(string $id, string $teamId, string $userId): ?array
+    public static function forTicket(string $id, UserEloquentModel $user): ?array
     {
+        $teamId = (string) $user->current_team_id;
+        $userId = $user->id;
+
         $model = TicketEloquentModel::query()
             ->withoutGlobalScope(CurrentTeamScope::class)
             ->where(TeamId::getDatabaseTableColumnName(), $teamId)
@@ -86,8 +94,12 @@ final class TicketDrawer
         $project = $model->getRelationValue(TicketRelationship::Project->value);
         $parent = $model->getRelationValue(TicketRelationship::Parent->value);
 
+        $ticket = Ticket::fromEloquentModel($model);
+
         return [
-            ...Ticket::fromEloquentModel($model)->toSummary(),
+            ...$ticket->toSummary(),
+            'can' => AccessAbilities::for($user, AccessResourceEnum::Ticket, $ticket),
+            'attachment_can' => AccessAbilities::for($user, AccessResourceEnum::Attachment),
             'customer_name' => $customer instanceof CustomerEloquentModel ? $customer->name : null,
             'assignee_name' => $assignee instanceof UserEloquentModel ? $assignee->name : null,
             'project_name' => $project instanceof ProjectEloquentModel ? $project->name : null,
@@ -112,7 +124,8 @@ final class TicketDrawer
                     'author_name' => $comment->author?->name,
                     'mentions' => $comment->mentions ?? [],
                     'created_at' => $comment->created_at?->toIso8601String(),
-                    'can_delete' => $comment->user_id === $userId,
+                    'can_delete' => $comment->user_id === $userId
+                        && AccessEvaluator::allows($user, AccessResourceEnum::Comment, AccessActionEnum::Delete, Comment::fromEloquentModel($comment)),
                 ])
                 ->values()
                 ->all(),

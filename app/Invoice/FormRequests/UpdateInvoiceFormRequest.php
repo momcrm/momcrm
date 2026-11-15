@@ -12,6 +12,7 @@ use App\Invoice\InvoiceValidationRules;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 
 final class UpdateInvoiceFormRequest extends FormRequest
@@ -36,9 +37,11 @@ final class UpdateInvoiceFormRequest extends FormRequest
             throw CouldNotFindInvoice::notFound();
         }
 
-        return $this->invoice->isDraft()
-            ? Response::allow()
-            : Response::deny(__('Only draft invoices can be edited.'));
+        if (! $this->invoice->isDraft()) {
+            return Response::deny(__('Only draft invoices can be edited.'));
+        }
+
+        return Gate::authorize('update', $this->invoice);
     }
 
     /**

@@ -15,8 +15,10 @@ use App\Customer\Properties\Notes;
 use App\Customer\Properties\Phone;
 use App\Customer\Properties\Status;
 use App\Customer\Properties\Website;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 
 final class UpdateCustomerFormRequest extends FormRequest
@@ -33,7 +35,7 @@ final class UpdateCustomerFormRequest extends FormRequest
     /**
      * @throws CouldNotFindCustomer
      */
-    public function authorize(): bool
+    public function authorize(): Response
     {
         $this->customer = FindCustomer::byIdForTeam((string) $this->route('customer'), $this->user()?->current_team_id);
 
@@ -41,7 +43,7 @@ final class UpdateCustomerFormRequest extends FormRequest
             throw CouldNotFindCustomer::notFound();
         }
 
-        return true;
+        return Gate::authorize('update', $this->customer);
     }
 
     /**

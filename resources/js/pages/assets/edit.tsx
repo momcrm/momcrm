@@ -8,14 +8,22 @@ import {
     index as customersIndex,
     show as showCustomer,
 } from '@/routes/customers';
-import type { Asset, Customer, CustomerOption, Option } from '@/types';
+import type {
+    Abilities,
+    Asset,
+    Customer,
+    CustomerOption,
+    Option,
+} from '@/types';
 
 export default function EditAsset({
+    can,
     asset,
     customer,
     statuses,
     locations,
 }: {
+    can: Abilities;
     asset: Asset;
     customer: Customer;
     statuses: Option[];
@@ -38,11 +46,13 @@ export default function EditAsset({
                     title="Edit asset"
                     description={`For ${customer.name}`}
                     actions={
-                        <ConfirmDelete
-                            action={DeleteAssetController.form(asset.id)}
-                            title="Delete this asset?"
-                            description="This can't be undone."
-                        />
+                        can.delete && (
+                            <ConfirmDelete
+                                action={DeleteAssetController.form(asset.id)}
+                                title="Delete this asset?"
+                                description="This can't be undone."
+                            />
+                        )
                     }
                 />
                 <AssetForm

@@ -37,15 +37,28 @@ final class TeamPolicy
      */
     public function invite(UserEloquentModel $user, Team $team): Response
     {
+        return $this->isOwnerOrAdmin($user, $team)
+            ? Response::allow()
+            : Response::deny('Only team owners and admins can invite people.');
+    }
+
+    /**
+     * Owners and admins can remove the sample data, which deletes records across the team.
+     */
+    public function removeSampleData(UserEloquentModel $user, Team $team): Response
+    {
+        return $this->isOwnerOrAdmin($user, $team)
+            ? Response::allow()
+            : Response::deny('Only team owners and admins can remove the sample data.');
+    }
+
+    private function isOwnerOrAdmin(UserEloquentModel $user, Team $team): bool
+    {
         $role = FindTeamUser::byTeamAndUser(
             teamId: $team->getId()->toString(),
             userId: (string) $user->getAuthIdentifier(),
         )->getRole()->toNullableEnum();
 
-        if (in_array($role, [TeamRoleEnum::Owner, TeamRoleEnum::Admin], true)) {
-            return Response::allow();
-        }
-
-        return Response::deny('Only team owners and admins can invite people.');
+        return in_array($role, [TeamRoleEnum::Owner, TeamRoleEnum::Admin], true);
     }
 }

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Project\Controllers;
 
+use App\AccessRule\AccessResourceEnum;
+use App\AccessRule\Engine\AccessAbilities;
 use App\Attachment\Actions\FindAttachment;
 use App\Attachment\AttachmentEloquentModel;
 use App\Favorite\Actions\FindFavorite;
@@ -11,6 +13,7 @@ use App\Favorite\FavoritableTypeEnum;
 use App\Group\GroupEloquentModel;
 use App\Project\Actions\FindProject;
 use App\Project\Exceptions\CouldNotFindProject;
+use App\Project\Project;
 use App\Project\ProjectFormOptions;
 use App\Project\ProjectOverview;
 use App\Project\ProjectRelationship;
@@ -57,12 +60,15 @@ final class ShowProjectController
                 'group_name' => $group instanceof GroupEloquentModel ? $group->name : null,
             ],
             'tab' => $tab,
+            'can' => AccessAbilities::for($user, AccessResourceEnum::Project, Project::fromEloquentModel($model)),
+            'milestoneCan' => AccessAbilities::for($user, AccessResourceEnum::Milestone),
             ...match ($tab) {
                 'files' => [
                     'attachments' => FindAttachment::forAttachable(MorphMapKeyEnum::Project, $model->id)
                         ->map(fn (AttachmentEloquentModel $attachment): array => FindAttachment::listItem($attachment))
                         ->values()
                         ->all(),
+                    'attachmentCan' => AccessAbilities::for($user, AccessResourceEnum::Attachment),
                     'favoriteTicketIds' => [],
                     ...TicketDrawer::options($teamId, $user->id),
                     'drawer' => null,

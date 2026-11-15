@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace App\Customer\FormRequests;
 
 use App\Customer\Actions\ImportCustomersFromCsv;
+use App\Customer\Customer;
 use App\Onboarding\Actions\CompleteOnboarding;
 use App\User\User;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
@@ -17,9 +20,9 @@ final class ImportCustomersFormRequest extends FormRequest
 {
     public const int MAX_KILOBYTES = 1024;
 
-    public function authorize(): bool
+    public function authorize(): Response
     {
-        return $this->user()?->current_team_id !== null;
+        return Gate::authorize('import', Customer::class);
     }
 
     /**

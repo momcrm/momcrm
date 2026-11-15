@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\User\Factories;
 
 use App\Team\Actions\CreatePersonalTeam;
+use App\TeamUser\Actions\CreateTeamUser;
+use App\TeamUser\TeamRoleEnum;
 use App\User\Properties\Email;
 use App\User\Properties\EmailVerifiedAt;
 use App\User\Properties\Name;
@@ -76,6 +78,18 @@ final class UserFactory extends Factory
 
             $user->refresh();
         });
+    }
+
+    /**
+     * Put the user in a team with the given role and make it their current team.
+     */
+    public function inTeam(string $teamId, TeamRoleEnum $role = TeamRoleEnum::Member): static
+    {
+        return $this
+            ->state(['current_team_id' => $teamId])
+            ->afterCreating(function (UserEloquentModel $user) use ($teamId, $role): void {
+                CreateTeamUser::fromIds(teamId: $teamId, userId: $user->id, role: $role);
+            });
     }
 
     /**

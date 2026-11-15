@@ -14,6 +14,7 @@ use App\Team\Team;
 use App\Ticket\Actions\FindTicket;
 use App\User\UserEloquentModel;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -56,6 +57,7 @@ class HandleInertiaRequests extends Middleware
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'hasSampleData' => fn (): bool => $this->hasSampleData($request),
+            'canRemoveSampleData' => fn (): bool => $this->canRemoveSampleData($request),
             'sidebarCounts' => fn (): ?array => $this->sidebarCounts($request),
             'gettingStarted' => fn (): ?array => $request->user() instanceof UserEloquentModel
                 ? GetGettingStartedProgress::forUser($request->user())
@@ -71,6 +73,19 @@ class HandleInertiaRequests extends Middleware
         $teamId = $request->user()?->current_team_id;
 
         return is_string($teamId) && RemoveSampleData::teamHasSampleData($teamId);
+    }
+
+    private function canRemoveSampleData(Request $request): bool
+    {
+        $user = $request->user();
+
+        if (! $user instanceof UserEloquentModel) {
+            return false;
+        }
+
+        $team = FindTeam::byIdForMember(id: $user->current_team_id, userId: $user->id);
+
+        return $team->isNotNull() && Gate::forUser($user)->allows('removeSampleData', $team);
     }
 
     /**

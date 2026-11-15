@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Customer\Controllers;
 
+use App\AccessRule\AccessResourceEnum;
+use App\AccessRule\Engine\AccessAbilities;
 use App\Asset\Actions\FindAsset;
 use App\Asset\Asset;
 use App\Contact\Actions\FindContact;
@@ -44,6 +46,7 @@ final class ShowCustomerController
 
         return Inertia::render('customers/show', [
             'customer' => $found->toSummary(),
+            'can' => AccessAbilities::for($request->user(), AccessResourceEnum::Customer, $found),
             'contacts' => FindContact::forCustomer($customerId, $teamId)
                 ->map(fn (Contact $contact): array => $contact->toSummary())
                 ->values()

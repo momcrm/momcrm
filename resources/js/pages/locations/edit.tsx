@@ -8,12 +8,14 @@ import {
     index as customersIndex,
     show as showCustomer,
 } from '@/routes/customers';
-import type { Customer, Location } from '@/types';
+import type { Abilities, Customer, Location } from '@/types';
 
 export default function EditLocation({
+    can,
     location,
     customer,
 }: {
+    can: Abilities;
     location: Location;
     customer: Customer;
 }) {
@@ -34,11 +36,15 @@ export default function EditLocation({
                     title="Edit location"
                     description={`For ${customer.name}`}
                     actions={
-                        <ConfirmDelete
-                            action={DeleteLocationController.form(location.id)}
-                            title="Delete this location?"
-                            description="This can't be undone."
-                        />
+                        can.delete && (
+                            <ConfirmDelete
+                                action={DeleteLocationController.form(
+                                    location.id,
+                                )}
+                                title="Delete this location?"
+                                description="This can't be undone."
+                            />
+                        )
                     }
                 />
                 <LocationForm

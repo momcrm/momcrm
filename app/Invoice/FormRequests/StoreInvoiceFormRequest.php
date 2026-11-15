@@ -9,16 +9,18 @@ use App\Invoice\Invoice;
 use App\Invoice\InvoiceValidationRules;
 use App\Invoice\Properties\CustomerId;
 use App\Shared\Table;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 final class StoreInvoiceFormRequest extends FormRequest
 {
-    public function authorize(): bool
+    public function authorize(): Response
     {
-        return $this->user()?->current_team_id !== null;
+        return Gate::authorize('create', Invoice::class);
     }
 
     /**

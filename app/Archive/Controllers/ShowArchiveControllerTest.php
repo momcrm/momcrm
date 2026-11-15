@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Project\ProjectEloquentModel;
+use App\TeamUser\TeamRoleEnum;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -27,4 +28,18 @@ it('lists the team’s archived tickets and projects', function (): void {
             ->where('tickets.0.title', 'Old ticket')
             ->where('projects.0.name', 'Old project'),
         );
+});
+
+it('tells the page which archived items the person may restore or delete', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $member = UserEloquentModel::factory()->inTeam($owner->current_team_id, TeamRoleEnum::Member)->create();
+    TicketEloquentModel::factory()->archived()->create(['team_id' => $owner->current_team_id]);
+
+    actingAs($member)
+        ->get(route('archive'))
+        ->assertInertia(fn (Assert $page) => $page->where('tickets.0.can.restore', false)->where('tickets.0.can.delete', false));
+
+    actingAs($owner)
+        ->get(route('archive'))
+        ->assertInertia(fn (Assert $page) => $page->where('tickets.0.can.restore', true)->where('tickets.0.can.delete', true));
 });

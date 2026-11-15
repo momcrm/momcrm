@@ -5,15 +5,28 @@ declare(strict_types=1);
 namespace App\Onboarding\FormRequests;
 
 use App\Onboarding\Actions\RemoveSampleData;
+use App\Team\Actions\FindTeam;
+use App\Team\Exceptions\CouldNotUpdateTeam;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 
 final class RemoveSampleDataFormRequest extends FormRequest
 {
-    public function authorize(): bool
+    public function authorize(): Response
     {
-        return $this->user()?->current_team_id !== null;
+        $team = FindTeam::byIdForMember(
+            id: $this->user()?->current_team_id,
+            userId: (string) $this->user()?->getAuthIdentifier(),
+        );
+
+        if ($team->isNull()) {
+            throw CouldNotUpdateTeam::notFound();
+        }
+
+        return Gate::authorize('removeSampleData', $team);
     }
 
     /**

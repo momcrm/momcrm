@@ -8,8 +8,10 @@ use App\Contact\Actions\DeleteContact;
 use App\Contact\Actions\FindContact;
 use App\Contact\Contact;
 use App\Contact\Exceptions\CouldNotFindContact;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 
 final class DeleteContactFormRequest extends FormRequest
@@ -26,7 +28,7 @@ final class DeleteContactFormRequest extends FormRequest
     /**
      * @throws CouldNotFindContact
      */
-    public function authorize(): bool
+    public function authorize(): Response
     {
         $this->contact = FindContact::byIdForTeam((string) $this->route('contact'), $this->user()?->current_team_id);
 
@@ -34,7 +36,7 @@ final class DeleteContactFormRequest extends FormRequest
             throw CouldNotFindContact::notFound();
         }
 
-        return true;
+        return Gate::authorize('delete', $this->contact);
     }
 
     /**

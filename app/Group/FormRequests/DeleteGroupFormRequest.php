@@ -6,9 +6,12 @@ namespace App\Group\FormRequests;
 
 use App\Group\Actions\FindGroupForTeam;
 use App\Group\Exceptions\CouldNotFindGroup;
+use App\Group\Group;
 use App\Group\GroupEloquentModel;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 
 /**
@@ -21,7 +24,7 @@ final class DeleteGroupFormRequest extends FormRequest
     /**
      * @throws CouldNotFindGroup
      */
-    public function authorize(): bool
+    public function authorize(): Response
     {
         $this->group = FindGroupForTeam::byId((string) $this->route('group'), $this->user()?->current_team_id);
 
@@ -29,7 +32,7 @@ final class DeleteGroupFormRequest extends FormRequest
             throw CouldNotFindGroup::notFound();
         }
 
-        return true;
+        return Gate::authorize('delete', Group::fromEloquentModel($this->group));
     }
 
     /**

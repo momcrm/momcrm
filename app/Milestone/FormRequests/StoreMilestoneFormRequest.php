@@ -11,8 +11,10 @@ use App\Milestone\Properties\Name;
 use App\Project\Actions\FindProject;
 use App\Project\Exceptions\CouldNotFindProject;
 use App\Project\Project;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 
 final class StoreMilestoneFormRequest extends FormRequest
 {
@@ -28,7 +30,7 @@ final class StoreMilestoneFormRequest extends FormRequest
     /**
      * @throws CouldNotFindProject
      */
-    public function authorize(): bool
+    public function authorize(): Response
     {
         $this->project = FindProject::visibleByIdForTeam((string) $this->route('project'), $this->user()?->current_team_id, (string) $this->user()?->getAuthIdentifier());
 
@@ -36,7 +38,7 @@ final class StoreMilestoneFormRequest extends FormRequest
             throw CouldNotFindProject::notFound();
         }
 
-        return true;
+        return Gate::authorize('create', Milestone::class);
     }
 
     /**

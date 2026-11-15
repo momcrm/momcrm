@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\AccessRule\AccessRuleEloquentModel;
 use App\Contact\ContactEloquentModel;
 use App\Customer\CustomerEloquentModel;
 use App\Label\LabelEloquentModel;
@@ -94,4 +95,19 @@ it("returns not found for another team's ticket", function (): void {
     actingAs(UserEloquentModel::factory()->withPersonalTeam()->create())
         ->patch(route('tickets.patch', TicketEloquentModel::factory()->create()->id), ['priority' => 'low'])
         ->assertNotFound();
+});
+
+it('applies the close rules when an edit closes or reopens the ticket', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $member = UserEloquentModel::factory()->inTeam($owner->current_team_id)->create();
+    AccessRuleEloquentModel::factory()->deny()->create(['team_id' => $owner->current_team_id, 'resources' => ['ticket'], 'actions' => ['close', 'reopen']]);
+    $open = patchableTicket($owner, ['status' => 'new']);
+    $closed = patchableTicket($owner, ['status' => 'closed']);
+
+    actingAs($member)->patch(route('tickets.patch', $open->id), ['priority' => 'urgent'])->assertSessionHasNoErrors();
+    actingAs($member)->patch(route('tickets.patch', $open->id), ['status' => 'closed'])->assertForbidden();
+    actingAs($member)->patch(route('tickets.patch', $closed->id), ['status' => 'new'])->assertForbidden();
+
+    expect($open->fresh())->priority->toBe('urgent')->status->toBe('new')
+        ->and($closed->fresh()->status)->toBe('closed');
 });

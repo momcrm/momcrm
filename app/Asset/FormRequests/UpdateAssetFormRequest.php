@@ -16,8 +16,10 @@ use App\Asset\Properties\Status;
 use App\Customer\Actions\FindCustomer;
 use App\Customer\Customer;
 use App\Shared\Table;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
@@ -38,7 +40,7 @@ final class UpdateAssetFormRequest extends FormRequest
     /**
      * @throws CouldNotFindAsset
      */
-    public function authorize(): bool
+    public function authorize(): Response
     {
         $teamId = $this->user()?->current_team_id;
         $this->asset = FindAsset::byIdForTeam((string) $this->route('asset'), $teamId);
@@ -49,7 +51,7 @@ final class UpdateAssetFormRequest extends FormRequest
 
         $this->customer = FindCustomer::byIdForTeam($this->asset->getCustomerId()->toString(), $teamId);
 
-        return true;
+        return Gate::authorize('update', $this->asset);
     }
 
     /**

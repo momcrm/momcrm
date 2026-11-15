@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Contact\Controllers;
 
+use App\AccessRule\AccessResourceEnum;
+use App\AccessRule\Engine\AccessAbilities;
 use App\Contact\Actions\FindContact;
 use App\Contact\Exceptions\CouldNotFindContact;
 use App\Customer\Actions\FindCustomer;
@@ -28,6 +30,7 @@ final class EditContactController
         return Inertia::render('contacts/edit', [
             'contact' => $found->toSummary(),
             'customers' => FindCustomer::optionsForTeam($teamId),
+            'can' => AccessAbilities::for($request->user(), AccessResourceEnum::Contact, $found),
         ]);
     }
 }

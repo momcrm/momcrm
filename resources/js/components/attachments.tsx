@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { formatBytes, timeAgo } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { destroy } from '@/routes/attachments';
-import type { AttachmentItem } from '@/types';
+import type { Abilities, AttachmentItem } from '@/types';
 
 /**
  * A ticket's or project's files, with a drop zone that uploads straight away.
@@ -15,10 +15,13 @@ export default function Attachments({
     attachments,
     uploadUrl,
     reload,
+    can,
 }: {
     attachments: AttachmentItem[];
     uploadUrl: string;
     reload: string[];
+    /** Whether files may be added and deleted, under the team's access rules. */
+    can: Abilities;
 }) {
     const input = useRef<HTMLInputElement>(null);
     const [isOver, setIsOver] = useState(false);
@@ -85,57 +88,64 @@ export default function Attachments({
                                         ` · ${attachment.uploaded_by}`}
                                     {` · ${timeAgo(attachment.created_at)}`}
                                 </span>
-                                <button
-                                    type="button"
-                                    aria-label={`Delete ${attachment.name}`}
-                                    onClick={() =>
-                                        router.delete(
-                                            destroy.url(attachment.id),
-                                            {
-                                                only: reload,
-                                                preserveScroll: true,
-                                                preserveState: true,
-                                            },
-                                        )
-                                    }
-                                    className="text-subtle-foreground opacity-0 group-hover:opacity-100 hover:text-destructive focus-visible:opacity-100"
-                                >
-                                    <Trash2 className="size-3.5" />
-                                </button>
+                                {can.delete && (
+                                    <button
+                                        type="button"
+                                        aria-label={`Delete ${attachment.name}`}
+                                        onClick={() =>
+                                            router.delete(
+                                                destroy.url(attachment.id),
+                                                {
+                                                    only: reload,
+                                                    preserveScroll: true,
+                                                    preserveState: true,
+                                                },
+                                            )
+                                        }
+                                        className="text-subtle-foreground opacity-0 group-hover:opacity-100 hover:text-destructive focus-visible:opacity-100"
+                                    >
+                                        <Trash2 className="size-3.5" />
+                                    </button>
+                                )}
                             </li>
                         );
                     })}
                 </ul>
             )}
-            <button
-                type="button"
-                onClick={() => input.current?.click()}
-                onDragOver={(event) => {
-                    event.preventDefault();
-                    setIsOver(true);
-                }}
-                onDragLeave={() => setIsOver(false)}
-                onDrop={onDrop}
-                className={cn(
-                    'flex w-full items-center justify-center gap-2 rounded-md border border-dashed px-3 py-3 text-sm text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground',
-                    isOver && 'border-primary bg-primary/5 text-foreground',
-                )}
-            >
-                <Upload className="size-4" />
-                {uploading
-                    ? 'Uploading…'
-                    : 'Drop files here or click to upload'}
-            </button>
-            <input
-                ref={input}
-                type="file"
-                multiple
-                hidden
-                onChange={(event) => {
-                    upload(event.target.files);
-                    event.target.value = '';
-                }}
-            />
+            {can.create && (
+                <>
+                    <button
+                        type="button"
+                        onClick={() => input.current?.click()}
+                        onDragOver={(event) => {
+                            event.preventDefault();
+                            setIsOver(true);
+                        }}
+                        onDragLeave={() => setIsOver(false)}
+                        onDrop={onDrop}
+                        className={cn(
+                            'flex w-full items-center justify-center gap-2 rounded-md border border-dashed px-3 py-3 text-sm text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground',
+                            isOver &&
+                                'border-primary bg-primary/5 text-foreground',
+                        )}
+                    >
+                        <Upload className="size-4" />
+                        {uploading
+                            ? 'Uploading…'
+                            : 'Drop files here or click to upload'}
+                    </button>
+                    <input
+                        ref={input}
+                        type="file"
+                        multiple
+                        hidden
+                        onChange={(event) => {
+                            upload(event.target.files);
+                            event.target.value = '';
+                        }}
+                    />
+                </>
+            )}
         </div>
     );
 }

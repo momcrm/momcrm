@@ -16,7 +16,7 @@ import {
     destroy as destroyTicket,
     restore as restoreTicket,
 } from '@/routes/tickets';
-import type { ProjectListItem, TicketListItem } from '@/types';
+import type { Abilities, ProjectListItem, TicketListItem } from '@/types';
 
 type Tab = 'tickets' | 'projects';
 
@@ -30,8 +30,8 @@ export default function ArchivePage({
     projects,
 }: {
     tab: Tab;
-    tickets: TicketListItem[];
-    projects: ProjectListItem[];
+    tickets: (TicketListItem & { can: Abilities })[];
+    projects: (ProjectListItem & { can: Abilities })[];
 }) {
     const restore = (url: string) =>
         router.post(url, {}, { preserveScroll: true });
@@ -102,23 +102,31 @@ export default function ArchivePage({
                                         {ticket.archived_at &&
                                             `Archived ${formatDay(ticket.archived_at.slice(0, 10))}`}
                                     </span>
-                                    <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        onClick={() =>
-                                            restore(
-                                                restoreTicket.url(ticket.id),
-                                            )
-                                        }
-                                    >
-                                        <RotateCcw />
-                                        Restore
-                                    </Button>
-                                    <ConfirmDelete
-                                        action={destroyTicket.form(ticket.id)}
-                                        title={`Delete ticket #${ticket.number}?`}
-                                        description="It's gone for good, with its subtasks. This can't be undone."
-                                    />
+                                    {ticket.can.restore && (
+                                        <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() =>
+                                                restore(
+                                                    restoreTicket.url(
+                                                        ticket.id,
+                                                    ),
+                                                )
+                                            }
+                                        >
+                                            <RotateCcw />
+                                            Restore
+                                        </Button>
+                                    )}
+                                    {ticket.can.delete && (
+                                        <ConfirmDelete
+                                            action={destroyTicket.form(
+                                                ticket.id,
+                                            )}
+                                            title={`Delete ticket #${ticket.number}?`}
+                                            description="It's gone for good, with its subtasks. This can't be undone."
+                                        />
+                                    )}
                                 </li>
                             ))}
                         </ul>
@@ -146,21 +154,27 @@ export default function ArchivePage({
                                 <span className="hidden text-xs text-muted-foreground md:block">
                                     {project.tickets_count} tickets
                                 </span>
-                                <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() =>
-                                        restore(restoreProject.url(project.id))
-                                    }
-                                >
-                                    <RotateCcw />
-                                    Restore
-                                </Button>
-                                <ConfirmDelete
-                                    action={destroyProject.form(project.id)}
-                                    title={`Delete ${project.name}?`}
-                                    description={`The project and its ${project.tickets_count} tickets are gone for good. This can't be undone.`}
-                                />
+                                {project.can.restore && (
+                                    <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() =>
+                                            restore(
+                                                restoreProject.url(project.id),
+                                            )
+                                        }
+                                    >
+                                        <RotateCcw />
+                                        Restore
+                                    </Button>
+                                )}
+                                {project.can.delete && (
+                                    <ConfirmDelete
+                                        action={destroyProject.form(project.id)}
+                                        title={`Delete ${project.name}?`}
+                                        description={`The project and its ${project.tickets_count} tickets are gone for good. This can't be undone.`}
+                                    />
+                                )}
                             </li>
                         ))}
                     </ul>

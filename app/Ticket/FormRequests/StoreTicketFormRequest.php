@@ -11,9 +11,11 @@ use App\Ticket\Properties\Status;
 use App\Ticket\Ticket;
 use App\Ticket\TicketStatusEnum;
 use App\Ticket\TicketValidationRules;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
@@ -25,9 +27,9 @@ final class StoreTicketFormRequest extends FormRequest
 {
     public const string QUICK = 'quick';
 
-    public function authorize(): bool
+    public function authorize(): Response
     {
-        return $this->user()?->current_team_id !== null;
+        return Gate::authorize('create', Ticket::class);
     }
 
     /**

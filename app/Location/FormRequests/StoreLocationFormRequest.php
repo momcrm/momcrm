@@ -17,8 +17,10 @@ use App\Location\Properties\State;
 use App\Location\Properties\StreetOne;
 use App\Location\Properties\StreetTwo;
 use App\Location\Properties\Suburb;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 
 final class StoreLocationFormRequest extends FormRequest
@@ -35,7 +37,7 @@ final class StoreLocationFormRequest extends FormRequest
     /**
      * @throws CouldNotFindCustomer
      */
-    public function authorize(): bool
+    public function authorize(): Response
     {
         $this->customer = FindCustomer::byIdForTeam((string) $this->route('customer'), $this->user()?->current_team_id);
 
@@ -43,7 +45,7 @@ final class StoreLocationFormRequest extends FormRequest
             throw CouldNotFindCustomer::notFound();
         }
 
-        return true;
+        return Gate::authorize('create', Location::class);
     }
 
     /**

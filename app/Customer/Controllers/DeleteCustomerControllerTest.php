@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Contact\ContactEloquentModel;
 use App\Customer\CustomerEloquentModel;
+use App\TeamUser\TeamRoleEnum;
 use App\User\UserEloquentModel;
 
 use function Pest\Laravel\actingAs;
@@ -30,4 +31,14 @@ it("returns not found for another team's customer", function (): void {
         ->assertNotFound();
 
     expect(CustomerEloquentModel::query()->withoutGlobalScopes()->whereKey($other->id)->exists())->toBeTrue();
+});
+
+it('leaves deleting customers to owners and admins by default', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $member = UserEloquentModel::factory()->inTeam($owner->current_team_id, TeamRoleEnum::Member)->create();
+    $customer = CustomerEloquentModel::factory()->create(['team_id' => $owner->current_team_id]);
+
+    actingAs($member)->delete(route('customers.destroy', $customer->id))->assertForbidden();
+
+    expect($customer->fresh())->not->toBeNull();
 });

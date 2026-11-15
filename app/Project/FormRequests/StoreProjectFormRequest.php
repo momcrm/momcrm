@@ -7,16 +7,18 @@ namespace App\Project\FormRequests;
 use App\Project\Actions\CreateProject;
 use App\Project\Project;
 use App\Project\ProjectValidationRules;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 
 final class StoreProjectFormRequest extends FormRequest
 {
-    public function authorize(): bool
+    public function authorize(): Response
     {
-        return $this->user()?->current_team_id !== null;
+        return Gate::authorize('create', Project::class);
     }
 
     /**

@@ -1,5 +1,11 @@
 export type Option = { value: string; label: string };
 
+/**
+ * What the signed-in person may do to a record under the team's access rules,
+ * keyed by camel-cased action (update, delete, archive, changeVisibility, ...).
+ */
+export type Abilities = Partial<Record<string, boolean>>;
+
 export type CustomerOption = { id: string; name: string };
 
 export type Customer = {
@@ -124,6 +130,8 @@ export type TicketDrawerData = Omit<
         status: TicketStatus;
     }[];
     is_favorite: boolean;
+    can: Abilities;
+    attachment_can: Abilities;
     comments: TicketComment[];
     attachments: AttachmentItem[];
     activity: import('./activity').ActivityItem[];

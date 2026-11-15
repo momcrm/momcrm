@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Service\Controllers;
 
+use App\AccessRule\AccessResourceEnum;
+use App\AccessRule\Engine\AccessAbilities;
 use App\Customer\Actions\FindCustomer;
 use App\Location\Actions\FindLocation;
 use App\Service\Actions\FindService;
@@ -34,6 +36,7 @@ final class EditServiceController
             'customer' => $customer->toSummary(),
             'statuses' => ServiceStatusEnum::options(),
             'locations' => FindLocation::optionsForCustomer($customer->getId()->toString(), (string) $customer->getTeamId()->toString()),
+            'can' => AccessAbilities::for($request->user(), AccessResourceEnum::Service, $found),
         ]);
     }
 }

@@ -29,11 +29,16 @@ export default function ProjectFormDialog({
     onOpenChange,
     options,
     project,
+    canChangeVisibility = true,
+    canManageMembers = true,
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     options: ProjectFormOptions;
     project?: ProjectListItem;
+    /** Without these, the fields are left out so the values stay as they are. */
+    canChangeVisibility?: boolean;
+    canManageMembers?: boolean;
 }) {
     const [color, setColor] = useState<ColorName>(project?.color ?? 'indigo');
     const [icon, setIcon] = useState(project?.icon ?? 'folder');
@@ -165,14 +170,16 @@ export default function ProjectFormDialog({
                                     choices={options.statuses}
                                     error={errors.status}
                                 />
-                                <Select
-                                    id="project-visibility"
-                                    name="visibility"
-                                    label="Who can see it"
-                                    value={project?.visibility ?? 'open'}
-                                    choices={options.visibilities}
-                                    error={errors.visibility}
-                                />
+                                {canChangeVisibility && (
+                                    <Select
+                                        id="project-visibility"
+                                        name="visibility"
+                                        label="Who can see it"
+                                        value={project?.visibility ?? 'open'}
+                                        choices={options.visibilities}
+                                        error={errors.visibility}
+                                    />
+                                )}
                                 <Select
                                     id="project-customer"
                                     name="customer_id"
@@ -244,7 +251,7 @@ export default function ProjectFormDialog({
                                 </FormField>
                             </div>
 
-                            {options.members.length > 1 && (
+                            {canManageMembers && options.members.length > 1 && (
                                 <Field label="Members">
                                     <div className="flex flex-wrap gap-1.5">
                                         {options.members.map((member) => {

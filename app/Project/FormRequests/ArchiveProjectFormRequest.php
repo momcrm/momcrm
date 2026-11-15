@@ -8,8 +8,10 @@ use App\Project\Actions\ArchiveProject;
 use App\Project\Actions\FindProject;
 use App\Project\Exceptions\CouldNotFindProject;
 use App\Project\Project;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 
 final class ArchiveProjectFormRequest extends FormRequest
@@ -26,7 +28,7 @@ final class ArchiveProjectFormRequest extends FormRequest
     /**
      * @throws CouldNotFindProject
      */
-    public function authorize(): bool
+    public function authorize(): Response
     {
         $this->project = FindProject::visibleByIdForTeam((string) $this->route('project'), $this->user()?->current_team_id, (string) $this->user()?->getAuthIdentifier());
 
@@ -34,7 +36,7 @@ final class ArchiveProjectFormRequest extends FormRequest
             throw CouldNotFindProject::notFound();
         }
 
-        return true;
+        return Gate::authorize('archive', $this->project);
     }
 
     /**

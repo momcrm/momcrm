@@ -8,8 +8,10 @@ use App\Location\Actions\DeleteLocation;
 use App\Location\Actions\FindLocation;
 use App\Location\Exceptions\CouldNotFindLocation;
 use App\Location\Location;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 
 final class DeleteLocationFormRequest extends FormRequest
@@ -26,7 +28,7 @@ final class DeleteLocationFormRequest extends FormRequest
     /**
      * @throws CouldNotFindLocation
      */
-    public function authorize(): bool
+    public function authorize(): Response
     {
         $this->location = FindLocation::byIdForTeam((string) $this->route('location'), $this->user()?->current_team_id);
 
@@ -34,7 +36,7 @@ final class DeleteLocationFormRequest extends FormRequest
             throw CouldNotFindLocation::notFound();
         }
 
-        return true;
+        return Gate::authorize('delete', $this->location);
     }
 
     /**

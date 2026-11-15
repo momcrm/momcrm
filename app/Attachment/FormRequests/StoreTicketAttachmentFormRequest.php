@@ -5,14 +5,17 @@ declare(strict_types=1);
 namespace App\Attachment\FormRequests;
 
 use App\Attachment\Actions\CreateAttachment;
+use App\Attachment\Attachment;
 use App\Attachment\AttachmentValidationRules;
 use App\Team\Scopes\CurrentTeamScope;
 use App\Ticket\Exceptions\CouldNotFindTicket;
 use App\Ticket\Properties\TeamId;
 use App\Ticket\TicketEloquentModel;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Gate;
 
 final class StoreTicketAttachmentFormRequest extends FormRequest
 {
@@ -21,7 +24,7 @@ final class StoreTicketAttachmentFormRequest extends FormRequest
     /**
      * @throws CouldNotFindTicket
      */
-    public function authorize(): bool
+    public function authorize(): Response
     {
         $this->ticket = TicketEloquentModel::query()
             ->withoutGlobalScope(CurrentTeamScope::class)
@@ -32,7 +35,7 @@ final class StoreTicketAttachmentFormRequest extends FormRequest
             throw CouldNotFindTicket::notFound();
         }
 
-        return true;
+        return Gate::authorize('create', Attachment::class);
     }
 
     /**

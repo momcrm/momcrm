@@ -7,6 +7,7 @@ use App\Activity\ActivityTypeEnum;
 use App\Customer\CustomerEloquentModel;
 use App\Onboarding\Actions\SeedSampleData;
 use App\Project\ProjectEloquentModel;
+use App\TeamUser\TeamRoleEnum;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -46,4 +47,11 @@ it('tells every page whether the team has sample data', function (): void {
     SeedSampleData::forTeam(teamId: $user->current_team_id, userId: $user->id);
 
     actingAs($user)->get(route('customers.index'))->assertInertia(fn (Assert $page) => $page->where('hasSampleData', true));
+});
+
+it('leaves removing the sample data to owners and admins', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $member = UserEloquentModel::factory()->inTeam($owner->current_team_id, TeamRoleEnum::Member)->create();
+
+    actingAs($member)->delete(route('sample-data.destroy'))->assertForbidden();
 });

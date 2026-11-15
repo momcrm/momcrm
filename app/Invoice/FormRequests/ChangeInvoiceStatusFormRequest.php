@@ -9,8 +9,10 @@ use App\Invoice\Actions\FindInvoice;
 use App\Invoice\Exceptions\CouldNotFindInvoice;
 use App\Invoice\Invoice;
 use App\Invoice\InvoiceStatusEnum;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
@@ -28,7 +30,7 @@ final class ChangeInvoiceStatusFormRequest extends FormRequest
     /**
      * @throws CouldNotFindInvoice
      */
-    public function authorize(): bool
+    public function authorize(): Response
     {
         $this->invoice = FindInvoice::byIdForTeam((string) $this->route('invoice'), $this->user()?->current_team_id);
 
@@ -36,7 +38,7 @@ final class ChangeInvoiceStatusFormRequest extends FormRequest
             throw CouldNotFindInvoice::notFound();
         }
 
-        return true;
+        return Gate::authorize('changeStatus', $this->invoice);
     }
 
     /**

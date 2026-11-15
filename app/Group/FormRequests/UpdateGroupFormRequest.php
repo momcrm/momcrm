@@ -9,10 +9,14 @@ use App\Group\Actions\SyncGroupMembers;
 use App\Group\Exceptions\CouldNotFindGroup;
 use App\Group\Group;
 use App\Group\GroupEloquentModel;
+use App\Group\GroupRoleEnum;
 use App\Group\GroupValidationRules;
+use App\User\UserEloquentModel;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 
 final class UpdateGroupFormRequest extends FormRequest
@@ -22,7 +26,7 @@ final class UpdateGroupFormRequest extends FormRequest
     /**
      * @throws CouldNotFindGroup
      */
-    public function authorize(): bool
+    public function authorize(): Response
     {
         $this->group = FindGroupForTeam::byId((string) $this->route('group'), $this->user()?->current_team_id);
 
@@ -30,7 +34,12 @@ final class UpdateGroupFormRequest extends FormRequest
             throw CouldNotFindGroup::notFound();
         }
 
-        return true;
+        $group = Group::fromEloquentModel($this->group);
+        Gate::authorize('update', $group);
+
+        return $this->changesMembers()
+            ? Gate::authorize('manageMembers', $group)
+            : Response::allow();
     }
 
     protected function prepareForValidation(): void
@@ -72,5 +81,30 @@ final class UpdateGroupFormRequest extends FormRequest
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Group saved.')]);
 
         return back();
+    }
+
+    /**
+     * Whether the request changes who is in the group or who leads it.
+     */
+    private function changesMembers(): bool
+    {
+        if ($this->group === null || ! $this->has(GroupValidationRules::MEMBER_IDS)) {
+            return false;
+        }
+
+        $current = $this->group->members()->get()
+            ->mapWithKeys(fn (UserEloquentModel $member): array => [$member->id => (string) $member->getRelationValue('pivot')?->getAttribute('role')])
+            ->sortKeys()
+            ->all();
+
+        $leadId = $this->input(GroupValidationRules::LEAD_ID);
+        $requested = collect((array) $this->input(GroupValidationRules::MEMBER_IDS))
+            ->map(strval(...))
+            ->mapWithKeys(fn (string $id): array => [$id => GroupRoleEnum::Member->value])
+            ->when(is_string($leadId) && $leadId !== '', fn ($members) => $members->put($leadId, GroupRoleEnum::Lead->value))
+            ->sortKeys()
+            ->all();
+
+        return $current !== $requested;
     }
 }
