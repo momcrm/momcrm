@@ -6,17 +6,20 @@ namespace App\Ticket\Actions;
 
 use App\Activity\Actions\RecordActivity;
 use App\Activity\ActivityTypeEnum;
+use App\Choice\Actions\FindChoice;
 use App\Inbox\Actions\NotifyTicketWatchers;
 use App\Team\Scopes\CurrentTeamScope;
 use App\Ticket\Notifications\TicketAssignedNotification;
 use App\Ticket\Notifications\TicketStatusChangedNotification;
 use App\Ticket\Ticket;
 use App\Ticket\TicketEloquentModel;
+use App\Ticket\TicketStatusCategoryEnum;
 use App\User\UserEloquentModel;
 use Carbon\CarbonImmutable;
 
 /**
- * Saves a ticket. Moving it to or from Closed stamps or clears its closed time.
+ * Saves a ticket. Moving it into or out of a closed status stamps or clears its
+ * closed time.
  * A new status or assignee is recorded in the team's activity, and the new
  * assignee and the ticket's watchers are notified.
  */
@@ -38,8 +41,11 @@ final readonly class UpdateTicket
         }
 
         $before = Ticket::fromEloquentModel($model);
-        $wasOpen = $before->isOpen();
-        $isOpen = $this->ticket->isOpen();
+        $teamId = $this->ticket->getTeamId()->toString();
+        $statusBefore = FindChoice::byIdForTeam($before->getStatusId()->toNullableString(), $teamId);
+        $status = FindChoice::byIdForTeam($this->ticket->getStatusId()->toNullableString(), $teamId);
+        $wasOpen = ! $statusBefore->hasCategory(TicketStatusCategoryEnum::Closed);
+        $isOpen = ! $status->hasCategory(TicketStatusCategoryEnum::Closed);
 
         if ($wasOpen && ! $isOpen) {
             $this->ticket->setClosedAt(CarbonImmutable::now());
@@ -49,10 +55,8 @@ final readonly class UpdateTicket
 
         $model->update($this->ticket->forDatabaseUpdate());
 
-        $teamId = $this->ticket->getTeamId()->toString();
         $details = ['number' => $this->ticket->getNumber()->toInteger(), 'title' => $this->ticket->getTitle()->toString()];
-        $status = $this->ticket->getStatus()->toEnum();
-        $statusChanged = ! $before->getStatus()->equalsTo($status->value);
+        $statusChanged = $before->getStatusId()->toNullableString() !== $this->ticket->getStatusId()->toNullableString();
         $assigneeId = $this->ticket->getAssigneeId()->toNullableString();
         $assigneeChanged = $before->getAssigneeId()->toNullableString() !== $assigneeId;
         $actor = $this->updatedById === null ? null : UserEloquentModel::query()->find($this->updatedById);
@@ -71,7 +75,7 @@ final readonly class UpdateTicket
                 userId: $this->updatedById,
                 teamId: $teamId,
                 subject: $model,
-                details: [...$details, 'from' => $before->getStatus()->toEnum()->label(), 'to' => $status->label()],
+                details: [...$details, 'from' => $statusBefore->getName()->toString(), 'to' => $status->getName()->toString()],
             );
         }
 
@@ -92,7 +96,7 @@ final readonly class UpdateTicket
         if ($statusChanged) {
             NotifyTicketWatchers::send(
                 $model->refresh(),
-                new TicketStatusChangedNotification($model, $actor, $status->label()),
+                new TicketStatusChangedNotification($model, $actor, $status->getName()->toString()),
                 actorId: $this->updatedById,
                 except: $assigneeChanged ? [$assigneeId] : [],
             );

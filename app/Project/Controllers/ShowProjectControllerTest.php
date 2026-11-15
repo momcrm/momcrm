@@ -16,7 +16,7 @@ it('sums up a project on its overview', function (): void {
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
     $project = ProjectEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'name' => 'Refit']);
     $team = ['team_id' => $user->current_team_id, 'project_id' => $project->id];
-    TicketEloquentModel::factory()->create([...$team, 'status' => 'closed']);
+    TicketEloquentModel::factory()->closed()->create($team);
     TicketEloquentModel::factory()->create([...$team, 'title' => 'Due soon', 'due_on' => now()->addDay()->toDateString()]);
     MilestoneEloquentModel::factory()->create(['project_id' => $project->id, 'name' => 'Go live']);
 
@@ -27,7 +27,7 @@ it('sums up a project on its overview', function (): void {
             ->component('projects/show')
             ->where('tab', 'overview')
             ->where('project.name', 'Refit')
-            ->where('statusCounts', ['closed' => 1, 'new' => 1])
+            ->where('statusCounts', fn ($counts): bool => collect($counts)->sortKeys()->all() === collect([ticketStatusId($user->current_team_id, 'Closed') => 1, ticketStatusId($user->current_team_id, 'New') => 1])->sortKeys()->all())
             ->where('upcoming.0.title', 'Due soon')
             ->where('milestones.0.name', 'Go live')
             ->has('options.labels'),

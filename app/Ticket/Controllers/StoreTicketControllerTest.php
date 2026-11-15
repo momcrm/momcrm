@@ -42,7 +42,7 @@ it('opens a ticket numbered within the team', function (): void {
         ->assertInertiaFlash('toast', ['type' => 'success', 'message' => 'Ticket #2 opened for Acme IT.']);
     expect($ticket)
         ->number->toBe(2)
-        ->status->toBe('new')
+        ->status_id->toBe(ticketStatusId($user->current_team_id, 'New'))
         ->priority_id->toBe($high)
         ->assignee_id->toBe($user->id);
     expect(ActivityEloquentModel::query()->where('type', ActivityTypeEnum::TicketOpened->value)->sole())
@@ -139,15 +139,16 @@ it('rejects a due date before the start date', function (): void {
 it('quick-adds a ticket into a board column and stays on the board', function (): void {
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
     $project = ProjectEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
-    TicketEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'status' => 'in_progress', 'position' => 4]);
+    $inProgress = ticketStatusId($user->current_team_id, 'In progress');
+    TicketEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'status_id' => $inProgress, 'position' => 4]);
 
     actingAs($user)
         ->from(route('tickets.index', ['view' => 'board']))
-        ->post(route('tickets.store'), ['title' => 'Quick one', 'project_id' => $project->id, 'status' => 'in_progress', 'quick' => '1'])
+        ->post(route('tickets.store'), ['title' => 'Quick one', 'project_id' => $project->id, 'status_id' => $inProgress, 'quick' => '1'])
         ->assertRedirectToRoute('tickets.index', ['view' => 'board']);
 
     expect(TicketEloquentModel::query()->where('title', 'Quick one')->sole())
-        ->status->toBe('in_progress')
+        ->status_id->toBe($inProgress)
         ->position->toBe(5);
 });
 

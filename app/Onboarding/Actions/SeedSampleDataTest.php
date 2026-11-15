@@ -22,8 +22,8 @@ it('adds sample customers with contacts, tickets and an invoice to the team', fu
     expect($customers->pluck('name')->all())->toBe(['Harbour Dental', 'Coastal Logistics', 'Bright Spark Electrical'])
         ->and($customers->every(fn (CustomerEloquentModel $customer): bool => $customer->is_sample && $customer->team_id === $user->current_team_id))->toBeTrue();
     expect(ContactEloquentModel::query()->withoutGlobalScopes()->count())->toBe(4);
-    expect(TicketEloquentModel::query()->withoutGlobalScopes()->whereNotNull('customer_id')->whereNull('project_id')->orderBy('number')->pluck('status')->all())
-        ->toBe(['in_progress', 'closed']);
+    expect(TicketEloquentModel::query()->withoutGlobalScopes()->whereNotNull('customer_id')->whereNull('project_id')->orderBy('number')->pluck('status_id')->all())
+        ->toBe([ticketStatusId($user->current_team_id, 'In progress'), ticketStatusId($user->current_team_id, 'Closed')]);
     expect(InvoiceEloquentModel::query()->withoutGlobalScopes()->sole())
         ->status->toBe('sent')
         ->customer_id->toBe($customers->first()->id);

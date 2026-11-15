@@ -1,24 +1,20 @@
 import {
     useTicketPriorities,
     usePriority,
+    useTicketStatus,
 } from '@/components/tickets/ticket-meta';
 import { Badge } from '@/components/ui/badge';
 import { colorSoft } from '@/lib/colors';
 import { cn } from '@/lib/utils';
-import type { TicketStatus } from '@/types';
 
-const statusLabels: Record<TicketStatus, string> = {
-    new: 'New',
-    in_progress: 'In progress',
-    waiting_on_customer: 'Waiting on customer',
-    waiting_on_supplier: 'Waiting on supplier',
-    closed: 'Closed',
-};
+export function TicketStatusBadge({ statusId }: { statusId: string | null }) {
+    const status = useTicketStatus(statusId);
 
-export function TicketStatusBadge({ status }: { status: TicketStatus }) {
     return (
-        <Badge variant={status === 'closed' ? 'outline' : 'secondary'}>
-            {statusLabels[status]}
+        <Badge
+            variant={status?.category === 'closed' ? 'outline' : 'secondary'}
+        >
+            {status?.name ?? 'No status'}
         </Badge>
     );
 }

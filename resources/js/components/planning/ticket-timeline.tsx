@@ -1,6 +1,7 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
+import { useIsClosedStatus } from '@/components/tickets/ticket-meta';
 import { ProjectIcon } from '@/components/projects/project-meta';
 import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
@@ -73,6 +74,7 @@ export default function TicketTimeline({
     milestones: TimelineMilestone[];
     showUngrouped?: boolean;
 }) {
+    const isClosedStatus = useIsClosedStatus();
     const { openTicket, updateTicket } = useTicketActions();
     const [items, setItems] = useState(tickets);
     const [drag, setDrag] = useState<Drag | null>(null);
@@ -464,7 +466,9 @@ export default function TicketTimeline({
                                     width,
                                     offset(end) + dayWidth,
                                 );
-                                const isClosed = ticket.status === 'closed';
+                                const isClosed = isClosedStatus(
+                                    ticket.status_id,
+                                );
                                 const color = ticket.project_color
                                     ? colorDot[ticket.project_color]
                                     : 'bg-slate-400';

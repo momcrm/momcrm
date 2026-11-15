@@ -1,5 +1,7 @@
 <?php
 
+use App\Choice\Actions\FindChoice;
+use App\Choice\ChoiceListEnum;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -52,4 +54,12 @@ expect()->extend('toBeOne', function () {
 function something()
 {
     // ..
+}
+
+/**
+ * The id of a team's ticket status by name, such as "Closed".
+ */
+function ticketStatusId(string $teamId, string $name): string
+{
+    return FindChoice::byNameForTeam($teamId, ChoiceListEnum::TicketStatus, $name)->getId()->toString();
 }

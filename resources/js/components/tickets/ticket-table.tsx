@@ -10,6 +10,7 @@ import {
     PriorityIcon,
     ProjectTag,
     TicketStatusPill,
+    useIsClosedStatus,
     usePriority,
 } from '@/components/tickets/ticket-meta';
 import { useTicketActions } from '@/hooks/use-ticket-actions';
@@ -32,29 +33,14 @@ const columns = column.columns([
     column.accessor('title', {
         header: 'Title',
         enableSorting: true,
-        cell: (info) => (
-            <span className="flex min-w-0 items-center gap-2">
-                <span
-                    className={cn(
-                        'truncate font-medium',
-                        info.row.original.status === 'closed' &&
-                            'text-muted-foreground line-through',
-                    )}
-                >
-                    {info.getValue()}
-                </span>
-                <LabelChips
-                    labels={info.row.original.labels}
-                    className="hidden flex-nowrap xl:flex"
-                />
-            </span>
-        ),
+        cell: (info) => <TitleCell ticket={info.row.original} />,
     }),
-    column.accessor('status', {
+    column.accessor('status_id', {
+        id: 'status',
         header: 'Status',
         enableSorting: true,
         meta: { className: 'w-44' },
-        cell: (info) => <TicketStatusPill status={info.getValue()} />,
+        cell: (info) => <TicketStatusPill statusId={info.getValue()} />,
     }),
     column.accessor('priority_id', {
         id: 'priority',
@@ -95,15 +81,7 @@ const columns = column.columns([
         header: 'Due',
         enableSorting: true,
         meta: { className: 'w-28' },
-        cell: (info) =>
-            info.getValue() ? (
-                <DueChip
-                    dueOn={info.getValue()}
-                    isClosed={info.row.original.status === 'closed'}
-                />
-            ) : (
-                <span className="text-subtle-foreground">—</span>
-            ),
+        cell: (info) => <DueCell ticket={info.row.original} />,
     }),
 ]);
 
@@ -148,5 +126,36 @@ function PriorityCell({ priorityId }: { priorityId: string | null }) {
             <PriorityIcon priorityId={priorityId} />
             {priority?.name ?? 'None'}
         </span>
+    );
+}
+
+function TitleCell({ ticket }: { ticket: TicketListItem }) {
+    const isClosed = useIsClosedStatus()(ticket.status_id);
+
+    return (
+        <span className="flex min-w-0 items-center gap-2">
+            <span
+                className={cn(
+                    'truncate font-medium',
+                    isClosed && 'text-muted-foreground line-through',
+                )}
+            >
+                {ticket.title}
+            </span>
+            <LabelChips
+                labels={ticket.labels}
+                className="hidden flex-nowrap xl:flex"
+            />
+        </span>
+    );
+}
+
+function DueCell({ ticket }: { ticket: TicketListItem }) {
+    const isClosed = useIsClosedStatus()(ticket.status_id);
+
+    return ticket.due_on ? (
+        <DueChip dueOn={ticket.due_on} isClosed={isClosed} />
+    ) : (
+        <span className="text-subtle-foreground">—</span>
     );
 }

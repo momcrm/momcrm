@@ -4,19 +4,19 @@ import { toast } from 'sonner';
 import NativeSelect from '@/components/native-select';
 import { Button } from '@/components/ui/button';
 import { store } from '@/routes/tickets';
-import type { TicketPickerOptions, TicketStatus } from '@/types';
+import type { TicketPickerOptions } from '@/types';
 
 /**
  * Adds a ticket straight into a board column: a title and, unless the board is
  * one project's, the project or customer it's for. Stays open for the next one.
  */
 export default function QuickAddTicket({
-    status,
+    statusId,
     options,
     projectId,
     onClose,
 }: {
-    status: TicketStatus;
+    statusId: string;
     options: TicketPickerOptions;
     projectId: string | null;
     onClose: () => void;
@@ -50,7 +50,7 @@ export default function QuickAddTicket({
             store.url(),
             {
                 title: title.trim(),
-                status,
+                status_id: statusId,
                 quick: 1,
                 [kind === 'project' ? 'project_id' : 'customer_id']: id,
             },

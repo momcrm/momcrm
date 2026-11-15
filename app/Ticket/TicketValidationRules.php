@@ -17,6 +17,7 @@ use App\Ticket\Properties\LocationId;
 use App\Ticket\Properties\PriorityId;
 use App\Ticket\Properties\ProjectId;
 use App\Ticket\Properties\StartsOn;
+use App\Ticket\Properties\StatusId;
 use App\Ticket\Properties\Title;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Foundation\Http\FormRequest;
@@ -84,6 +85,24 @@ final class TicketValidationRules
     }
 
     /**
+     * The status rules: one of the team's live ticket statuses.
+     *
+     * @return array<string, array<int, mixed>>
+     */
+    public static function status(FormRequest $request, string $teamId, bool $isRequired = false): array
+    {
+        return [
+            StatusId::getNameForValidation() => [
+                ...($isRequired ? ['required', 'uuid'] : StatusId::getValidationRulesForCreate($request)),
+                Rule::exists(Table::Choices->value, 'id')
+                    ->where('team_id', $teamId)
+                    ->where('list', ChoiceListEnum::TicketStatus->value)
+                    ->whereNull('archived_at'),
+            ],
+        ];
+    }
+
+    /**
      * @return array<string, string>
      */
     public static function messages(): array
@@ -96,6 +115,7 @@ final class TicketValidationRules
             AssigneeId::getNameForValidation().'.exists' => __('Choose someone in your team.'),
             ProjectId::getNameForValidation().'.exists' => __('Choose one of your team\'s projects.'),
             PriorityId::getNameForValidation().'.exists' => __('Choose one of your team\'s priorities.'),
+            StatusId::getNameForValidation().'.exists' => __('Choose one of your team\'s statuses.'),
             DueOn::getNameForValidation().'.after_or_equal' => __('The due date can\'t be before the start date.'),
         ];
     }

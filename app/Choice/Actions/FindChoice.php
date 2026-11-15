@@ -37,6 +37,23 @@ final class FindChoice
     }
 
     /**
+     * One of a team's choices by id, archived or not; empty if it isn't the team's.
+     */
+    public static function byIdForTeam(?string $id, string $teamId): Choice
+    {
+        if ($id === null) {
+            return Choice::new();
+        }
+
+        $model = ChoiceEloquentModel::query()
+            ->withoutGlobalScopes()
+            ->where(TeamId::getDatabaseTableColumnName(), $teamId)
+            ->find($id);
+
+        return $model === null ? Choice::new() : Choice::fromEloquentModel($model);
+    }
+
+    /**
      * The choice with this name in one of a team's lists, archived or not;
      * empty if there is none.
      */

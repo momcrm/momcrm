@@ -45,7 +45,7 @@ it("tells the watchers a ticket's status changed, but not whoever changed it", f
     FavoriteEloquentModel::factory()->forFavoritable($model, $stargazer)->create();
     FavoriteEloquentModel::factory()->forFavoritable($model, $actor)->create();
 
-    UpdateTicket::fromTicket(Ticket::fromEloquentModel($model)->setStatus('in_progress'), updatedById: $actor->id);
+    UpdateTicket::fromTicket(Ticket::fromEloquentModel($model)->setStatusId(ticketStatusId($model->team_id, 'In progress')), updatedById: $actor->id);
 
     Notification::assertSentTo([$assignee, $stargazer], TicketStatusChangedNotification::class, fn ($notification): bool => $notification->statusLabel === 'In progress');
     Notification::assertNotSentTo($actor, TicketStatusChangedNotification::class);

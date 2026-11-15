@@ -18,7 +18,7 @@ it("shows a group's projects, their open tickets and its members", function (): 
     $project = ProjectEloquentModel::factory()->create([...$team, 'group_id' => $group->id, 'name' => 'Refit']);
     ProjectEloquentModel::factory()->create($team);
     TicketEloquentModel::factory()->create([...$team, 'project_id' => $project->id, 'title' => 'Open one']);
-    TicketEloquentModel::factory()->create([...$team, 'project_id' => $project->id, 'status' => 'closed']);
+    TicketEloquentModel::factory()->closed()->create([...$team, 'project_id' => $project->id]);
 
     actingAs($user)
         ->get(route('groups.show', $group->id))

@@ -6,7 +6,6 @@ use App\Choice\ChoiceEloquentModel;
 use App\Customer\CustomerEloquentModel;
 use App\Ticket\Notifications\TicketDueSoonNotification;
 use App\Ticket\TicketEloquentModel;
-use App\Ticket\TicketStatusEnum;
 use App\User\UserEloquentModel;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -18,8 +17,8 @@ it('shares the open ticket (not subtask) and unread notification counts shown in
     $ticket = fn (array $attributes) => TicketEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'customer_id' => $customer->id, ...$attributes]);
 
     $ticket(['assignee_id' => $user->id]);
-    $ticket(['assignee_id' => null, 'status' => TicketStatusEnum::InProgress->value]);
-    $ticket(['assignee_id' => $user->id, 'status' => TicketStatusEnum::Closed->value]);
+    $ticket(['assignee_id' => null, 'status_id' => ticketStatusId($user->current_team_id, 'In progress')]);
+    $ticket(['assignee_id' => $user->id, 'status_id' => ticketStatusId($user->current_team_id, 'Closed')]);
     $ticket(['parent_id' => $ticket([])->id, 'assignee_id' => $user->id]);
     TicketEloquentModel::factory()->create();
     $user->notify(new TicketDueSoonNotification(TicketEloquentModel::query()->first()));

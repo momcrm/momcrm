@@ -9,7 +9,9 @@ import type { Tone, TicketListItem } from '@/types';
 export type TicketGroup = {
     key: string;
     label: string;
-    tone: Tone;
+    tone?: Tone;
+    /** A colour class for the group's dot, such as a team status's colour. */
+    dotClassName?: string;
     tickets: TicketListItem[];
     collapsed?: boolean;
 };
@@ -61,7 +63,10 @@ export default function TicketGroups({
                                         !isCollapsed && 'rotate-90',
                                     )}
                                 />
-                                <StatusPill tone={group.tone}>
+                                <StatusPill
+                                    tone={group.tone}
+                                    dotClassName={group.dotClassName}
+                                >
                                     {group.label}
                                 </StatusPill>
                                 <span className="text-xs text-subtle-foreground">

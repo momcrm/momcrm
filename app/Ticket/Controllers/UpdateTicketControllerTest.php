@@ -21,13 +21,13 @@ it('saves changes and stamps the time when the status becomes closed', function 
     $urgent = FindChoice::byNameForTeam($user->current_team_id, ChoiceListEnum::TicketPriority, 'Urgent')->getId()->toString();
 
     actingAs($user)
-        ->put(route('tickets.update', $ticket->id), ['customer_id' => $customer->id, 'title' => 'Renamed', 'priority_id' => $urgent, 'status' => 'closed', 'number' => 99])
+        ->put(route('tickets.update', $ticket->id), ['customer_id' => $customer->id, 'title' => 'Renamed', 'priority_id' => $urgent, 'status_id' => ticketStatusId($user->current_team_id, 'Closed'), 'number' => 99])
         ->assertRedirectToRoute('tickets.show', $ticket->id);
 
     expect($ticket->fresh())
         ->title->toBe('Renamed')
         ->priority_id->toBe($urgent)
-        ->status->toBe('closed')
+        ->status_id->toBe(ticketStatusId($user->current_team_id, 'Closed'))
         ->number->toBe(5)
         ->and($ticket->fresh()->closed_at?->toDateTimeString())->toBe('2026-11-14 15:00:00');
     expect(ActivityEloquentModel::query()->where('type', ActivityTypeEnum::TicketClosed->value)->exists())->toBeTrue();
@@ -37,7 +37,7 @@ it("returns not found for another team's ticket", function (): void {
     $other = TicketEloquentModel::factory()->create(['title' => 'Theirs']);
 
     actingAs(UserEloquentModel::factory()->withPersonalTeam()->create())
-        ->put(route('tickets.update', $other->id), ['customer_id' => $other->customer_id, 'title' => 'Mine', 'status' => 'new'])
+        ->put(route('tickets.update', $other->id), ['customer_id' => $other->customer_id, 'title' => 'Mine'])
         ->assertNotFound();
 
     expect($other->fresh()->title)->toBe('Theirs');

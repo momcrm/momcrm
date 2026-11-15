@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Ticket\FormRequests;
 
+use App\Choice\Actions\FindChoice;
+use App\Choice\ChoiceListEnum;
 use App\Ticket\Actions\FindTicket;
 use App\Ticket\Actions\UpdateTicket;
 use App\Ticket\Exceptions\CouldNotFindTicket;
 use App\Ticket\Ticket;
-use App\Ticket\TicketStatusEnum;
+use App\Ticket\TicketStatusCategoryEnum;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
@@ -51,7 +53,7 @@ final class ReopenTicketFormRequest extends FormRequest
     public function process(): RedirectResponse
     {
         UpdateTicket::fromTicket(
-            $this->ticket->setStatus(TicketStatusEnum::InProgress),
+            $this->ticket->setStatusId(FindChoice::defaultForTeam($this->ticket->getTeamId()->toString(), ChoiceListEnum::TicketStatus, TicketStatusCategoryEnum::Open->value)->getId()),
             updatedById: (string) $this->user()?->id,
         );
 

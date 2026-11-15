@@ -22,7 +22,7 @@ it("adds a subtask with its parent's customer and project", function (): void {
         ->parent_id->toBe($parent->id)
         ->customer_id->toBe($parent->customer_id)
         ->project_id->toBe($project->id)
-        ->status->toBe('new');
+        ->status_id->toBe(ticketStatusId($user->current_team_id, 'New'));
 });
 
 it('requires a title', function (): void {

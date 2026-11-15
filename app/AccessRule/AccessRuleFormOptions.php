@@ -15,7 +15,6 @@ use App\Project\ProjectStatusEnum;
 use App\Project\ProjectVisibilityEnum;
 use App\TeamUser\Actions\FindTeamMembers;
 use App\TeamUser\TeamRoleEnum;
-use App\Ticket\TicketStatusEnum;
 use Illuminate\Support\Collection;
 
 /**
@@ -68,7 +67,7 @@ final class AccessRuleFormOptions
             AccessAttributeEnum::ProjectGroup => self::idNameOptions(FindGroup::optionsForTeam($teamId)),
             AccessAttributeEnum::ProjectStatus => ProjectStatusEnum::options(),
             AccessAttributeEnum::ProjectVisibility => ProjectVisibilityEnum::options(),
-            AccessAttributeEnum::TicketStatus => TicketStatusEnum::options(),
+            AccessAttributeEnum::TicketStatus => FindChoice::listForTeam($teamId, ChoiceListEnum::TicketStatus)->toOptions(),
             AccessAttributeEnum::TicketPriority => FindChoice::listForTeam($teamId, ChoiceListEnum::TicketPriority)->toOptions(),
             AccessAttributeEnum::TicketProject => self::idNameOptions(FindProject::optionsForTeam($teamId, $userId)),
             AccessAttributeEnum::TicketLabel => self::idNameOptions(FindLabel::optionsForTeam($teamId)),

@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useIsClosedStatus } from '@/components/tickets/ticket-meta';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
@@ -46,6 +47,7 @@ export default function TicketCalendar({
     favoriteIds: string[];
     showMine?: boolean;
 }) {
+    const isClosed = useIsClosedStatus();
     const { openTicket, updateTicket } = useTicketActions();
     const [items, setItems] = useState(tickets);
     const [dragging, setDragging] = useState<string | null>(null);
@@ -261,7 +263,7 @@ export default function TicketCalendar({
                                         title={`#${ticket.number} ${ticket.title}`}
                                         className={cn(
                                             'flex items-center gap-1.5 truncate rounded-[5px] border bg-card px-1.5 py-0.5 text-left text-xs shadow-xs hover:border-border-strong',
-                                            ticket.status === 'closed' &&
+                                            isClosed(ticket.status_id) &&
                                                 'text-muted-foreground line-through',
                                             dragging === ticket.id &&
                                                 'opacity-40',

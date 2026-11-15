@@ -34,12 +34,12 @@ use App\Ticket\Properties\ClosedAt;
 use App\Ticket\Properties\DueOn;
 use App\Ticket\Properties\Number;
 use App\Ticket\Properties\ParentId;
-use App\Ticket\Properties\Status;
+use App\Ticket\Properties\StatusId;
 use App\Ticket\Properties\TeamId;
 use App\Ticket\Ticket;
 use App\Ticket\TicketEloquentModel;
 use App\Ticket\TicketRelationship;
-use App\Ticket\TicketStatusEnum;
+use App\Ticket\TicketStatusCategoryEnum;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -61,7 +61,7 @@ final class WorkspaceNumbers
             'at_risk_projects' => self::liveProjects($teamId)->where(ProjectStatus::getDatabaseTableColumnName(), ProjectStatusEnum::AtRisk->value)->count(),
             'open_tickets' => self::open($teamId)->count(),
             'closed_this_week' => self::tickets($teamId)
-                ->where(Status::getDatabaseTableColumnName(), TicketStatusEnum::Closed->value)
+                ->whereIn(StatusId::getDatabaseTableColumnName(), TicketStatusCategoryEnum::Closed->statusIds())
                 ->where(ClosedAt::getDatabaseTableColumnName(), '>=', $today->startOfWeek(CarbonImmutable::MONDAY))
                 ->count(),
             'overdue_tickets' => self::open($teamId)->where(DueOn::getDatabaseTableColumnName(), '<', $today->toDateString())->count(),
@@ -90,22 +90,22 @@ final class WorkspaceNumbers
     }
 
     /**
-     * How many tickets the team has in each status.
+     * How many tickets the team has in each status, keyed by status id.
      *
      * @return array<string, int>
      */
     public static function statusCounts(string $teamId): array
     {
         return self::tickets($teamId)
-            ->selectRaw('status, count(*) as aggregate')
-            ->groupBy(Status::getDatabaseTableColumnName())
+            ->selectRaw('status_id, count(*) as aggregate')
+            ->groupBy(StatusId::getDatabaseTableColumnName())
             ->get()
-            ->mapWithKeys(fn (TicketEloquentModel $row): array => [$row->status => Types::int($row->getAttribute('aggregate'))])
+            ->mapWithKeys(fn (TicketEloquentModel $row): array => [(string) $row->status_id => Types::int($row->getAttribute('aggregate'))])
             ->all();
     }
 
     /**
-     * Each member's open tickets, by status, busiest first.
+     * Each member's open tickets, by status id, busiest first.
      *
      * @return array<int, array{id: string, name: string, total: int, statuses: array<string, int>}>
      */
@@ -113,15 +113,15 @@ final class WorkspaceNumbers
     {
         $counts = self::open($teamId)
             ->whereNotNull(AssigneeId::getDatabaseTableColumnName())
-            ->selectRaw('assignee_id, status, count(*) as aggregate')
-            ->groupBy(AssigneeId::getDatabaseTableColumnName(), Status::getDatabaseTableColumnName())
+            ->selectRaw('assignee_id, status_id, count(*) as aggregate')
+            ->groupBy(AssigneeId::getDatabaseTableColumnName(), StatusId::getDatabaseTableColumnName())
             ->get();
 
         return FindTeamMembers::optionsForTeam($teamId)
             ->map(function (array $member) use ($counts): array {
                 $statuses = $counts
                     ->where(AssigneeId::getDatabaseTableColumnName(), $member['id'])
-                    ->mapWithKeys(fn (TicketEloquentModel $row): array => [$row->status => Types::int($row->getAttribute('aggregate'))])
+                    ->mapWithKeys(fn (TicketEloquentModel $row): array => [(string) $row->status_id => Types::int($row->getAttribute('aggregate'))])
                     ->all();
 
                 return ['id' => $member['id'], 'name' => $member['name'], 'total' => array_sum($statuses), 'statuses' => $statuses];
@@ -204,7 +204,7 @@ final class WorkspaceNumbers
      */
     private static function open(string $teamId): Builder
     {
-        return self::tickets($teamId)->whereIn(Status::getDatabaseTableColumnName(), TicketStatusEnum::openValues());
+        return self::tickets($teamId)->whereIn(StatusId::getDatabaseTableColumnName(), TicketStatusCategoryEnum::Open->statusIds());
     }
 
     /**

@@ -42,7 +42,6 @@ use App\Ticket\Actions\CreateTicket;
 use App\Ticket\Actions\MoveTicket;
 use App\Ticket\Ticket;
 use App\Ticket\TicketEloquentModel;
-use App\Ticket\TicketStatusEnum;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
@@ -57,7 +56,7 @@ use Illuminate\Support\Facades\DB;
 final readonly class SeedSampleData
 {
     /**
-     * @var array<int, array{name: string, email: string, phone: string, location: array{name: string, suburb: string, postcode: string}, contacts: array<int, array{first: string, last: string, position: string, email: string}>, assets: array<int, array{name: string, serial: string}>, service: array{name: string, quantity: int, cents: int}, tickets: array<int, array{title: string, status: TicketStatusEnum, priority: string, due?: int, labels?: array<int, string>, project?: string}>}>
+     * @var array<int, array{name: string, email: string, phone: string, location: array{name: string, suburb: string, postcode: string}, contacts: array<int, array{first: string, last: string, position: string, email: string}>, assets: array<int, array{name: string, serial: string}>, service: array{name: string, quantity: int, cents: int}, tickets: array<int, array{title: string, status: string, priority: string, due?: int, labels?: array<int, string>, project?: string}>}>
      */
     private const array CUSTOMERS = [
         [
@@ -75,8 +74,8 @@ final readonly class SeedSampleData
             ],
             'service' => ['name' => 'Managed IT support', 'quantity' => 6, 'cents' => 4500],
             'tickets' => [
-                ['title' => 'Reception printer offline', 'status' => TicketStatusEnum::InProgress, 'priority' => 'High', 'due' => -2, 'labels' => ['Hardware']],
-                ['title' => 'Laptop for new starter', 'status' => TicketStatusEnum::New, 'priority' => 'Normal', 'due' => 5, 'labels' => ['Onboarding', 'Hardware'], 'project' => 'refit'],
+                ['title' => 'Reception printer offline', 'status' => 'In progress', 'priority' => 'High', 'due' => -2, 'labels' => ['Hardware']],
+                ['title' => 'Laptop for new starter', 'status' => 'New', 'priority' => 'Normal', 'due' => 5, 'labels' => ['Onboarding', 'Hardware'], 'project' => 'refit'],
             ],
         ],
         [
@@ -92,7 +91,7 @@ final readonly class SeedSampleData
             ],
             'service' => ['name' => 'Microsoft 365 Business Standard', 'quantity' => 12, 'cents' => 1890],
             'tickets' => [
-                ['title' => 'VPN drops every afternoon', 'status' => TicketStatusEnum::WaitingOnCustomer, 'priority' => 'Urgent', 'due' => 1, 'labels' => ['Network'], 'project' => 'vpn'],
+                ['title' => 'VPN drops every afternoon', 'status' => 'Waiting on customer', 'priority' => 'Urgent', 'due' => 1, 'labels' => ['Network'], 'project' => 'vpn'],
             ],
         ],
         [
@@ -106,7 +105,7 @@ final readonly class SeedSampleData
             'assets' => [],
             'service' => ['name' => 'Cloud backup', 'quantity' => 1, 'cents' => 2500],
             'tickets' => [
-                ['title' => "Reset Lena's email password", 'status' => TicketStatusEnum::Closed, 'priority' => 'Low', 'due' => -6],
+                ['title' => "Reset Lena's email password", 'status' => 'Closed', 'priority' => 'Low', 'due' => -6],
             ],
         ],
     ];
@@ -115,7 +114,7 @@ final readonly class SeedSampleData
      * Sample projects, keyed so tickets can point at them. A project's customer
      * is named; tickets listed here are internal (no customer).
      *
-     * @var array<string, array{name: string, customer: ?string, status: ProjectStatusEnum, color: ColorEnum, icon: string, description: string, starts: int, due: int, milestones: array<int, array{name: string, due: int, done?: bool}>, tickets: array<int, array{title: string, status: TicketStatusEnum, priority: string, due: int, labels: array<int, string>}>}>
+     * @var array<string, array{name: string, customer: ?string, status: ProjectStatusEnum, color: ColorEnum, icon: string, description: string, starts: int, due: int, milestones: array<int, array{name: string, due: int, done?: bool}>, tickets: array<int, array{title: string, status: string, priority: string, due: int, labels: array<int, string>}>}>
      */
     private const array PROJECTS = [
         'refit' => [
@@ -132,9 +131,9 @@ final readonly class SeedSampleData
                 ['name' => 'Workstations live', 'due' => 18],
             ],
             'tickets' => [
-                ['title' => 'Run new cabling to surgery 2', 'status' => TicketStatusEnum::Closed, 'priority' => 'Normal', 'due' => -4, 'labels' => ['Network']],
-                ['title' => 'Image six new workstations', 'status' => TicketStatusEnum::InProgress, 'priority' => 'High', 'due' => 7, 'labels' => ['Hardware']],
-                ['title' => 'Survey Wi-Fi coverage', 'status' => TicketStatusEnum::New, 'priority' => 'Normal', 'due' => 12, 'labels' => ['Network']],
+                ['title' => 'Run new cabling to surgery 2', 'status' => 'Closed', 'priority' => 'Normal', 'due' => -4, 'labels' => ['Network']],
+                ['title' => 'Image six new workstations', 'status' => 'In progress', 'priority' => 'High', 'due' => 7, 'labels' => ['Hardware']],
+                ['title' => 'Survey Wi-Fi coverage', 'status' => 'New', 'priority' => 'Normal', 'due' => 12, 'labels' => ['Network']],
             ],
         ],
         'vpn' => [
@@ -150,7 +149,7 @@ final readonly class SeedSampleData
                 ['name' => 'Firewall swapped', 'due' => 6],
             ],
             'tickets' => [
-                ['title' => 'Order replacement firewall', 'status' => TicketStatusEnum::WaitingOnSupplier, 'priority' => 'High', 'due' => 3, 'labels' => ['Hardware']],
+                ['title' => 'Order replacement firewall', 'status' => 'Waiting on supplier', 'priority' => 'High', 'due' => 3, 'labels' => ['Hardware']],
             ],
         ],
         'docs' => [
@@ -166,8 +165,8 @@ final readonly class SeedSampleData
                 ['name' => 'Runbooks drafted', 'due' => 30],
             ],
             'tickets' => [
-                ['title' => 'Write the customer onboarding runbook', 'status' => TicketStatusEnum::New, 'priority' => 'Normal', 'due' => 14, 'labels' => ['Onboarding']],
-                ['title' => 'Audit the shared password vault', 'status' => TicketStatusEnum::New, 'priority' => 'Low', 'due' => 28, 'labels' => []],
+                ['title' => 'Write the customer onboarding runbook', 'status' => 'New', 'priority' => 'Normal', 'due' => 14, 'labels' => ['Onboarding']],
+                ['title' => 'Audit the shared password vault', 'status' => 'New', 'priority' => 'Low', 'due' => 28, 'labels' => []],
             ],
         ],
     ];
@@ -247,7 +246,7 @@ final readonly class SeedSampleData
     }
 
     /**
-     * @param  array{name: string, email: string, phone: string, location: array{name: string, suburb: string, postcode: string}, contacts: array<int, array{first: string, last: string, position: string, email: string}>, assets: array<int, array{name: string, serial: string}>, service: array{name: string, quantity: int, cents: int}, tickets: array<int, array{title: string, status: TicketStatusEnum, priority: string, due?: int, labels?: array<int, string>, project?: string}>}  $sample
+     * @param  array{name: string, email: string, phone: string, location: array{name: string, suburb: string, postcode: string}, contacts: array<int, array{first: string, last: string, position: string, email: string}>, assets: array<int, array{name: string, serial: string}>, service: array{name: string, quantity: int, cents: int}, tickets: array<int, array{title: string, status: string, priority: string, due?: int, labels?: array<int, string>, project?: string}>}  $sample
      * @return array{customer: string, contact: string, location: string}
      */
     private function seedCustomer(array $sample, bool $sendsInvoice): array
@@ -381,7 +380,7 @@ final readonly class SeedSampleData
     }
 
     /**
-     * @param  array{title: string, status: TicketStatusEnum, priority: string, due?: int, labels?: array<int, string>}  $sample
+     * @param  array{title: string, status: string, priority: string, due?: int, labels?: array<int, string>}  $sample
      * @param  array<string, string>  $labels
      * @param  array{customer: string, contact: string, location: string}|null  $customer
      */
@@ -404,8 +403,10 @@ final readonly class SeedSampleData
             ->labels()
             ->sync(array_map(fn (string $name): string => $labels[$name], $sample['labels'] ?? []));
 
-        if ($sample['status'] !== TicketStatusEnum::New) {
-            MoveTicket::to($ticket, $sample['status'], PHP_INT_MAX, movedById: $this->userId);
+        $status = FindChoice::byNameForTeam($this->teamId, ChoiceListEnum::TicketStatus, $sample['status']);
+
+        if ($status->isNotNull() && ! $status->getId()->equalsTo($ticket->getStatusId()->toValue())) {
+            MoveTicket::to($ticket, $status->getId()->toString(), PHP_INT_MAX, movedById: $this->userId);
         }
     }
 }

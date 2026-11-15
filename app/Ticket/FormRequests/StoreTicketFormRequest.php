@@ -12,10 +12,8 @@ use App\Project\Actions\FindProject;
 use App\Shared\Table;
 use App\Shared\Types;
 use App\Ticket\Actions\CreateTicket;
-use App\Ticket\Properties\Status;
 use App\Ticket\Ticket;
 use App\Ticket\TicketEloquentModel;
-use App\Ticket\TicketStatusEnum;
 use App\Ticket\TicketValidationRules;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
@@ -60,7 +58,7 @@ final class StoreTicketFormRequest extends FormRequest
 
         return [
             ...TicketValidationRules::for($this, $teamId),
-            Status::getNameForValidation() => ['sometimes', Rule::enum(TicketStatusEnum::class)],
+            ...TicketValidationRules::status($this, $teamId),
             self::QUICK => ['sometimes', 'boolean'],
             self::LABEL_IDS => ['sometimes', 'array'],
             self::LABEL_IDS.'.*' => ['uuid', Rule::exists(Table::Labels->value, 'id')->where('team_id', $teamId)],

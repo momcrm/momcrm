@@ -107,7 +107,7 @@ final class TicketDrawer
             'labels' => $model->labels->map(fn (LabelEloquentModel $label): array => ['id' => $label->id, 'name' => $label->name, 'color' => $label->color])->values()->all(),
             'parent' => $parent instanceof TicketEloquentModel ? ['id' => $parent->id, 'number' => $parent->number, 'title' => $parent->title] : null,
             'subtasks' => $model->subtasks
-                ->map(fn (TicketEloquentModel $subtask): array => ['id' => $subtask->id, 'number' => $subtask->number, 'title' => $subtask->title, 'status' => $subtask->status])
+                ->map(fn (TicketEloquentModel $subtask): array => ['id' => $subtask->id, 'number' => $subtask->number, 'title' => $subtask->title, 'status_id' => $subtask->status_id])
                 ->values()
                 ->all(),
             'is_favorite' => in_array($model->id, FindFavorite::idsForUser($teamId, $userId, FavoritableTypeEnum::Ticket), true),
@@ -147,8 +147,8 @@ final class TicketDrawer
     }
 
     /**
-     * The pickers' choices: members, projects, labels, customers and statuses.
-     * Priorities come from the shared `choices` prop.
+     * The pickers' choices: members, projects, labels and customers. Statuses
+     * and priorities come from the shared `choices` prop.
      *
      * @return array{options: array<string, mixed>}
      */
@@ -160,7 +160,6 @@ final class TicketDrawer
                 'projects' => FindProject::optionsForTeam($teamId, $userId),
                 'labels' => FindLabel::optionsForTeam($teamId),
                 'customers' => FindCustomer::optionsForTeam($teamId),
-                'statuses' => TicketStatusEnum::options(),
             ],
         ];
     }

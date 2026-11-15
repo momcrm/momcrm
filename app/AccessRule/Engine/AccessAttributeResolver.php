@@ -43,7 +43,7 @@ final class AccessAttributeResolver
             AccessAttributeEnum::ProjectSubjectIsLead => $record instanceof Project ? $record->getLeadId()->equalsTo($subject->userId) : null,
             AccessAttributeEnum::ProjectSubjectIsMember => $record instanceof Project ? self::isProjectMember($record->getId()->toString(), $subject->userId) : null,
 
-            AccessAttributeEnum::TicketStatus => $record instanceof Ticket ? $record->getStatus()->toNullableString() : null,
+            AccessAttributeEnum::TicketStatus => $record instanceof Ticket ? $record->getStatusId()->toNullableString() : null,
             AccessAttributeEnum::TicketPriority => $record instanceof Ticket ? $record->getPriorityId()->toNullableString() : null,
             AccessAttributeEnum::TicketProject => $record instanceof Ticket ? $record->getProjectId()->toNullableString() : null,
             AccessAttributeEnum::TicketLabel => $record instanceof Ticket ? self::ticketLabelIds($record->getId()->toString()) : null,

@@ -19,7 +19,7 @@ use App\Ticket\Properties\ParentId;
 use App\Ticket\Properties\Position;
 use App\Ticket\Properties\PriorityId;
 use App\Ticket\Properties\ProjectId;
-use App\Ticket\Properties\Status;
+use App\Ticket\Properties\StatusId;
 use App\Ticket\Properties\TeamId;
 use App\Ticket\Properties\Title;
 use App\Ticket\Ticket;
@@ -27,7 +27,7 @@ use App\Ticket\TicketCollection;
 use App\Ticket\TicketEloquentModel;
 use App\Ticket\TicketListFilters;
 use App\Ticket\TicketRelationship;
-use App\Ticket\TicketStatusEnum;
+use App\Ticket\TicketStatusCategoryEnum;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -60,8 +60,8 @@ final class FindTicket
             ->with([TicketRelationship::Customer->value, TicketRelationship::Assignee->value, TicketRelationship::Project->value])
             ->whereNull(ArchivedAt::getDatabaseTableColumnName())
             ->when($projectId, fn (Builder $query, string $projectId) => $query->where(ProjectId::getDatabaseTableColumnName(), $projectId))
-            ->when($filter === self::FILTER_OPEN, fn (Builder $query) => $query->whereIn(Status::getDatabaseTableColumnName(), TicketStatusEnum::openValues()))
-            ->when($filter === self::FILTER_CLOSED, fn (Builder $query) => $query->where(Status::getDatabaseTableColumnName(), TicketStatusEnum::Closed->value))
+            ->when($filter === self::FILTER_OPEN, fn (Builder $query) => $query->whereIn(StatusId::getDatabaseTableColumnName(), TicketStatusCategoryEnum::Open->statusIds()))
+            ->when($filter === self::FILTER_CLOSED, fn (Builder $query) => $query->whereIn(StatusId::getDatabaseTableColumnName(), TicketStatusCategoryEnum::Closed->statusIds()))
             ->when($customerId, fn (Builder $query, string $customerId) => $query->where(CustomerId::getDatabaseTableColumnName(), $customerId))
             ->when($assigneeId, fn (Builder $query, string $assigneeId) => $query->where(AssigneeId::getDatabaseTableColumnName(), $assigneeId))
             ->when($search, fn (Builder $query, string $search) => $query->where(fn (Builder $query) => $query
@@ -92,12 +92,12 @@ final class FindTicket
             ])
             ->withCount([
                 TicketRelationship::Subtasks->value,
-                TicketRelationship::Subtasks->value.' as closed_subtasks_count' => fn (Builder $query) => $query->where(Status::getDatabaseTableColumnName(), TicketStatusEnum::Closed->value),
+                TicketRelationship::Subtasks->value.' as closed_subtasks_count' => fn (Builder $query) => $query->whereIn(StatusId::getDatabaseTableColumnName(), TicketStatusCategoryEnum::Closed->statusIds()),
             ])
             ->whereNull(ArchivedAt::getDatabaseTableColumnName())
             ->whereNull(ParentId::getDatabaseTableColumnName())
-            ->when($filters->status === self::FILTER_OPEN, fn (Builder $query) => $query->whereIn(Status::getDatabaseTableColumnName(), TicketStatusEnum::openValues()))
-            ->when($filters->status === self::FILTER_CLOSED, fn (Builder $query) => $query->where(Status::getDatabaseTableColumnName(), TicketStatusEnum::Closed->value))
+            ->when($filters->status === self::FILTER_OPEN, fn (Builder $query) => $query->whereIn(StatusId::getDatabaseTableColumnName(), TicketStatusCategoryEnum::Open->statusIds()))
+            ->when($filters->status === self::FILTER_CLOSED, fn (Builder $query) => $query->whereIn(StatusId::getDatabaseTableColumnName(), TicketStatusCategoryEnum::Closed->statusIds()))
             ->when($filters->priorities !== [], fn (Builder $query) => $query->whereIn(PriorityId::getDatabaseTableColumnName(), $filters->priorities))
             ->when($filters->assignee, fn (Builder $query, string $assignee) => match ($assignee) {
                 TicketListFilters::ASSIGNEE_ME => $query->where(AssigneeId::getDatabaseTableColumnName(), $userId),
@@ -126,6 +126,13 @@ final class FindTicket
                             ->whereColumn(ChoiceId::getDatabaseTableColumnNameWithTable(Table::Choices->value), PriorityId::getDatabaseTableColumnNameWithTable(Table::Tickets->value)),
                         $isAscending ? 'desc' : 'asc',
                     )->orderByDesc(Number::getDatabaseTableColumnName()),
+                    'status' => $query->orderBy(
+                        ChoiceEloquentModel::query()
+                            ->withoutGlobalScopes()
+                            ->select(ChoicePosition::getDatabaseTableColumnName())
+                            ->whereColumn(ChoiceId::getDatabaseTableColumnNameWithTable(Table::Choices->value), StatusId::getDatabaseTableColumnNameWithTable(Table::Tickets->value)),
+                        $isAscending ? 'asc' : 'desc',
+                    )->orderByDesc(Number::getDatabaseTableColumnName()),
                     'due_on' => $query->orderByRaw($isAscending ? 'due_on is null, due_on asc' : 'due_on is null, due_on desc')
                         ->orderByDesc(Number::getDatabaseTableColumnName()),
                     default => $query->orderBy(TicketListFilters::SORTS[$filters->sort], $filters->direction),
@@ -146,7 +153,7 @@ final class FindTicket
             ->whereNull(ArchivedAt::getDatabaseTableColumnName())
             ->where(AssigneeId::getDatabaseTableColumnName(), $userId)
             ->where(fn (Builder $query) => $query
-                ->whereIn(Status::getDatabaseTableColumnName(), TicketStatusEnum::openValues())
+                ->whereIn(StatusId::getDatabaseTableColumnName(), TicketStatusCategoryEnum::Open->statusIds())
                 ->orWhere(ClosedAt::getDatabaseTableColumnName(), '>=', now()->subDays(14)))
             ->orderByRaw('due_on is null, due_on')
             ->orderByDesc(Number::getDatabaseTableColumnName())
@@ -194,7 +201,7 @@ final class FindTicket
         return self::query($teamId)
             ->whereNull(ArchivedAt::getDatabaseTableColumnName())
             ->whereNull(ParentId::getDatabaseTableColumnName())
-            ->whereIn(Status::getDatabaseTableColumnName(), TicketStatusEnum::openValues())
+            ->whereIn(StatusId::getDatabaseTableColumnName(), TicketStatusCategoryEnum::Open->statusIds())
             ->when($assigneeId, fn (Builder $query, string $assigneeId) => $query->where(AssigneeId::getDatabaseTableColumnName(), $assigneeId))
             ->count();
     }

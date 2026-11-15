@@ -38,7 +38,7 @@ import TicketGroups from '@/components/tickets/ticket-groups';
 import {
     daysUntil,
     formatDay,
-    ticketStatuses,
+    useTicketStatuses,
 } from '@/components/tickets/ticket-meta';
 import TicketRow from '@/components/tickets/ticket-row';
 import TicketTable from '@/components/tickets/ticket-table';
@@ -54,6 +54,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { useTicketActions } from '@/hooks/use-ticket-actions';
+import { colorDot } from '@/lib/colors';
 import { visitWithQuery } from '@/lib/query';
 import { cn } from '@/lib/utils';
 import {
@@ -77,7 +78,6 @@ import type {
     TicketFilters,
     TicketListItem,
     TicketPickerOptions,
-    TicketStatus,
     TimelineMilestone,
     TimelineProject,
     TimelineWindow,
@@ -101,7 +101,7 @@ type Props = {
     options: TicketPickerOptions;
     drawer: TicketDrawerData | null;
     favoriteTicketIds: string[];
-    statusCounts?: Partial<Record<TicketStatus, number>>;
+    statusCounts?: Record<string, number>;
     upcoming?: TicketListItem[];
     milestones?: Milestone[] | TimelineMilestone[];
     activity?: ActivityItem[];
@@ -350,6 +350,8 @@ function TicketTabs({
     options,
     favoriteTicketIds,
 }: Props) {
+    const statuses = useTicketStatuses();
+
     if (!tickets || Array.isArray(tickets) || !filters) {
         return null;
     }
@@ -392,12 +394,12 @@ function TicketTabs({
                 <TicketGroups
                     key={filters.status}
                     favoriteIds={favoriteTicketIds}
-                    groups={ticketStatuses.map((status) => ({
-                        key: status.value,
-                        label: status.label,
-                        tone: status.tone,
+                    groups={statuses.map((status) => ({
+                        key: status.id,
+                        label: status.name,
+                        dotClassName: colorDot[status.color],
                         tickets: page.data.filter(
-                            (ticket) => ticket.status === status.value,
+                            (ticket) => ticket.status_id === status.id,
                         ),
                     }))}
                 />
@@ -405,14 +407,6 @@ function TicketTabs({
         </div>
     );
 }
-
-const statusBar: Record<TicketStatus, string> = {
-    new: 'bg-muted-foreground/40',
-    in_progress: 'bg-primary',
-    waiting_on_customer: 'bg-warning',
-    waiting_on_supplier: 'bg-info',
-    closed: 'bg-success',
-};
 
 function Overview({
     project,
@@ -424,6 +418,7 @@ function Overview({
     milestoneCan,
 }: Props) {
     const { openTicket } = useTicketActions();
+    const statuses = useTicketStatuses();
     const total = project.tickets_count;
     const percent =
         total === 0
@@ -457,13 +452,13 @@ function Overview({
                         </span>
                     </div>
                     <div className="mt-3 flex h-2 overflow-hidden rounded-full bg-muted">
-                        {ticketStatuses.map((status) => {
-                            const count = statusCounts[status.value] ?? 0;
+                        {statuses.map((status) => {
+                            const count = statusCounts[status.id] ?? 0;
 
                             return count > 0 ? (
                                 <span
-                                    key={status.value}
-                                    className={statusBar[status.value]}
+                                    key={status.id}
+                                    className={colorDot[status.color]}
                                     style={{
                                         width: `${(count / total) * 100}%`,
                                     }}
@@ -472,20 +467,20 @@ function Overview({
                         })}
                     </div>
                     <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                        {ticketStatuses.map((status) => (
+                        {statuses.map((status) => (
                             <li
-                                key={status.value}
+                                key={status.id}
                                 className="flex items-center gap-1.5"
                             >
                                 <span
                                     className={cn(
                                         'size-2 rounded-full',
-                                        statusBar[status.value],
+                                        colorDot[status.color],
                                     )}
                                 />
-                                {status.label}
+                                {status.name}
                                 <span className="tabular-nums">
-                                    {statusCounts[status.value] ?? 0}
+                                    {statusCounts[status.id] ?? 0}
                                 </span>
                             </li>
                         ))}

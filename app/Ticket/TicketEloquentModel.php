@@ -54,7 +54,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $priority_id
  * @property string|null $project_id
  * @property string|null $starts_on
- * @property string $status
+ * @property string|null $status_id
  * @property string $team_id
  * @property string $title
  * @property CarbonImmutable|null $updated_at

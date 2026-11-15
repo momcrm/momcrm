@@ -24,6 +24,7 @@ import {
     AssigneeAvatar,
     daysUntil,
     formatDay,
+    useIsClosedStatus,
 } from '@/components/tickets/ticket-meta';
 import TicketRow from '@/components/tickets/ticket-row';
 import { Button } from '@/components/ui/button';
@@ -423,21 +424,22 @@ function Panel({
 }
 
 function MyTickets({ tickets }: { tickets: TicketListItem[] }) {
+    const isClosed = useIsClosedStatus();
     const { openTicket } = useTicketActions();
     const [segment, setSegment] = useState<Segment>('upcoming');
     const groups: Record<Segment, TicketListItem[]> = {
         upcoming: tickets.filter(
             (ticket) =>
-                ticket.status !== 'closed' &&
+                !isClosed(ticket.status_id) &&
                 (!ticket.due_on || daysUntil(ticket.due_on) >= 0),
         ),
         overdue: tickets.filter(
             (ticket) =>
-                ticket.status !== 'closed' &&
+                !isClosed(ticket.status_id) &&
                 ticket.due_on !== null &&
                 daysUntil(ticket.due_on) < 0,
         ),
-        completed: tickets.filter((ticket) => ticket.status === 'closed'),
+        completed: tickets.filter((ticket) => isClosed(ticket.status_id)),
     };
     const shown = groups[segment].slice(0, 6);
 

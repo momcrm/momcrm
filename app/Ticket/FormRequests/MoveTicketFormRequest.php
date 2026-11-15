@@ -8,14 +8,13 @@ use App\Ticket\Actions\FindTicket;
 use App\Ticket\Actions\MoveTicket;
 use App\Ticket\Exceptions\CouldNotFindTicket;
 use App\Ticket\Properties\Position;
-use App\Ticket\Properties\Status;
+use App\Ticket\Properties\StatusId;
 use App\Ticket\Ticket;
 use App\Ticket\TicketAccess;
-use App\Ticket\TicketStatusEnum;
+use App\Ticket\TicketValidationRules;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Validation\Rule;
 
 final class MoveTicketFormRequest extends FormRequest
 {
@@ -39,7 +38,7 @@ final class MoveTicketFormRequest extends FormRequest
             throw CouldNotFindTicket::notFound();
         }
 
-        return TicketAccess::authorizeStatusChange('move', $this->ticket, $this->input(Status::getNameForValidation()));
+        return TicketAccess::authorizeStatusChange('move', $this->ticket, $this->input(StatusId::getNameForValidation()));
     }
 
     /**
@@ -48,16 +47,24 @@ final class MoveTicketFormRequest extends FormRequest
     public function rules(): array
     {
         return [
-            Status::getNameForValidation() => ['required', Rule::enum(TicketStatusEnum::class)],
+            ...TicketValidationRules::status($this, $this->ticket->getTeamId()->toString(), isRequired: true),
             Position::getNameForValidation() => ['required', 'integer', 'min:0'],
         ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return TicketValidationRules::messages();
     }
 
     public function process(): RedirectResponse
     {
         MoveTicket::to(
             $this->ticket,
-            TicketStatusEnum::from($this->string(Status::getNameForValidation())->toString()),
+            $this->string(StatusId::getNameForValidation())->toString(),
             $this->integer(Position::getNameForValidation()),
             movedById: (string) $this->user()?->id,
         );

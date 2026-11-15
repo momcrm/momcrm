@@ -23,9 +23,10 @@ import {
 } from 'react';
 import type { KeyboardEvent, ReactNode } from 'react';
 import {
+    defaultStatusId,
     PriorityGlyph,
-    ticketStatuses,
     useTicketPriorities,
+    useTicketStatuses,
 } from '@/components/tickets/ticket-meta';
 import { Button } from '@/components/ui/button';
 import {
@@ -45,18 +46,18 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 import { useInitials } from '@/hooks/use-initials';
-import { colorDot } from '@/lib/colors';
+import { colorDot, colorText } from '@/lib/colors';
 import { addDays, addMonths, parseDay, toDay } from '@/lib/dates';
 import { formatBytes } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { create as createCustomer } from '@/routes/customers';
 import { formOptions, store } from '@/routes/tickets';
-import type { TicketFormOptions, TicketStatus } from '@/types';
+import type { TicketFormOptions } from '@/types';
 
 type Defaults = {
     customerId?: string | null;
     projectId?: string | null;
-    status?: TicketStatus;
+    statusId?: string;
 };
 
 const CreateTicketContext = createContext<{
@@ -193,9 +194,11 @@ function CreateTicketForm({
     );
     const [contactId, setContactId] = useState('');
     const [locationId, setLocationId] = useState('');
-    const [status, setStatus] = useState<TicketStatus>(
-        defaults.status ?? 'new',
+    const statuses = useTicketStatuses();
+    const [statusId, setStatusId] = useState(
+        defaults.statusId ?? defaultStatusId(statuses, 'open') ?? '',
     );
+    const status = statuses.find((option) => option.id === statusId);
     const [assigneeId, setAssigneeId] = useState(
         options.members.some((member) => member.id === currentUserId)
             ? (currentUserId ?? '')
@@ -270,7 +273,7 @@ function CreateTicketForm({
                 contact_id: contactId || null,
                 location_id: locationId || null,
                 assignee_id: assigneeId || null,
-                status,
+                status_id: statusId || null,
                 priority_id: priorityId || null,
                 starts_on: startsOn,
                 due_on: dueOn,
@@ -411,19 +414,23 @@ function CreateTicketForm({
 
                     <SearchPicker
                         label="Status"
-                        value={status}
-                        choices={ticketStatuses.map((option) => ({
-                            value: option.value,
-                            label: option.label,
+                        value={statusId}
+                        choices={statuses.map((option) => ({
+                            value: option.id,
+                            label: option.name,
+                            dot: colorDot[option.color],
                         }))}
-                        onChange={(next) => setStatus(next as TicketStatus)}
+                        onChange={setStatusId}
                     >
-                        <Circle className="size-3.5 shrink-0 text-muted-foreground" />
-                        {
-                            ticketStatuses.find(
-                                (option) => option.value === status,
-                            )?.label
-                        }
+                        <Circle
+                            className={cn(
+                                'size-3.5 shrink-0',
+                                status
+                                    ? colorText[status.color]
+                                    : 'text-muted-foreground',
+                            )}
+                        />
+                        {status?.name ?? 'Status'}
                     </SearchPicker>
 
                     <SearchPicker

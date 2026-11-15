@@ -12,7 +12,7 @@ use App\Ticket\Exceptions\CouldNotFindTicket;
 use App\Ticket\Properties\ContactId;
 use App\Ticket\Properties\CustomerId;
 use App\Ticket\Properties\LocationId;
-use App\Ticket\Properties\Status;
+use App\Ticket\Properties\StatusId;
 use App\Ticket\Ticket;
 use App\Ticket\TicketAccess;
 use App\Ticket\TicketEloquentModel;
@@ -48,7 +48,7 @@ final class PatchTicketFormRequest extends FormRequest
     {
         $this->loadTicket();
 
-        return TicketAccess::authorizeStatusChange('update', $this->ticket, $this->input(Status::getNameForValidation()));
+        return TicketAccess::authorizeStatusChange('update', $this->ticket, $this->input(StatusId::getNameForValidation()));
     }
 
     /**
@@ -60,7 +60,7 @@ final class PatchTicketFormRequest extends FormRequest
 
         return [
             ...TicketValidationRules::for($this, $teamId, $this->ticket->getProjectId()->toNullableString()),
-            Status::getNameForValidation() => Status::getValidationRulesForUpdate($this),
+            ...TicketValidationRules::status($this, $teamId),
             self::LABEL_IDS => ['sometimes', 'array'],
             self::LABEL_IDS.'.*' => ['uuid', Rule::exists(Table::Labels->value, 'id')->where('team_id', $teamId)],
         ];
@@ -112,7 +112,7 @@ final class PatchTicketFormRequest extends FormRequest
         }
 
         $this->merge(array_merge(
-            Arr::only($current, ['customer_id', 'project_id', 'contact_id', 'location_id', 'assignee_id', 'title', 'description', 'priority_id', 'status', 'starts_on', 'due_on', 'estimate_minutes']),
+            Arr::only($current, ['customer_id', 'project_id', 'contact_id', 'location_id', 'assignee_id', 'title', 'description', 'priority_id', 'status_id', 'starts_on', 'due_on', 'estimate_minutes']),
             $this->all(),
         ));
     }
