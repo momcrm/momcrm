@@ -16,6 +16,7 @@ use App\Attachment\Properties\Size;
 use App\Attachment\Properties\TeamId;
 use App\Attachment\Properties\UpdatedAt;
 use App\Attachment\Properties\UploadedById;
+use App\Attachment\Properties\UploaderName;
 use Mom\Data\AbstractData;
 use Mom\Data\AbstractValue;
 
@@ -36,6 +37,7 @@ final class Attachment extends AbstractData
         public TeamId $teamId,
         public UpdatedAt $updatedAt,
         public UploadedById $uploadedById,
+        public UploaderName $uploaderName,
     ) {}
 
     public static function getFactory(): AttachmentFactory
@@ -164,5 +166,10 @@ final class Attachment extends AbstractData
         $this->uploadedById = new UploadedById($uploadedById instanceof AbstractValue ? $uploadedById->toValue() : $uploadedById);
 
         return $this;
+    }
+
+    public function getUploaderName(): UploaderName
+    {
+        return $this->uploaderName;
     }
 }

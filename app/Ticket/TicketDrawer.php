@@ -14,7 +14,7 @@ use App\Activity\ActivityRelationship;
 use App\Activity\Properties\SubjectId;
 use App\Activity\Properties\SubjectType;
 use App\Attachment\Actions\FindAttachment;
-use App\Attachment\AttachmentEloquentModel;
+use App\Attachment\Attachment;
 use App\Comment\Comment;
 use App\Comment\CommentEloquentModel;
 use App\Comment\CommentRelationship;
@@ -130,7 +130,7 @@ final class TicketDrawer
                 ->values()
                 ->all(),
             'attachments' => FindAttachment::forAttachable(MorphMapKeyEnum::Ticket, $model->id)
-                ->map(fn (AttachmentEloquentModel $attachment): array => FindAttachment::listItem($attachment))
+                ->map(fn (Attachment $attachment): array => FindAttachment::listItem($attachment))
                 ->values()
                 ->all(),
             'activity' => ActivityEloquentModel::query()
@@ -140,7 +140,7 @@ final class TicketDrawer
                 ->latest()
                 ->limit(30)
                 ->get()
-                ->map(fn (ActivityEloquentModel $activity): array => Activity::fromEloquentModel($activity)->toListItem($activity->actor?->name))
+                ->map(fn (ActivityEloquentModel $activity): array => Activity::fromEloquentModel($activity)->toListItem())
                 ->values()
                 ->all(),
         ];

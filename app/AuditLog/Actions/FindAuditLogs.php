@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\AuditLog\Actions;
 
+use App\AuditLog\AuditLog;
 use App\AuditLog\AuditLogEloquentModel;
 use App\AuditLog\AuditLogRelationship;
 use App\AuditLog\Properties\CreatedAt;
@@ -20,7 +21,7 @@ final class FindAuditLogs
     /**
      * A team's rows, newest first.
      *
-     * @return LengthAwarePaginator<int, AuditLogEloquentModel>
+     * @return LengthAwarePaginator<int, AuditLog>
      */
     public static function forTeam(string $teamId, string $pageName = 'page'): LengthAwarePaginator
     {
@@ -33,7 +34,7 @@ final class FindAuditLogs
     /**
      * A user's own account-level rows (not tied to a team), newest first.
      *
-     * @return LengthAwarePaginator<int, AuditLogEloquentModel>
+     * @return LengthAwarePaginator<int, AuditLog>
      */
     public static function forUser(string $userId, string $pageName = 'page'): LengthAwarePaginator
     {
@@ -47,7 +48,7 @@ final class FindAuditLogs
 
     /**
      * @param  Builder<AuditLogEloquentModel>  $query
-     * @return LengthAwarePaginator<int, AuditLogEloquentModel>
+     * @return LengthAwarePaginator<int, AuditLog>
      */
     private static function newestFirst(Builder $query, string $pageName): LengthAwarePaginator
     {
@@ -55,6 +56,7 @@ final class FindAuditLogs
             ->with(AuditLogRelationship::Actor->value)
             ->orderByDesc(CreatedAt::getDatabaseTableColumnName())
             ->orderByDesc(Id::getDatabaseTableColumnName())
-            ->paginate(perPage: self::PER_PAGE, pageName: $pageName);
+            ->paginate(perPage: self::PER_PAGE, pageName: $pageName)
+            ->through(fn (AuditLogEloquentModel $model): AuditLog => AuditLog::fromEloquentModel($model));
     }
 }

@@ -66,7 +66,7 @@ final class ListWorkspaceActivityController
                 ->paginate(40)
                 ->withQueryString()
                 ->through(fn (ActivityEloquentModel $model): array => [
-                    ...Activity::fromEloquentModel($model)->toListItem($model->actor?->name),
+                    ...Activity::fromEloquentModel($model)->toListItem(),
                     'url' => match ($model->getAttribute(SubjectType::getDatabaseTableColumnName())) {
                         MorphMapKeyEnum::Ticket->value => route('tickets.index', ['ticket' => Types::string($model->getAttribute(SubjectId::getDatabaseTableColumnName()))]),
                         MorphMapKeyEnum::Project->value => route('projects.show', Types::string($model->getAttribute(SubjectId::getDatabaseTableColumnName()))),

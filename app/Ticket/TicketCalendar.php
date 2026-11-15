@@ -68,7 +68,7 @@ final class TicketCalendar
                 ->orderBy(Number::getDatabaseTableColumnName())
                 ->limit(1000)
                 ->get()
-                ->map(fn (TicketEloquentModel $model): array => ListTicketsController::listItem($model))
+                ->map(fn (TicketEloquentModel $model): array => ListTicketsController::listItem(Ticket::fromEloquentModel($model)))
                 ->values()
                 ->all(),
             'projects' => FindProject::optionsForTeam($teamId, $user->id)->values()->all(),

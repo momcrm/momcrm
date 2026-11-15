@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Invoice\Controllers;
 
 use App\Invoice\Actions\FindInvoice;
-use App\Invoice\InvoiceEloquentModel;
+use App\Invoice\Invoice;
 use App\Invoice\InvoiceStatusEnum;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -20,7 +20,7 @@ final class ListInvoicesController
 
         return Inertia::render('invoices/index', [
             'invoices' => FindInvoice::paginateForTeam((string) $request->user()?->current_team_id, $status, $search)
-                ->through(fn (InvoiceEloquentModel $model): array => FindInvoice::listItem($model)),
+                ->through(fn (Invoice $invoice): array => FindInvoice::listItem($invoice)),
             'filters' => ['search' => $search, 'status' => $status?->value],
             'statuses' => InvoiceStatusEnum::options(),
         ]);

@@ -37,7 +37,7 @@ final class FindInvoice
     /**
      * Invoices newest first, optionally with one status or for one customer.
      *
-     * @return LengthAwarePaginator<int, InvoiceEloquentModel>
+     * @return LengthAwarePaginator<int, Invoice>
      */
     public static function paginateForTeam(string $teamId, ?InvoiceStatusEnum $status = null, ?string $search = null, ?string $customerId = null, int $perPage = 25): LengthAwarePaginator
     {
@@ -48,7 +48,8 @@ final class FindInvoice
             ->when($search, fn (Builder $query, string $search) => $query->where(Number::getDatabaseTableColumnName(), (int) preg_replace('/\D/', '', $search)))
             ->orderByDesc(Number::getDatabaseTableColumnName())
             ->paginate($perPage)
-            ->withQueryString();
+            ->withQueryString()
+            ->through(fn (InvoiceEloquentModel $model): Invoice => Invoice::fromEloquentModel($model));
     }
 
     /**
@@ -66,19 +67,17 @@ final class FindInvoice
     }
 
     /**
-     * An invoice with its line items' totals, for lists. Expects items to be eager loaded.
+     * An invoice with its totals and customer, for lists. Expects the invoice
+     * to have been found with its items and customer loaded.
      *
      * @return array<string, mixed>
      */
-    public static function listItem(InvoiceEloquentModel $model): array
+    public static function listItem(Invoice $invoice): array
     {
-        $invoice = Invoice::fromEloquentModel($model);
-        $items = InvoiceItem::collect($model->items->all(), 'fromEloquentModel');
-
         return [
             ...$invoice->toSummary(),
-            ...InvoiceTotals::fromItems($items, $invoice->getTaxRateBasisPoints()->toInteger())->toArray(),
-            'customer_name' => $model->customer?->name,
+            ...InvoiceTotals::fromSubtotal($invoice->getItemsSubtotalInCents()->toInteger(), $invoice->getTaxRateBasisPoints()->toInteger())->toArray(),
+            'customer_name' => $invoice->getCustomerName()->toNullableString(),
         ];
     }
 

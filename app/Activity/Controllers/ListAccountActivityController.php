@@ -6,10 +6,8 @@ namespace App\Activity\Controllers;
 
 use App\Activity\Actions\FindActivities;
 use App\Activity\Activity;
-use App\Activity\ActivityEloquentModel;
 use App\AuditLog\Actions\FindAuditLogs;
 use App\AuditLog\AuditLog;
-use App\AuditLog\AuditLogEloquentModel;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Inertia\Inertia;
@@ -31,18 +29,18 @@ final class ListAccountActivityController
     }
 
     /**
-     * @param  LengthAwarePaginator<int, ActivityEloquentModel>  $activities
-     * @param  LengthAwarePaginator<int, AuditLogEloquentModel>  $auditLogs
+     * @param  LengthAwarePaginator<int, Activity>  $activities
+     * @param  LengthAwarePaginator<int, AuditLog>  $auditLogs
      * @return array{activities: LengthAwarePaginator<int, covariant array<string, mixed>>, auditLogs: LengthAwarePaginator<int, covariant array<string, mixed>>}
      */
     private static function lists(LengthAwarePaginator $activities, LengthAwarePaginator $auditLogs): array
     {
         return [
             'activities' => $activities->through(
-                fn (ActivityEloquentModel $model): array => Activity::fromEloquentModel($model)->toListItem($model->actor?->name),
+                fn (Activity $activity): array => $activity->toListItem(),
             ),
             'auditLogs' => $auditLogs->through(
-                fn (AuditLogEloquentModel $model): array => AuditLog::fromEloquentModel($model)->toListItem($model->actor?->name),
+                fn (AuditLog $auditLog): array => $auditLog->toListItem(),
             ),
         ];
     }

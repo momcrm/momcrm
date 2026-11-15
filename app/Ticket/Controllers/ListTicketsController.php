@@ -4,16 +4,10 @@ declare(strict_types=1);
 
 namespace App\Ticket\Controllers;
 
-use App\Customer\CustomerEloquentModel;
-use App\Label\LabelEloquentModel;
-use App\Project\ProjectEloquentModel;
 use App\Shared\Types;
 use App\Ticket\Ticket;
-use App\Ticket\TicketEloquentModel;
 use App\Ticket\TicketListFilters;
-use App\Ticket\TicketRelationship;
 use App\Ticket\TicketViewProps;
-use App\User\UserEloquentModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -36,23 +30,24 @@ final class ListTicketsController
      *
      * @return array<string, mixed>
      */
-    public static function listItem(TicketEloquentModel $model): array
+    public static function listItem(Ticket $ticket): array
     {
-        $customer = $model->getRelationValue(TicketRelationship::Customer->value);
-        $assignee = $model->getRelationValue(TicketRelationship::Assignee->value);
-        $project = $model->getRelationValue(TicketRelationship::Project->value);
-
         return [
-            ...Ticket::fromEloquentModel($model)->toSummary(),
-            'customer_name' => $customer instanceof CustomerEloquentModel ? $customer->name : null,
-            'assignee_name' => $assignee instanceof UserEloquentModel ? $assignee->name : null,
-            'project_name' => $project instanceof ProjectEloquentModel ? $project->name : null,
-            'project_color' => $project instanceof ProjectEloquentModel ? $project->color : null,
-            'labels' => $model->relationLoaded(TicketRelationship::Labels->value)
-                ? $model->labels->map(fn (LabelEloquentModel $label): array => ['id' => $label->id, 'name' => $label->name, 'color' => $label->color])->values()->all()
-                : [],
-            'subtasks_count' => Types::intOrZero($model->getAttribute('subtasks_count')),
-            'closed_subtasks_count' => Types::intOrZero($model->getAttribute('closed_subtasks_count')),
+            ...$ticket->toSummary(),
+            'customer_name' => $ticket->getCustomerName()->toNullableString(),
+            'assignee_name' => $ticket->getAssigneeName()->toNullableString(),
+            'project_name' => $ticket->getProjectName()->toNullableString(),
+            'project_color' => $ticket->getProjectColor()->toNullableString(),
+            'labels' => $ticket->getLabels()->toCollection()
+                ->map(function (mixed $label): array {
+                    $label = Types::stringKeyed($label);
+
+                    return ['id' => Types::string($label['id'] ?? null), 'name' => Types::string($label['name'] ?? null), 'color' => Types::string($label['color'] ?? null)];
+                })
+                ->values()
+                ->all(),
+            'subtasks_count' => $ticket->getSubtasksCount()->toInteger(),
+            'closed_subtasks_count' => $ticket->getClosedSubtasksCount()->toInteger(),
         ];
     }
 }

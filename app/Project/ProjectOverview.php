@@ -22,6 +22,7 @@ use App\Ticket\Properties\DueOn;
 use App\Ticket\Properties\ParentId;
 use App\Ticket\Properties\ProjectId;
 use App\Ticket\Properties\Status;
+use App\Ticket\Ticket;
 use App\Ticket\TicketEloquentModel;
 use App\Ticket\TicketRelationship;
 use App\Ticket\TicketStatusEnum;
@@ -61,7 +62,7 @@ final class ProjectOverview
                 ->orderBy(DueOn::getDatabaseTableColumnName())
                 ->limit(6)
                 ->get()
-                ->map(fn (TicketEloquentModel $model): array => ListTicketsController::listItem($model))
+                ->map(fn (TicketEloquentModel $model): array => ListTicketsController::listItem(Ticket::fromEloquentModel($model)))
                 ->values()
                 ->all(),
             'milestones' => MilestoneEloquentModel::query()
@@ -92,7 +93,7 @@ final class ProjectOverview
                 ->latest()
                 ->limit(12)
                 ->get()
-                ->map(fn (ActivityEloquentModel $model): array => Activity::fromEloquentModel($model)->toListItem($model->actor?->name))
+                ->map(fn (ActivityEloquentModel $model): array => Activity::fromEloquentModel($model)->toListItem())
                 ->values()
                 ->all(),
         ];

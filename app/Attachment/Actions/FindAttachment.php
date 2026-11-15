@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Attachment\Actions;
 
+use App\Attachment\Attachment;
 use App\Attachment\AttachmentEloquentModel;
 use App\Attachment\AttachmentRelationship;
 use App\Attachment\Properties\AttachableId;
@@ -17,7 +18,7 @@ use App\Shared\Table;
 use App\Ticket\Properties\Id as TicketId;
 use App\Ticket\Properties\TeamId as TicketTeamId;
 use App\Ticket\TicketEloquentModel;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Collection;
 
 final class FindAttachment
 {
@@ -25,10 +26,10 @@ final class FindAttachment
      * An attachment in the team, unless it sits on a project or ticket the person
      * may not see.
      */
-    public static function visibleByIdForTeam(?string $id, ?string $teamId, string $userId): ?AttachmentEloquentModel
+    public static function visibleByIdForTeam(?string $id, ?string $teamId, string $userId): Attachment
     {
         if ($id === null || $teamId === null) {
-            return null;
+            return Attachment::new();
         }
 
         $attachment = AttachmentEloquentModel::query()
@@ -38,7 +39,7 @@ final class FindAttachment
             ->first();
 
         if ($attachment === null) {
-            return null;
+            return Attachment::new();
         }
 
         $isVisible = match ($attachment->attachable_type) {
@@ -47,7 +48,7 @@ final class FindAttachment
             default => true,
         };
 
-        return $isVisible ? $attachment : null;
+        return $isVisible ? Attachment::fromEloquentModel($attachment) : Attachment::new();
     }
 
     /**
@@ -69,32 +70,33 @@ final class FindAttachment
     /**
      * A ticket's or project's files, newest first, with who uploaded them.
      *
-     * @return Collection<int, AttachmentEloquentModel>
+     * @return Collection<int, Attachment>
      */
     public static function forAttachable(MorphMapKeyEnum $type, string $id): Collection
     {
-        return AttachmentEloquentModel::query()
+        return Attachment::collect(AttachmentEloquentModel::query()
             ->withoutGlobalScopes()
             ->with(AttachmentRelationship::Uploader->value)
             ->where(AttachableType::getDatabaseTableColumnName(), $type->value)
             ->where(AttachableId::getDatabaseTableColumnName(), $id)
             ->latest()
-            ->get();
+            ->get()
+            ->all());
     }
 
     /**
      * @return array{id: string, name: string, size: int, mime_type: string, uploaded_by: ?string, created_at: ?string, url: string}
      */
-    public static function listItem(AttachmentEloquentModel $attachment): array
+    public static function listItem(Attachment $attachment): array
     {
         return [
-            'id' => $attachment->id,
-            'name' => $attachment->name,
-            'size' => $attachment->size,
-            'mime_type' => $attachment->mime_type,
-            'uploaded_by' => $attachment->uploader?->name,
-            'created_at' => $attachment->created_at?->toIso8601String(),
-            'url' => route('attachments.show', $attachment->id),
+            'id' => $attachment->getId()->toString(),
+            'name' => $attachment->getName()->toString(),
+            'size' => $attachment->getSize()->toInteger(),
+            'mime_type' => $attachment->getMimeType()->toString(),
+            'uploaded_by' => $attachment->getUploaderName()->toNullableString(),
+            'created_at' => $attachment->getCreatedAt()->toNullableISOString(),
+            'url' => route('attachments.show', $attachment->getId()->toString()),
         ];
     }
 }

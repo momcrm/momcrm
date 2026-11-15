@@ -6,21 +6,28 @@ namespace App\Project;
 
 use App\Project\Factories\ProjectFactory;
 use App\Project\Properties\ArchivedAt;
+use App\Project\Properties\ClosedTicketsCount;
 use App\Project\Properties\Color;
 use App\Project\Properties\CreatedAt;
 use App\Project\Properties\CustomerId;
+use App\Project\Properties\CustomerName;
 use App\Project\Properties\Description;
 use App\Project\Properties\DueOn;
 use App\Project\Properties\GroupId;
+use App\Project\Properties\GroupName;
 use App\Project\Properties\Icon;
 use App\Project\Properties\Id;
 use App\Project\Properties\IsSample;
 use App\Project\Properties\LeadId;
+use App\Project\Properties\LeadName;
+use App\Project\Properties\Members;
 use App\Project\Properties\Name;
 use App\Project\Properties\Number;
+use App\Project\Properties\OverdueTicketsCount;
 use App\Project\Properties\StartsOn;
 use App\Project\Properties\Status;
 use App\Project\Properties\TeamId;
+use App\Project\Properties\TicketsCount;
 use App\Project\Properties\UpdatedAt;
 use App\Project\Properties\Visibility;
 use Mom\Data\AbstractData;
@@ -33,21 +40,28 @@ final class Project extends AbstractData
 {
     public function __construct(
         public ArchivedAt $archivedAt,
+        public ClosedTicketsCount $closedTicketsCount,
         public Color $color,
         public CreatedAt $createdAt,
         public CustomerId $customerId,
+        public CustomerName $customerName,
         public Description $description,
         public DueOn $dueOn,
         public GroupId $groupId,
+        public GroupName $groupName,
         public Icon $icon,
         public Id $id,
         public IsSample $isSample,
         public LeadId $leadId,
+        public LeadName $leadName,
+        public Members $members,
         public Name $name,
         public Number $number,
+        public OverdueTicketsCount $overdueTicketsCount,
         public StartsOn $startsOn,
         public Status $status,
         public TeamId $teamId,
+        public TicketsCount $ticketsCount,
         public UpdatedAt $updatedAt,
         public Visibility $visibility,
     ) {}
@@ -292,5 +306,40 @@ final class Project extends AbstractData
         $this->visibility = new Visibility($visibility instanceof AbstractValue ? $visibility->toValue() : $visibility);
 
         return $this;
+    }
+
+    public function getCustomerName(): CustomerName
+    {
+        return $this->customerName;
+    }
+
+    public function getLeadName(): LeadName
+    {
+        return $this->leadName;
+    }
+
+    public function getGroupName(): GroupName
+    {
+        return $this->groupName;
+    }
+
+    public function getMembers(): Members
+    {
+        return $this->members;
+    }
+
+    public function getTicketsCount(): TicketsCount
+    {
+        return $this->ticketsCount;
+    }
+
+    public function getClosedTicketsCount(): ClosedTicketsCount
+    {
+        return $this->closedTicketsCount;
+    }
+
+    public function getOverdueTicketsCount(): OverdueTicketsCount
+    {
+        return $this->overdueTicketsCount;
     }
 }

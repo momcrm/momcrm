@@ -31,7 +31,7 @@ final class FindContact
     }
 
     /**
-     * @return LengthAwarePaginator<int, ContactEloquentModel>
+     * @return LengthAwarePaginator<int, Contact>
      */
     public static function paginateForTeam(string $teamId, ?string $search = null, int $perPage = 25): LengthAwarePaginator
     {
@@ -44,7 +44,8 @@ final class FindContact
             ->orderBy(FirstName::getDatabaseTableColumnName())
             ->orderBy(LastName::getDatabaseTableColumnName())
             ->paginate($perPage)
-            ->withQueryString();
+            ->withQueryString()
+            ->through(fn (ContactEloquentModel $model): Contact => Contact::fromEloquentModel($model));
     }
 
     /**

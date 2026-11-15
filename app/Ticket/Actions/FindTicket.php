@@ -9,7 +9,6 @@ use App\Ticket\Properties\ArchivedAt;
 use App\Ticket\Properties\AssigneeId;
 use App\Ticket\Properties\ClosedAt;
 use App\Ticket\Properties\CustomerId;
-use App\Ticket\Properties\DueOn;
 use App\Ticket\Properties\Id;
 use App\Ticket\Properties\Number;
 use App\Ticket\Properties\ParentId;
@@ -25,8 +24,8 @@ use App\Ticket\TicketListFilters;
 use App\Ticket\TicketRelationship;
 use App\Ticket\TicketStatusEnum;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 
 final class FindTicket
 {
@@ -49,7 +48,7 @@ final class FindTicket
      * Live (not archived) tickets newest first, optionally only open or closed
      * ones, matching a search on the title or the ticket number.
      *
-     * @return LengthAwarePaginator<int, TicketEloquentModel>
+     * @return LengthAwarePaginator<int, Ticket>
      */
     public static function paginateForTeam(string $teamId, string $filter = self::FILTER_OPEN, ?string $search = null, ?string $customerId = null, int $perPage = 25, ?string $assigneeId = null, ?string $projectId = null): LengthAwarePaginator
     {
@@ -66,14 +65,15 @@ final class FindTicket
                 ->orWhere(Number::getDatabaseTableColumnName(), ltrim($search, '#'))))
             ->orderByDesc(Number::getDatabaseTableColumnName())
             ->paginate($perPage)
-            ->withQueryString();
+            ->withQueryString()
+            ->through(fn (TicketEloquentModel $model): Ticket => Ticket::fromEloquentModel($model));
     }
 
     /**
      * Live tickets for the ticket views, filtered and sorted as the toolbar
      * says. The board orders each column by its position instead.
      *
-     * @return LengthAwarePaginator<int, TicketEloquentModel>
+     * @return LengthAwarePaginator<int, Ticket>
      */
     public static function paginateFiltered(string $teamId, string $userId, TicketListFilters $filters, int $perPage): LengthAwarePaginator
     {
@@ -124,17 +124,18 @@ final class FindTicket
                 },
             )
             ->paginate($perPage)
-            ->withQueryString();
+            ->withQueryString()
+            ->through(fn (TicketEloquentModel $model): Ticket => Ticket::fromEloquentModel($model));
     }
 
     /**
      * Live tickets assigned to someone, with a due date or still open, for My Tickets.
      *
-     * @return Collection<int, TicketEloquentModel>
+     * @return Collection<int, Ticket>
      */
     public static function assignedTo(string $teamId, string $userId): Collection
     {
-        return self::query($teamId)
+        return Ticket::collect(self::query($teamId)
             ->with([TicketRelationship::Customer->value, TicketRelationship::Assignee->value, TicketRelationship::Project->value, TicketRelationship::Labels->value])
             ->whereNull(ArchivedAt::getDatabaseTableColumnName())
             ->where(AssigneeId::getDatabaseTableColumnName(), $userId)
@@ -144,55 +145,41 @@ final class FindTicket
             ->orderByRaw('due_on is null, due_on')
             ->orderByDesc(Number::getDatabaseTableColumnName())
             ->limit(200)
-            ->get();
+            ->get()
+            ->all());
     }
 
     /**
      * Some tickets by id, live or archived, with what list rows show.
      *
      * @param  array<int, string>  $ids
-     * @return Collection<int, TicketEloquentModel>
+     * @return Collection<int, Ticket>
      */
     public static function byIdsForTeam(string $teamId, array $ids, bool $archived = false): Collection
     {
-        return self::query($teamId)
+        return Ticket::collect(self::query($teamId)
             ->with([TicketRelationship::Customer->value, TicketRelationship::Assignee->value, TicketRelationship::Project->value, TicketRelationship::Labels->value])
             ->whereIn(Id::getDatabaseTableColumnName(), $ids)
             ->when($archived, fn (Builder $query) => $query->whereNotNull(ArchivedAt::getDatabaseTableColumnName()), fn (Builder $query) => $query->whereNull(ArchivedAt::getDatabaseTableColumnName()))
             ->orderByDesc(Number::getDatabaseTableColumnName())
-            ->get();
-    }
-
-    /**
-     * Open tickets due on a day, in every team, for the due-soon reminder.
-     *
-     * @return Collection<int, TicketEloquentModel>
-     */
-    public static function openDueOn(string $date): Collection
-    {
-        return TicketEloquentModel::query()
-            ->withoutGlobalScope(CurrentTeamScope::class)
-            ->with(TicketRelationship::Project->value)
-            ->whereNull(ArchivedAt::getDatabaseTableColumnName())
-            ->whereNotNull(AssigneeId::getDatabaseTableColumnName())
-            ->whereIn(Status::getDatabaseTableColumnName(), TicketStatusEnum::openValues())
-            ->whereDate(DueOn::getDatabaseTableColumnName(), $date)
-            ->get();
+            ->get()
+            ->all());
     }
 
     /**
      * The team's archived tickets, most recently archived first.
      *
-     * @return Collection<int, TicketEloquentModel>
+     * @return Collection<int, Ticket>
      */
     public static function archivedForTeam(string $teamId): Collection
     {
-        return self::query($teamId)
+        return Ticket::collect(self::query($teamId)
             ->with([TicketRelationship::Customer->value, TicketRelationship::Assignee->value, TicketRelationship::Project->value, TicketRelationship::Labels->value])
             ->whereNotNull(ArchivedAt::getDatabaseTableColumnName())
             ->orderByDesc(ArchivedAt::getDatabaseTableColumnName())
             ->limit(200)
-            ->get();
+            ->get()
+            ->all());
     }
 
     /**

@@ -8,13 +8,13 @@ use App\AccessRule\AccessResourceEnum;
 use App\AccessRule\Engine\AccessAbilities;
 use App\Favorite\Actions\FindFavorite;
 use App\Favorite\FavoritableTypeEnum;
+use App\Group\Actions\FindGroup;
 use App\Group\Actions\FindGroupForTeam;
 use App\Group\Exceptions\CouldNotFindGroup;
 use App\Group\Group;
-use App\Group\GroupRoleEnum;
 use App\Project\Actions\FindProject;
 use App\Project\Controllers\ListProjectsController;
-use App\Project\ProjectEloquentModel;
+use App\Project\Project;
 use App\Shared\ColorEnum;
 use App\Team\Scopes\CurrentTeamScope;
 use App\TeamUser\Actions\FindTeamMembers;
@@ -24,6 +24,7 @@ use App\Ticket\Properties\DueOn;
 use App\Ticket\Properties\ParentId;
 use App\Ticket\Properties\ProjectId;
 use App\Ticket\Properties\Status;
+use App\Ticket\Ticket;
 use App\Ticket\TicketDrawer;
 use App\Ticket\TicketEloquentModel;
 use App\Ticket\TicketRelationship;
@@ -46,38 +47,33 @@ final class ShowGroupController
         /** @var UserEloquentModel $user */
         $user = $request->user();
         $teamId = (string) $user->current_team_id;
-        $model = FindGroupForTeam::byId($group, $teamId);
+        $found = FindGroupForTeam::byId($group, $teamId);
 
-        if ($model === null) {
+        if ($found->isNull()) {
             throw CouldNotFindGroup::notFound();
         }
 
-        $projects = FindProject::listForTeam($teamId, $user->id)->where('group_id', $model->id)->values();
+        $groupId = $found->getId()->toString();
+
+        $projects = FindProject::listForTeam($teamId, $user->id)
+            ->filter(fn (Project $project): bool => $project->getGroupId()->equalsTo($groupId))
+            ->values();
         $favoriteProjectIds = FindFavorite::idsForUser($teamId, $user->id, FavoritableTypeEnum::Project);
 
         return Inertia::render('groups/show', [
             'group' => [
-                'id' => $model->id,
-                'name' => $model->name,
-                'description' => $model->description,
-                'color' => $model->color,
-                'icon' => $model->icon,
+                'id' => $groupId,
+                'name' => $found->getName()->toString(),
+                'description' => $found->getDescription()->toNullableString(),
+                'color' => $found->getColor()->toString(),
+                'icon' => $found->getIcon()->toNullableString(),
             ],
-            'members' => $model->members()
-                ->orderBy('name')
-                ->get()
-                ->map(fn (UserEloquentModel $member): array => [
-                    'id' => $member->id,
-                    'name' => $member->name,
-                    'email' => $member->email,
-                    'role' => GroupRoleEnum::ofMember($member)->value,
-                ])
-                ->values(),
-            'projects' => $projects->map(fn (ProjectEloquentModel $project): array => ListProjectsController::listItem($project, $favoriteProjectIds))->values(),
+            'members' => FindGroup::membersOf($groupId),
+            'projects' => $projects->map(fn (Project $project): array => ListProjectsController::listItem($project, $favoriteProjectIds))->values(),
             'tickets' => TicketEloquentModel::query()
                 ->withoutGlobalScope(CurrentTeamScope::class)
                 ->with([TicketRelationship::Project->value, TicketRelationship::Assignee->value, TicketRelationship::Customer->value, TicketRelationship::Labels->value])
-                ->whereIn(ProjectId::getDatabaseTableColumnName(), $projects->modelKeys())
+                ->whereIn(ProjectId::getDatabaseTableColumnName(), $projects->map(fn (Project $project): string => $project->getId()->toString())->all())
                 ->whereNull(ArchivedAt::getDatabaseTableColumnName())
                 ->whereNull(ParentId::getDatabaseTableColumnName())
                 ->whereIn(Status::getDatabaseTableColumnName(), TicketStatusEnum::openValues())
@@ -85,10 +81,10 @@ final class ShowGroupController
                 ->orderBy(DueOn::getDatabaseTableColumnName())
                 ->limit(15)
                 ->get()
-                ->map(fn (TicketEloquentModel $ticket): array => ListTicketsController::listItem($ticket))
+                ->map(fn (TicketEloquentModel $model): array => ListTicketsController::listItem(Ticket::fromEloquentModel($model)))
                 ->values(),
             'teamMembers' => FindTeamMembers::optionsForTeam($teamId),
-            'can' => AccessAbilities::for($user, AccessResourceEnum::Group, Group::fromEloquentModel($model)),
+            'can' => AccessAbilities::for($user, AccessResourceEnum::Group, $found),
             'colors' => ColorEnum::values(),
             'favoriteTicketIds' => FindFavorite::idsForUser($teamId, $user->id, FavoritableTypeEnum::Ticket),
             ...TicketDrawer::options($teamId, $user->id),

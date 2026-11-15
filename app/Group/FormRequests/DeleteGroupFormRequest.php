@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Group\FormRequests;
 
+use App\Group\Actions\DeleteGroup;
 use App\Group\Actions\FindGroupForTeam;
 use App\Group\Exceptions\CouldNotFindGroup;
 use App\Group\Group;
-use App\Group\GroupEloquentModel;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
@@ -19,7 +19,14 @@ use Inertia\Inertia;
  */
 final class DeleteGroupFormRequest extends FormRequest
 {
-    public ?GroupEloquentModel $group = null;
+    public Group $group;
+
+    public function __construct()
+    {
+        parent::__construct();
+
+        $this->group = Group::new();
+    }
 
     /**
      * @throws CouldNotFindGroup
@@ -28,11 +35,11 @@ final class DeleteGroupFormRequest extends FormRequest
     {
         $this->group = FindGroupForTeam::byId((string) $this->route('group'), $this->user()?->current_team_id);
 
-        if ($this->group === null) {
+        if ($this->group->isNull()) {
             throw CouldNotFindGroup::notFound();
         }
 
-        return Gate::authorize('delete', Group::fromEloquentModel($this->group));
+        return Gate::authorize('delete', $this->group);
     }
 
     /**
@@ -45,8 +52,8 @@ final class DeleteGroupFormRequest extends FormRequest
 
     public function process(): RedirectResponse
     {
-        $name = $this->group?->name;
-        $this->group?->delete();
+        $name = $this->group->getName()->toString();
+        DeleteGroup::fromGroup($this->group);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __(':name deleted.', ['name' => $name])]);
 

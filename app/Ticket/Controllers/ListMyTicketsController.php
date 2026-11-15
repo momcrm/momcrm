@@ -7,8 +7,8 @@ namespace App\Ticket\Controllers;
 use App\Favorite\Actions\FindFavorite;
 use App\Favorite\FavoritableTypeEnum;
 use App\Ticket\Actions\FindTicket;
+use App\Ticket\Ticket;
 use App\Ticket\TicketDrawer;
-use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -28,7 +28,7 @@ final class ListMyTicketsController
 
         return Inertia::render('tickets/mine', [
             'tickets' => FindTicket::assignedTo($teamId, $user->id)
-                ->map(fn (TicketEloquentModel $model): array => ListTicketsController::listItem($model))
+                ->map(fn (Ticket $ticket): array => ListTicketsController::listItem($ticket))
                 ->values(),
             'favoriteTicketIds' => FindFavorite::idsForUser($teamId, $user->id, FavoritableTypeEnum::Ticket),
             ...TicketDrawer::options($teamId, $user->id),

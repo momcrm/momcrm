@@ -22,7 +22,6 @@ use App\Ticket\Properties\ParentId as TicketParentId;
 use App\Ticket\Properties\Status as TicketStatus;
 use App\Ticket\TicketStatusEnum;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
 
 final class FindProject
@@ -59,24 +58,24 @@ final class FindProject
     }
 
     /**
-     * A project someone may see, with its lead, customer, members and ticket
-     * counts, for its page.
+     * A project someone may see, with its lead, customer, group, members and
+     * ticket counts, for its page; empty when they may not.
      */
-    public static function withDetailsForTeam(string $id, string $teamId, string $userId): ?ProjectEloquentModel
+    public static function withDetailsForTeam(string $id, string $teamId, string $userId): Project
     {
-        return self::withListDetails(self::visibleQuery($teamId, $userId))
+        return Project::fromEloquentModel(self::withListDetails(self::visibleQuery($teamId, $userId))
             ->with(ProjectRelationship::Group->value)
             ->where(Id::getDatabaseTableColumnName(), $id)
-            ->first();
+            ->first());
     }
 
     /**
      * The team's live projects someone may see, with their lead, customer,
      * members and ticket counts.
      *
-     * @return EloquentCollection<int, ProjectEloquentModel>
+     * @return Collection<int, Project>
      */
-    public static function listForTeam(string $teamId, string $userId, ?string $search = null, ?string $status = null, string $sort = 'name', string $direction = 'asc'): EloquentCollection
+    public static function listForTeam(string $teamId, string $userId, ?string $search = null, ?string $status = null, string $sort = 'name', string $direction = 'asc'): Collection
     {
         $query = self::withListDetails(self::visibleQuery($teamId, $userId))
             ->whereNull(ArchivedAt::getDatabaseTableColumnName())
@@ -90,53 +89,55 @@ final class FindProject
             default => $query->orderBy(Name::getDatabaseTableColumnName(), $direction === 'asc' ? 'asc' : 'desc'),
         };
 
-        return $query->limit(200)->get();
+        return Project::collect($query->limit(200)->get()->all());
     }
 
     /**
      * A customer's live projects someone may see.
      *
-     * @return EloquentCollection<int, ProjectEloquentModel>
+     * @return Collection<int, Project>
      */
-    public static function forCustomer(string $teamId, string $userId, string $customerId): EloquentCollection
+    public static function forCustomer(string $teamId, string $userId, string $customerId): Collection
     {
-        return self::withListDetails(self::visibleQuery($teamId, $userId))
+        return Project::collect(self::withListDetails(self::visibleQuery($teamId, $userId))
             ->whereNull(ArchivedAt::getDatabaseTableColumnName())
             ->where(CustomerId::getDatabaseTableColumnName(), $customerId)
             ->orderBy(Name::getDatabaseTableColumnName())
-            ->get();
+            ->get()
+            ->all());
     }
 
     /**
      * Archived projects someone may see, most recently archived first.
      *
-     * @return EloquentCollection<int, ProjectEloquentModel>
+     * @return Collection<int, Project>
      */
-    public static function archivedForTeam(string $teamId, string $userId): EloquentCollection
+    public static function archivedForTeam(string $teamId, string $userId): Collection
     {
-        return self::withListDetails(self::visibleQuery($teamId, $userId))
+        return Project::collect(self::withListDetails(self::visibleQuery($teamId, $userId))
             ->whereNotNull(ArchivedAt::getDatabaseTableColumnName())
             ->orderByDesc(ArchivedAt::getDatabaseTableColumnName())
-            ->get();
+            ->get()
+            ->all());
     }
 
     /**
      * Some projects by id, in the order given, for favourites and the sidebar.
      *
      * @param  array<int, string>  $ids
-     * @return EloquentCollection<int, ProjectEloquentModel>
+     * @return Collection<int, Project>
      */
-    public static function liveByIds(string $teamId, string $userId, array $ids): EloquentCollection
+    public static function liveByIds(string $teamId, string $userId, array $ids): Collection
     {
         $projects = self::withListDetails(self::visibleQuery($teamId, $userId))
             ->whereNull(ArchivedAt::getDatabaseTableColumnName())
             ->whereIn(Id::getDatabaseTableColumnName(), $ids)
             ->get()
-            ->sortBy(fn (ProjectEloquentModel $project): int|false => array_search($project->id, $ids, true))
-            ->values()
             ->all();
 
-        return new EloquentCollection($projects);
+        return Project::collect($projects)
+            ->sortBy(fn (Project $project): int|false => array_search($project->getId()->toString(), $ids, true))
+            ->values();
     }
 
     /**

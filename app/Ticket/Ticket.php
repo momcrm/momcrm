@@ -7,22 +7,29 @@ namespace App\Ticket;
 use App\Ticket\Factories\TicketFactory;
 use App\Ticket\Properties\ArchivedAt;
 use App\Ticket\Properties\AssigneeId;
+use App\Ticket\Properties\AssigneeName;
 use App\Ticket\Properties\ClosedAt;
+use App\Ticket\Properties\ClosedSubtasksCount;
 use App\Ticket\Properties\ContactId;
 use App\Ticket\Properties\CreatedAt;
 use App\Ticket\Properties\CustomerId;
+use App\Ticket\Properties\CustomerName;
 use App\Ticket\Properties\Description;
 use App\Ticket\Properties\DueOn;
 use App\Ticket\Properties\EstimateMinutes;
 use App\Ticket\Properties\Id;
+use App\Ticket\Properties\Labels;
 use App\Ticket\Properties\LocationId;
 use App\Ticket\Properties\Number;
 use App\Ticket\Properties\ParentId;
 use App\Ticket\Properties\Position;
 use App\Ticket\Properties\Priority;
+use App\Ticket\Properties\ProjectColor;
 use App\Ticket\Properties\ProjectId;
+use App\Ticket\Properties\ProjectName;
 use App\Ticket\Properties\StartsOn;
 use App\Ticket\Properties\Status;
+use App\Ticket\Properties\SubtasksCount;
 use App\Ticket\Properties\TeamId;
 use App\Ticket\Properties\Title;
 use App\Ticket\Properties\UpdatedAt;
@@ -37,22 +44,29 @@ final class Ticket extends AbstractData
     public function __construct(
         public ArchivedAt $archivedAt,
         public AssigneeId $assigneeId,
+        public AssigneeName $assigneeName,
         public ClosedAt $closedAt,
+        public ClosedSubtasksCount $closedSubtasksCount,
         public ContactId $contactId,
         public CreatedAt $createdAt,
         public CustomerId $customerId,
+        public CustomerName $customerName,
         public Description $description,
         public DueOn $dueOn,
         public EstimateMinutes $estimateMinutes,
         public Id $id,
+        public Labels $labels,
         public LocationId $locationId,
         public Number $number,
         public ParentId $parentId,
         public Position $position,
         public Priority $priority,
+        public ProjectColor $projectColor,
         public ProjectId $projectId,
+        public ProjectName $projectName,
         public StartsOn $startsOn,
         public Status $status,
+        public SubtasksCount $subtasksCount,
         public TeamId $teamId,
         public Title $title,
         public UpdatedAt $updatedAt,
@@ -344,5 +358,40 @@ final class Ticket extends AbstractData
         $this->startsOn = new StartsOn($startsOn instanceof AbstractValue ? $startsOn->toValue() : $startsOn);
 
         return $this;
+    }
+
+    public function getCustomerName(): CustomerName
+    {
+        return $this->customerName;
+    }
+
+    public function getAssigneeName(): AssigneeName
+    {
+        return $this->assigneeName;
+    }
+
+    public function getProjectName(): ProjectName
+    {
+        return $this->projectName;
+    }
+
+    public function getProjectColor(): ProjectColor
+    {
+        return $this->projectColor;
+    }
+
+    public function getLabels(): Labels
+    {
+        return $this->labels;
+    }
+
+    public function getSubtasksCount(): SubtasksCount
+    {
+        return $this->subtasksCount;
+    }
+
+    public function getClosedSubtasksCount(): ClosedSubtasksCount
+    {
+        return $this->closedSubtasksCount;
     }
 }

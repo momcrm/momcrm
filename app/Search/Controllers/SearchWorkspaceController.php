@@ -5,16 +5,15 @@ declare(strict_types=1);
 namespace App\Search\Controllers;
 
 use App\Contact\Actions\FindContact;
-use App\Contact\ContactEloquentModel;
+use App\Contact\Contact;
 use App\Customer\Actions\FindCustomer;
-use App\Customer\CustomerEloquentModel;
+use App\Customer\Customer;
 use App\Invoice\Actions\FindInvoice;
-use App\Invoice\InvoiceEloquentModel;
+use App\Invoice\Invoice;
 use App\Project\Actions\FindProject;
-use App\Project\ProjectEloquentModel;
+use App\Project\Project;
 use App\Ticket\Actions\FindTicket;
-use App\Ticket\TicketEloquentModel;
-use App\Ticket\TicketRelationship;
+use App\Ticket\Ticket;
 use App\User\UserEloquentModel;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -44,40 +43,40 @@ final class SearchWorkspaceController
             'tickets' => $this->tickets($teamId, $term),
             'projects' => FindProject::listForTeam($teamId, $user->id, $term)
                 ->take(self::RESULTS_PER_GROUP)
-                ->map(fn (ProjectEloquentModel $project): array => [
-                    'id' => $project->id,
-                    'title' => $project->name,
-                    'subtitle' => $project->customer?->name,
-                    'url' => route('projects.show', $project->id),
+                ->map(fn (Project $project): array => [
+                    'id' => $project->getId()->toString(),
+                    'title' => $project->getName()->toString(),
+                    'subtitle' => $project->getCustomerName()->toNullableString(),
+                    'url' => route('projects.show', $project->getId()->toString()),
                 ])
                 ->values()
                 ->all(),
             'customers' => FindCustomer::paginateForTeam($teamId, $term, self::RESULTS_PER_GROUP)
                 ->getCollection()
-                ->map(fn (CustomerEloquentModel $customer): array => [
-                    'id' => $customer->id,
-                    'title' => $customer->name,
-                    'subtitle' => $customer->email,
-                    'url' => route('customers.show', $customer->id),
+                ->map(fn (Customer $customer): array => [
+                    'id' => $customer->getId()->toString(),
+                    'title' => $customer->getName()->toString(),
+                    'subtitle' => $customer->getEmail()->toNullableString(),
+                    'url' => route('customers.show', $customer->getId()->toString()),
                 ])
                 ->all(),
             'contacts' => FindContact::paginateForTeam($teamId, $term, self::RESULTS_PER_GROUP)
                 ->getCollection()
-                ->map(fn (ContactEloquentModel $contact): array => [
-                    'id' => $contact->id,
-                    'title' => trim("{$contact->first_name} {$contact->last_name}"),
-                    'subtitle' => $contact->customer?->name,
-                    'url' => route('contacts.edit', $contact->id),
+                ->map(fn (Contact $contact): array => [
+                    'id' => $contact->getId()->toString(),
+                    'title' => $contact->getFullName(),
+                    'subtitle' => $contact->getCustomerName()->toNullableString(),
+                    'url' => route('contacts.edit', $contact->getId()->toString()),
                 ])
                 ->all(),
             'invoices' => preg_match('/\d/', $term) === 1
                 ? FindInvoice::paginateForTeam($teamId, search: $term, perPage: self::RESULTS_PER_GROUP)
                     ->getCollection()
-                    ->map(fn (InvoiceEloquentModel $invoice): array => [
-                        'id' => $invoice->id,
-                        'title' => "Invoice #{$invoice->number}",
-                        'subtitle' => $invoice->customer?->name,
-                        'url' => route('invoices.show', $invoice->id),
+                    ->map(fn (Invoice $invoice): array => [
+                        'id' => $invoice->getId()->toString(),
+                        'title' => "Invoice #{$invoice->getNumber()->toInteger()}",
+                        'subtitle' => $invoice->getCustomerName()->toNullableString(),
+                        'url' => route('invoices.show', $invoice->getId()->toString()),
                     ])
                     ->all()
                 : [],
@@ -91,30 +90,15 @@ final class SearchWorkspaceController
     {
         return FindTicket::paginateForTeam($teamId, FindTicket::FILTER_ALL, $term, perPage: self::RESULTS_PER_GROUP)
             ->getCollection()
-            ->map(fn (TicketEloquentModel $ticket): array => [
-                'id' => $ticket->id,
-                'number' => $ticket->number,
-                'title' => $ticket->title,
-                'status' => $ticket->status,
-                'subtitle' => self::ticketSubtitle($ticket),
-                'url' => route('tickets.show', $ticket->id),
+            ->map(fn (Ticket $ticket): array => [
+                'id' => $ticket->getId()->toString(),
+                'number' => $ticket->getNumber()->toInteger(),
+                'title' => $ticket->getTitle()->toString(),
+                'status' => $ticket->getStatus()->toString(),
+                'subtitle' => $ticket->getCustomerName()->toNullableString() ?? $ticket->getProjectName()->toNullableString(),
+                'url' => route('tickets.show', $ticket->getId()->toString()),
             ])
             ->values()
             ->all();
-    }
-
-    /**
-     * Who the ticket is for: its customer, or its project for internal work.
-     */
-    private static function ticketSubtitle(TicketEloquentModel $ticket): ?string
-    {
-        $customer = $ticket->getRelationValue(TicketRelationship::Customer->value);
-        $project = $ticket->getRelationValue(TicketRelationship::Project->value);
-
-        return match (true) {
-            $customer instanceof CustomerEloquentModel => $customer->name,
-            $project instanceof ProjectEloquentModel => $project->name,
-            default => null,
-        };
     }
 }

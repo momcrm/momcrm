@@ -7,6 +7,7 @@ namespace App\Contact;
 use App\Contact\Factories\ContactFactory;
 use App\Contact\Properties\CreatedAt;
 use App\Contact\Properties\CustomerId;
+use App\Contact\Properties\CustomerName;
 use App\Contact\Properties\Email;
 use App\Contact\Properties\FirstName;
 use App\Contact\Properties\Id;
@@ -28,6 +29,7 @@ final class Contact extends AbstractData
     public function __construct(
         public CreatedAt $createdAt,
         public CustomerId $customerId,
+        public CustomerName $customerName,
         public Email $email,
         public FirstName $firstName,
         public Id $id,
@@ -204,5 +206,10 @@ final class Contact extends AbstractData
         $this->workPhone = new WorkPhone($workPhone instanceof AbstractValue ? $workPhone->toValue() : $workPhone);
 
         return $this;
+    }
+
+    public function getCustomerName(): CustomerName
+    {
+        return $this->customerName;
     }
 }
