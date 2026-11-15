@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\AccessRule;
 
+use App\Choice\ChoiceListEnum;
 use App\Shared\Traits\Enum;
 
 /**
@@ -95,6 +96,18 @@ enum AccessAttributeEnum: string
             self::TicketSubjectIsProjectLead,
             self::TicketSubjectIsProjectMember => AccessAttributeTypeEnum::Boolean,
             default => AccessAttributeTypeEnum::Choice,
+        };
+    }
+
+    /**
+     * The team's list whose choice ids this attribute's conditions hold, if any.
+     */
+    public function choiceList(): ?ChoiceListEnum
+    {
+        return match ($this) {
+            self::TicketPriority => ChoiceListEnum::TicketPriority,
+            self::TicketStatus => ChoiceListEnum::TicketStatus,
+            default => null,
         };
     }
 
