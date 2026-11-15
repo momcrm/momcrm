@@ -42,7 +42,7 @@ it('adds a rule for the team', function (): void {
         ->actions->toBe(['archive'])
         ->effect->toBe('allow')
         ->is_enabled->toBeTrue()
-        ->conditions->toBe([['attribute' => 'ticket.subject_is_project_lead', 'operator' => 'is_true', 'value' => null]]);
+        ->conditions->toEqual([['attribute' => 'ticket.subject_is_project_lead', 'operator' => 'is_true', 'value' => null]]);
 });
 
 it('rejects rules that do not fit together', function (array $overrides, string $errorKey): void {

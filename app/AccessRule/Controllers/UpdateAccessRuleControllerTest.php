@@ -27,7 +27,7 @@ it('edits a rule and can switch it off', function (): void {
         ->name->toBe('Members close urgent tickets')
         ->effect->toBe('deny')
         ->is_enabled->toBeFalse()
-        ->conditions->toBe([['attribute' => 'ticket.priority', 'operator' => 'in', 'value' => ['urgent']]]);
+        ->conditions->toEqual([['attribute' => 'ticket.priority', 'operator' => 'in', 'value' => ['urgent']]]);
 });
 
 it("returns not found for another team's rule", function (): void {
