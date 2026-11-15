@@ -153,7 +153,14 @@ enum ChoiceListEnum: string
                 ['name' => 'Projects', 'hue' => HuePalette::VIOLET, 'icon' => null, 'category' => null, 'is_default' => false],
                 ['name' => 'Accounts', 'hue' => HuePalette::TEAL, 'icon' => null, 'category' => null, 'is_default' => false],
             ],
-            self::Label => [],
+            self::Label => [
+                ['name' => 'Hardware', 'hue' => HuePalette::AMBER, 'icon' => null, 'category' => null, 'is_default' => false],
+                ['name' => 'Software', 'hue' => HuePalette::INDIGO, 'icon' => null, 'category' => null, 'is_default' => false],
+                ['name' => 'Network', 'hue' => HuePalette::BLUE, 'icon' => null, 'category' => null, 'is_default' => false],
+                ['name' => 'Security', 'hue' => HuePalette::RED, 'icon' => null, 'category' => null, 'is_default' => false],
+                ['name' => 'Billing', 'hue' => HuePalette::VIOLET, 'icon' => null, 'category' => null, 'is_default' => false],
+                ['name' => 'Onboarding', 'hue' => HuePalette::GREEN, 'icon' => null, 'category' => null, 'is_default' => false],
+            ],
             self::TicketPriority => [
                 ['name' => 'Urgent', 'hue' => HuePalette::ROSE, 'icon' => 'chevrons-up', 'category' => null, 'is_default' => false],
                 ['name' => 'High', 'hue' => HuePalette::AMBER, 'icon' => 'chevron-up', 'category' => null, 'is_default' => false],

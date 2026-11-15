@@ -171,6 +171,9 @@ final readonly class SeedSampleData
     ];
 
     /**
+     * The labels the samples use. New teams start with them (see
+     * ChoiceListEnum::defaults()); any the team has since deleted come back.
+     *
      * @var array<string, int>
      */
     private const array LABELS = [

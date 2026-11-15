@@ -2,7 +2,8 @@
 
 declare(strict_types=1);
 
-use App\Choice\ChoiceEloquentModel;
+use App\Choice\Actions\FindChoice;
+use App\Choice\ChoiceListEnum;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -12,7 +13,7 @@ use function Pest\Laravel\actingAs;
 it("shows the owner the team's lists with how many tickets use each choice", function (): void {
     $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
     [$ticket] = TicketEloquentModel::factory()->count(2)->create(['team_id' => $owner->current_team_id])->all();
-    $ticket->labels()->attach(ChoiceEloquentModel::factory()->label()->create(['team_id' => $owner->current_team_id, 'name' => 'Bug']));
+    $ticket->labels()->attach(FindChoice::byNameForTeam($owner->current_team_id, ChoiceListEnum::Label, 'Hardware')->getId()->toString());
 
     actingAs($owner)
         ->get(route('workflow.edit'))
@@ -37,8 +38,9 @@ it("shows the owner the team's lists with how many tickets use each choice", fun
             ->where('lists.3.choices.0.name', 'Support')
             ->where('lists.4.value', 'label')
             ->where('lists.4.is_optional', true)
-            ->where('lists.4.choices.0.name', 'Bug')
-            ->where('lists.4.choices.0.usage', 1),
+            ->where('lists.4.choices.0.name', 'Hardware')
+            ->where('lists.4.choices.0.usage', 1)
+            ->where('lists.4.choices.1.usage', 0),
         );
 });
 

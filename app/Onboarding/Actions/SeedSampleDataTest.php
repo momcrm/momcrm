@@ -39,7 +39,7 @@ it('adds sample projects with milestones, labelled tickets with due dates and a 
         ->and($projects->every(fn (ProjectEloquentModel $project): bool => $project->is_sample && $project->lead_id === $user->id))->toBeTrue()
         ->and($projects->last()->customer_id)->toBeNull();
     expect(MilestoneEloquentModel::query()->withoutGlobalScopes()->count())->toBe(4);
-    expect(ChoiceEloquentModel::query()->withoutGlobalScopes()->where('list', 'label')->pluck('name')->sort()->values()->all())->toBe(['Billing', 'Hardware', 'Network', 'Onboarding']);
+    expect(ChoiceEloquentModel::query()->withoutGlobalScopes()->where('list', 'label')->pluck('name')->sort()->values()->all())->toBe(['Billing', 'Hardware', 'Network', 'Onboarding', 'Security', 'Software']);
     expect(GroupEloquentModel::query()->withoutGlobalScopes()->sole()->name)->toBe('Service desk');
 
     $internal = TicketEloquentModel::query()->withoutGlobalScopes()->where('project_id', $projects->last()->id)->get();
@@ -48,12 +48,13 @@ it('adds sample projects with milestones, labelled tickets with due dates and a 
     expect(TicketEloquentModel::query()->withoutGlobalScopes()->where('title', 'Reception printer offline')->sole()->labels->pluck('name')->all())->toBe(['Hardware']);
 });
 
-it('reuses the labels and group when sample data is added again', function (): void {
+it('reuses the labels and group when sample data is added again, bringing back a deleted label', function (): void {
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    ChoiceEloquentModel::query()->withoutGlobalScopes()->where('list', 'label')->where('name', 'Network')->delete();
 
     SeedSampleData::forTeam(teamId: $user->current_team_id, userId: $user->id);
     SeedSampleData::forTeam(teamId: $user->current_team_id, userId: $user->id);
 
-    expect(ChoiceEloquentModel::query()->withoutGlobalScopes()->where('list', 'label')->count())->toBe(4)
+    expect(ChoiceEloquentModel::query()->withoutGlobalScopes()->where('list', 'label')->count())->toBe(6)
         ->and(GroupEloquentModel::query()->withoutGlobalScopes()->count())->toBe(1);
 });
