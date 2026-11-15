@@ -56,3 +56,17 @@ it('forbids members', function (): void {
         ->delete(route('choices.destroy', archiveTicketStatus($owner->current_team_id, 'Waiting on supplier')))
         ->assertForbidden();
 });
+
+it('deletes a label straight away, taking it off its tickets', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $label = ChoiceEloquentModel::factory()->ticketLabel()->create(['team_id' => $owner->current_team_id, 'name' => 'Bug']);
+    $ticket = TicketEloquentModel::factory()->create(['team_id' => $owner->current_team_id]);
+    $ticket->labels()->attach($label);
+
+    actingAs($owner)
+        ->delete(route('choices.destroy', $label->id))
+        ->assertSessionHasNoErrors();
+
+    expect(ChoiceEloquentModel::query()->withoutGlobalScopes()->find($label->id))->toBeNull()
+        ->and($ticket->labels()->count())->toBe(0);
+});

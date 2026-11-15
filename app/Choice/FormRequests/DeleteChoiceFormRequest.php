@@ -18,7 +18,9 @@ use Illuminate\Validation\Validator;
 use Inertia\Inertia;
 
 /**
- * Deletes an archived choice for good, once no record uses it.
+ * Deletes a choice for good. Statuses and priorities must be archived and
+ * unused first, so no ticket is left without one; a label can go at any time,
+ * coming off the tickets that have it.
  */
 final class DeleteChoiceFormRequest extends FormRequest
 {
@@ -40,7 +42,7 @@ final class DeleteChoiceFormRequest extends FormRequest
         $team = ChoiceAccess::team($this);
         $this->choice = FindChoice::byIdForTeam((string) $this->route('choice'), $team->getId()->toString());
 
-        if (! $this->choice->isArchived()) {
+        if ($this->choice->isNull() || (! $this->choice->isArchived() && ! $this->choice->getListName()->toEnum()->isOptional())) {
             throw CouldNotFindChoice::notFound();
         }
 
@@ -61,6 +63,10 @@ final class DeleteChoiceFormRequest extends FormRequest
     public function after(): array
     {
         return [function (Validator $validator): void {
+            if ($this->choice->getListName()->toEnum()->isOptional()) {
+                return;
+            }
+
             $usage = FindChoice::usageCountsForTeam($this->choice->getTeamId()->toString(), $this->choice->getListName()->toEnum())[$this->choice->getId()->toString()] ?? 0;
 
             if ($usage > 0) {

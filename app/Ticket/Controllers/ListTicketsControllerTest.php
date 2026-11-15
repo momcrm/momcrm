@@ -3,9 +3,9 @@
 declare(strict_types=1);
 
 use App\Choice\Actions\FindChoice;
+use App\Choice\ChoiceEloquentModel;
 use App\Choice\ChoiceListEnum;
 use App\Customer\CustomerEloquentModel;
-use App\Label\LabelEloquentModel;
 use App\Project\ProjectEloquentModel;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
@@ -83,7 +83,7 @@ it('shows every status on the board, each column in its saved order', function (
 it('filters by priority, assignee, project and label', function (): void {
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
     $project = ProjectEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
-    $label = LabelEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
+    $label = ChoiceEloquentModel::factory()->ticketLabel()->create(['team_id' => $user->current_team_id]);
     [$urgent, $high, $low] = array_map(fn (string $name): string => FindChoice::byNameForTeam($user->current_team_id, ChoiceListEnum::TicketPriority, $name)->getId()->toString(), ['Urgent', 'High', 'Low']);
     $match = ticketFor($user, ['number' => 1, 'priority_id' => $urgent, 'assignee_id' => $user->id, 'project_id' => $project->id]);
     $match->labels()->attach($label);
@@ -147,7 +147,7 @@ it('opens a ticket in the drawer', function (): void {
             ->where('drawer.customer_name', 'Acme IT')
             ->where('drawer.subtasks.0.id', $subtask->id)
             ->where('drawer.is_favorite', false)
-            ->has('options.labels'),
+            ->has('choices.ticket_label'),
         );
 });
 

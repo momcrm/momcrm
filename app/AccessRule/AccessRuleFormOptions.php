@@ -9,7 +9,6 @@ use App\Choice\ChoiceListEnum;
 use App\Customer\CustomerStatusEnum;
 use App\Group\Actions\FindGroup;
 use App\Invoice\InvoiceStatusEnum;
-use App\Label\Actions\FindLabel;
 use App\Project\Actions\FindProject;
 use App\Project\ProjectStatusEnum;
 use App\Project\ProjectVisibilityEnum;
@@ -70,7 +69,7 @@ final class AccessRuleFormOptions
             AccessAttributeEnum::TicketStatus => FindChoice::listForTeam($teamId, ChoiceListEnum::TicketStatus, withArchived: true)->toOptions(),
             AccessAttributeEnum::TicketPriority => FindChoice::listForTeam($teamId, ChoiceListEnum::TicketPriority, withArchived: true)->toOptions(),
             AccessAttributeEnum::TicketProject => self::idNameOptions(FindProject::optionsForTeam($teamId, $userId)),
-            AccessAttributeEnum::TicketLabel => self::idNameOptions(FindLabel::optionsForTeam($teamId)),
+            AccessAttributeEnum::TicketLabel => FindChoice::listForTeam($teamId, ChoiceListEnum::TicketLabel, withArchived: true)->toOptions(),
             AccessAttributeEnum::CustomerStatus => CustomerStatusEnum::options(),
             AccessAttributeEnum::InvoiceStatus => InvoiceStatusEnum::options(),
             default => [],

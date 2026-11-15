@@ -15,6 +15,7 @@ use App\Activity\Properties\SubjectId;
 use App\Activity\Properties\SubjectType;
 use App\Attachment\Actions\FindAttachment;
 use App\Attachment\Attachment;
+use App\Choice\Choice;
 use App\Comment\Comment;
 use App\Comment\CommentEloquentModel;
 use App\Comment\CommentRelationship;
@@ -23,8 +24,6 @@ use App\Customer\Actions\FindCustomer;
 use App\Customer\CustomerEloquentModel;
 use App\Favorite\Actions\FindFavorite;
 use App\Favorite\FavoritableTypeEnum;
-use App\Label\Actions\FindLabel;
-use App\Label\LabelEloquentModel;
 use App\Project\Actions\FindProject;
 use App\Project\ProjectEloquentModel;
 use App\Shared\MorphMapKeyEnum;
@@ -104,7 +103,7 @@ final class TicketDrawer
             'assignee_name' => $assignee instanceof UserEloquentModel ? $assignee->name : null,
             'project_name' => $project instanceof ProjectEloquentModel ? $project->name : null,
             'project_color' => $project instanceof ProjectEloquentModel ? $project->color : null,
-            'labels' => $model->labels->map(fn (LabelEloquentModel $label): array => ['id' => $label->id, 'name' => $label->name, 'color' => $label->color])->values()->all(),
+            'labels' => Choice::collect($model->labels->all(), 'fromEloquentModel')->toTags(),
             'parent' => $parent instanceof TicketEloquentModel ? ['id' => $parent->id, 'number' => $parent->number, 'title' => $parent->title] : null,
             'subtasks' => $model->subtasks
                 ->map(fn (TicketEloquentModel $subtask): array => ['id' => $subtask->id, 'number' => $subtask->number, 'title' => $subtask->title, 'status_id' => $subtask->status_id])
@@ -147,8 +146,8 @@ final class TicketDrawer
     }
 
     /**
-     * The pickers' choices: members, projects, labels and customers. Statuses
-     * and priorities come from the shared `choices` prop.
+     * The pickers' choices: members, projects and customers. Statuses,
+     * priorities and labels come from the shared `choices` prop.
      *
      * @return array{options: array<string, mixed>}
      */
@@ -158,7 +157,6 @@ final class TicketDrawer
             'options' => [
                 'members' => FindTeamMembers::optionsForTeam($teamId),
                 'projects' => FindProject::optionsForTeam($teamId, $userId),
-                'labels' => FindLabel::optionsForTeam($teamId),
                 'customers' => FindCustomer::optionsForTeam($teamId),
             ],
         ];

@@ -24,6 +24,7 @@ import {
     ProjectTag,
     TicketStatusPill,
     usePriority,
+    useTicketLabels,
     useTicketPriorities,
     useTicketStatuses,
 } from '@/components/tickets/ticket-meta';
@@ -56,7 +57,11 @@ import { colorDot } from '@/lib/colors';
 import { cn } from '@/lib/utils';
 import { show } from '@/routes/tickets';
 import { store as storeAttachment } from '@/routes/tickets/attachments';
-import type { TicketDrawerData, TicketPickerOptions } from '@/types';
+import type {
+    TicketDrawerData,
+    TicketLabel,
+    TicketPickerOptions,
+} from '@/types';
 
 const NONE = '__none__';
 
@@ -106,6 +111,7 @@ function DrawerBody({
     const isClosed = isClosedStatus(statuses, ticket.status_id);
     const priorities = useTicketPriorities(ticket.priority_id);
     const priority = usePriority(ticket.priority_id);
+    const labels = useTicketLabels(...ticket.labels.map((label) => label.id));
     const overdueDays =
         ticket.due_on && !isClosed ? -daysUntil(ticket.due_on) : 0;
 
@@ -351,7 +357,7 @@ function DrawerBody({
                     <Property label="Labels">
                         <LabelPicker
                             selected={ticket.labels.map((label) => label.id)}
-                            options={options.labels}
+                            options={labels}
                             onChange={(label_ids) => save({ label_ids })}
                         >
                             {ticket.labels.length > 0 ? (
@@ -544,7 +550,7 @@ function LabelPicker({
     children,
 }: {
     selected: string[];
-    options: TicketPickerOptions['labels'];
+    options: TicketLabel[];
     onChange: (ids: string[]) => void;
     children: ReactNode;
 }) {

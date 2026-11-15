@@ -9,7 +9,6 @@ use App\Contact\ContactEloquentModel;
 use App\Contact\Properties\FirstName;
 use App\Contact\Properties\TeamId as ContactTeamId;
 use App\Customer\Actions\FindCustomer;
-use App\Label\Actions\FindLabel;
 use App\Location\LocationEloquentModel;
 use App\Location\Properties\Name as LocationName;
 use App\Location\Properties\TeamId as LocationTeamId;
@@ -48,7 +47,6 @@ final class TicketFormOptions
                 ->map(fn (LocationEloquentModel $model): array => ['id' => $model->id, 'name' => $model->name, 'customer_id' => $model->customer_id]),
             'members' => FindTeamMembers::optionsForTeam($teamId),
             'projects' => FindProject::optionsForTeam($teamId, $userId),
-            'labels' => FindLabel::optionsForTeam($teamId),
         ];
     }
 }

@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Choice\ChoiceCollection;
+use App\Choice\ChoiceEloquentModel;
 use App\Customer\Customer;
 use App\Customer\CustomerEloquentModel;
-use App\Label\LabelCollection;
-use App\Label\LabelEloquentModel;
 use App\Ticket\Ticket;
 use App\Ticket\TicketEloquentModel;
 
@@ -24,10 +24,10 @@ it('reads a loaded relation as its data object, and leaves an unloaded one empty
 
 it('reads a loaded has-many relation as the domain collection', function (): void {
     $model = TicketEloquentModel::factory()->create();
-    $model->labels()->attach(LabelEloquentModel::factory()->count(2)->create(['team_id' => $model->team_id])->modelKeys());
+    $model->labels()->attach(ChoiceEloquentModel::factory()->ticketLabel()->count(2)->create(['team_id' => $model->team_id])->modelKeys());
 
     $labels = Ticket::fromEloquentModel($model->load('labels'))->getLabels()->toDataCollection();
 
-    expect($labels)->toBeInstanceOf(LabelCollection::class)->toHaveCount(2)
-        ->and(Ticket::fromEloquentModel($model->fresh())->getLabels()->toDataCollection())->toBeInstanceOf(LabelCollection::class)->toBeEmpty();
+    expect($labels)->toBeInstanceOf(ChoiceCollection::class)->toHaveCount(2)
+        ->and(Ticket::fromEloquentModel($model->fresh())->getLabels()->toDataCollection())->toBeInstanceOf(ChoiceCollection::class)->toBeEmpty();
 });

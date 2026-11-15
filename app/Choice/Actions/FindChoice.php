@@ -10,6 +10,7 @@ use App\Choice\ChoiceEloquentModel;
 use App\Choice\ChoiceListEnum;
 use App\Choice\Properties\ArchivedAt;
 use App\Choice\Properties\Category;
+use App\Choice\Properties\Id as ChoiceId;
 use App\Choice\Properties\IsDefault;
 use App\Choice\Properties\ListName;
 use App\Choice\Properties\Name;
@@ -17,6 +18,7 @@ use App\Choice\Properties\Position;
 use App\Choice\Properties\TeamId;
 use App\Shared\Types;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Facades\DB;
 
 final class FindChoice
@@ -66,7 +68,11 @@ final class FindChoice
 
         foreach ($list->usages() as $usage) {
             DB::table($usage['table']->value)
-                ->where('team_id', $teamId)
+                ->when(
+                    $usage['isPivot'],
+                    fn (QueryBuilder $query) => $query->whereIn($usage['column'], self::inList($teamId, $list)->select(ChoiceId::getDatabaseTableColumnName())),
+                    fn (QueryBuilder $query) => $query->where('team_id', $teamId),
+                )
                 ->whereNotNull($usage['column'])
                 ->select("{$usage['column']} as choice_id")
                 ->selectRaw('count(*) as aggregate')

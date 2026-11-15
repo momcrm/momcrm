@@ -20,12 +20,14 @@ enum ChoiceListEnum: string
     use Enum;
     use EnumOptions;
 
+    case TicketLabel = 'ticket_label';
     case TicketPriority = 'ticket_priority';
     case TicketStatus = 'ticket_status';
 
     public function label(): string
     {
         return match ($this) {
+            self::TicketLabel => 'Ticket labels',
             self::TicketPriority => 'Ticket priorities',
             self::TicketStatus => 'Ticket statuses',
         };
@@ -40,7 +42,7 @@ enum ChoiceListEnum: string
     public function categoryEnum(): ?string
     {
         return match ($this) {
-            self::TicketPriority => null,
+            self::TicketLabel, self::TicketPriority => null,
             self::TicketStatus => TicketStatusCategoryEnum::class,
         };
     }
@@ -53,7 +55,7 @@ enum ChoiceListEnum: string
     public function categoryOptions(): array
     {
         return match ($this) {
-            self::TicketPriority => [],
+            self::TicketLabel, self::TicketPriority => [],
             self::TicketStatus => TicketStatusCategoryEnum::options(),
         };
     }
@@ -67,21 +69,34 @@ enum ChoiceListEnum: string
     {
         return match ($this) {
             self::TicketPriority => ['chevrons-up', 'chevron-up', 'equal', 'chevron-down', 'minus'],
-            self::TicketStatus => [],
+            self::TicketLabel, self::TicketStatus => [],
         };
     }
 
     /**
-     * Where records point at the list's choices, so deleting one can move them.
+     * Where records point at the list's choices, so archiving one can move
+     * them and deleting one can count or clear them. A pivot table links many
+     * choices to one record and has no team column of its own.
      *
-     * @return list<array{table: Table, column: string}>
+     * @return list<array{table: Table, column: string, isPivot: bool}>
      */
     public function usages(): array
     {
         return match ($this) {
-            self::TicketPriority => [['table' => Table::Tickets, 'column' => 'priority_id']],
-            self::TicketStatus => [['table' => Table::Tickets, 'column' => 'status_id']],
+            self::TicketLabel => [['table' => Table::LabelTicket, 'column' => 'label_id', 'isPivot' => true]],
+            self::TicketPriority => [['table' => Table::Tickets, 'column' => 'priority_id', 'isPivot' => false]],
+            self::TicketStatus => [['table' => Table::Tickets, 'column' => 'status_id', 'isPivot' => false]],
         };
+    }
+
+    /**
+     * Whether a record may have none of the list's choices, as a ticket may
+     * have no labels. Such a list has no default, any of its choices can be
+     * archived, and deleting one simply takes it off the records that have it.
+     */
+    public function isOptional(): bool
+    {
+        return $this === self::TicketLabel;
     }
 
     /**
@@ -106,6 +121,7 @@ enum ChoiceListEnum: string
     public function defaults(): array
     {
         return match ($this) {
+            self::TicketLabel => [],
             self::TicketPriority => [
                 ['name' => 'Urgent', 'color' => ColorEnum::Rose, 'icon' => 'chevrons-up', 'category' => null, 'is_default' => false],
                 ['name' => 'High', 'color' => ColorEnum::Amber, 'icon' => 'chevron-up', 'category' => null, 'is_default' => false],

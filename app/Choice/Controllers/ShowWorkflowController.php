@@ -14,7 +14,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * The team's customisable lists (ticket statuses and priorities), for owners
+ * The team's customisable lists (ticket statuses, priorities and labels), for owners
  * and admins to edit, with how many records use each choice.
  */
 final class ShowWorkflowController
@@ -36,12 +36,13 @@ final class ShowWorkflowController
                     'label' => $list->label(),
                     'categories' => $list->categoryOptions(),
                     'icons' => $list->icons(),
+                    'is_optional' => $list->isOptional(),
                     'choices' => FindChoice::listForTeam($teamId, $list, withArchived: true)
                         ->map(fn (Choice $choice): array => [...$choice->toSummary(), 'usage' => $usage[$choice->getId()->toString()] ?? 0])
                         ->values()
                         ->all(),
                 ];
-            }, ChoiceListEnum::cases()),
+            }, [ChoiceListEnum::TicketStatus, ChoiceListEnum::TicketPriority, ChoiceListEnum::TicketLabel]),
         ]);
     }
 }

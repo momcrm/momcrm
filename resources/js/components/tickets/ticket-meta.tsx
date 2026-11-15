@@ -185,6 +185,16 @@ export function PriorityIcon({
     );
 }
 
+/**
+ * The team's live ticket labels in order, plus any archived ones among the
+ * given labels (such as the ticket's own).
+ */
+export function useTicketLabels(
+    ...inUseIds: (string | null | undefined)[]
+): Choice[] {
+    return liveOrInUse(usePage().props.choices?.ticket_label ?? [], inUseIds);
+}
+
 const dayFormatter = new Intl.DateTimeFormat(undefined, {
     day: 'numeric',
     month: 'short',

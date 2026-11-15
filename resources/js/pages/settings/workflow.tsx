@@ -50,6 +50,8 @@ type WorkflowList = {
     label: string;
     categories: Option[];
     icons: string[];
+    /** Records may have none, as tickets may have no labels: no default, and deleting takes it off them. */
+    is_optional: boolean;
     choices: WorkflowChoice[];
 };
 
@@ -92,7 +94,7 @@ export default function Workflow({ lists }: { lists: WorkflowList[] }) {
                 <Heading
                     variant="small"
                     title="Workflow"
-                    description="The statuses and priorities your team's tickets use. Changes apply to every ticket straight away."
+                    description="The statuses, priorities and labels your team's tickets use. Changes apply to every ticket straight away."
                 />
 
                 <ToggleGroup
@@ -104,21 +106,15 @@ export default function Workflow({ lists }: { lists: WorkflowList[] }) {
                         value && setCurrent(value as ChoiceList)
                     }
                 >
-                    {[...lists]
-                        .sort(
-                            (a, b) =>
-                                Number(b.value === 'ticket_status') -
-                                Number(a.value === 'ticket_status'),
-                        )
-                        .map((option) => (
-                            <ToggleGroupItem
-                                key={option.value}
-                                value={option.value}
-                                className="px-3"
-                            >
-                                {option.label}
-                            </ToggleGroupItem>
-                        ))}
+                    {lists.map((option) => (
+                        <ToggleGroupItem
+                            key={option.value}
+                            value={option.value}
+                            className="px-3"
+                        >
+                            {option.label}
+                        </ToggleGroupItem>
+                    ))}
                 </ToggleGroup>
 
                 <ListEditor key={list.value} list={list} />
@@ -216,6 +212,7 @@ function ListEditor({ list }: { list: WorkflowList }) {
                                             category.value === choice.category,
                                     )?.label
                                 }
+                                isOptional={list.is_optional}
                             />
                         ))}
                     </ul>
@@ -241,6 +238,7 @@ function ChoiceRow({
     onMove: (direction: -1 | 1) => void;
 }) {
     const [archiving, setArchiving] = useState(false);
+    const [deleting, setDeleting] = useState(false);
     const save = (fields: Record<string, unknown>) =>
         router.patch(update.url(choice.id), fields as never, saveOptions);
     const Icon = choice.icon ? priorityIcons[choice.icon] : null;
@@ -392,21 +390,37 @@ function ChoiceRow({
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
+                    {!list.is_optional && (
+                        <>
+                            <DropdownMenuItem
+                                disabled={choice.is_default}
+                                onSelect={() => save({ is_default: true })}
+                            >
+                                <Star />
+                                Make default
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                        </>
+                    )}
                     <DropdownMenuItem
-                        disabled={choice.is_default}
-                        onSelect={() => save({ is_default: true })}
-                    >
-                        <Star />
-                        Make default
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                        disabled={choice.is_default || siblings.length <= 1}
+                        disabled={
+                            !list.is_optional &&
+                            (choice.is_default || siblings.length <= 1)
+                        }
                         onSelect={() => setArchiving(true)}
                     >
                         <Archive />
                         Archive
                     </DropdownMenuItem>
+                    {list.is_optional && (
+                        <DropdownMenuItem
+                            variant="destructive"
+                            onSelect={() => setDeleting(true)}
+                        >
+                            <Trash2 />
+                            Delete
+                        </DropdownMenuItem>
+                    )}
                 </DropdownMenuContent>
             </DropdownMenu>
 
@@ -414,15 +428,24 @@ function ChoiceRow({
                 open={archiving}
                 onOpenChange={setArchiving}
                 choice={choice}
-                replacements={siblings.filter((item) => item.id !== choice.id)}
+                replacements={
+                    list.is_optional
+                        ? []
+                        : siblings.filter((item) => item.id !== choice.id)
+                }
+            />
+            <DeleteChoiceDialog
+                open={deleting}
+                onOpenChange={setDeleting}
+                choice={choice}
             />
         </li>
     );
 }
 
 /**
- * Archives a choice. Its tickets keep it unless moved to another choice of
- * the same kind.
+ * Archives a choice. Its tickets keep it, unless moved to another choice of
+ * the same kind (offered only when there are replacements, so not for labels).
  */
 function ArchiveChoiceDialog({
     open,
@@ -445,9 +468,9 @@ function ArchiveChoiceDialog({
                 <DialogDescription>
                     {choice.usage === 0
                         ? "It won't be offered for tickets any more. You can restore it later."
-                        : `It won't be offered for tickets any more. ${choice.usage === 1 ? 'The 1 ticket that uses it keeps' : `The ${choice.usage} tickets that use it keep`} it, unless you move ${choice.usage === 1 ? 'it' : 'them'}.`}
+                        : `It won't be offered for tickets any more. ${choice.usage === 1 ? 'The 1 ticket that uses it keeps' : `The ${choice.usage} tickets that use it keep`} it${replacements.length > 0 ? `, unless you move ${choice.usage === 1 ? 'it' : 'them'}` : ''}.`}
                 </DialogDescription>
-                {choice.usage > 0 && (
+                {choice.usage > 0 && replacements.length > 0 && (
                     <NativeSelect
                         aria-label="Tickets that use it"
                         value={replacementId}
@@ -498,12 +521,14 @@ function ArchiveChoiceDialog({
 function ArchivedChoiceRow({
     choice,
     category,
+    isOptional,
 }: {
     choice: WorkflowChoice;
     category?: string;
+    isOptional: boolean;
 }) {
     const [deleting, setDeleting] = useState(false);
-    const [processing, setProcessing] = useState(false);
+    const canDelete = isOptional || choice.usage === 0;
 
     return (
         <li className="flex h-11 items-center gap-2 px-3">
@@ -539,48 +564,71 @@ function ArchivedChoiceRow({
                 className="size-7"
                 aria-label={`Delete ${choice.name}`}
                 title={
-                    choice.usage > 0
-                        ? 'Tickets still use it, so it can only stay archived.'
-                        : undefined
+                    canDelete
+                        ? undefined
+                        : 'Tickets still use it, so it can only stay archived.'
                 }
-                disabled={choice.usage > 0}
+                disabled={!canDelete}
                 onClick={() => setDeleting(true)}
             >
                 <Trash2 />
             </Button>
 
-            <Dialog open={deleting} onOpenChange={setDeleting}>
-                <DialogContent>
-                    <DialogTitle>Delete {choice.name}?</DialogTitle>
-                    <DialogDescription>
-                        No tickets use it. It will be gone for good, and
-                        can&apos;t be restored.
-                    </DialogDescription>
-                    <DialogFooter className="gap-2">
-                        <Button
-                            variant="ghost"
-                            onClick={() => setDeleting(false)}
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            variant="destructive"
-                            disabled={processing}
-                            onClick={() =>
-                                router.delete(destroy.url(choice.id), {
-                                    ...saveOptions,
-                                    onStart: () => setProcessing(true),
-                                    onFinish: () => setProcessing(false),
-                                    onSuccess: () => setDeleting(false),
-                                })
-                            }
-                        >
-                            Delete
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            <DeleteChoiceDialog
+                open={deleting}
+                onOpenChange={setDeleting}
+                choice={choice}
+            />
         </li>
+    );
+}
+
+/**
+ * Deletes a choice for good. Only a label can go while tickets have it, and
+ * it comes off them.
+ */
+function DeleteChoiceDialog({
+    open,
+    onOpenChange,
+    choice,
+}: {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    choice: WorkflowChoice;
+}) {
+    const [processing, setProcessing] = useState(false);
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogTitle>Delete {choice.name}?</DialogTitle>
+                <DialogDescription>
+                    {choice.usage === 0
+                        ? 'No tickets use it.'
+                        : `It comes off the ${choice.usage === 1 ? '1 ticket that has it' : `${choice.usage} tickets that have it`}.`}{' '}
+                    It will be gone for good, and can&apos;t be restored.
+                </DialogDescription>
+                <DialogFooter className="gap-2">
+                    <Button variant="ghost" onClick={() => onOpenChange(false)}>
+                        Cancel
+                    </Button>
+                    <Button
+                        variant="destructive"
+                        disabled={processing}
+                        onClick={() =>
+                            router.delete(destroy.url(choice.id), {
+                                ...saveOptions,
+                                onStart: () => setProcessing(true),
+                                onFinish: () => setProcessing(false),
+                                onSuccess: () => onOpenChange(false),
+                            })
+                        }
+                    >
+                        Delete
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 }
 
@@ -592,7 +640,11 @@ function AddChoice({
     category: string | null;
 }) {
     const [name, setName] = useState('');
-    const noun = list.value === 'ticket_status' ? 'status' : 'priority';
+    const noun = {
+        ticket_label: 'label',
+        ticket_priority: 'priority',
+        ticket_status: 'status',
+    }[list.value];
 
     return (
         <li>

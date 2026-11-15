@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Ticket\Properties;
 
-use App\Label\LabelCollection;
+use App\Choice\ChoiceCollection;
 use App\Shared\Abstracts\AbstractRelatedDataCollection;
 
 /**
- * The ticket's labels, when loaded.
+ * The ticket's labels (its "ticket_label" choices), when loaded.
  */
 final class Labels extends AbstractRelatedDataCollection
 {
@@ -19,13 +19,13 @@ final class Labels extends AbstractRelatedDataCollection
 
     public static function collectionClass(): string
     {
-        return LabelCollection::class;
+        return ChoiceCollection::class;
     }
 
-    public function toDataCollection(): LabelCollection
+    public function toDataCollection(): ChoiceCollection
     {
         $collection = parent::toDataCollection();
 
-        return $collection instanceof LabelCollection ? $collection : new LabelCollection;
+        return $collection instanceof ChoiceCollection ? $collection : new ChoiceCollection;
     }
 }

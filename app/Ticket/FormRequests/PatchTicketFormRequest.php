@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Ticket\FormRequests;
 
-use App\Shared\Table;
 use App\Shared\Types;
 use App\Ticket\Actions\FindTicket;
 use App\Ticket\Actions\UpdateTicket;
@@ -21,7 +20,6 @@ use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Arr;
-use Illuminate\Validation\Rule;
 
 /**
  * Changes one or a few fields of a ticket in place, as the drawer's inline
@@ -62,7 +60,7 @@ final class PatchTicketFormRequest extends FormRequest
             ...TicketValidationRules::for($this, $teamId, $this->ticket->getProjectId()->toNullableString(), $this->ticket->getPriorityId()->toNullableString()),
             ...TicketValidationRules::status($this, $teamId, currentStatusId: $this->ticket->getStatusId()->toNullableString()),
             self::LABEL_IDS => ['sometimes', 'array'],
-            self::LABEL_IDS.'.*' => ['uuid', Rule::exists(Table::Labels->value, 'id')->where('team_id', $teamId)],
+            self::LABEL_IDS.'.*' => ['uuid', TicketValidationRules::label($teamId, $this->ticket->getId()->toString())],
         ];
     }
 

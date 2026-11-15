@@ -22,7 +22,6 @@ enum Table: string
     case InvoiceItems = 'invoice_items';
     case Invoices = 'invoices';
     case LabelTicket = 'label_ticket';
-    case Labels = 'labels';
     case Locations = 'locations';
     case Milestones = 'milestones';
     case Notifications = 'notifications';

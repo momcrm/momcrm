@@ -21,7 +21,9 @@ use App\Ticket\Properties\StatusId;
 use App\Ticket\Properties\Title;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Exists;
 
 /**
  * Rules shared by opening and editing a ticket. The customer must be in the
@@ -102,6 +104,20 @@ final class TicketValidationRules
                     ->where(fn (Builder $query) => $query->whereNull('archived_at')->orWhere('id', $currentStatusId)),
             ],
         ];
+    }
+
+    /**
+     * The rule for one label id: one of the team's live labels, or one the
+     * ticket already has, so a ticket keeps an archived label when edited.
+     */
+    public static function label(string $teamId, ?string $ticketId = null): Exists
+    {
+        return Rule::exists(Table::Choices->value, 'id')
+            ->where('team_id', $teamId)
+            ->where('list', ChoiceListEnum::TicketLabel->value)
+            ->where(fn (Builder $query) => $query
+                ->whereNull('archived_at')
+                ->orWhereIn('id', DB::table(Table::LabelTicket->value)->select('label_id')->where('ticket_id', $ticketId)));
     }
 
     /**

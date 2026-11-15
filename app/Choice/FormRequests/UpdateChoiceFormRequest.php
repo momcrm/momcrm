@@ -69,7 +69,7 @@ final class UpdateChoiceFormRequest extends FormRequest
             ],
             Color::getNameForValidation() => ['sometimes', ...Color::getValidationRulesForCreate($this)],
             Icon::getNameForValidation() => ['sometimes', 'nullable', Rule::in($this->choice->getListName()->toEnum()->icons())],
-            IsDefault::getNameForValidation() => ['sometimes', 'accepted', ...($this->choice->isArchived() ? ['prohibited'] : [])],
+            IsDefault::getNameForValidation() => ['sometimes', 'accepted', ...($this->choice->isArchived() || $this->choice->getListName()->toEnum()->isOptional() ? ['prohibited'] : [])],
         ];
     }
 
@@ -81,7 +81,9 @@ final class UpdateChoiceFormRequest extends FormRequest
         return [
             Name::getNameForValidation().'.unique' => __('That name is already in this list, or in its archive.'),
             IsDefault::getNameForValidation().'.accepted' => __('Make another choice the default instead.'),
-            IsDefault::getNameForValidation().'.prohibited' => __('Restore :name before making it the default.', ['name' => $this->choice->getName()->toString()]),
+            IsDefault::getNameForValidation().'.prohibited' => $this->choice->getListName()->toEnum()->isOptional()
+                ? __('This list has no default.')
+                : __('Restore :name before making it the default.', ['name' => $this->choice->getName()->toString()]),
         ];
     }
 
