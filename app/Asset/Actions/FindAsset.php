@@ -35,7 +35,7 @@ final class FindAsset
             ->orderBy(Name::getDatabaseTableColumnName())
             ->get();
 
-        return Asset::collect($models, 'fromEloquentModel');
+        return Asset::collect($models->all(), 'fromEloquentModel');
     }
 
     /**

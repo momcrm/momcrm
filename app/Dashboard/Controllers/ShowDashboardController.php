@@ -14,6 +14,7 @@ use App\Project\Actions\FindProject;
 use App\Project\Controllers\ListProjectsController;
 use App\Project\ProjectEloquentModel;
 use App\Project\ProjectStatusEnum;
+use App\Shared\Types;
 use App\Team\Scopes\CurrentTeamScope;
 use App\Ticket\Actions\FindTicket;
 use App\Ticket\Controllers\ListTicketsController;
@@ -47,7 +48,7 @@ final class ShowDashboardController
                 ...WorkspaceNumbers::headline($teamId),
                 'customers' => CustomerEloquentModel::query()->withoutGlobalScope(CurrentTeamScope::class)->where(CustomerTeamId::getDatabaseTableColumnName(), $teamId)->count(),
                 'unpaid_invoices' => $unpaid->count(),
-                'unpaid_total_in_cents' => (int) $unpaid->sum('total_in_cents'),
+                'unpaid_total_in_cents' => Types::intOrZero($unpaid->sum('total_in_cents')),
                 'overdue_invoices' => $unpaid->where('is_overdue', true)->count(),
             ],
             'myTickets' => FindTicket::assignedTo($teamId, $user->id)

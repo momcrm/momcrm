@@ -35,7 +35,7 @@ final class UpdateTeamFormRequest extends FormRequest
     {
         $this->team = FindTeam::byIdForMember(
             id: $this->user()?->current_team_id,
-            userId: (string) $this->user()?->getAuthIdentifier(),
+            userId: (string) $this->user()?->id,
         );
 
         if ($this->team->isNull()) {
@@ -46,7 +46,7 @@ final class UpdateTeamFormRequest extends FormRequest
     }
 
     /**
-     * @return array<string, array<int, mixed>>
+     * @return array<string, array<array-key, mixed>>
      */
     public function rules(): array
     {
@@ -63,7 +63,7 @@ final class UpdateTeamFormRequest extends FormRequest
 
         RecordActivity::for(
             type: ActivityTypeEnum::TeamRenamed,
-            userId: (string) $this->user()?->getAuthIdentifier(),
+            userId: (string) $this->user()?->id,
             teamId: $this->team->getId()->toString(),
             details: ['from' => $previousName, 'to' => $this->team->getName()->toString()],
         );

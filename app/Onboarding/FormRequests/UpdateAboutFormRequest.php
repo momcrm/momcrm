@@ -17,7 +17,7 @@ final class UpdateAboutFormRequest extends FormRequest
     /**
      * Every answer is optional: a skipped question is sent as null.
      *
-     * @return array<string, array<int, mixed>>
+     * @return array<string, array<array-key, mixed>>
      */
     public function rules(): array
     {

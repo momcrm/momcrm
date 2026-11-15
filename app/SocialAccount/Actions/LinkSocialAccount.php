@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\SocialAccount\Actions;
 
 use App\Auth\AuthSession;
+use App\Shared\Types;
 use App\SocialAccount\Properties\Id;
 use App\SocialAccount\Properties\Provider;
 use App\SocialAccount\Properties\ProviderUserId;
@@ -60,11 +61,11 @@ final readonly class LinkSocialAccount
     {
         $pending = $session->pull(AuthSession::PENDING_SOCIAL);
 
-        if (! is_array($pending) || mb_strtolower((string) ($pending['email'] ?? '')) !== mb_strtolower($user->email)) {
+        if (! is_array($pending) || mb_strtolower(Types::string($pending['email'] ?? '')) !== mb_strtolower($user->email)) {
             return;
         }
 
-        $provider = SocialProviderEnum::tryFrom((string) ($pending['provider'] ?? ''));
+        $provider = SocialProviderEnum::tryFrom(Types::string($pending['provider'] ?? ''));
 
         if ($provider !== null && is_string($pending['provider_user_id'] ?? null)) {
             self::forUser($user, $provider, $pending['provider_user_id'], $user->email);

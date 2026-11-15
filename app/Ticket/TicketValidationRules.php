@@ -36,8 +36,8 @@ final class TicketValidationRules
      */
     public static function for(FormRequest $request, string $teamId, ?string $currentProjectId = null): array
     {
-        $customerId = (string) $request->input(CustomerId::getNameForValidation());
-        $userId = (string) $request->user()?->getAuthIdentifier();
+        $customerId = $request->string(CustomerId::getNameForValidation())->toString();
+        $userId = (string) $request->user()?->id;
 
         return [
             CustomerId::getNameForValidation() => [

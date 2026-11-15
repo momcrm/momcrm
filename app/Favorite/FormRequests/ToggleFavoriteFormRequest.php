@@ -24,7 +24,7 @@ final class ToggleFavoriteFormRequest extends FormRequest
      */
     public function rules(): array
     {
-        $type = FavoritableTypeEnum::tryFrom((string) $this->input(FavoritableType::getNameForValidation()));
+        $type = FavoritableTypeEnum::tryFrom($this->string(FavoritableType::getNameForValidation())->toString());
 
         return [
             FavoritableType::getNameForValidation() => ['required', Rule::enum(FavoritableTypeEnum::class)],
@@ -40,7 +40,7 @@ final class ToggleFavoriteFormRequest extends FormRequest
     {
         ToggleFavorite::for(
             teamId: (string) $this->user()?->current_team_id,
-            userId: (string) $this->user()?->getAuthIdentifier(),
+            userId: (string) $this->user()?->id,
             type: FavoritableTypeEnum::from($this->string(FavoritableType::getNameForValidation())->toString()),
             favoritableId: $this->string(FavoritableId::getNameForValidation())->toString(),
         );

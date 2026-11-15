@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\TeamInvitation\FormRequests;
 
 use App\Shared\Table;
+use App\Shared\Types;
 use App\Team\Actions\FindTeam;
 use App\Team\Exceptions\CouldNotUpdateTeam;
 use App\Team\Team;
@@ -46,7 +47,7 @@ final class StoreTeamInvitationsFormRequest extends FormRequest
     {
         $this->team = FindTeam::byIdForMember(
             id: $this->user()?->current_team_id,
-            userId: (string) $this->user()?->getAuthIdentifier(),
+            userId: (string) $this->user()?->id,
         );
 
         if ($this->team->isNull()) {
@@ -89,14 +90,14 @@ final class StoreTeamInvitationsFormRequest extends FormRequest
     {
         /** @var array<int, string> $emails */
         $emails = $this->validated('email_list');
-        $role = TeamRoleEnum::from((string) $this->validated(Role::getNameForValidation()));
+        $role = TeamRoleEnum::from(Types::string($this->validated(Role::getNameForValidation())));
         $inviter = User::fromEloquentModel($this->user());
 
         $members = UserEloquentModel::query()
             ->whereIn(UserEmail::getDatabaseTableColumnName(), $emails)
             ->whereHas(UserRelationship::Teams->value, fn ($query) => $query->where(TeamId::getDatabaseTableColumnNameWithTable(Table::TeamUser), $this->team->getId()->toString()))
             ->pluck(UserEmail::getDatabaseTableColumnName())
-            ->map(fn (string $email): string => mb_strtolower($email))
+            ->map(fn (mixed $email): string => mb_strtolower(Types::string($email)))
             ->all();
 
         $invited = array_values(array_diff($emails, $members));
@@ -116,7 +117,7 @@ final class StoreTeamInvitationsFormRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        $emails = preg_split('/[\s,;]+/', (string) $this->input('emails'), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $emails = preg_split('/[\s,;]+/', $this->string('emails')->toString(), -1, PREG_SPLIT_NO_EMPTY) ?: [];
 
         $this->merge([
             'email_list' => array_values(array_unique(array_map(mb_strtolower(...), $emails))),

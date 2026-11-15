@@ -14,6 +14,7 @@ use App\Milestone\Properties\DueOn as MilestoneDueOn;
 use App\Milestone\Properties\ProjectId as MilestoneProjectId;
 use App\Shared\MorphMapKeyEnum;
 use App\Shared\Table;
+use App\Shared\Types;
 use App\Team\Scopes\CurrentTeamScope;
 use App\Ticket\Controllers\ListTicketsController;
 use App\Ticket\Properties\ArchivedAt;
@@ -25,6 +26,7 @@ use App\Ticket\TicketEloquentModel;
 use App\Ticket\TicketRelationship;
 use App\Ticket\TicketStatusEnum;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 
 /**
  * What a project's Overview tab shows: tickets per status, what's due next,
@@ -46,8 +48,8 @@ final class ProjectOverview
         $statusCounts = $tickets()
             ->selectRaw('status, count(*) as aggregate')
             ->groupBy(Status::getDatabaseTableColumnName())
-            ->pluck('aggregate', 'status')
-            ->map(fn (mixed $count): int => (int) $count)
+            ->get()
+            ->mapWithKeys(fn (TicketEloquentModel $row): array => [$row->status => Types::int($row->getAttribute('aggregate'))])
             ->all();
 
         return [
@@ -83,7 +85,7 @@ final class ProjectOverview
                         ->where(SubjectId::getDatabaseTableColumnName(), $projectId))
                     ->orWhere(fn (Builder $query) => $query
                         ->where(SubjectType::getDatabaseTableColumnName(), MorphMapKeyEnum::Ticket->value)
-                        ->whereIn(SubjectId::getDatabaseTableColumnName(), fn ($tickets) => $tickets
+                        ->whereIn(SubjectId::getDatabaseTableColumnName(), fn (QueryBuilder $tickets) => $tickets
                             ->select('id')
                             ->from(Table::Tickets->value)
                             ->where(ProjectId::getDatabaseTableColumnName(), $projectId))))

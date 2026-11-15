@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Inbox\Actions;
 
 use App\Inbox\InboxKindEnum;
+use App\Shared\Types;
 use App\User\UserEloquentModel;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Notifications\DatabaseNotification;
@@ -44,10 +45,10 @@ final class FindNotifications
         $counts = self::query($user)
             ->whereNull('read_at')
             ->get(['data'])
-            ->countBy(fn (DatabaseNotification $notification): string => (string) ($notification->data['kind'] ?? ''));
+            ->countBy(fn (DatabaseNotification $notification): string => Types::string($notification->data['kind'] ?? ''));
 
         return [
-            'all' => $counts->sum(),
+            'all' => Types::intOrZero($counts->sum()),
             ...collect(InboxKindEnum::cases())->mapWithKeys(fn (InboxKindEnum $kind): array => [$kind->value => (int) $counts->get($kind->value, 0)])->all(),
         ];
     }
@@ -87,8 +88,8 @@ final class FindNotifications
             'read_at' => $notification->read_at?->toIso8601String(),
             'created_at' => $notification->created_at?->toIso8601String(),
             'url' => ($data['subject_type'] ?? null) === 'project'
-                ? route('projects.show', (string) $data['subject_id'])
-                : route('tickets.index', ['ticket' => (string) ($data['subject_id'] ?? '')]),
+                ? route('projects.show', Types::string($data['subject_id']))
+                : route('tickets.index', ['ticket' => Types::string($data['subject_id'] ?? '')]),
         ];
     }
 }

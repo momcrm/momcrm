@@ -16,6 +16,7 @@ use App\AccessRule\Properties\Name;
 use App\AccessRule\Properties\Resources;
 use App\AccessRule\Properties\TeamId;
 use App\AccessRule\Properties\UpdatedAt;
+use App\Shared\Types;
 use Mom\Data\AbstractData;
 use Mom\Data\AbstractValue;
 
@@ -177,8 +178,8 @@ final class AccessRule extends AbstractData
         return [
             'id' => $this->getId()->toString(),
             'name' => $this->getName()->toString(),
-            'resources' => array_values(array_map(strval(...), $this->getResources()->toArray())),
-            'actions' => array_values(array_map(strval(...), $this->getActions()->toArray())),
+            'resources' => Types::stringList($this->getResources()->toArray()),
+            'actions' => Types::stringList($this->getActions()->toArray()),
             'effect' => $this->getEffect()->toEnum()->value,
             'conditions' => array_map(fn (AccessCondition $condition): array => $condition->toArray(), $this->conditionObjects()),
             'is_enabled' => $this->getIsEnabled()->toBoolean(),

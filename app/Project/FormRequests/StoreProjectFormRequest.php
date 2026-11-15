@@ -7,6 +7,7 @@ namespace App\Project\FormRequests;
 use App\Project\Actions\CreateProject;
 use App\Project\Project;
 use App\Project\ProjectValidationRules;
+use App\Shared\Types;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
@@ -40,16 +41,16 @@ final class StoreProjectFormRequest extends FormRequest
     public function process(): RedirectResponse
     {
         $validated = $this->validated();
-        $userId = (string) $this->user()?->getAuthIdentifier();
+        $userId = (string) $this->user()?->id;
         $project = Project::new()
-            ->setPropertyIfExists(Arr::except($validated, ProjectValidationRules::MEMBER_IDS))
+            ->setPropertyIfExists(Types::stringKeyed(Arr::except($validated, ProjectValidationRules::MEMBER_IDS)))
             ->setTeamId((string) $this->user()?->current_team_id);
 
         if ($project->getLeadId()->isNull()) {
             $project->setLeadId($userId);
         }
 
-        $project = CreateProject::fromProject($project, createdById: $userId, memberIds: [$userId, ...($validated[ProjectValidationRules::MEMBER_IDS] ?? [])]);
+        $project = CreateProject::fromProject($project, createdById: $userId, memberIds: [$userId, ...Types::stringList($validated[ProjectValidationRules::MEMBER_IDS] ?? [])]);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __(':name created.', ['name' => $project->getName()->toString()])]);
 

@@ -65,7 +65,7 @@ final class FindTeam
             ->orderBy(Name::getDatabaseTableColumnNameWithTable(Table::Teams))
             ->get();
 
-        return Team::collect($teams, 'fromEloquentModel');
+        return Team::collect($teams->all(), 'fromEloquentModel');
     }
 
     /**

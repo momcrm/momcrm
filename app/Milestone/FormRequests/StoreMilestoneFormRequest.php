@@ -32,7 +32,7 @@ final class StoreMilestoneFormRequest extends FormRequest
      */
     public function authorize(): Response
     {
-        $this->project = FindProject::visibleByIdForTeam((string) $this->route('project'), $this->user()?->current_team_id, (string) $this->user()?->getAuthIdentifier());
+        $this->project = FindProject::visibleByIdForTeam((string) $this->route('project'), $this->user()?->current_team_id, (string) $this->user()?->id);
 
         if ($this->project->isNull()) {
             throw CouldNotFindProject::notFound();

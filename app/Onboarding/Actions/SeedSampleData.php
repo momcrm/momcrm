@@ -334,7 +334,7 @@ final readonly class SeedSampleData
      */
     private function seedLabels(): array
     {
-        $existing = FindLabel::optionsForTeam($this->teamId)->pluck('id', 'name')->all();
+        $existing = FindLabel::optionsForTeam($this->teamId)->mapWithKeys(fn (array $label): array => [$label['name'] => $label['id']])->all();
 
         foreach (self::LABELS as $name => $color) {
             $existing[$name] ??= CreateLabel::fromLabel(Label::new()->setTeamId($this->teamId)->setName($name)->setColor($color))

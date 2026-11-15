@@ -6,6 +6,7 @@ namespace App\Activity\Listeners;
 
 use App\Activity\Actions\RecordActivity;
 use App\Activity\ActivityTypeEnum;
+use App\Shared\Types;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Auth\Events\PasswordReset;
@@ -53,7 +54,7 @@ final class RecordAccountActivity
             return;
         }
 
-        RecordActivity::for(type: $type, userId: (string) $user->getAuthIdentifier());
+        RecordActivity::for(type: $type, userId: Types::string($user->getAuthIdentifier()));
     }
 
     private static function typeFor(object $event): ?ActivityTypeEnum

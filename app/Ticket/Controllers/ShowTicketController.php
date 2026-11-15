@@ -34,7 +34,7 @@ final class ShowTicketController
         $contact = FindContact::byIdForTeam($found->getContactId()->toNullableString(), $teamId);
         $location = FindLocation::byIdForTeam($found->getLocationId()->toNullableString(), $teamId);
         $customer = FindCustomer::byIdForTeam($found->getCustomerId()->toNullableString(), $teamId);
-        $project = FindProject::visibleByIdForTeam($found->getProjectId()->toNullableString(), $teamId, (string) $request->user()?->getAuthIdentifier());
+        $project = FindProject::visibleByIdForTeam($found->getProjectId()->toNullableString(), $teamId, (string) $request->user()?->id);
 
         return Inertia::render('tickets/show', [
             'ticket' => $found->toSummary(),

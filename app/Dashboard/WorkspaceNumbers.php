@@ -24,6 +24,7 @@ use App\Project\Properties\ArchivedAt as ProjectArchivedAt;
 use App\Project\Properties\Status as ProjectStatus;
 use App\Project\Properties\TeamId as ProjectTeamId;
 use App\Shared\MorphMapKeyEnum;
+use App\Shared\Types;
 use App\Team\Scopes\CurrentTeamScope;
 use App\TeamUser\Actions\FindTeamMembers;
 use App\Ticket\Controllers\ListTicketsController;
@@ -97,8 +98,8 @@ final class WorkspaceNumbers
         return self::tickets($teamId)
             ->selectRaw('status, count(*) as aggregate')
             ->groupBy(Status::getDatabaseTableColumnName())
-            ->pluck('aggregate', 'status')
-            ->map(fn (mixed $count): int => (int) $count)
+            ->get()
+            ->mapWithKeys(fn (TicketEloquentModel $row): array => [$row->status => Types::int($row->getAttribute('aggregate'))])
             ->all();
     }
 
@@ -113,13 +114,13 @@ final class WorkspaceNumbers
             ->whereNotNull(AssigneeId::getDatabaseTableColumnName())
             ->selectRaw('assignee_id, status, count(*) as aggregate')
             ->groupBy(AssigneeId::getDatabaseTableColumnName(), Status::getDatabaseTableColumnName())
-            ->get()
-            ->groupBy(AssigneeId::getDatabaseTableColumnName());
+            ->get();
 
         return FindTeamMembers::optionsForTeam($teamId)
             ->map(function (array $member) use ($counts): array {
-                $statuses = collect($counts->get($member['id'], []))
-                    ->mapWithKeys(fn (TicketEloquentModel $row): array => [$row->status => (int) $row->getAttribute('aggregate')])
+                $statuses = $counts
+                    ->where(AssigneeId::getDatabaseTableColumnName(), $member['id'])
+                    ->mapWithKeys(fn (TicketEloquentModel $row): array => [$row->status => Types::int($row->getAttribute('aggregate'))])
                     ->all();
 
                 return ['id' => $member['id'], 'name' => $member['name'], 'total' => array_sum($statuses), 'statuses' => $statuses];
@@ -176,8 +177,8 @@ final class WorkspaceNumbers
             ->map(fn (ActivityEloquentModel $model): array => [
                 ...Activity::fromEloquentModel($model)->toListItem($model->actor?->name),
                 'url' => match ($model->getAttribute(SubjectType::getDatabaseTableColumnName())) {
-                    MorphMapKeyEnum::Ticket->value => route('tickets.index', ['ticket' => (string) $model->getAttribute(SubjectId::getDatabaseTableColumnName())]),
-                    MorphMapKeyEnum::Project->value => route('projects.show', (string) $model->getAttribute(SubjectId::getDatabaseTableColumnName())),
+                    MorphMapKeyEnum::Ticket->value => route('tickets.index', ['ticket' => Types::string($model->getAttribute(SubjectId::getDatabaseTableColumnName()))]),
+                    MorphMapKeyEnum::Project->value => route('projects.show', Types::string($model->getAttribute(SubjectId::getDatabaseTableColumnName()))),
                     default => null,
                 },
             ])

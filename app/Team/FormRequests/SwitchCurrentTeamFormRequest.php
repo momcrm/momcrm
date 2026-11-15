@@ -33,7 +33,7 @@ final class SwitchCurrentTeamFormRequest extends FormRequest
     {
         $team = FindTeam::byIdForMember(
             id: $this->string('team_id')->toString(),
-            userId: (string) $this->user()?->getAuthIdentifier(),
+            userId: (string) $this->user()?->id,
         );
 
         if ($team->isNull()) {

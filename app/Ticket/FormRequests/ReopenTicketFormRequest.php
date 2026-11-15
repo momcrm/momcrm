@@ -52,7 +52,7 @@ final class ReopenTicketFormRequest extends FormRequest
     {
         UpdateTicket::fromTicket(
             $this->ticket->setStatus(TicketStatusEnum::InProgress),
-            updatedById: (string) $this->user()?->getAuthIdentifier(),
+            updatedById: (string) $this->user()?->id,
         );
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Ticket #:number reopened.', ['number' => $this->ticket->getNumber()->toInteger()])]);

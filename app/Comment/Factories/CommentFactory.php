@@ -10,6 +10,7 @@ use App\Comment\Properties\Mentions;
 use App\Comment\Properties\TeamId;
 use App\Comment\Properties\TicketId;
 use App\Comment\Properties\UserId;
+use App\Shared\Types;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -28,10 +29,10 @@ final class CommentFactory extends Factory
     {
         return [
             TicketId::getDatabaseTableColumnName() => TicketEloquentModel::factory(),
-            TeamId::getDatabaseTableColumnName() => fn (array $attributes): string => (string) TicketEloquentModel::query()
+            TeamId::getDatabaseTableColumnName() => fn (array $attributes): string => Types::string(TicketEloquentModel::query()
                 ->withoutGlobalScopes()
                 ->whereKey($attributes[TicketId::getDatabaseTableColumnName()])
-                ->value('team_id'),
+                ->value('team_id')),
             UserId::getDatabaseTableColumnName() => UserEloquentModel::factory(),
             Body::getDatabaseTableColumnName() => fake()->sentence(),
             Mentions::getDatabaseTableColumnName() => null,

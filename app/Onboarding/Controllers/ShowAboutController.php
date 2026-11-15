@@ -34,14 +34,14 @@ final class ShowAboutController
     }
 
     /**
-     * @param  array<int, OnboardingUseCaseEnum|OnboardingRoleEnum|OnboardingTeamSizeEnum>  $cases
-     * @return array<int, array{value: string, label: string}>
+     * @param  array<OnboardingUseCaseEnum|OnboardingRoleEnum|OnboardingTeamSizeEnum>  $cases
+     * @return list<array{value: string, label: string}>
      */
     private static function options(array $cases): array
     {
-        return array_map(
+        return array_values(array_map(
             fn (BackedEnum $case): array => ['value' => (string) $case->value, 'label' => $case->label()],
             $cases,
-        );
+        ));
     }
 }

@@ -49,7 +49,7 @@ final class ArchiveTicketFormRequest extends FormRequest
 
     public function process(): RedirectResponse
     {
-        ArchiveTicket::archive($this->ticket, userId: (string) $this->user()?->getAuthIdentifier());
+        ArchiveTicket::archive($this->ticket, userId: (string) $this->user()?->id);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Ticket #:number archived.', ['number' => $this->ticket->getNumber()->toInteger()])]);
 

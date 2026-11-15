@@ -10,6 +10,7 @@ use App\AuditLog\Properties\AuditableType;
 use App\AuditLog\Properties\TeamId;
 use App\AuditLog\Properties\UserId;
 use App\Shared\MorphMapKeyEnum;
+use App\Shared\Types;
 use Illuminate\Database\Eloquent\Builder;
 
 final readonly class PurgeAccountAuditLogs
@@ -24,14 +25,14 @@ final readonly class PurgeAccountAuditLogs
      */
     public function __invoke(): int
     {
-        return AuditLogEloquentModel::query()
+        return Types::int(AuditLogEloquentModel::query()
             ->where(fn (Builder $query) => $query
                 ->where(UserId::getDatabaseTableColumnName(), $this->userId)
                 ->whereNull(TeamId::getDatabaseTableColumnName()))
             ->orWhere(fn (Builder $query) => $query
                 ->where(AuditableType::getDatabaseTableColumnName(), MorphMapKeyEnum::User->value)
                 ->where(AuditableId::getDatabaseTableColumnName(), $this->userId))
-            ->delete();
+            ->delete());
     }
 
     public static function fromUserId(string $userId): int

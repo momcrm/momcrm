@@ -10,6 +10,7 @@ use App\AccessRule\Properties\Effect;
 use App\AccessRule\Properties\IsEnabled;
 use App\AccessRule\Properties\Name;
 use App\AccessRule\Properties\Resources;
+use App\Shared\Types;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -104,8 +105,11 @@ final class AccessRuleValidationRules
 
             $allowed = array_column(AccessRuleFormOptions::valuesFor($attribute, $teamId, $userId), 'value');
             $values = $operator->takesList() ? $value : [$value];
+            $isValid = is_array($values)
+                && $values !== []
+                && collect($values)->every(fn (mixed $item): bool => is_string($item) && in_array($item, $allowed, true));
 
-            if (! is_array($values) || $values === [] || array_diff($values, $allowed) !== [] || ($operator->takesList() === false && ! is_string($value))) {
+            if (! $isValid) {
                 $validator->errors()->add("conditions.{$index}.value", $operator->takesList() ? __('Choose one or more values.') : __('Choose a value.'));
             }
         }
@@ -113,26 +117,26 @@ final class AccessRuleValidationRules
 
     /**
      * The conditions as stored: a value only where the operator needs one, a
-     * list only where it takes one.
+     * list only where it takes one. Takes validated input.
      *
-     * @param  array<int, array{attribute: string, operator: string, value?: mixed}>  $conditions
-     * @return array<int, array{attribute: string, operator: string, value: string|array<int, string>|null}>
+     * @return list<array{attribute: string, operator: string, value: string|list<string>|null}>
      */
-    public static function normalizeConditions(array $conditions): array
+    public static function normalizeConditions(mixed $conditions): array
     {
-        return array_values(array_map(function (array $condition): array {
-            $operator = AccessOperatorEnum::from($condition['operator']);
+        return array_values(array_map(function (mixed $condition): array {
+            $condition = Types::stringKeyed($condition);
+            $operator = AccessOperatorEnum::from(Types::string($condition['operator'] ?? null));
             $value = $condition['value'] ?? null;
 
             return [
-                'attribute' => $condition['attribute'],
+                'attribute' => Types::string($condition['attribute'] ?? null),
                 'operator' => $operator->value,
                 'value' => match (true) {
                     $operator->takesNoValue() => null,
-                    $operator->takesList() => array_values(array_map(strval(...), (array) $value)),
-                    default => is_scalar($value) ? (string) $value : null,
+                    $operator->takesList() => Types::stringList((array) $value),
+                    default => Types::nullableString($value),
                 },
             ];
-        }, $conditions));
+        }, is_array($conditions) ? $conditions : []));
     }
 }

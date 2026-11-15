@@ -12,6 +12,7 @@ use App\EmailCode\Properties\ConsumedAt;
 use App\EmailCode\Properties\Email;
 use App\EmailCode\Properties\Purpose;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Config;
 
 /**
  * Checks a typed code against the latest one emailed to the address. A right
@@ -75,6 +76,6 @@ final readonly class VerifyEmailCode
      */
     public static function hash(string $code): string
     {
-        return hash_hmac('sha256', $code, (string) config('app.key'));
+        return hash_hmac('sha256', $code, Config::string('app.key'));
     }
 }

@@ -52,7 +52,7 @@ final class CloseTicketFormRequest extends FormRequest
     {
         UpdateTicket::fromTicket(
             $this->ticket->setStatus(TicketStatusEnum::Closed),
-            updatedById: (string) $this->user()?->getAuthIdentifier(),
+            updatedById: (string) $this->user()?->id,
         );
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Ticket #:number closed. Nice work.', ['number' => $this->ticket->getNumber()->toInteger()])]);

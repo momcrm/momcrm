@@ -27,7 +27,7 @@ final class DeleteAttachmentFormRequest extends FormRequest
      */
     public function authorize(): Response
     {
-        $this->attachment = FindAttachment::visibleByIdForTeam((string) $this->route('attachment'), $this->user()?->current_team_id, (string) $this->user()?->getAuthIdentifier());
+        $this->attachment = FindAttachment::visibleByIdForTeam((string) $this->route('attachment'), $this->user()?->current_team_id, (string) $this->user()?->id);
 
         if ($this->attachment === null) {
             throw CouldNotFindAttachment::notFound();

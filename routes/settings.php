@@ -17,6 +17,8 @@ use App\User\Controllers\UpdatePasswordController;
 use App\User\Controllers\UpdateProfileController;
 use Illuminate\Auth\Middleware\RequirePassword;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
+use Inertia\Response;
 
 Route::middleware(['auth'])->group(function () {
     Route::redirect('settings', '/settings/profile');
@@ -49,7 +51,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('settings/activity', ListAccountActivityController::class)->name('activity.index');
 
-    Route::inertia('settings/appearance', 'settings/appearance')->name('appearance.edit');
+    Route::get('settings/appearance', fn (): Response => Inertia::render('settings/appearance'))->name('appearance.edit');
 });
 
 Route::get('.well-known/passkey-endpoints', function () {

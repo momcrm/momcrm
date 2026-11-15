@@ -8,6 +8,7 @@ use App\AccessRule\AccessRule;
 use App\AccessRule\AccessRuleValidationRules;
 use App\AccessRule\Actions\CreateAccessRule;
 use App\AccessRule\Properties\Conditions;
+use App\Shared\Types;
 use App\Team\Actions\FindTeam;
 use App\Team\Exceptions\CouldNotViewTeam;
 use Closure;
@@ -28,7 +29,7 @@ final class StoreAccessRuleFormRequest extends FormRequest
     {
         $team = FindTeam::byIdForMember(
             id: $this->user()?->current_team_id,
-            userId: (string) $this->user()?->getAuthIdentifier(),
+            userId: (string) $this->user()?->id,
         );
 
         if ($team->isNull()) {
@@ -62,7 +63,7 @@ final class StoreAccessRuleFormRequest extends FormRequest
         return [fn (Validator $validator) => AccessRuleValidationRules::after(
             $validator,
             (string) $this->user()?->current_team_id,
-            (string) $this->user()?->getAuthIdentifier(),
+            (string) $this->user()?->id,
         )];
     }
 
@@ -72,10 +73,10 @@ final class StoreAccessRuleFormRequest extends FormRequest
 
         $rule = CreateAccessRule::fromAccessRule(
             AccessRule::new()
-                ->setPropertyIfExists(Arr::except($validated, [Conditions::getNameForValidation()]))
+                ->setPropertyIfExists(Types::stringKeyed(Arr::except($validated, [Conditions::getNameForValidation()])))
                 ->setConditions(AccessRuleValidationRules::normalizeConditions($validated[Conditions::getNameForValidation()]))
                 ->setTeamId((string) $this->user()?->current_team_id)
-                ->setCreatedById((string) $this->user()?->getAuthIdentifier()),
+                ->setCreatedById((string) $this->user()?->id),
         );
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __(':name added.', ['name' => $rule->getName()->toString()])]);

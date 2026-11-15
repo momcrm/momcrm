@@ -17,6 +17,7 @@ use App\Activity\Properties\Type;
 use App\Activity\Properties\UserId;
 use App\Project\ProjectVisibility;
 use App\Shared\MorphMapKeyEnum;
+use App\Shared\Types;
 use App\TeamUser\Actions\FindTeamMembers;
 use App\User\UserEloquentModel;
 use Illuminate\Database\Eloquent\Builder;
@@ -67,8 +68,8 @@ final class ListWorkspaceActivityController
                 ->through(fn (ActivityEloquentModel $model): array => [
                     ...Activity::fromEloquentModel($model)->toListItem($model->actor?->name),
                     'url' => match ($model->getAttribute(SubjectType::getDatabaseTableColumnName())) {
-                        MorphMapKeyEnum::Ticket->value => route('tickets.index', ['ticket' => (string) $model->getAttribute(SubjectId::getDatabaseTableColumnName())]),
-                        MorphMapKeyEnum::Project->value => route('projects.show', (string) $model->getAttribute(SubjectId::getDatabaseTableColumnName())),
+                        MorphMapKeyEnum::Ticket->value => route('tickets.index', ['ticket' => Types::string($model->getAttribute(SubjectId::getDatabaseTableColumnName()))]),
+                        MorphMapKeyEnum::Project->value => route('projects.show', Types::string($model->getAttribute(SubjectId::getDatabaseTableColumnName()))),
                         default => null,
                     },
                 ]),

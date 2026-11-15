@@ -8,8 +8,10 @@ use App\Team\Controllers\SwitchCurrentTeamController;
 use App\TeamInvitation\Controllers\AcceptTeamInvitationController;
 use App\TeamInvitation\Controllers\ShowTeamInvitationController;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
+use Inertia\Response;
 
-Route::inertia('/', 'welcome')->name('home');
+Route::get('/', fn (): Response => Inertia::render('welcome'))->name('home');
 
 Route::get('invitations/{token}', ShowTeamInvitationController::class)->name('team-invitations.show');
 Route::post('invitations/{token}/accept', AcceptTeamInvitationController::class)
@@ -22,7 +24,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::put('current-team', SwitchCurrentTeamController::class)->name('current-team.update');
 
-    Route::inertia('design-system', 'design-system')->name('design-system');
+    Route::get('design-system', fn (): Response => Inertia::render('design-system'))->name('design-system');
     Route::get('search', SearchWorkspaceController::class)->name('search');
 });
 

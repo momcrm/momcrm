@@ -56,7 +56,7 @@ final class UpdateLocationFormRequest extends FormRequest
     }
 
     /**
-     * @return array<string, array<int, mixed>>
+     * @return array<string, array<array-key, mixed>>
      */
     public function rules(): array
     {

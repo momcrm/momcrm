@@ -11,6 +11,7 @@ use App\Group\Group;
 use App\Group\GroupEloquentModel;
 use App\Group\GroupRoleEnum;
 use App\Group\GroupValidationRules;
+use App\Shared\Types;
 use App\User\UserEloquentModel;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
@@ -71,11 +72,11 @@ final class UpdateGroupFormRequest extends FormRequest
         $group = $this->group ?? new GroupEloquentModel;
 
         $group->update(Group::fromEloquentModel($group)
-            ->setPropertyIfExists(Arr::except($validated, [GroupValidationRules::LEAD_ID, GroupValidationRules::MEMBER_IDS]))
+            ->setPropertyIfExists(Types::stringKeyed(Arr::except($validated, [GroupValidationRules::LEAD_ID, GroupValidationRules::MEMBER_IDS])))
             ->forDatabaseUpdate());
 
         if (array_key_exists(GroupValidationRules::MEMBER_IDS, $validated)) {
-            SyncGroupMembers::to($group, $validated[GroupValidationRules::LEAD_ID] ?? null, $validated[GroupValidationRules::MEMBER_IDS]);
+            SyncGroupMembers::to($group, Types::nullableString($validated[GroupValidationRules::LEAD_ID] ?? null), Types::stringList($validated[GroupValidationRules::MEMBER_IDS]));
         }
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Group saved.')]);
@@ -93,15 +94,14 @@ final class UpdateGroupFormRequest extends FormRequest
         }
 
         $current = $this->group->members()->get()
-            ->mapWithKeys(fn (UserEloquentModel $member): array => [$member->id => (string) $member->getRelationValue('pivot')?->getAttribute('role')])
+            ->mapWithKeys(fn (UserEloquentModel $member): array => [$member->id => GroupRoleEnum::ofMember($member)->value])
             ->sortKeys()
             ->all();
 
-        $leadId = $this->input(GroupValidationRules::LEAD_ID);
-        $requested = collect((array) $this->input(GroupValidationRules::MEMBER_IDS))
-            ->map(strval(...))
+        $leadId = $this->string(GroupValidationRules::LEAD_ID)->toString();
+        $requested = collect(Types::stringList((array) $this->input(GroupValidationRules::MEMBER_IDS)))
             ->mapWithKeys(fn (string $id): array => [$id => GroupRoleEnum::Member->value])
-            ->when(is_string($leadId) && $leadId !== '', fn ($members) => $members->put($leadId, GroupRoleEnum::Lead->value))
+            ->when($leadId !== '', fn ($members) => $members->put($leadId, GroupRoleEnum::Lead->value))
             ->sortKeys()
             ->all();
 

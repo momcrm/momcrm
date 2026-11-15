@@ -67,7 +67,7 @@ final class TeamPolicy
     {
         $role = FindTeamUser::byTeamAndUser(
             teamId: $team->getId()->toString(),
-            userId: (string) $user->getAuthIdentifier(),
+            userId: $user->id,
         )->getRole()->toNullableEnum();
 
         return in_array($role, [TeamRoleEnum::Owner, TeamRoleEnum::Admin], true);

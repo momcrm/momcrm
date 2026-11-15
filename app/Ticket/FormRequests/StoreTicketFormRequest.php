@@ -6,6 +6,7 @@ namespace App\Ticket\FormRequests;
 
 use App\Customer\Actions\FindCustomer;
 use App\Project\Actions\FindProject;
+use App\Shared\Types;
 use App\Ticket\Actions\CreateTicket;
 use App\Ticket\Properties\Status;
 use App\Ticket\Ticket;
@@ -57,8 +58,8 @@ final class StoreTicketFormRequest extends FormRequest
         $teamId = (string) $this->user()?->current_team_id;
 
         $ticket = CreateTicket::fromTicket(
-            Ticket::new()->setPropertyIfExists(Arr::except($this->validated(), self::QUICK))->setTeamId($teamId),
-            openedById: (string) $this->user()?->getAuthIdentifier(),
+            Ticket::new()->setPropertyIfExists(Types::stringKeyed(Arr::except($this->validated(), self::QUICK)))->setTeamId($teamId),
+            openedById: (string) $this->user()?->id,
         );
 
         $for = FindCustomer::byIdForTeam($ticket->getCustomerId()->toNullableString(), $teamId)->getName()->toNullableString()

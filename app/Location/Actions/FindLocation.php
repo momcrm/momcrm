@@ -35,7 +35,7 @@ final class FindLocation
             ->orderBy(Name::getDatabaseTableColumnName())
             ->get();
 
-        return Location::collect($models, 'fromEloquentModel');
+        return Location::collect($models->all(), 'fromEloquentModel');
     }
 
     /**

@@ -63,7 +63,7 @@ final class StoreSubtaskFormRequest extends FormRequest
                 ->setProjectId($this->parent->getProjectId())
                 ->setTitle($this->string(Title::getNameForValidation())->toString())
                 ->setPriority(TicketPriorityEnum::Normal),
-            openedById: (string) $this->user()?->getAuthIdentifier(),
+            openedById: (string) $this->user()?->id,
         );
 
         return back();

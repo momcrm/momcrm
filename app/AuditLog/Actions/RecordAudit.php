@@ -10,6 +10,7 @@ use App\AuditLog\AuditLogEloquentModel;
 use App\AuditLog\Contracts\Auditable;
 use App\Shared\MorphMapKeyEnum;
 use App\Shared\RequestContext;
+use App\Shared\Types;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
@@ -43,7 +44,7 @@ final readonly class RecordAudit
      */
     public static function fromModel(Model&Auditable $model, AuditEventEnum $event): AuditLog
     {
-        $excluded = [...$model->getHidden(), ...self::ALWAYS_EXCLUDED];
+        $excluded = array_values([...$model->getHidden(), ...self::ALWAYS_EXCLUDED]);
 
         [$oldValues, $newValues] = match ($event) {
             AuditEventEnum::Created => [null, Arr::except($model->getAttributes(), $excluded)],
@@ -55,7 +56,7 @@ final readonly class RecordAudit
             return AuditLog::new();
         }
 
-        $key = (string) $model->getKey();
+        $key = Types::string($model->getKey());
         $teamId = $model->auditTeamId();
 
         // A deleted team's own row cannot reference it any more.
@@ -95,8 +96,8 @@ final readonly class RecordAudit
      */
     private static function changedValues(Model $model, array $excluded): array
     {
-        $newValues = Arr::except($model->getChanges(), $excluded);
-        $oldValues = Arr::only($model->getRawOriginal(), array_keys($newValues));
+        $newValues = Types::stringKeyed(Arr::except($model->getChanges(), $excluded));
+        $oldValues = Types::stringKeyed(Arr::only($model->getRawOriginal(), array_keys($newValues)));
 
         return [$oldValues, $newValues];
     }

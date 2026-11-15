@@ -13,13 +13,13 @@ namespace App\Shared\Traits;
 trait EnumOptions
 {
     /**
-     * @return array<int, array{value: string, label: string}>
+     * @return list<array{value: string, label: string}>
      */
     public static function options(): array
     {
-        return array_map(
+        return array_values(array_map(
             fn (self $case): array => ['value' => (string) $case->value, 'label' => $case->label()],
             self::cases(),
-        );
+        ));
     }
 }

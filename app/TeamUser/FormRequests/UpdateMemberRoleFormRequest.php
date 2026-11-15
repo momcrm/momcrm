@@ -38,7 +38,7 @@ final class UpdateMemberRoleFormRequest extends FormRequest
 
     public function authorize(): bool
     {
-        $this->team = FindTeam::byIdForMember($this->user()?->current_team_id, (string) $this->user()?->getAuthIdentifier());
+        $this->team = FindTeam::byIdForMember($this->user()?->current_team_id, (string) $this->user()?->id);
         $this->membership = FindTeamUser::byTeamAndUser($this->team->getId()->toString(), (string) $this->route('member'));
 
         if ($this->team->isNull() || $this->membership->isNull()) {

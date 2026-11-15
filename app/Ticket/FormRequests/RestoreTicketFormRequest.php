@@ -49,7 +49,7 @@ final class RestoreTicketFormRequest extends FormRequest
 
     public function process(): RedirectResponse
     {
-        ArchiveTicket::restore($this->ticket, userId: (string) $this->user()?->getAuthIdentifier());
+        ArchiveTicket::restore($this->ticket, userId: (string) $this->user()?->id);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Ticket #:number restored.', ['number' => $this->ticket->getNumber()->toInteger()])]);
 

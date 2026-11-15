@@ -25,7 +25,7 @@ final class StoreProjectAttachmentFormRequest extends FormRequest
      */
     public function authorize(): Response
     {
-        $project = FindProject::visibleByIdForTeam((string) $this->route('project'), $this->user()?->current_team_id, (string) $this->user()?->getAuthIdentifier());
+        $project = FindProject::visibleByIdForTeam((string) $this->route('project'), $this->user()?->current_team_id, (string) $this->user()?->id);
 
         if ($project->isNull()) {
             throw CouldNotFindProject::notFound();
@@ -58,7 +58,7 @@ final class StoreProjectAttachmentFormRequest extends FormRequest
         $files = $this->file(AttachmentValidationRules::FILES, []);
 
         foreach ($files as $file) {
-            CreateAttachment::for($file, $this->project ?? new ProjectEloquentModel, (string) $this->user()?->getAuthIdentifier());
+            CreateAttachment::for($file, $this->project ?? new ProjectEloquentModel, (string) $this->user()?->id);
         }
 
         return back();

@@ -7,6 +7,7 @@ namespace App\Ticket\Controllers;
 use App\Customer\CustomerEloquentModel;
 use App\Label\LabelEloquentModel;
 use App\Project\ProjectEloquentModel;
+use App\Shared\Types;
 use App\Ticket\Ticket;
 use App\Ticket\TicketEloquentModel;
 use App\Ticket\TicketListFilters;
@@ -50,8 +51,8 @@ final class ListTicketsController
             'labels' => $model->relationLoaded(TicketRelationship::Labels->value)
                 ? $model->labels->map(fn (LabelEloquentModel $label): array => ['id' => $label->id, 'name' => $label->name, 'color' => $label->color])->values()->all()
                 : [],
-            'subtasks_count' => (int) $model->getAttribute('subtasks_count'),
-            'closed_subtasks_count' => (int) $model->getAttribute('closed_subtasks_count'),
+            'subtasks_count' => Types::intOrZero($model->getAttribute('subtasks_count')),
+            'closed_subtasks_count' => Types::intOrZero($model->getAttribute('closed_subtasks_count')),
         ];
     }
 }
