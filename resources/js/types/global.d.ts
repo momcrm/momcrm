@@ -29,6 +29,10 @@ declare module '@inertiajs/core' {
                 }[];
             } | null;
             gettingStarted?: GettingStarted | null;
+            choices?: Record<
+                import('./crm').ChoiceList,
+                import('./crm').Choice[]
+            > | null;
             [key: string]: unknown;
         };
     }

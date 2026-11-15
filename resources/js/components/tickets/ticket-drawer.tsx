@@ -17,11 +17,11 @@ import {
     AssigneeAvatar,
     LabelChips,
     PriorityIcon,
+    usePriority,
+    useTicketPriorities,
     ProjectTag,
     TicketStatusPill,
     daysUntil,
-    priorityOf,
-    ticketPriorities,
     ticketStatuses,
 } from '@/components/tickets/ticket-meta';
 import Attachments from '@/components/attachments';
@@ -100,6 +100,8 @@ function DrawerBody({
     const save = (fields: Record<string, unknown>) =>
         updateTicket(ticket.id, fields);
     const isClosed = ticket.status === 'closed';
+    const priorities = useTicketPriorities();
+    const priority = usePriority(ticket.priority_id);
     const overdueDays =
         ticket.due_on && !isClosed ? -daysUntil(ticket.due_on) : 0;
 
@@ -237,15 +239,17 @@ function DrawerBody({
                     </Property>
                     <Property label="Priority">
                         <Picker
-                            value={ticket.priority}
-                            choices={ticketPriorities.map((priority) => ({
-                                value: priority.value,
-                                label: priority.label,
+                            value={ticket.priority_id ?? NONE}
+                            choices={priorities.map((priority) => ({
+                                value: priority.id,
+                                label: priority.name,
                             }))}
-                            onChange={(priority) => save({ priority })}
+                            onChange={(priorityId) =>
+                                save({ priority_id: priorityId })
+                            }
                         >
-                            <PriorityIcon priority={ticket.priority} />
-                            {priorityOf(ticket.priority).label}
+                            <PriorityIcon priorityId={ticket.priority_id} />
+                            {priority?.name ?? 'None'}
                         </Picker>
                     </Property>
                     <Property label="Assignee">

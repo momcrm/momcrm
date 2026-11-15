@@ -10,7 +10,6 @@ use App\Location\Actions\FindLocation;
 use App\Project\Actions\FindProject;
 use App\Ticket\Actions\FindTicket;
 use App\Ticket\Exceptions\CouldNotFindTicket;
-use App\Ticket\TicketPriorityEnum;
 use App\Ticket\TicketStatusEnum;
 use App\User\Actions\FindUser;
 use Illuminate\Http\Request;
@@ -44,7 +43,6 @@ final class ShowTicketController
             'location' => $location->isNull() ? null : $location->toSummary(),
             'assigneeName' => FindUser::byId($found->getAssigneeId()->toNullableString())->getName()->toNullableString(),
             'statuses' => TicketStatusEnum::options(),
-            'priorities' => TicketPriorityEnum::options(),
         ]);
     }
 }

@@ -6,6 +6,8 @@ namespace App\Ticket\Actions;
 
 use App\Activity\Actions\RecordActivity;
 use App\Activity\ActivityTypeEnum;
+use App\Choice\Actions\FindChoice;
+use App\Choice\ChoiceListEnum;
 use App\Project\Actions\FindProject;
 use App\Shared\Actions\NextTeamNumber;
 use App\Shared\Table;
@@ -22,7 +24,8 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Opens a ticket with the team's next number, at the bottom of its status
- * column. A project ticket with no customer takes the project's customer.
+ * column, with the team's default priority unless one is given. A project
+ * ticket with no customer takes the project's customer.
  * Someone other than the opener who is assigned it is notified.
  */
 final readonly class CreateTicket
@@ -49,6 +52,10 @@ final readonly class CreateTicket
                 $this->ticket->setCustomerId(
                     FindProject::byIdForTeam($this->ticket->getProjectId()->toString(), $teamId)->getCustomerId(),
                 );
+            }
+
+            if ($this->ticket->getPriorityId()->isNull()) {
+                $this->ticket->setPriorityId(FindChoice::defaultForTeam($teamId, ChoiceListEnum::TicketPriority)->getId());
             }
 
             if ($this->ticket->getPosition()->isNull()) {

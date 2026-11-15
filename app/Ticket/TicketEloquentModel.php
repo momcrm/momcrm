@@ -51,7 +51,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $number
  * @property string|null $parent_id
  * @property int $position
- * @property string $priority
+ * @property string|null $priority_id
  * @property string|null $project_id
  * @property string|null $starts_on
  * @property string $status

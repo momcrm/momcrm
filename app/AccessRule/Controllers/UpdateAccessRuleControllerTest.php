@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\AccessRule\AccessRuleEloquentModel;
+use App\Choice\Actions\FindChoice;
+use App\Choice\ChoiceListEnum;
 use App\User\UserEloquentModel;
 
 use function Pest\Laravel\actingAs;
@@ -10,6 +12,7 @@ use function Pest\Laravel\actingAs;
 it('edits a rule and can switch it off', function (): void {
     $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
     $rule = AccessRuleEloquentModel::factory()->create(['team_id' => $owner->current_team_id, 'name' => 'Old']);
+    $urgent = FindChoice::byNameForTeam($owner->current_team_id, ChoiceListEnum::TicketPriority, 'Urgent')->getId()->toString();
 
     actingAs($owner)
         ->put(route('access-rules.update', $rule->id), [
@@ -18,7 +21,7 @@ it('edits a rule and can switch it off', function (): void {
             'is_enabled' => false,
             'resources' => ['ticket'],
             'actions' => ['close'],
-            'conditions' => [['attribute' => 'ticket.priority', 'operator' => 'in', 'value' => ['urgent']]],
+            'conditions' => [['attribute' => 'ticket.priority', 'operator' => 'in', 'value' => [$urgent]]],
         ])
         ->assertSessionHasNoErrors()
         ->assertRedirectToRoute('access-rules.index');
@@ -27,7 +30,7 @@ it('edits a rule and can switch it off', function (): void {
         ->name->toBe('Members close urgent tickets')
         ->effect->toBe('deny')
         ->is_enabled->toBeFalse()
-        ->conditions->toEqual([['attribute' => 'ticket.priority', 'operator' => 'in', 'value' => ['urgent']]]);
+        ->conditions->toEqual([['attribute' => 'ticket.priority', 'operator' => 'in', 'value' => [$urgent]]]);
 });
 
 it("returns not found for another team's rule", function (): void {

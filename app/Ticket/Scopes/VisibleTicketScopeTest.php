@@ -70,7 +70,7 @@ it('returns not found when opening or changing a hidden ticket directly', functi
     ['outsider' => $outsider, 'secret' => $secret] = restrictedProjectSetup();
 
     actingAs($outsider)->get(route('tickets.show', $secret->id))->assertNotFound();
-    actingAs($outsider)->patch(route('tickets.patch', $secret->id), ['priority' => 'low'])->assertNotFound();
+    actingAs($outsider)->patch(route('tickets.patch', $secret->id), ['title' => 'Mine'])->assertNotFound();
     actingAs($outsider)->post(route('comments.store', $secret->id), ['body' => 'Hi'])->assertNotFound();
 });
 

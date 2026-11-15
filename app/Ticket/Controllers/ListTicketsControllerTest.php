@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Choice\Actions\FindChoice;
+use App\Choice\ChoiceListEnum;
 use App\Customer\CustomerEloquentModel;
 use App\Label\LabelEloquentModel;
 use App\Project\ProjectEloquentModel;
@@ -83,18 +85,19 @@ it('filters by priority, assignee, project and label', function (): void {
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
     $project = ProjectEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
     $label = LabelEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
-    $match = ticketFor($user, ['number' => 1, 'priority' => 'urgent', 'assignee_id' => $user->id, 'project_id' => $project->id]);
+    [$urgent, $high, $low] = array_map(fn (string $name): string => FindChoice::byNameForTeam($user->current_team_id, ChoiceListEnum::TicketPriority, $name)->getId()->toString(), ['Urgent', 'High', 'Low']);
+    $match = ticketFor($user, ['number' => 1, 'priority_id' => $urgent, 'assignee_id' => $user->id, 'project_id' => $project->id]);
     $match->labels()->attach($label);
-    ticketFor($user, ['number' => 2, 'priority' => 'urgent', 'assignee_id' => $user->id]);
-    ticketFor($user, ['number' => 3, 'priority' => 'low', 'project_id' => $project->id]);
+    ticketFor($user, ['number' => 2, 'priority_id' => $urgent, 'assignee_id' => $user->id]);
+    ticketFor($user, ['number' => 3, 'priority_id' => $low, 'project_id' => $project->id]);
 
     actingAs($user)
-        ->get(route('tickets.index', ['priority' => 'urgent,high', 'assignee' => 'me', 'project' => $project->id, 'label' => $label->id]))
+        ->get(route('tickets.index', ['priority' => "{$urgent},{$high}", 'assignee' => 'me', 'project' => $project->id, 'label' => $label->id]))
         ->assertInertia(fn (Assert $page) => $page
             ->where('tickets.total', 1)
             ->where('tickets.data.0.id', $match->id)
             ->where('tickets.data.0.labels.0.name', $label->name)
-            ->where('filters.priority', ['urgent', 'high']),
+            ->where('filters.priority', [$urgent, $high]),
         );
 
     actingAs($user)
@@ -102,19 +105,20 @@ it('filters by priority, assignee, project and label', function (): void {
         ->assertInertia(fn (Assert $page) => $page->where('tickets.total', 0));
 });
 
-it('sorts the table by priority', function (): void {
+it("sorts the table by priority, in the team's order", function (): void {
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
-    ticketFor($user, ['number' => 1, 'priority' => 'low']);
-    ticketFor($user, ['number' => 2, 'priority' => 'urgent']);
-    ticketFor($user, ['number' => 3, 'priority' => 'normal']);
+    [$urgent, $normal, $low] = array_map(fn (string $name): string => FindChoice::byNameForTeam($user->current_team_id, ChoiceListEnum::TicketPriority, $name)->getId()->toString(), ['Urgent', 'Normal', 'Low']);
+    ticketFor($user, ['number' => 1, 'priority_id' => $low]);
+    ticketFor($user, ['number' => 2, 'priority_id' => $urgent]);
+    ticketFor($user, ['number' => 3, 'priority_id' => $normal]);
+    $sorted = fn (string $direction): array => collect(actingAs($user)
+        ->get(route('tickets.index', ['view' => 'table', 'sort' => 'priority', 'direction' => $direction]))
+        ->inertiaProps('tickets.data'))
+        ->pluck('priority_id')
+        ->all();
 
-    actingAs($user)
-        ->get(route('tickets.index', ['view' => 'table', 'sort' => 'priority', 'direction' => 'desc']))
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('tickets.data.0.priority', 'urgent')
-            ->where('tickets.data.1.priority', 'normal')
-            ->where('tickets.data.2.priority', 'low'),
-        );
+    expect($sorted('desc'))->toBe([$urgent, $normal, $low])
+        ->and($sorted('asc'))->toBe([$low, $normal, $urgent]);
 });
 
 it('leaves subtasks out of the views and counts them on their parent', function (): void {

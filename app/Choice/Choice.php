@@ -66,6 +66,24 @@ final class Choice extends AbstractData
         return ChoiceCollection::make(parent::collect($items, $method)->all());
     }
 
+    /**
+     * The fields the frontend needs to show the choice.
+     *
+     * @return array{id: string, name: string, color: string, icon: ?string, category: ?string, position: int, is_default: bool}
+     */
+    public function toSummary(): array
+    {
+        return [
+            'id' => $this->getId()->toString(),
+            'name' => $this->getName()->toString(),
+            'color' => $this->getColor()->toEnum()->value,
+            'icon' => $this->getIcon()->toNullableString(),
+            'category' => $this->getCategory()->toNullableString(),
+            'position' => $this->getPosition()->toInteger(),
+            'is_default' => $this->getIsDefault()->toBoolean(),
+        ];
+    }
+
     public function isArchived(): bool
     {
         return $this->archivedAt->isNotNull();

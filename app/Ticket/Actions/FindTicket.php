@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Ticket\Actions;
 
+use App\Choice\ChoiceEloquentModel;
+use App\Choice\Properties\Id as ChoiceId;
+use App\Choice\Properties\Position as ChoicePosition;
+use App\Shared\Table;
 use App\Team\Scopes\CurrentTeamScope;
 use App\Ticket\Properties\ArchivedAt;
 use App\Ticket\Properties\AssigneeId;
@@ -13,7 +17,7 @@ use App\Ticket\Properties\Id;
 use App\Ticket\Properties\Number;
 use App\Ticket\Properties\ParentId;
 use App\Ticket\Properties\Position;
-use App\Ticket\Properties\Priority;
+use App\Ticket\Properties\PriorityId;
 use App\Ticket\Properties\ProjectId;
 use App\Ticket\Properties\Status;
 use App\Ticket\Properties\TeamId;
@@ -94,7 +98,7 @@ final class FindTicket
             ->whereNull(ParentId::getDatabaseTableColumnName())
             ->when($filters->status === self::FILTER_OPEN, fn (Builder $query) => $query->whereIn(Status::getDatabaseTableColumnName(), TicketStatusEnum::openValues()))
             ->when($filters->status === self::FILTER_CLOSED, fn (Builder $query) => $query->where(Status::getDatabaseTableColumnName(), TicketStatusEnum::Closed->value))
-            ->when($filters->priorities !== [], fn (Builder $query) => $query->whereIn(Priority::getDatabaseTableColumnName(), $filters->priorities))
+            ->when($filters->priorities !== [], fn (Builder $query) => $query->whereIn(PriorityId::getDatabaseTableColumnName(), $filters->priorities))
             ->when($filters->assignee, fn (Builder $query, string $assignee) => match ($assignee) {
                 TicketListFilters::ASSIGNEE_ME => $query->where(AssigneeId::getDatabaseTableColumnName(), $userId),
                 TicketListFilters::NONE => $query->whereNull(AssigneeId::getDatabaseTableColumnName()),
@@ -114,9 +118,13 @@ final class FindTicket
                 $filters->view === TicketListFilters::VIEW_BOARD,
                 fn (Builder $query) => $query->orderBy(Position::getDatabaseTableColumnName())->orderByDesc(Number::getDatabaseTableColumnName()),
                 fn (Builder $query) => match ($filters->sort) {
-                    'priority' => $query->orderByRaw($isAscending
-                        ? "case priority when 'urgent' then 4 when 'high' then 3 when 'normal' then 2 else 1 end asc"
-                        : "case priority when 'urgent' then 4 when 'high' then 3 when 'normal' then 2 else 1 end desc",
+                    // The first priority in the team's list is the most urgent, so "descending" runs up the list.
+                    'priority' => $query->orderBy(
+                        ChoiceEloquentModel::query()
+                            ->withoutGlobalScopes()
+                            ->select(ChoicePosition::getDatabaseTableColumnName())
+                            ->whereColumn(ChoiceId::getDatabaseTableColumnNameWithTable(Table::Choices->value), PriorityId::getDatabaseTableColumnNameWithTable(Table::Tickets->value)),
+                        $isAscending ? 'desc' : 'asc',
                     )->orderByDesc(Number::getDatabaseTableColumnName()),
                     'due_on' => $query->orderByRaw($isAscending ? 'due_on is null, due_on asc' : 'due_on is null, due_on desc')
                         ->orderByDesc(Number::getDatabaseTableColumnName()),

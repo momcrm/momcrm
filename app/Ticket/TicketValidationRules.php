@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Ticket;
 
+use App\Choice\ChoiceListEnum;
 use App\Project\ProjectVisibility;
 use App\Shared\Table;
 use App\Ticket\Properties\AssigneeId;
@@ -13,7 +14,7 @@ use App\Ticket\Properties\Description;
 use App\Ticket\Properties\DueOn;
 use App\Ticket\Properties\EstimateMinutes;
 use App\Ticket\Properties\LocationId;
-use App\Ticket\Properties\Priority;
+use App\Ticket\Properties\PriorityId;
 use App\Ticket\Properties\ProjectId;
 use App\Ticket\Properties\StartsOn;
 use App\Ticket\Properties\Title;
@@ -72,7 +73,13 @@ final class TicketValidationRules
             EstimateMinutes::getNameForValidation() => EstimateMinutes::getValidationRulesForCreate($request),
             Title::getNameForValidation() => Title::getValidationRulesForCreate($request),
             Description::getNameForValidation() => Description::getValidationRulesForCreate($request),
-            Priority::getNameForValidation() => Priority::getValidationRulesForCreate($request),
+            PriorityId::getNameForValidation() => [
+                ...PriorityId::getValidationRulesForCreate($request),
+                Rule::exists(Table::Choices->value, 'id')
+                    ->where('team_id', $teamId)
+                    ->where('list', ChoiceListEnum::TicketPriority->value)
+                    ->whereNull('archived_at'),
+            ],
         ];
     }
 
@@ -88,6 +95,7 @@ final class TicketValidationRules
             LocationId::getNameForValidation().'.exists' => __('Choose one of this customer\'s locations.'),
             AssigneeId::getNameForValidation().'.exists' => __('Choose someone in your team.'),
             ProjectId::getNameForValidation().'.exists' => __('Choose one of your team\'s projects.'),
+            PriorityId::getNameForValidation().'.exists' => __('Choose one of your team\'s priorities.'),
             DueOn::getNameForValidation().'.after_or_equal' => __('The due date can\'t be before the start date.'),
         ];
     }

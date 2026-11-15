@@ -1,6 +1,7 @@
 import { Form, Link } from '@inertiajs/react';
 import { useState } from 'react';
 import FormField from '@/components/form-field';
+import { useTicketPriorities } from '@/components/tickets/ticket-meta';
 import NativeSelect from '@/components/native-select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,6 +26,7 @@ export default function TicketForm({
     submitLabel: string;
     cancelHref: string;
 }) {
+    const priorities = useTicketPriorities();
     const [selectedCustomer, setSelectedCustomer] = useState(
         ticket?.customer_id ?? customerId ?? '',
     );
@@ -204,21 +206,26 @@ export default function TicketForm({
                             </NativeSelect>
                         </FormField>
                         <FormField
-                            id="priority"
+                            id="priority_id"
                             label="Priority"
-                            error={errors.priority}
+                            error={errors.priority_id}
                         >
                             <NativeSelect
-                                id="priority"
-                                name="priority"
-                                defaultValue={ticket?.priority ?? 'normal'}
+                                id="priority_id"
+                                name="priority_id"
+                                defaultValue={
+                                    ticket?.priority_id ??
+                                    priorities.find(
+                                        (priority) => priority.is_default,
+                                    )?.id
+                                }
                             >
-                                {options.priorities.map((priority) => (
+                                {priorities.map((priority) => (
                                     <option
-                                        key={priority.value}
-                                        value={priority.value}
+                                        key={priority.id}
+                                        value={priority.id}
                                     >
-                                        {priority.label}
+                                        {priority.name}
                                     </option>
                                 ))}
                             </NativeSelect>

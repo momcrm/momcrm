@@ -10,7 +10,7 @@ import {
     PriorityIcon,
     ProjectTag,
     TicketStatusPill,
-    priorityOf,
+    usePriority,
 } from '@/components/tickets/ticket-meta';
 import { useTicketActions } from '@/hooks/use-ticket-actions';
 import { cn } from '@/lib/utils';
@@ -56,16 +56,12 @@ const columns = column.columns([
         meta: { className: 'w-44' },
         cell: (info) => <TicketStatusPill status={info.getValue()} />,
     }),
-    column.accessor('priority', {
+    column.accessor('priority_id', {
+        id: 'priority',
         header: 'Priority',
         enableSorting: true,
         meta: { className: 'w-28' },
-        cell: (info) => (
-            <span className="flex items-center gap-1.5 text-muted-foreground">
-                <PriorityIcon priority={info.getValue()} />
-                {priorityOf(info.getValue()).label}
-            </span>
-        ),
+        cell: (info) => <PriorityCell priorityId={info.getValue()} />,
     }),
     column.display({
         id: 'project',
@@ -141,5 +137,16 @@ export default function TicketTable({
                 onOpen ? onOpen(ticket) : openTicket(ticket.id)
             }
         />
+    );
+}
+
+function PriorityCell({ priorityId }: { priorityId: string | null }) {
+    const priority = usePriority(priorityId);
+
+    return (
+        <span className="flex items-center gap-1.5 text-muted-foreground">
+            <PriorityIcon priorityId={priorityId} />
+            {priority?.name ?? 'None'}
+        </span>
     );
 }

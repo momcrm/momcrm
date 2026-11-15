@@ -15,7 +15,6 @@ use App\Ticket\Actions\CreateTicket;
 use App\Ticket\Properties\Status;
 use App\Ticket\Ticket;
 use App\Ticket\TicketEloquentModel;
-use App\Ticket\TicketPriorityEnum;
 use App\Ticket\TicketStatusEnum;
 use App\Ticket\TicketValidationRules;
 use Illuminate\Auth\Access\Response;
@@ -137,8 +136,7 @@ final class StoreTicketFormRequest extends FormRequest
                     ->setParentId($ticket->getId())
                     ->setCustomerId($ticket->getCustomerId())
                     ->setProjectId($ticket->getProjectId())
-                    ->setTitle($title)
-                    ->setPriority(TicketPriorityEnum::Normal),
+                    ->setTitle($title),
                 openedById: $userId,
             );
         }
