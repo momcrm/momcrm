@@ -128,12 +128,15 @@ final class FindProject
      */
     public static function liveByIds(string $teamId, string $userId, array $ids): EloquentCollection
     {
-        return self::withListDetails(self::visibleQuery($teamId, $userId))
+        $projects = self::withListDetails(self::visibleQuery($teamId, $userId))
             ->whereNull(ArchivedAt::getDatabaseTableColumnName())
             ->whereIn(Id::getDatabaseTableColumnName(), $ids)
             ->get()
             ->sortBy(fn (ProjectEloquentModel $project): int|false => array_search($project->id, $ids, true))
-            ->values();
+            ->values()
+            ->all();
+
+        return new EloquentCollection($projects);
     }
 
     /**
