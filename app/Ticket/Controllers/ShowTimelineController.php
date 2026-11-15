@@ -27,7 +27,7 @@ final class ShowTimelineController
         return Inertia::render('timeline', [
             ...TicketTimeline::forRequest($request),
             'favoriteTicketIds' => FindFavorite::idsForUser($teamId, $user->id, FavoritableTypeEnum::Ticket),
-            ...TicketDrawer::options($teamId),
+            ...TicketDrawer::options($teamId, $user->id),
             'drawer' => TicketDrawer::forRequest($request),
         ]);
     }

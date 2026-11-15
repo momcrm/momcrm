@@ -71,7 +71,7 @@ final class TicketCalendar
                 ->map(fn (TicketEloquentModel $model): array => ListTicketsController::listItem($model))
                 ->values()
                 ->all(),
-            'projects' => FindProject::optionsForTeam($teamId)->values()->all(),
+            'projects' => FindProject::optionsForTeam($teamId, $user->id)->values()->all(),
         ];
     }
 

@@ -25,7 +25,7 @@ final class TicketFormOptions
     /**
      * @return array<string, mixed>
      */
-    public static function forTeam(string $teamId): array
+    public static function forTeam(string $teamId, string $userId): array
     {
         return [
             'customers' => FindCustomer::optionsForTeam($teamId),
@@ -46,7 +46,7 @@ final class TicketFormOptions
                 ->get()
                 ->map(fn (LocationEloquentModel $model): array => ['id' => $model->id, 'name' => $model->name, 'customer_id' => $model->customer_id]),
             'members' => FindTeamMembers::optionsForTeam($teamId),
-            'projects' => FindProject::optionsForTeam($teamId),
+            'projects' => FindProject::optionsForTeam($teamId, $userId),
             'priorities' => TicketPriorityEnum::options(),
             'statuses' => TicketStatusEnum::options(),
         ];

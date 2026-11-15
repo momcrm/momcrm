@@ -11,13 +11,19 @@ use App\Attachment\Properties\AttachableType;
 use App\Attachment\Properties\Id;
 use App\Attachment\Properties\TeamId;
 use App\Project\Actions\FindProject;
+use App\Project\ProjectVisibility;
 use App\Shared\MorphMapKeyEnum;
+use App\Shared\Table;
+use App\Ticket\Properties\Id as TicketId;
+use App\Ticket\Properties\TeamId as TicketTeamId;
+use App\Ticket\TicketEloquentModel;
 use Illuminate\Database\Eloquent\Collection;
 
 final class FindAttachment
 {
     /**
-     * An attachment in the team, unless it sits on a project the person may not see.
+     * An attachment in the team, unless it sits on a project or ticket the person
+     * may not see.
      */
     public static function visibleByIdForTeam(?string $id, ?string $teamId, string $userId): ?AttachmentEloquentModel
     {
@@ -31,14 +37,33 @@ final class FindAttachment
             ->where(Id::getDatabaseTableColumnName(), $id)
             ->first();
 
-        if (
-            $attachment?->attachable_type === MorphMapKeyEnum::Project->value
-            && FindProject::visibleByIdForTeam($attachment->attachable_id, $teamId, $userId)->isNull()
-        ) {
+        if ($attachment === null) {
             return null;
         }
 
-        return $attachment;
+        $isVisible = match ($attachment->attachable_type) {
+            MorphMapKeyEnum::Project->value => FindProject::visibleByIdForTeam($attachment->attachable_id, $teamId, $userId)->isNotNull(),
+            MorphMapKeyEnum::Ticket->value => self::ticketIsVisible($attachment->attachable_id, $teamId, $userId),
+            default => true,
+        };
+
+        return $isVisible ? $attachment : null;
+    }
+
+    /**
+     * Whether someone may see the ticket, whoever is signed in: queued and
+     * console code has no user for VisibleTicketScope to read.
+     */
+    private static function ticketIsVisible(string $ticketId, string $teamId, string $userId): bool
+    {
+        $tickets = TicketEloquentModel::query()
+            ->withoutGlobalScopes()
+            ->where(TicketTeamId::getDatabaseTableColumnName(), $teamId)
+            ->where(TicketId::getDatabaseTableColumnName(), $ticketId);
+
+        ProjectVisibility::constrainTickets($tickets->getQuery(), $userId, Table::Tickets->value);
+
+        return $tickets->exists();
     }
 
     /**

@@ -7,6 +7,7 @@ use App\Activity\ActivityTypeEnum;
 use App\Contact\ContactEloquentModel;
 use App\Customer\CustomerEloquentModel;
 use App\Project\ProjectEloquentModel;
+use App\TeamUser\TeamUserEloquentModel;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
 
@@ -140,4 +141,20 @@ it('quick-adds a ticket into a board column and stays on the board', function ()
     expect(TicketEloquentModel::query()->where('title', 'Quick one')->sole())
         ->status->toBe('in_progress')
         ->position->toBe(5);
+});
+
+it('rejects a members-only project the person is not in', function (): void {
+    $member = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $outsider = UserEloquentModel::factory()->create(['current_team_id' => $member->current_team_id]);
+    TeamUserEloquentModel::query()->create(['team_id' => $member->current_team_id, 'user_id' => $outsider->id, 'role' => 'member']);
+    $project = ProjectEloquentModel::factory()->create(['team_id' => $member->current_team_id, 'visibility' => 'restricted']);
+    $project->members()->attach($member->id);
+
+    actingAs($outsider)
+        ->post(route('tickets.store'), ['project_id' => $project->id, 'title' => 'X', 'priority' => 'normal'])
+        ->assertSessionHasErrors(['project_id' => "Choose one of your team's projects."]);
+
+    actingAs($member)
+        ->post(route('tickets.store'), ['project_id' => $project->id, 'title' => 'X', 'priority' => 'normal'])
+        ->assertSessionHasNoErrors();
 });

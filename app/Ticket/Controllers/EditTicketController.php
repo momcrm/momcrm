@@ -27,7 +27,7 @@ final class EditTicketController
 
         return Inertia::render('tickets/edit', [
             'ticket' => $found->toSummary(),
-            ...TicketFormOptions::forTeam($teamId),
+            ...TicketFormOptions::forTeam($teamId, (string) $request->user()?->getAuthIdentifier()),
         ]);
     }
 }

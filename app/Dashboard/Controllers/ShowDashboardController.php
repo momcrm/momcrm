@@ -62,7 +62,7 @@ final class ShowDashboardController
                 ->values()
                 ->all(),
             'activity' => WorkspaceNumbers::recentActivity($teamId, $user->id),
-            ...TicketDrawer::options($teamId),
+            ...TicketDrawer::options($teamId, $user->id),
             'drawer' => TicketDrawer::forRequest($request),
             'hasSecurity' => $user->two_factor_confirmed_at !== null || $user->passkeys()->exists(),
         ]);
