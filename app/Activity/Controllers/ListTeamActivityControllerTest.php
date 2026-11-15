@@ -26,7 +26,7 @@ it('shows the owner their teams activity and audit trail', function (): void {
             ->has('activities.data', 1)
             ->where('activities.data.0.details', ['from' => 'A', 'to' => 'B'])
             ->where('auditLogs.data', fn ($rows): bool => collect($rows)->isNotEmpty()
-                && collect($rows)->every(fn (array $row): bool => in_array($row['subject'], [MorphMapKeyEnum::Team->value, MorphMapKeyEnum::TeamUser->value], true))),
+                && collect($rows)->every(fn (array $row): bool => in_array($row['subject'], [MorphMapKeyEnum::Team->value, MorphMapKeyEnum::TeamUser->value, MorphMapKeyEnum::AccessRule->value], true))),
         );
 });
 

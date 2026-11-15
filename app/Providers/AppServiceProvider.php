@@ -3,11 +3,35 @@
 namespace App\Providers;
 
 use App\Activity\Listeners\RecordAccountActivity;
+use App\Asset\Asset;
+use App\Asset\AssetPolicy;
+use App\Attachment\Attachment;
+use App\Attachment\AttachmentPolicy;
+use App\Comment\Comment;
+use App\Comment\CommentPolicy;
+use App\Contact\Contact;
+use App\Contact\ContactPolicy;
+use App\Customer\Customer;
+use App\Customer\CustomerPolicy;
+use App\Group\Group;
+use App\Group\GroupPolicy;
+use App\Invoice\Invoice;
+use App\Invoice\InvoicePolicy;
+use App\Location\Location;
+use App\Location\LocationPolicy;
+use App\Milestone\Milestone;
+use App\Milestone\MilestonePolicy;
 use App\Passkey\PasskeyEloquentModel;
+use App\Project\Project;
+use App\Project\ProjectPolicy;
+use App\Service\Service;
+use App\Service\ServicePolicy;
 use App\Shared\MorphMapKeyEnum;
 use App\Team\Team;
 use App\Team\TeamPolicy;
 use App\TeamInvitation\Listeners\AcceptPendingTeamInvitation;
+use App\Ticket\Ticket;
+use App\Ticket\TicketPolicy;
 use App\User\Listeners\SendWelcomeNotification;
 use App\User\UserEloquentModel;
 use Carbon\CarbonImmutable;
@@ -92,6 +116,18 @@ class AppServiceProvider extends ServiceProvider
      */
     protected function configurePolicies(): void
     {
+        Gate::policy(Asset::class, AssetPolicy::class);
+        Gate::policy(Attachment::class, AttachmentPolicy::class);
+        Gate::policy(Comment::class, CommentPolicy::class);
+        Gate::policy(Contact::class, ContactPolicy::class);
+        Gate::policy(Customer::class, CustomerPolicy::class);
+        Gate::policy(Group::class, GroupPolicy::class);
+        Gate::policy(Invoice::class, InvoicePolicy::class);
+        Gate::policy(Location::class, LocationPolicy::class);
+        Gate::policy(Milestone::class, MilestonePolicy::class);
+        Gate::policy(Project::class, ProjectPolicy::class);
+        Gate::policy(Service::class, ServicePolicy::class);
+        Gate::policy(Ticket::class, TicketPolicy::class);
         Gate::policy(Team::class, TeamPolicy::class);
     }
 

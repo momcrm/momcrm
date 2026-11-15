@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Team\Factories;
 
+use App\AccessRule\Actions\SeedDefaultAccessRules;
 use App\Team\Properties\IsPersonal;
 use App\Team\Properties\Name;
 use App\Team\Properties\OwnerId;
@@ -33,7 +34,8 @@ final class TeamFactory extends Factory
     }
 
     /**
-     * Add the owner to the team as a member with the owner role.
+     * Add the owner to the team as a member with the owner role, and give the
+     * team the default access rules.
      */
     public function configure(): static
     {
@@ -43,6 +45,8 @@ final class TeamFactory extends Factory
                 userId: $team->owner_id,
                 role: TeamRoleEnum::Owner,
             );
+
+            SeedDefaultAccessRules::forTeam($team->id);
         });
     }
 }
