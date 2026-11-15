@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Choice\Actions;
 
-use App\AccessRule\Actions\PruneDeletedChoicesFromAccessRules;
+use App\AccessRule\Actions\PruneDeletedRecordsFromAccessRules;
 use App\Choice\Choice;
 use App\Choice\ChoiceEloquentModel;
 use Illuminate\Support\Facades\DB;
@@ -25,7 +25,7 @@ final readonly class DeleteChoice
         DB::transaction(function (): void {
             ChoiceEloquentModel::query()->withoutGlobalScopes()->findOrFail($this->choice->getId()->toString())->delete();
 
-            PruneDeletedChoicesFromAccessRules::forTeam($this->choice->getTeamId()->toString());
+            PruneDeletedRecordsFromAccessRules::forTeam($this->choice->getTeamId()->toString());
         });
     }
 

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\AccessRule;
 
-use App\Choice\ChoiceListEnum;
+use App\Shared\Table;
 use App\Shared\Traits\Enum;
 
 /**
@@ -100,13 +100,16 @@ enum AccessAttributeEnum: string
     }
 
     /**
-     * The team's list whose choice ids this attribute's conditions hold, if any.
+     * The table whose record ids this attribute's conditions hold, if any, so
+     * conditions can be tidied when one of those records is deleted.
      */
-    public function choiceList(): ?ChoiceListEnum
+    public function referencedTable(): ?Table
     {
         return match ($this) {
-            self::TicketPriority => ChoiceListEnum::TicketPriority,
-            self::TicketStatus => ChoiceListEnum::TicketStatus,
+            self::ProjectGroup, self::SubjectGroup, self::SubjectLeadsGroup => Table::Groups,
+            self::TicketLabel => Table::Labels,
+            self::TicketPriority, self::TicketStatus => Table::Choices,
+            self::TicketProject => Table::Projects,
             default => null,
         };
     }

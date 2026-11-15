@@ -7,22 +7,20 @@ namespace App\AccessRule\Actions;
 use App\AccessRule\AccessCondition;
 use App\AccessRule\AccessOperatorEnum;
 use App\AccessRule\AccessRule;
-use App\Choice\Actions\FindChoice;
-use App\Choice\Choice;
-use App\Choice\ChoiceListEnum;
+use Illuminate\Support\Facades\DB;
 
 /**
- * Takes deleted statuses and priorities out of a team's access rule
- * conditions, without changing what any rule does:
+ * Takes deleted records (statuses, priorities, projects, groups, labels) out
+ * of a team's access rule conditions, without changing what any rule does:
  *
- * - "is not" and "is none of" always hold for a deleted choice, so its id is
+ * - "is not" and "is none of" always hold for a deleted record, so its id is
  *   dropped, and the condition with it once nothing is left.
  * - "is any of" just loses the deleted id.
  * - "is", or "is any of" with nothing left, could never hold again, so the rule
  *   could never apply. Its value is cleared and the rule is disabled, for an
  *   admin to choose a new value.
  */
-final readonly class PruneDeletedChoicesFromAccessRules
+final readonly class PruneDeletedRecordsFromAccessRules
 {
     public function __construct(
         private string $teamId,
@@ -33,19 +31,10 @@ final readonly class PruneDeletedChoicesFromAccessRules
      */
     public function __invoke(): int
     {
-        /** @var array<string, list<string>> $existingIds */
-        $existingIds = [];
-
-        foreach (ChoiceListEnum::cases() as $list) {
-            $existingIds[$list->value] = array_values(FindChoice::listForTeam($this->teamId, $list, withArchived: true)
-                ->map(fn (Choice $choice): string => $choice->getId()->toString())
-                ->all());
-        }
-
         $changed = 0;
 
         foreach (FindAccessRules::allForTeam($this->teamId) as $rule) {
-            if ($this->prune($rule, $existingIds)) {
+            if ($this->prune($rule)) {
                 $changed++;
             }
         }
@@ -53,10 +42,7 @@ final readonly class PruneDeletedChoicesFromAccessRules
         return $changed;
     }
 
-    /**
-     * @param  array<string, list<string>>  $existingIds
-     */
-    private function prune(AccessRule $rule, array $existingIds): bool
+    private function prune(AccessRule $rule): bool
     {
         $isChanged = false;
         $canNeverApply = false;
@@ -64,16 +50,22 @@ final readonly class PruneDeletedChoicesFromAccessRules
 
         foreach ($rule->getConditions()->toCollection()->all() as $stored) {
             $condition = AccessCondition::fromArray(is_array($stored) ? $stored : []);
-            $list = $condition->attribute?->choiceList();
+            $table = $condition->attribute?->referencedTable();
 
-            if ($list === null || $condition->operator === null || $condition->isBroken()) {
+            if ($table === null || $condition->operator === null || $condition->isBroken()) {
                 $conditions[] = $stored;
 
                 continue;
             }
 
             $values = (array) $condition->value;
-            $kept = array_values(array_intersect($values, $existingIds[$list->value]));
+            $existing = DB::table($table->value)
+                ->where('team_id', $this->teamId)
+                ->whereIn('id', $values)
+                ->pluck('id')
+                ->filter(fn (mixed $id): bool => is_string($id))
+                ->all();
+            $kept = array_values(array_intersect($values, $existing));
 
             if ($kept === $values) {
                 $conditions[] = $stored;

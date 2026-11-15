@@ -60,7 +60,7 @@ function describeCondition(
     return [
         label.charAt(0).toLowerCase() + label.slice(1),
         labelFor(options.operators, condition.operator),
-        // A value can be missing once the status or priority it named is deleted.
+        // A value can be missing once the record it named is deleted.
         values || (takesValue ? '(choose a value)' : ''),
     ]
         .filter(Boolean)
