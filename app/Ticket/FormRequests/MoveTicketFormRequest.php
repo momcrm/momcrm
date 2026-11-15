@@ -47,7 +47,7 @@ final class MoveTicketFormRequest extends FormRequest
     public function rules(): array
     {
         return [
-            ...TicketValidationRules::status($this, $this->ticket->getTeamId()->toString(), isRequired: true),
+            ...TicketValidationRules::status($this, $this->ticket->getTeamId()->toString(), isRequired: true, currentStatusId: $this->ticket->getStatusId()->toNullableString()),
             Position::getNameForValidation() => ['required', 'integer', 'min:0'],
         ];
     }

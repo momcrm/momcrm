@@ -116,7 +116,7 @@ class HandleInertiaRequests extends Middleware
         }
 
         return collect(ChoiceListEnum::cases())
-            ->mapWithKeys(fn (ChoiceListEnum $list): array => [$list->value => FindChoice::listForTeam($teamId, $list)->toSummaries()])
+            ->mapWithKeys(fn (ChoiceListEnum $list): array => [$list->value => FindChoice::listForTeam($teamId, $list, withArchived: true)->toSummaries()])
             ->all();
     }
 

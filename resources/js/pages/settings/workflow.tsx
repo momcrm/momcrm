@@ -1,5 +1,7 @@
 import { Head, router } from '@inertiajs/react';
 import {
+    Archive,
+    ArchiveRestore,
     ArrowDown,
     ArrowUp,
     MoreHorizontal,
@@ -31,7 +33,14 @@ import {
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { colorDot, colorText } from '@/lib/colors';
 import { cn } from '@/lib/utils';
-import { destroy, reorder, store, update } from '@/routes/choices';
+import {
+    archive,
+    destroy,
+    reorder,
+    restore,
+    store,
+    update,
+} from '@/routes/choices';
 import type { Choice, ChoiceList, ColorName, Option } from '@/types';
 
 type WorkflowChoice = Choice & { usage: number };
@@ -119,9 +128,11 @@ export default function Workflow({ lists }: { lists: WorkflowList[] }) {
 }
 
 function ListEditor({ list }: { list: WorkflowList }) {
+    const live = list.choices.filter((choice) => !choice.is_archived);
+    const archived = list.choices.filter((choice) => choice.is_archived);
     const groups =
         list.categories.length === 0
-            ? [{ category: null, label: null, choices: list.choices }]
+            ? [{ category: null, label: null, choices: live }]
             : [...list.categories]
                   .sort((a, b) =>
                       a.value === 'open' ? -1 : b.value === 'open' ? 1 : 0,
@@ -129,7 +140,7 @@ function ListEditor({ list }: { list: WorkflowList }) {
                   .map((category) => ({
                       category: category.value,
                       label: category.label,
-                      choices: list.choices.filter(
+                      choices: live.filter(
                           (choice) => choice.category === category.value,
                       ),
                   }));
@@ -139,10 +150,8 @@ function ListEditor({ list }: { list: WorkflowList }) {
      * the list where it is.
      */
     const move = (choice: WorkflowChoice, direction: -1 | 1) => {
-        const ids = list.choices.map((item) => item.id);
-        const group = list.choices.filter(
-            (item) => item.category === choice.category,
-        );
+        const ids = live.map((item) => item.id);
+        const group = live.filter((item) => item.category === choice.category);
         const neighbour = group[group.indexOf(choice) + direction];
 
         if (!neighbour) {
@@ -186,6 +195,32 @@ function ListEditor({ list }: { list: WorkflowList }) {
                     </ul>
                 </section>
             ))}
+
+            {archived.length > 0 && (
+                <section className="space-y-2">
+                    <div>
+                        <h2 className="text-sm font-medium">Archived</h2>
+                        <p className="text-xs text-muted-foreground">
+                            No longer offered. Tickets that use one keep it
+                            until you change them.
+                        </p>
+                    </div>
+                    <ul className="divide-y rounded-lg border bg-card shadow-xs">
+                        {archived.map((choice) => (
+                            <ArchivedChoiceRow
+                                key={choice.id}
+                                choice={choice}
+                                category={
+                                    list.categories.find(
+                                        (category) =>
+                                            category.value === choice.category,
+                                    )?.label
+                                }
+                            />
+                        ))}
+                    </ul>
+                </section>
+            )}
         </div>
     );
 }
@@ -205,7 +240,7 @@ function ChoiceRow({
     isLast: boolean;
     onMove: (direction: -1 | 1) => void;
 }) {
-    const [deleting, setDeleting] = useState(false);
+    const [archiving, setArchiving] = useState(false);
     const save = (fields: Record<string, unknown>) =>
         router.patch(update.url(choice.id), fields as never, saveOptions);
     const Icon = choice.icon ? priorityIcons[choice.icon] : null;
@@ -366,19 +401,18 @@ function ChoiceRow({
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
-                        variant="destructive"
                         disabled={choice.is_default || siblings.length <= 1}
-                        onSelect={() => setDeleting(true)}
+                        onSelect={() => setArchiving(true)}
                     >
-                        <Trash2 />
-                        Delete
+                        <Archive />
+                        Archive
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
 
-            <DeleteChoiceDialog
-                open={deleting}
-                onOpenChange={setDeleting}
+            <ArchiveChoiceDialog
+                open={archiving}
+                onOpenChange={setArchiving}
                 choice={choice}
                 replacements={siblings.filter((item) => item.id !== choice.id)}
             />
@@ -386,7 +420,11 @@ function ChoiceRow({
     );
 }
 
-function DeleteChoiceDialog({
+/**
+ * Archives a choice. Its tickets keep it unless moved to another choice of
+ * the same kind.
+ */
+function ArchiveChoiceDialog({
     open,
     onOpenChange,
     choice,
@@ -397,33 +435,30 @@ function DeleteChoiceDialog({
     choice: WorkflowChoice;
     replacements: WorkflowChoice[];
 }) {
-    const [replacementId, setReplacementId] = useState(
-        replacements.find((item) => item.is_default)?.id ??
-            replacements[0]?.id ??
-            '',
-    );
+    const [replacementId, setReplacementId] = useState('');
     const [processing, setProcessing] = useState(false);
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent>
-                <DialogTitle>Delete {choice.name}?</DialogTitle>
+                <DialogTitle>Archive {choice.name}?</DialogTitle>
                 <DialogDescription>
                     {choice.usage === 0
-                        ? 'No tickets use it, so nothing else changes.'
-                        : `${choice.usage === 1 ? '1 ticket uses' : `${choice.usage} tickets use`} it. Choose where to move ${choice.usage === 1 ? 'it' : 'them'}.`}
+                        ? "It won't be offered for tickets any more. You can restore it later."
+                        : `It won't be offered for tickets any more. ${choice.usage === 1 ? 'The 1 ticket that uses it keeps' : `The ${choice.usage} tickets that use it keep`} it, unless you move ${choice.usage === 1 ? 'it' : 'them'}.`}
                 </DialogDescription>
                 {choice.usage > 0 && (
                     <NativeSelect
-                        aria-label="Move tickets to"
+                        aria-label="Tickets that use it"
                         value={replacementId}
                         onChange={(event) =>
                             setReplacementId(event.target.value)
                         }
                     >
+                        <option value="">Leave them in {choice.name}</option>
                         {replacements.map((item) => (
                             <option key={item.id} value={item.id}>
-                                {item.name}
+                                Move them to {item.name}
                             </option>
                         ))}
                     </NativeSelect>
@@ -433,26 +468,119 @@ function DeleteChoiceDialog({
                         Cancel
                     </Button>
                     <Button
-                        variant="destructive"
                         disabled={processing}
                         onClick={() =>
-                            router.delete(destroy.url(choice.id), {
-                                data:
-                                    choice.usage > 0
-                                        ? { replacement_id: replacementId }
-                                        : {},
-                                ...saveOptions,
-                                onStart: () => setProcessing(true),
-                                onFinish: () => setProcessing(false),
-                                onSuccess: () => onOpenChange(false),
-                            })
+                            router.post(
+                                archive.url(choice.id),
+                                replacementId
+                                    ? { replacement_id: replacementId }
+                                    : {},
+                                {
+                                    ...saveOptions,
+                                    onStart: () => setProcessing(true),
+                                    onFinish: () => setProcessing(false),
+                                    onSuccess: () => onOpenChange(false),
+                                },
+                            )
                         }
                     >
-                        Delete
+                        Archive
                     </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
+    );
+}
+
+/**
+ * An archived choice: restore it, or delete it for good once nothing uses it.
+ */
+function ArchivedChoiceRow({
+    choice,
+    category,
+}: {
+    choice: WorkflowChoice;
+    category?: string;
+}) {
+    const [deleting, setDeleting] = useState(false);
+    const [processing, setProcessing] = useState(false);
+
+    return (
+        <li className="flex h-11 items-center gap-2 px-3">
+            <span className="flex size-6 shrink-0 items-center justify-center">
+                <span
+                    className={cn(
+                        'size-2.5 rounded-full opacity-60',
+                        colorDot[choice.color],
+                    )}
+                />
+            </span>
+            <span className="min-w-0 flex-1 truncate px-2 text-sm text-muted-foreground">
+                {choice.name}
+            </span>
+            {category && <SoftBadge tone="neutral">{category}</SoftBadge>}
+            <span className="w-20 text-right text-xs text-subtle-foreground tabular-nums">
+                {choice.usage === 1 ? '1 ticket' : `${choice.usage} tickets`}
+            </span>
+            <Button
+                variant="ghost"
+                size="sm"
+                className="h-7"
+                onClick={() =>
+                    router.post(restore.url(choice.id), {}, saveOptions)
+                }
+            >
+                <ArchiveRestore />
+                Restore
+            </Button>
+            <Button
+                variant="ghost"
+                size="icon"
+                className="size-7"
+                aria-label={`Delete ${choice.name}`}
+                title={
+                    choice.usage > 0
+                        ? 'Tickets still use it, so it can only stay archived.'
+                        : undefined
+                }
+                disabled={choice.usage > 0}
+                onClick={() => setDeleting(true)}
+            >
+                <Trash2 />
+            </Button>
+
+            <Dialog open={deleting} onOpenChange={setDeleting}>
+                <DialogContent>
+                    <DialogTitle>Delete {choice.name}?</DialogTitle>
+                    <DialogDescription>
+                        No tickets use it. It will be gone for good, and
+                        can&apos;t be restored.
+                    </DialogDescription>
+                    <DialogFooter className="gap-2">
+                        <Button
+                            variant="ghost"
+                            onClick={() => setDeleting(false)}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            disabled={processing}
+                            onClick={() =>
+                                router.delete(destroy.url(choice.id), {
+                                    ...saveOptions,
+                                    onStart: () => setProcessing(true),
+                                    onFinish: () => setProcessing(false),
+                                    onSuccess: () => setDeleting(false),
+                                })
+                            }
+                        >
+                            Delete
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </li>
     );
 }
 

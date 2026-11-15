@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\AccessRule\AccessRuleEloquentModel;
 use App\Choice\Actions\FindChoice;
+use App\Choice\ChoiceEloquentModel;
 use App\Choice\ChoiceListEnum;
 use App\Contact\ContactEloquentModel;
 use App\Customer\CustomerEloquentModel;
@@ -132,4 +133,22 @@ it('applies the close rules when an edit closes or reopens the ticket', function
 
     expect($open->fresh())->priority_id->toBe($urgent)->status_id->toBe($new)
         ->and($closed->fresh()->status_id)->toBe($closedStatus);
+});
+
+it('keeps an archived status the ticket already has, but does not move tickets into one', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $teamId = $user->current_team_id;
+    $ticket = patchableTicket($user, ['status_id' => ticketStatusId($teamId, 'Waiting on supplier')]);
+    $other = patchableTicket($user);
+    ChoiceEloquentModel::query()->withoutGlobalScopes()->whereKey($ticket->status_id)->update(['archived_at' => now()]);
+
+    actingAs($user)
+        ->patch(route('tickets.patch', $ticket->id), ['status_id' => $ticket->status_id, 'title' => 'Renamed'])
+        ->assertSessionHasNoErrors();
+
+    actingAs($user)
+        ->patch(route('tickets.patch', $other->id), ['status_id' => $ticket->status_id])
+        ->assertSessionHasErrors(['status_id' => "Choose one of your team's statuses."]);
+
+    expect($ticket->fresh()->title)->toBe('Renamed');
 });

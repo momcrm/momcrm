@@ -28,15 +28,16 @@ use Illuminate\Validation\Rule;
  * team, and can be left out only when the ticket belongs to a project; the
  * contact and location must belong to that customer; the project must be one
  * of the team's live projects the person may see (or the one the ticket is
- * already in); the
- * assignee must be a member of the team.
+ * already in); the assignee must be a member of the team. The priority must be
+ * live, unless it is the one the ticket already has, so a ticket with an
+ * archived priority can still be edited.
  */
 final class TicketValidationRules
 {
     /**
      * @return array<string, array<int, mixed>>
      */
-    public static function for(FormRequest $request, string $teamId, ?string $currentProjectId = null): array
+    public static function for(FormRequest $request, string $teamId, ?string $currentProjectId = null, ?string $currentPriorityId = null): array
     {
         $customerId = $request->string(CustomerId::getNameForValidation())->toString();
         $userId = (string) $request->user()?->id;
@@ -79,17 +80,18 @@ final class TicketValidationRules
                 Rule::exists(Table::Choices->value, 'id')
                     ->where('team_id', $teamId)
                     ->where('list', ChoiceListEnum::TicketPriority->value)
-                    ->whereNull('archived_at'),
+                    ->where(fn (Builder $query) => $query->whereNull('archived_at')->orWhere('id', $currentPriorityId)),
             ],
         ];
     }
 
     /**
-     * The status rules: one of the team's live ticket statuses.
+     * The status rules: one of the team's live ticket statuses, or the one the
+     * ticket already has.
      *
      * @return array<string, array<int, mixed>>
      */
-    public static function status(FormRequest $request, string $teamId, bool $isRequired = false): array
+    public static function status(FormRequest $request, string $teamId, bool $isRequired = false, ?string $currentStatusId = null): array
     {
         return [
             StatusId::getNameForValidation() => [
@@ -97,7 +99,7 @@ final class TicketValidationRules
                 Rule::exists(Table::Choices->value, 'id')
                     ->where('team_id', $teamId)
                     ->where('list', ChoiceListEnum::TicketStatus->value)
-                    ->whereNull('archived_at'),
+                    ->where(fn (Builder $query) => $query->whereNull('archived_at')->orWhere('id', $currentStatusId)),
             ],
         ];
     }

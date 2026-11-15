@@ -29,8 +29,8 @@ export default function TicketForm({
     submitLabel: string;
     cancelHref: string;
 }) {
-    const priorities = useTicketPriorities();
-    const statuses = useTicketStatuses();
+    const priorities = useTicketPriorities(ticket?.priority_id);
+    const statuses = useTicketStatuses(ticket?.status_id);
     const [selectedCustomer, setSelectedCustomer] = useState(
         ticket?.customer_id ?? customerId ?? '',
     );

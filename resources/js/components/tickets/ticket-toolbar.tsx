@@ -65,7 +65,7 @@ export default function TicketToolbar({
             : options.projects.find((project) => project.id === id)?.name;
     const labelName = (id: string | null) =>
         options.labels.find((label) => label.id === id)?.name;
-    const priorities = useTicketPriorities();
+    const priorities = useTicketPriorities(...filters.priority);
 
     const hasFilters =
         filters.priority.length > 0 ||

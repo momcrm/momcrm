@@ -76,7 +76,7 @@ export default function Overview({
         return sort.direction === 'asc' ? order : -order;
     });
     const busiest = Math.max(1, ...workload.map((member) => member.total));
-    const statuses = useTicketStatuses();
+    const statuses = useTicketStatuses(...Object.keys(statusCounts));
     const openStatuses = statuses.filter(
         (status) => status.category !== 'closed',
     );

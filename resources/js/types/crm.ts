@@ -91,6 +91,8 @@ export type Choice = {
     category: string | null;
     position: number;
     is_default: boolean;
+    /** No longer offered, but kept by the records that still use it. */
+    is_archived: boolean;
 };
 
 export type Ticket = {
