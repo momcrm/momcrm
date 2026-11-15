@@ -36,7 +36,9 @@ export default function TicketsIndex({
     drawer: TicketDrawerData | null;
 }) {
     const { openCreateTicket } = useCreateTicket();
-    const statuses = useTicketStatuses();
+    const statuses = useTicketStatuses(
+        ...tickets.data.map((ticket) => ticket.status_id),
+    );
     const isFiltered =
         Boolean(filters.search) ||
         filters.priority.length > 0 ||

@@ -59,8 +59,8 @@ final class PatchTicketFormRequest extends FormRequest
         $teamId = (string) $this->user()?->current_team_id;
 
         return [
-            ...TicketValidationRules::for($this, $teamId, $this->ticket->getProjectId()->toNullableString()),
-            ...TicketValidationRules::status($this, $teamId),
+            ...TicketValidationRules::for($this, $teamId, $this->ticket->getProjectId()->toNullableString(), $this->ticket->getPriorityId()->toNullableString()),
+            ...TicketValidationRules::status($this, $teamId, currentStatusId: $this->ticket->getStatusId()->toNullableString()),
             self::LABEL_IDS => ['sometimes', 'array'],
             self::LABEL_IDS.'.*' => ['uuid', Rule::exists(Table::Labels->value, 'id')->where('team_id', $teamId)],
         ];

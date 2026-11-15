@@ -19,7 +19,7 @@ final class ChoiceCollection extends AbstractDataCollection
     /**
      * Each choice as the frontend shows it, in order.
      *
-     * @return list<array{id: string, name: string, color: string, icon: ?string, category: ?string, position: int, is_default: bool}>
+     * @return list<array{id: string, name: string, color: string, icon: ?string, category: ?string, position: int, is_default: bool, is_archived: bool}>
      */
     public function toSummaries(): array
     {
@@ -27,7 +27,8 @@ final class ChoiceCollection extends AbstractDataCollection
     }
 
     /**
-     * Value/label pairs, for pickers that take an id, such as access rule conditions.
+     * Value/label pairs, for pickers that take an id, such as access rule
+     * conditions. Archived choices say so.
      *
      * @return list<array{value: string, label: string}>
      */
@@ -35,7 +36,9 @@ final class ChoiceCollection extends AbstractDataCollection
     {
         return array_values($this->map(fn (Choice $choice): array => [
             'value' => $choice->getId()->toString(),
-            'label' => $choice->getName()->toString(),
+            'label' => $choice->isArchived()
+                ? __(':name (archived)', ['name' => $choice->getName()->toString()])
+                : $choice->getName()->toString(),
         ])->all());
     }
 }

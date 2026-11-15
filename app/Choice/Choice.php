@@ -70,7 +70,7 @@ final class Choice extends AbstractData
     /**
      * The fields the frontend needs to show the choice.
      *
-     * @return array{id: string, name: string, color: string, icon: ?string, category: ?string, position: int, is_default: bool}
+     * @return array{id: string, name: string, color: string, icon: ?string, category: ?string, position: int, is_default: bool, is_archived: bool}
      */
     public function toSummary(): array
     {
@@ -82,6 +82,7 @@ final class Choice extends AbstractData
             'category' => $this->getCategory()->toNullableString(),
             'position' => $this->getPosition()->toInteger(),
             'is_default' => $this->getIsDefault()->toBoolean(),
+            'is_archived' => $this->isArchived(),
         ];
     }
 

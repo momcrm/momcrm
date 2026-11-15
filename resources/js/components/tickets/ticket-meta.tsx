@@ -20,17 +20,42 @@ import { cn } from '@/lib/utils';
 import type { ColorName, TicketLabel, Choice } from '@/types';
 
 /**
- * The team's ticket statuses, in board order.
+ * The live choices in a list, plus any archived ones still in use by the
+ * records on screen, so those records keep showing (and can keep) their value.
  */
-export function useTicketStatuses(): Choice[] {
+function liveOrInUse(
+    choices: Choice[],
+    inUseIds: (string | null | undefined)[],
+): Choice[] {
+    return choices.filter(
+        (choice) => !choice.is_archived || inUseIds.includes(choice.id),
+    );
+}
+
+/**
+ * Every one of the team's ticket statuses, archived ones included, for
+ * looking a ticket's status up.
+ */
+function useAllTicketStatuses(): Choice[] {
     return usePage().props.choices?.ticket_status ?? [];
 }
 
 /**
- * One of the team's statuses by id; undefined for none or an unknown id.
+ * The team's live ticket statuses in board order, plus any archived ones that
+ * the given statuses (such as the tickets on screen) are in.
+ */
+export function useTicketStatuses(
+    ...inUseIds: (string | null | undefined)[]
+): Choice[] {
+    return liveOrInUse(useAllTicketStatuses(), inUseIds);
+}
+
+/**
+ * One of the team's statuses by id, archived or not; undefined for none or
+ * an unknown id.
  */
 export function useTicketStatus(statusId: string | null): Choice | undefined {
-    const statuses = useTicketStatuses();
+    const statuses = useAllTicketStatuses();
 
     return statuses.find((status) => status.id === statusId);
 }
@@ -48,7 +73,7 @@ export function isClosedStatus(statuses: Choice[], statusId: string | null) {
  * A check for closed statuses, for components that look at many tickets.
  */
 export function useIsClosedStatus(): (statusId: string | null) => boolean {
-    const statuses = useTicketStatuses();
+    const statuses = useAllTicketStatuses();
 
     return (statusId) => isClosedStatus(statuses, statusId);
 }
@@ -60,10 +85,12 @@ export function defaultStatusId(
     statuses: Choice[],
     category: 'open' | 'closed',
 ): string | undefined {
+    const live = statuses.filter((status) => !status.is_archived);
+
     return (
-        statuses.find(
+        live.find(
             (status) => status.category === category && status.is_default,
-        ) ?? statuses.find((status) => status.category === category)
+        ) ?? live.find((status) => status.category === category)
     )?.id;
 }
 
@@ -88,18 +115,26 @@ export const priorityIcons: Record<string, LucideIcon> = {
     minus: Minus,
 };
 
-/**
- * The team's ticket priorities, most urgent first.
- */
-export function useTicketPriorities(): Choice[] {
+function useAllTicketPriorities(): Choice[] {
     return usePage().props.choices?.ticket_priority ?? [];
 }
 
 /**
- * One of the team's priorities by id; undefined for none or an unknown id.
+ * The team's live ticket priorities, most urgent first, plus any archived
+ * ones among the given priorities (such as the ticket's own).
+ */
+export function useTicketPriorities(
+    ...inUseIds: (string | null | undefined)[]
+): Choice[] {
+    return liveOrInUse(useAllTicketPriorities(), inUseIds);
+}
+
+/**
+ * One of the team's priorities by id, archived or not; undefined for none or
+ * an unknown id.
  */
 export function usePriority(priorityId: string | null): Choice | undefined {
-    const priorities = useTicketPriorities();
+    const priorities = useAllTicketPriorities();
 
     return priorities.find((priority) => priority.id === priorityId);
 }

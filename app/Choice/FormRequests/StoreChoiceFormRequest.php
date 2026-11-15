@@ -65,7 +65,7 @@ final class StoreChoiceFormRequest extends FormRequest
     public function messages(): array
     {
         return [
-            Name::getNameForValidation().'.unique' => __('That name is already in this list.'),
+            Name::getNameForValidation().'.unique' => __('That name is already in this list, or in its archive.'),
         ];
     }
 

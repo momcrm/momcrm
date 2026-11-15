@@ -42,9 +42,19 @@ it("rejects a name already in the list, and returns not found for another team's
 
     actingAs($owner)
         ->patch(route('choices.update', ticketStatusId($owner->current_team_id, 'New')), ['name' => 'Closed'])
-        ->assertSessionHasErrors(['name' => 'That name is already in this list.']);
+        ->assertSessionHasErrors(['name' => 'That name is already in this list, or in its archive.']);
 
     actingAs($owner)
         ->patch(route('choices.update', ticketStatusId(UserEloquentModel::factory()->withPersonalTeam()->create()->current_team_id, 'New')), ['name' => 'Mine'])
         ->assertNotFound();
+});
+
+it('does not make an archived choice the default', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $inProgress = ticketStatusId($owner->current_team_id, 'In progress');
+    ChoiceEloquentModel::query()->withoutGlobalScopes()->whereKey($inProgress)->update(['archived_at' => now()]);
+
+    actingAs($owner)
+        ->patch(route('choices.update', $inProgress), ['is_default' => true])
+        ->assertSessionHasErrors(['is_default' => 'Restore In progress before making it the default.']);
 });

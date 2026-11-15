@@ -6,8 +6,10 @@ use App\AccessRule\Controllers\StoreAccessRuleController;
 use App\AccessRule\Controllers\UpdateAccessRuleController;
 use App\Activity\Controllers\ListAccountActivityController;
 use App\Activity\Controllers\ListTeamActivityController;
+use App\Choice\Controllers\ArchiveChoiceController;
 use App\Choice\Controllers\DeleteChoiceController;
 use App\Choice\Controllers\ReorderChoicesController;
+use App\Choice\Controllers\RestoreChoiceController;
 use App\Choice\Controllers\ShowWorkflowController;
 use App\Choice\Controllers\StoreChoiceController;
 use App\Choice\Controllers\UpdateChoiceController;
@@ -58,6 +60,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('settings/choices', StoreChoiceController::class)->name('choices.store');
     Route::put('settings/choices/order', ReorderChoicesController::class)->name('choices.reorder');
     Route::patch('settings/choices/{choice}', UpdateChoiceController::class)->whereUuid('choice')->name('choices.update');
+    Route::post('settings/choices/{choice}/archive', ArchiveChoiceController::class)->whereUuid('choice')->name('choices.archive');
+    Route::post('settings/choices/{choice}/restore', RestoreChoiceController::class)->whereUuid('choice')->name('choices.restore');
     Route::delete('settings/choices/{choice}', DeleteChoiceController::class)->whereUuid('choice')->name('choices.destroy');
 
     Route::get('settings/activity', ListAccountActivityController::class)->name('activity.index');

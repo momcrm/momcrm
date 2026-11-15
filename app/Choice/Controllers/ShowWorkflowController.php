@@ -36,7 +36,7 @@ final class ShowWorkflowController
                     'label' => $list->label(),
                     'categories' => $list->categoryOptions(),
                     'icons' => $list->icons(),
-                    'choices' => FindChoice::listForTeam($teamId, $list)
+                    'choices' => FindChoice::listForTeam($teamId, $list, withArchived: true)
                         ->map(fn (Choice $choice): array => [...$choice->toSummary(), 'usage' => $usage[$choice->getId()->toString()] ?? 0])
                         ->values()
                         ->all(),

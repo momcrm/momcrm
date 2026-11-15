@@ -18,6 +18,7 @@ import {
     daysUntil,
     defaultStatusId,
     isClosedStatus,
+    useIsClosedStatus,
     LabelChips,
     PriorityIcon,
     ProjectTag,
@@ -101,9 +102,9 @@ function DrawerBody({
         useTicketActions();
     const save = (fields: Record<string, unknown>) =>
         updateTicket(ticket.id, fields);
-    const statuses = useTicketStatuses();
+    const statuses = useTicketStatuses(ticket.status_id);
     const isClosed = isClosedStatus(statuses, ticket.status_id);
-    const priorities = useTicketPriorities();
+    const priorities = useTicketPriorities(ticket.priority_id);
     const priority = usePriority(ticket.priority_id);
     const overdueDays =
         ticket.due_on && !isClosed ? -daysUntil(ticket.due_on) : 0;
@@ -643,9 +644,10 @@ function EstimateField({
 function Subtasks({ ticket }: { ticket: TicketDrawerData }) {
     const { addSubtask, openTicket, updateTicket } = useTicketActions();
     const statuses = useTicketStatuses();
+    const isClosed = useIsClosedStatus();
     const [title, setTitle] = useState('');
     const done = ticket.subtasks.filter((subtask) =>
-        isClosedStatus(statuses, subtask.status_id),
+        isClosed(subtask.status_id),
     ).length;
 
     return (
@@ -660,7 +662,7 @@ function Subtasks({ ticket }: { ticket: TicketDrawerData }) {
             </h3>
             <ul className="space-y-0.5">
                 {ticket.subtasks.map((subtask) => {
-                    const isDone = isClosedStatus(statuses, subtask.status_id);
+                    const isDone = isClosed(subtask.status_id);
 
                     return (
                         <li

@@ -26,10 +26,12 @@ export default function TicketBoard({
     /** On one project's board, new tickets go in that project. */
     projectId?: string | null;
 }) {
-    const statuses = useTicketStatuses();
     const [addingTo, setAddingTo] = useState<string | null>(null);
     const { openTicket, moveTicket } = useTicketActions();
     const [items, setItems] = useState(tickets);
+    const statuses = useTicketStatuses(
+        ...items.map((ticket) => ticket.status_id),
+    );
     const [draggingId, setDraggingId] = useState<string | null>(null);
     const [target, setTarget] = useState<{
         statusId: string;
@@ -49,7 +51,11 @@ export default function TicketBoard({
         setDraggingId(null);
         setTarget(null);
 
-        if (!dragged || dragged.id === beforeId) {
+        if (
+            !dragged ||
+            dragged.id === beforeId ||
+            !acceptsDrop(statusId, dragged.status_id)
+        ) {
             return;
         }
 
@@ -76,9 +82,16 @@ export default function TicketBoard({
         moveTicket(dragged.id, statusId, index);
     };
 
+    /** An archived status takes no new tickets, only reordering its own. */
+    const acceptsDrop = (statusId: string, fromStatusId: string | null) =>
+        statusId === fromStatusId ||
+        !statuses.find((status) => status.id === statusId)?.is_archived;
+
     const allowDrop =
         (statusId: string, beforeId: string | null) => (event: DragEvent) => {
-            if (!draggingId) {
+            const dragged = items.find((ticket) => ticket.id === draggingId);
+
+            if (!dragged || !acceptsDrop(statusId, dragged.status_id)) {
                 return;
             }
 
@@ -113,14 +126,20 @@ export default function TicketBoard({
                         <span className="text-xs text-subtle-foreground">
                             {column.tickets.length}
                         </span>
-                        <button
-                            type="button"
-                            onClick={() => setAddingTo(column.id)}
-                            aria-label={`Add a ticket to ${column.name}`}
-                            className="ml-auto rounded p-0.5 text-subtle-foreground hover:bg-accent hover:text-foreground"
-                        >
-                            <Plus className="size-4" />
-                        </button>
+                        {column.is_archived ? (
+                            <span className="ml-auto text-xs text-subtle-foreground">
+                                Archived
+                            </span>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={() => setAddingTo(column.id)}
+                                aria-label={`Add a ticket to ${column.name}`}
+                                className="ml-auto rounded p-0.5 text-subtle-foreground hover:bg-accent hover:text-foreground"
+                            >
+                                <Plus className="size-4" />
+                            </button>
+                        )}
                     </header>
                     <ol className="flex flex-col gap-2">
                         {column.tickets.map((ticket) => (
@@ -155,7 +174,7 @@ export default function TicketBoard({
                             Drop tickets here
                         </p>
                     )}
-                    {addingTo === column.id ? (
+                    {column.is_archived ? null : addingTo === column.id ? (
                         <QuickAddTicket
                             statusId={column.id}
                             options={options}

@@ -350,7 +350,11 @@ function TicketTabs({
     options,
     favoriteTicketIds,
 }: Props) {
-    const statuses = useTicketStatuses();
+    const statuses = useTicketStatuses(
+        ...(tickets && !Array.isArray(tickets) ? tickets.data : []).map(
+            (ticket) => ticket.status_id,
+        ),
+    );
 
     if (!tickets || Array.isArray(tickets) || !filters) {
         return null;
@@ -418,7 +422,7 @@ function Overview({
     milestoneCan,
 }: Props) {
     const { openTicket } = useTicketActions();
-    const statuses = useTicketStatuses();
+    const statuses = useTicketStatuses(...Object.keys(statusCounts));
     const total = project.tickets_count;
     const percent =
         total === 0
