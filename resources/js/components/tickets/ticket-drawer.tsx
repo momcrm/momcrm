@@ -1,4 +1,4 @@
-import { Link } from '@inertiajs/react';
+import { router } from '@inertiajs/react';
 import {
     AlertTriangle,
     Archive,
@@ -6,6 +6,7 @@ import {
     ChevronRight,
     Link2,
     Maximize2,
+    Minimize2,
     Plus,
     RotateCcw,
     Star,
@@ -58,7 +59,7 @@ import {
 import { useTicketActions } from '@/hooks/use-ticket-actions';
 import { hueStyle } from '@/lib/colors';
 import { cn } from '@/lib/utils';
-import { show } from '@/routes/tickets';
+import { index, show } from '@/routes/tickets';
 import { store as storeAttachment } from '@/routes/tickets/attachments';
 import type {
     Choice,
@@ -69,9 +70,27 @@ import type {
 
 const NONE = '__none__';
 
+/** Remembers whether the drawer opens as a side panel or a full page. */
+const FULL_PAGE_KEY = 'ticket-drawer-full-page';
+
+function readFullPage(): boolean {
+    try {
+        return window.localStorage.getItem(FULL_PAGE_KEY) === '1';
+    } catch {
+        return false;
+    }
+}
+
+/**
+ * Where a ticket's details are shown: beside a list, expanded over it, or
+ * as its own page at /tickets/{id}.
+ */
+type TicketLayout = 'side' | 'full' | 'page';
+
 /**
  * A ticket opened beside the list it was picked from: every field edits in
- * place, and the URL (?ticket=) keeps it open on reload or when shared.
+ * place, and the URL (?ticket=) keeps it open on reload or when shared. It
+ * can expand into a centred full-page panel, and remembers that choice.
  */
 export default function TicketDrawer({
     ticket,
@@ -81,18 +100,39 @@ export default function TicketDrawer({
     options: TicketPickerOptions;
 }) {
     const { closeTicket } = useTicketActions();
+    const [isFullPage, setIsFullPage] = useState(readFullPage);
+
+    const toggleFullPage = () => {
+        const next = !isFullPage;
+
+        setIsFullPage(next);
+
+        try {
+            window.localStorage.setItem(FULL_PAGE_KEY, next ? '1' : '0');
+        } catch {
+            // Private windows can refuse storage; the choice lasts until reload.
+        }
+    };
 
     return (
         <Sheet
             open={ticket !== null}
             onOpenChange={(open) => !open && closeTicket()}
         >
-            <SheetContent className="w-full gap-0 overflow-y-auto p-0 sm:max-w-[34rem] [&>button:last-child]:top-2.75">
+            <SheetContent
+                className={cn(
+                    'w-full gap-0 overflow-y-auto p-0 sm:max-w-[34rem] [&>button:last-child]:top-2.75',
+                    isFullPage &&
+                        'data-[state=closed]:slide-out-to-right-0 data-[state=closed]:zoom-out-[0.98] data-[state=open]:slide-in-from-right-0 data-[state=open]:zoom-in-[0.98] sm:inset-y-6 sm:right-[max(1.5rem,calc(50%-490px))] sm:left-[max(1.5rem,calc(50%-490px))] sm:h-auto sm:w-auto sm:max-w-none sm:rounded-xl sm:border',
+                )}
+            >
                 {ticket && (
-                    <DrawerBody
+                    <TicketDetails
                         key={ticket.id}
                         ticket={ticket}
                         options={options}
+                        layout={isFullPage ? 'full' : 'side'}
+                        onToggleFullPage={toggleFullPage}
                     />
                 )}
             </SheetContent>
@@ -100,15 +140,32 @@ export default function TicketDrawer({
     );
 }
 
-function DrawerBody({
+/**
+ * A ticket's header, properties, description, subtasks, files and
+ * conversation, all editable in place. The drawer shows it beside a list or
+ * as a full-page panel; the ticket's own page shows it with no drawer around
+ * it, so opening another ticket goes to that ticket's page.
+ */
+export function TicketDetails({
     ticket,
     options,
+    layout,
+    onToggleFullPage,
 }: {
     ticket: TicketDrawerData;
     options: TicketPickerOptions;
+    layout: TicketLayout;
+    onToggleFullPage?: () => void;
 }) {
-    const { updateTicket, toggleStar, archiveTicket, openTicket, closeTicket } =
-        useTicketActions();
+    const actions = useTicketActions();
+    const { updateTicket, toggleStar, archiveTicket } = actions;
+    const isPage = layout === 'page';
+    const openTicket = isPage
+        ? (id: string) => router.visit(show(id))
+        : actions.openTicket;
+    const closeTicket = isPage
+        ? () => router.visit(index())
+        : actions.closeTicket;
     const save = (fields: Record<string, unknown>) =>
         updateTicket(ticket.id, fields);
     const statuses = useTicketStatuses(ticket.status_id);
@@ -128,7 +185,12 @@ function DrawerBody({
 
     return (
         <>
-            <div className="flex h-12 shrink-0 items-center gap-1 border-b px-4 pr-10.5 text-sm">
+            <div
+                className={cn(
+                    'flex h-12 shrink-0 items-center gap-1 border-b px-4 text-sm',
+                    !isPage && 'pr-10.5',
+                )}
+            >
                 <span className="flex min-w-0 items-center gap-1 text-muted-foreground">
                     {ticket.parent && (
                         <>
@@ -188,24 +250,17 @@ function DrawerBody({
                             <Archive />
                         </IconAction>
                     )}
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="size-7"
-                                asChild
-                            >
-                                <Link
-                                    href={show(ticket.id)}
-                                    aria-label="Open full page"
-                                >
-                                    <Maximize2 />
-                                </Link>
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Open full page</TooltipContent>
-                    </Tooltip>
+                    {onToggleFullPage && (
+                        <IconAction
+                            label={
+                                layout === 'full' ? 'Side panel' : 'Full page'
+                            }
+                            onClick={onToggleFullPage}
+                            className="hidden sm:inline-flex"
+                        >
+                            {layout === 'full' ? <Minimize2 /> : <Maximize2 />}
+                        </IconAction>
+                    )}
                 </div>
             </div>
 
@@ -231,20 +286,42 @@ function DrawerBody({
                 </div>
             )}
 
-            <div className="space-y-6 px-5 py-5">
+            <div
+                className={cn(
+                    'space-y-6',
+                    layout === 'side'
+                        ? 'px-5 py-5'
+                        : 'px-5 py-5 sm:px-12 sm:py-7',
+                )}
+            >
                 <div>
-                    <SheetTitle asChild>
+                    {isPage ? (
                         <InlineTitle
                             value={ticket.title}
                             onSave={(title) => save({ title })}
                         />
-                    </SheetTitle>
-                    <SheetDescription className="sr-only">
-                        Ticket #{ticket.number} details
-                    </SheetDescription>
+                    ) : (
+                        <>
+                            <SheetTitle asChild>
+                                <InlineTitle
+                                    value={ticket.title}
+                                    onSave={(title) => save({ title })}
+                                />
+                            </SheetTitle>
+                            <SheetDescription className="sr-only">
+                                Ticket #{ticket.number} details
+                            </SheetDescription>
+                        </>
+                    )}
                 </div>
 
-                <dl className="grid grid-cols-[7.5rem_1fr] items-center gap-x-3 gap-y-1 text-sm">
+                <dl
+                    className={cn(
+                        'grid grid-cols-[7.5rem_minmax(0,1fr)] items-center gap-x-3 gap-y-1 text-sm',
+                        layout !== 'side' &&
+                            'md:grid-cols-[7.5rem_minmax(0,1fr)_7.5rem_minmax(0,1fr)]',
+                    )}
+                >
                     <Property label="Status">
                         <Picker
                             value={ticket.status_id ?? NONE}
@@ -351,7 +428,9 @@ function DrawerBody({
                                 />
                             ) : (
                                 <span className="text-muted-foreground">
-                                    No project
+                                    {ticket.project_id
+                                        ? 'A members-only project'
+                                        : 'No project'}
                                 </span>
                             )}
                         </Picker>
@@ -377,6 +456,26 @@ function DrawerBody({
                             )}
                         </Picker>
                     </Property>
+                    {ticket.contact && (
+                        <Property label="Contact">
+                            <span className="block truncate px-2">
+                                {[
+                                    ticket.contact.name,
+                                    ticket.contact.email,
+                                    ticket.contact.phone,
+                                ]
+                                    .filter(Boolean)
+                                    .join(' · ')}
+                            </span>
+                        </Property>
+                    )}
+                    {ticket.location_name && (
+                        <Property label="Location">
+                            <span className="block truncate px-2">
+                                {ticket.location_name}
+                            </span>
+                        </Property>
+                    )}
                     <Property label="Labels">
                         <LabelPicker
                             selected={ticket.labels.map((label) => label.id)}
@@ -421,7 +520,9 @@ function DrawerBody({
                     />
                 </section>
 
-                {!ticket.parent && <Subtasks ticket={ticket} />}
+                {!ticket.parent && (
+                    <Subtasks ticket={ticket} onOpen={openTicket} />
+                )}
 
                 <section className="space-y-2">
                     <h3 className="text-xs font-medium tracking-wide text-subtle-foreground uppercase">
@@ -450,10 +551,12 @@ function DrawerBody({
 function IconAction({
     label,
     onClick,
+    className,
     children,
 }: {
     label: string;
     onClick: () => void;
+    className?: string;
     children: ReactNode;
 }) {
     return (
@@ -462,7 +565,7 @@ function IconAction({
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="size-7"
+                    className={cn('size-7', className)}
                     aria-label={label}
                     onClick={onClick}
                 >
@@ -717,8 +820,14 @@ function EstimateField({
     );
 }
 
-function Subtasks({ ticket }: { ticket: TicketDrawerData }) {
-    const { addSubtask, openTicket, updateTicket } = useTicketActions();
+function Subtasks({
+    ticket,
+    onOpen,
+}: {
+    ticket: TicketDrawerData;
+    onOpen: (id: string) => void;
+}) {
+    const { addSubtask, updateTicket } = useTicketActions();
     const statuses = useTicketStatuses();
     const isClosed = useIsClosedStatus();
     const [title, setTitle] = useState('');
@@ -771,7 +880,7 @@ function Subtasks({ ticket }: { ticket: TicketDrawerData }) {
                             </button>
                             <button
                                 type="button"
-                                onClick={() => openTicket(subtask.id)}
+                                onClick={() => onOpen(subtask.id)}
                                 className={cn(
                                     'min-w-0 flex-1 truncate text-left',
                                     isDone &&

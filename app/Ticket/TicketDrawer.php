@@ -20,13 +20,14 @@ use App\Comment\Comment;
 use App\Comment\CommentEloquentModel;
 use App\Comment\CommentRelationship;
 use App\Comment\Properties\TicketId as CommentTicketId;
+use App\Contact\Actions\FindContact;
 use App\Customer\Actions\FindCustomer;
 use App\Customer\CustomerEloquentModel;
 use App\Favorite\Actions\FindFavorite;
 use App\Favorite\FavoritableTypeEnum;
 use App\Group\Actions\FindGroup;
+use App\Location\Actions\FindLocation;
 use App\Project\Actions\FindProject;
-use App\Project\ProjectEloquentModel;
 use App\Shared\MorphMapKeyEnum;
 use App\Team\Scopes\CurrentTeamScope;
 use App\TeamUser\Actions\FindTeamMembers;
@@ -78,7 +79,6 @@ final class TicketDrawer
             ->with([
                 TicketRelationship::Customer->value,
                 TicketRelationship::Assignee->value,
-                TicketRelationship::Project->value,
                 TicketRelationship::Labels->value,
                 TicketRelationship::Parent->value,
                 TicketRelationship::Subtasks->value => fn ($query) => $query->orderBy(Number::getDatabaseTableColumnName()),
@@ -91,10 +91,12 @@ final class TicketDrawer
 
         $customer = $model->getRelationValue(TicketRelationship::Customer->value);
         $assignee = $model->getRelationValue(TicketRelationship::Assignee->value);
-        $project = $model->getRelationValue(TicketRelationship::Project->value);
         $parent = $model->getRelationValue(TicketRelationship::Parent->value);
 
         $ticket = Ticket::fromEloquentModel($model);
+        $project = FindProject::visibleByIdForTeam($ticket->getProjectId()->toNullableString(), $teamId, $userId);
+        $contact = FindContact::byIdForTeam($ticket->getContactId()->toNullableString(), $teamId);
+        $location = FindLocation::byIdForTeam($ticket->getLocationId()->toNullableString(), $teamId);
 
         return [
             ...$ticket->toSummary(),
@@ -102,8 +104,14 @@ final class TicketDrawer
             'attachment_can' => AccessAbilities::for($user, AccessResourceEnum::Attachment),
             'customer_name' => $customer instanceof CustomerEloquentModel ? $customer->name : null,
             'assignee_name' => $assignee instanceof UserEloquentModel ? $assignee->name : null,
-            'project_name' => $project instanceof ProjectEloquentModel ? $project->name : null,
-            'project_hue' => $project instanceof ProjectEloquentModel ? $project->hue : null,
+            'project_name' => $project->getName()->toNullableString(),
+            'project_hue' => $project->getHue()->toNullableInteger(),
+            'contact' => $contact->isNull() ? null : [
+                'name' => $contact->getFullName(),
+                'email' => $contact->getEmail()->toNullableString(),
+                'phone' => $contact->getWorkPhone()->toNullableString() ?? $contact->getMobilePhone()->toNullableString(),
+            ],
+            'location_name' => $location->isNull() ? null : $location->getName()->toString(),
             'labels' => Choice::collect($model->labels->all(), 'fromEloquentModel')->toTags(),
             'parent' => $parent instanceof TicketEloquentModel ? ['id' => $parent->id, 'number' => $parent->number, 'title' => $parent->title] : null,
             'subtasks' => $model->subtasks

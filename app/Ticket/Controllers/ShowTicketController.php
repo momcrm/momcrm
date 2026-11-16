@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace App\Ticket\Controllers;
 
-use App\Contact\Actions\FindContact;
-use App\Customer\Actions\FindCustomer;
-use App\Group\Actions\FindGroupForTeam;
-use App\Location\Actions\FindLocation;
-use App\Project\Actions\FindProject;
-use App\Ticket\Actions\FindTicket;
 use App\Ticket\Exceptions\CouldNotFindTicket;
-use App\User\Actions\FindUser;
+use App\Ticket\TicketDrawer;
+use App\User\UserEloquentModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * A ticket's own page: the drawer's full-page view, editable in place, for
+ * shared links and anywhere a ticket opens outside a list. The ticket is
+ * passed as `drawer` so the drawer's edits reload it.
+ */
 final class ShowTicketController
 {
     /**
@@ -23,27 +23,17 @@ final class ShowTicketController
      */
     public function __invoke(Request $request, string $ticket): Response
     {
-        $teamId = (string) $request->user()?->current_team_id;
-        $found = FindTicket::byIdForTeam($ticket, $teamId);
+        /** @var UserEloquentModel $user */
+        $user = $request->user();
+        $drawer = TicketDrawer::forTicket($ticket, $user);
 
-        if ($found->isNull()) {
+        if ($drawer === null) {
             throw CouldNotFindTicket::notFound();
         }
 
-        $contact = FindContact::byIdForTeam($found->getContactId()->toNullableString(), $teamId);
-        $location = FindLocation::byIdForTeam($found->getLocationId()->toNullableString(), $teamId);
-        $customer = FindCustomer::byIdForTeam($found->getCustomerId()->toNullableString(), $teamId);
-        $group = FindGroupForTeam::byId($found->getGroupId()->toNullableString(), $teamId);
-        $project = FindProject::visibleByIdForTeam($found->getProjectId()->toNullableString(), $teamId, (string) $request->user()?->id);
-
         return Inertia::render('tickets/show', [
-            'ticket' => $found->toSummary(),
-            'customer' => $customer->isNull() ? null : $customer->toSummary(),
-            'project' => $project->isNull() ? null : $project->toSummary(),
-            'contact' => $contact->isNull() ? null : $contact->toSummary(),
-            'location' => $location->isNull() ? null : $location->toSummary(),
-            'group' => $group->isNull() ? null : ['id' => $group->getId()->toString(), 'name' => $group->getName()->toString(), 'hue' => $group->getHue()->toNullableInteger()],
-            'assigneeName' => FindUser::byId($found->getAssigneeId()->toNullableString())->getName()->toNullableString(),
+            'drawer' => $drawer,
+            ...TicketDrawer::options((string) $user->current_team_id, $user->id),
         ]);
     }
 }
