@@ -76,6 +76,16 @@ final class TeamPolicy
     }
 
     /**
+     * Owners and admins define the fields the team adds to its records.
+     */
+    public function manageCustomFields(UserEloquentModel $user, Team $team): Response
+    {
+        return $this->isOwnerOrAdmin($user, $team)
+            ? Response::allow()
+            : Response::deny('Only team owners and admins can change custom fields.');
+    }
+
+    /**
      * Owners remove admins and members, admins remove members. Nobody removes
      * the owner or themselves.
      */

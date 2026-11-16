@@ -178,6 +178,44 @@ export type Choice = {
     is_archived: boolean;
 };
 
+/**
+ * The kinds of record a team can add its own fields to.
+ */
+export type CustomFieldTarget = 'ticket' | 'customer' | 'contact' | 'project';
+
+export type CustomFieldType =
+    | 'text'
+    | 'number'
+    | 'date'
+    | 'checkbox'
+    | 'select'
+    | 'multi_select';
+
+/**
+ * One thing a select field offers. Records store its id.
+ */
+export type CustomFieldOption = {
+    id: string;
+    name: string;
+    hue: number | null;
+};
+
+/**
+ * A field a team has added to one kind of record.
+ */
+export type CustomField = {
+    id: string;
+    target: CustomFieldTarget;
+    type: CustomFieldType;
+    name: string;
+    description: string | null;
+    /** Empty unless the field is a select. */
+    options: CustomFieldOption[];
+    position: number;
+    /** No longer offered, but its values are kept. */
+    is_archived: boolean;
+};
+
 export type Ticket = {
     id: string;
     number: number;
