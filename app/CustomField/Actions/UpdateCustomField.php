@@ -21,6 +21,8 @@ final readonly class UpdateCustomField
         $model = CustomFieldEloquentModel::query()->withoutGlobalScopes()->findOrFail($this->field->getId()->toString());
         $model->update($this->field->forDatabaseUpdate());
 
+        FindCustomField::forget($this->field->getTeamId()->toString());
+
         return CustomField::fromEloquentModel($model->refresh());
     }
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Ticket;
 
+use App\CustomField\Properties\CustomFieldValues;
 use App\Ticket\Factories\TicketFactory;
 use App\Ticket\Properties\ArchivedAt;
 use App\Ticket\Properties\Assignee;
@@ -51,6 +52,7 @@ final class Ticket extends AbstractData
         public ClosedSubtasksCount $closedSubtasksCount,
         public ContactId $contactId,
         public CreatedAt $createdAt,
+        public CustomFieldValues $customFields,
         public Customer $customer,
         public CustomerId $customerId,
         public Description $description,
@@ -105,7 +107,7 @@ final class Ticket extends AbstractData
     /**
      * The fields the ticket pages show.
      *
-     * @return array{id: string, number: int, title: string, description: ?string, status_id: ?string, priority_id: ?string, type_id: ?string, group_id: ?string, customer_id: ?string, project_id: ?string, parent_id: ?string, contact_id: ?string, location_id: ?string, assignee_id: ?string, starts_on: ?string, due_on: ?string, estimate_minutes: ?int, position: int, closed_at: ?string, archived_at: ?string, created_at: ?string}
+     * @return array{id: string, number: int, title: string, description: ?string, status_id: ?string, priority_id: ?string, type_id: ?string, group_id: ?string, customer_id: ?string, project_id: ?string, parent_id: ?string, contact_id: ?string, location_id: ?string, assignee_id: ?string, starts_on: ?string, due_on: ?string, estimate_minutes: ?int, position: int, closed_at: ?string, archived_at: ?string, created_at: ?string, custom_fields: array<string, mixed>}
      */
     public function toSummary(): array
     {
@@ -131,7 +133,20 @@ final class Ticket extends AbstractData
             'closed_at' => $this->getClosedAt()->toNullableISOString(),
             'archived_at' => $this->getArchivedAt()->toNullableISOString(),
             'created_at' => $this->getCreatedAt()->toNullableISOString(),
+            'custom_fields' => $this->getCustomFields()->toValues(),
         ];
+    }
+
+    public function getCustomFields(): CustomFieldValues
+    {
+        return $this->customFields;
+    }
+
+    public function setCustomFields(mixed $customFields): self
+    {
+        $this->customFields = new CustomFieldValues($customFields instanceof AbstractValue ? $customFields->toValue() : $customFields);
+
+        return $this;
     }
 
     public function getAssigneeId(): AssigneeId

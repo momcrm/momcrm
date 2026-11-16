@@ -8,33 +8,42 @@ use App\CustomField\CustomField;
 use App\CustomField\CustomFieldCollection;
 use App\CustomField\CustomFieldEloquentModel;
 use App\CustomField\CustomFieldTargetEnum;
-use App\CustomField\Properties\ArchivedAt;
 use App\CustomField\Properties\Name;
 use App\CustomField\Properties\Position;
 use App\CustomField\Properties\Target;
 use App\CustomField\Properties\TeamId;
-use Illuminate\Database\Eloquent\Builder;
+use App\Shared\RequestMemo;
 
 final class FindCustomField
 {
     /**
      * A team's fields on one kind of record, in order. Archived fields are
-     * left out unless asked for.
+     * left out unless asked for. Read once per request.
      */
     public static function listForTeam(string $teamId, CustomFieldTargetEnum $target, bool $withArchived = false): CustomFieldCollection
     {
-        return CustomField::collect(
+        $fields = RequestMemo::remember("custom-fields.{$teamId}.{$target->value}", fn (): CustomFieldCollection => CustomField::collect(
             CustomFieldEloquentModel::query()
                 ->withoutGlobalScopes()
                 ->where(TeamId::getDatabaseTableColumnName(), $teamId)
                 ->where(Target::getDatabaseTableColumnName(), $target->value)
-                ->when(! $withArchived, fn (Builder $query) => $query->whereNull(ArchivedAt::getDatabaseTableColumnName()))
                 ->orderBy(Position::getDatabaseTableColumnName())
                 ->orderBy(Name::getDatabaseTableColumnName())
                 ->get()
                 ->all(),
             'fromEloquentModel',
-        );
+        ));
+
+        return $withArchived ? $fields : $fields->filter(fn (CustomField $field): bool => ! $field->isArchived())->values();
+    }
+
+    /**
+     * Drops what was read for a team earlier in this request, after its
+     * fields change.
+     */
+    public static function forget(string $teamId): void
+    {
+        RequestMemo::forget("custom-fields.{$teamId}.");
     }
 
     /**

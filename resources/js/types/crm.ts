@@ -216,6 +216,15 @@ export type CustomField = {
     is_archived: boolean;
 };
 
+/**
+ * What a record holds for one custom field: text, a number, a date
+ * (YYYY-MM-DD), a ticked checkbox, an option's id, or several options' ids.
+ */
+export type CustomFieldValue = string | number | boolean | string[] | null;
+
+/** A record's custom field values by field id. A field without a value has no key. */
+export type CustomFieldValues = Record<string, CustomFieldValue>;
+
 export type Ticket = {
     id: string;
     number: number;
@@ -238,6 +247,7 @@ export type Ticket = {
     closed_at: string | null;
     archived_at: string | null;
     created_at: string | null;
+    custom_fields: CustomFieldValues;
 };
 
 export type TicketListItem = Ticket & {

@@ -10,6 +10,9 @@ use App\Choice\ChoiceEloquentModel;
 use App\Choice\ChoiceListEnum;
 use App\Contact\ContactEloquentModel;
 use App\Customer\CustomerEloquentModel;
+use App\CustomField\CustomFieldEloquentModel;
+use App\CustomField\CustomFieldTargetEnum;
+use App\CustomField\CustomFieldTypeEnum;
 use App\Group\GroupEloquentModel;
 use App\Project\ProjectEloquentModel;
 use App\Ticket\TicketEloquentModel;
@@ -214,3 +217,104 @@ it('sets the type and group, keeping an archived type the ticket has but not cho
     expect($ticket->fresh())->type_id->toBe($incident)->group_id->toBe($group->id)->title->toBe('Renamed')
         ->and($other->fresh())->type_id->toBeNull()->group_id->toBeNull();
 });
+
+it('sets custom field values, leaving the ones not sent as they are', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $teamId = $user->current_team_id;
+    $serial = CustomFieldEloquentModel::factory()->create(['team_id' => $teamId]);
+    $seats = CustomFieldEloquentModel::factory()->ofType(CustomFieldTypeEnum::Number)->create(['team_id' => $teamId]);
+    $due = CustomFieldEloquentModel::factory()->ofType(CustomFieldTypeEnum::Date)->create(['team_id' => $teamId]);
+    $onsite = CustomFieldEloquentModel::factory()->ofType(CustomFieldTypeEnum::Checkbox)->create(['team_id' => $teamId]);
+    $tier = CustomFieldEloquentModel::factory()->select(['Gold', 'Silver'])->create(['team_id' => $teamId]);
+    $tags = CustomFieldEloquentModel::factory()->select(['Red', 'Blue'], isMultiple: true)->create(['team_id' => $teamId]);
+    $ticket = patchableTicket($user, ['custom_fields' => [$serial->id => 'SN-1']]);
+
+    actingAs($user)
+        ->patch(route('tickets.patch', $ticket->id), ['custom_fields' => [
+            $seats->id => '12.5',
+            $due->id => '2026-12-01',
+            $onsite->id => true,
+            $tier->id => $tier->options[1]['id'],
+            $tags->id => [$tags->options[0]['id'], $tags->options[1]['id']],
+        ]])
+        ->assertSessionHasNoErrors();
+
+    expect($ticket->fresh()->custom_fields)->toEqual([
+        $serial->id => 'SN-1',
+        $seats->id => 12.5,
+        $due->id => '2026-12-01',
+        $onsite->id => true,
+        $tier->id => $tier->options[1]['id'],
+        $tags->id => [$tags->options[0]['id'], $tags->options[1]['id']],
+    ]);
+});
+
+it('removes a custom field value that is emptied', function (mixed $empty): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $field = CustomFieldEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
+    $ticket = patchableTicket($user, ['custom_fields' => [$field->id => 'SN-1']]);
+
+    actingAs($user)
+        ->patch(route('tickets.patch', $ticket->id), ['custom_fields' => [$field->id => $empty]])
+        ->assertSessionHasNoErrors();
+
+    expect($ticket->fresh()->custom_fields)->toBeNull();
+})->with([
+    'null' => [null],
+    'blank text' => ['  '],
+]);
+
+it('rejects a custom field value of the wrong type, naming the field', function (CustomFieldTypeEnum $type, mixed $value, string $message): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $field = CustomFieldEloquentModel::factory()->ofType($type)->create(['team_id' => $user->current_team_id, 'name' => 'Extra']);
+    $ticket = patchableTicket($user);
+
+    actingAs($user)
+        ->patch(route('tickets.patch', $ticket->id), ['custom_fields' => [$field->id => $value]])
+        ->assertSessionHasErrors(["custom_fields.{$field->id}" => $message]);
+
+    expect($ticket->fresh()->custom_fields)->toBeNull();
+})->with([
+    'text too long' => [CustomFieldTypeEnum::Text, str_repeat('a', 1001), 'The Extra field must not be greater than 1000 characters.'],
+    'number' => [CustomFieldTypeEnum::Number, 'twelve', 'The Extra field must be a number.'],
+    'date' => [CustomFieldTypeEnum::Date, '01/12/2026', 'The Extra field must match the format Y-m-d.'],
+    'checkbox' => [CustomFieldTypeEnum::Checkbox, 'maybe', 'The Extra field must be true or false.'],
+    'select' => [CustomFieldTypeEnum::Select, 'not-an-option', 'The selected Extra is invalid.'],
+]);
+
+it('rejects an option a multi-select does not offer', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $field = CustomFieldEloquentModel::factory()->select(['Red'], isMultiple: true)->create(['team_id' => $user->current_team_id, 'name' => 'Tags']);
+    $ticket = patchableTicket($user);
+
+    actingAs($user)
+        ->patch(route('tickets.patch', $ticket->id), ['custom_fields' => [$field->id => [$field->options[0]['id'], 'nope']]])
+        ->assertSessionHasErrors(["custom_fields.{$field->id}.1" => 'The selected Tags is invalid.']);
+});
+
+it('keeps an option the select no longer offers when the ticket already has it', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $field = CustomFieldEloquentModel::factory()->select(['Gold'])->create(['team_id' => $user->current_team_id]);
+    $ticket = patchableTicket($user, ['custom_fields' => [$field->id => 'removed-option']]);
+
+    actingAs($user)
+        ->patch(route('tickets.patch', $ticket->id), ['custom_fields' => [$field->id => 'removed-option']])
+        ->assertSessionHasNoErrors();
+
+    expect($ticket->fresh()->custom_fields)->toBe([$field->id => 'removed-option']);
+});
+
+it('only takes values for the live ticket fields of the team', function (Closure $field): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $ticket = patchableTicket($user);
+
+    actingAs($user)
+        ->patch(route('tickets.patch', $ticket->id), ['custom_fields' => [$field($user->current_team_id)->id => 'SN-1']])
+        ->assertSessionHasErrors('custom_fields');
+
+    expect($ticket->fresh()->custom_fields)->toBeNull();
+})->with([
+    'an archived field' => [fn (string $teamId) => CustomFieldEloquentModel::factory()->archived()->create(['team_id' => $teamId])],
+    'a customer field' => [fn (string $teamId) => CustomFieldEloquentModel::factory()->on(CustomFieldTargetEnum::Customer)->create(['team_id' => $teamId])],
+    "another team's field" => [fn (string $teamId) => CustomFieldEloquentModel::factory()->create()],
+]);

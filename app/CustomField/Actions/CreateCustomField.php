@@ -22,6 +22,8 @@ final readonly class CreateCustomField
 
         $model = CustomFieldEloquentModel::query()->create($this->field->forDatabaseCreate());
 
+        FindCustomField::forget($this->field->getTeamId()->toString());
+
         return CustomField::fromEloquentModel($model->refresh());
     }
 

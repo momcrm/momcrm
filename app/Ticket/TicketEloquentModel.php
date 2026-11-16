@@ -10,6 +10,7 @@ use App\Choice\HasLabels;
 use App\Choice\LabelTargetEnum;
 use App\Contact\ContactEloquentModel;
 use App\Customer\CustomerEloquentModel;
+use App\CustomField\Properties\CustomFieldValues;
 use App\Project\ProjectEloquentModel;
 use App\Shared\Table;
 use App\Team\Scopes\CurrentTeamScope;
@@ -174,6 +175,7 @@ final class TicketEloquentModel extends Model implements Auditable
             EstimateMinutes::getDatabaseTableColumnName() => 'integer',
             ClosedAt::getDatabaseTableColumnName() => 'immutable_datetime',
             ArchivedAt::getDatabaseTableColumnName() => 'immutable_datetime',
+            CustomFieldValues::getDatabaseTableColumnName() => 'array',
         ];
     }
 

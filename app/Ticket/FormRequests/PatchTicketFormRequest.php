@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Ticket\FormRequests;
 
 use App\Choice\LabelTargetEnum;
+use App\CustomField\CustomFieldTargetEnum;
+use App\CustomField\CustomFieldValueRules;
+use App\CustomField\Properties\CustomFieldValues;
 use App\Shared\Types;
 use App\Ticket\Actions\FindTicket;
 use App\Ticket\Actions\UpdateTicket;
@@ -60,6 +63,7 @@ final class PatchTicketFormRequest extends FormRequest
         return [
             ...TicketValidationRules::for($this, $teamId, $this->ticket),
             ...TicketValidationRules::status($this, $teamId, currentStatusId: $this->ticket->getStatusId()->toNullableString()),
+            ...CustomFieldValueRules::for($teamId, CustomFieldTargetEnum::Ticket, $this->ticket->getCustomFields()),
             self::LABEL_IDS => ['sometimes', 'array'],
             self::LABEL_IDS.'.*' => ['uuid', LabelTargetEnum::Ticket->rule($teamId, $this->ticket->getId()->toString())],
         ];
@@ -73,12 +77,32 @@ final class PatchTicketFormRequest extends FormRequest
         return TicketValidationRules::messages();
     }
 
+    /**
+     * @return array<string, string>
+     */
+    public function attributes(): array
+    {
+        return CustomFieldValueRules::attributes((string) $this->user()?->current_team_id, CustomFieldTargetEnum::Ticket);
+    }
+
     public function process(): RedirectResponse
     {
         $validated = $this->validated();
 
+        $customFields = CustomFieldValues::getNameForValidation();
+        $this->ticket->setPropertyIfExists(Types::stringKeyed(Arr::except($validated, [self::LABEL_IDS, $customFields])));
+
+        if (array_key_exists($customFields, $validated)) {
+            $this->ticket->setCustomFields(CustomFieldValueRules::merge(
+                $this->ticket->getTeamId()->toString(),
+                CustomFieldTargetEnum::Ticket,
+                $this->ticket->getCustomFields(),
+                $validated[$customFields],
+            ));
+        }
+
         UpdateTicket::fromTicket(
-            $this->ticket->setPropertyIfExists(Types::stringKeyed(Arr::except($validated, self::LABEL_IDS))),
+            $this->ticket,
             updatedById: (string) $this->user()?->id,
         );
 

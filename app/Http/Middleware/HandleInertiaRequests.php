@@ -4,6 +4,8 @@ namespace App\Http\Middleware;
 
 use App\Choice\Actions\FindChoice;
 use App\Choice\ChoiceListEnum;
+use App\CustomField\Actions\FindCustomField;
+use App\CustomField\CustomFieldTargetEnum;
 use App\Favorite\Actions\FindFavorite;
 use App\Favorite\FavoritableTypeEnum;
 use App\Group\Actions\FindGroup;
@@ -65,6 +67,7 @@ class HandleInertiaRequests extends Middleware
             'canManageWorkflow' => fn (): bool => $this->allowsOnCurrentTeam($request, 'manageWorkflow'),
             'sidebarCounts' => fn (): ?array => $this->sidebarCounts($request),
             'choices' => fn (): ?array => $this->choices($request),
+            'customFields' => fn (): ?array => $this->customFields($request),
             'gettingStarted' => fn (): ?array => $request->user() instanceof UserEloquentModel
                 ? GetGettingStartedProgress::forUser($request->user())
                 : null,
@@ -118,6 +121,25 @@ class HandleInertiaRequests extends Middleware
 
         return collect(ChoiceListEnum::cases())
             ->mapWithKeys(fn (ChoiceListEnum $list): array => [$list->value => FindChoice::listForTeam($teamId, $list, withArchived: true)->toSummaries()])
+            ->all();
+    }
+
+    /**
+     * The fields the current team has added to its records, keyed by kind of
+     * record, so any page can show and edit a record's custom fields.
+     *
+     * @return array<string, list<array<string, mixed>>>|null
+     */
+    private function customFields(Request $request): ?array
+    {
+        $teamId = $request->user()?->current_team_id;
+
+        if (! is_string($teamId)) {
+            return null;
+        }
+
+        return collect(CustomFieldTargetEnum::cases())
+            ->mapWithKeys(fn (CustomFieldTargetEnum $target): array => [$target->value => FindCustomField::listForTeam($teamId, $target)->toSummaries()])
             ->all();
     }
 

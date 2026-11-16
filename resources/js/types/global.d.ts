@@ -35,6 +35,10 @@ declare module '@inertiajs/core' {
                 import('./crm').ChoiceList,
                 import('./crm').Choice[]
             > | null;
+            customFields?: Record<
+                import('./crm').CustomFieldTarget,
+                import('./crm').CustomField[]
+            > | null;
             [key: string]: unknown;
         };
     }
