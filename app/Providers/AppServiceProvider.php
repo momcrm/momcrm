@@ -11,6 +11,8 @@ use App\Comment\Comment;
 use App\Comment\CommentPolicy;
 use App\Contact\Contact;
 use App\Contact\ContactPolicy;
+use App\Contract\Contract;
+use App\Contract\ContractPolicy;
 use App\Customer\Customer;
 use App\Customer\CustomerPolicy;
 use App\Group\Group;
@@ -148,6 +150,7 @@ class AppServiceProvider extends ServiceProvider
     protected function configurePolicies(): void
     {
         Gate::policy(Asset::class, AssetPolicy::class);
+        Gate::policy(Contract::class, ContractPolicy::class);
         Gate::policy(Secret::class, SecretPolicy::class);
         Gate::policy(Attachment::class, AttachmentPolicy::class);
         Gate::policy(Comment::class, CommentPolicy::class);

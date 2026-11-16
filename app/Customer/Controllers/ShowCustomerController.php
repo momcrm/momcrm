@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Customer\Controllers;
 
+use App\Contract\Actions\FindContract;
+use App\Contract\Contract;
 use App\Customer\CustomerWorkspace;
 use App\Customer\Exceptions\CouldNotFindCustomer;
 use App\Invoice\Actions\FindInvoice;
@@ -22,7 +24,7 @@ use Inertia\Response;
 
 /**
  * The customer's dashboard: what they owe, the tickets and draft invoices
- * waiting on someone, and services that end soon.
+ * waiting on someone, and services and contracts that end soon.
  */
 final class ShowCustomerController
 {
@@ -58,6 +60,11 @@ final class ShowCustomerController
                 ->sortBy(fn (Service $service): string => $service->getEndsOn()->toCarbon()->toDateString())
                 ->take(self::CARD_ROWS)
                 ->map(fn (Service $service): array => $service->toSummary())
+                ->values()
+                ->all(),
+            'expiringContracts' => FindContract::endingSoonForCustomer($customerId, $workspace->teamId, self::EXPIRING_WITHIN_DAYS)
+                ->take(self::CARD_ROWS)
+                ->map(fn (Contract $contract): array => $contract->toSummary())
                 ->values()
                 ->all(),
         ]);

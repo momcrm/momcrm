@@ -12,6 +12,7 @@ use App\AuditLog\AuditLogEloquentModel;
 use App\Choice\ChoiceEloquentModel;
 use App\Comment\CommentEloquentModel;
 use App\Contact\ContactEloquentModel;
+use App\Contract\ContractEloquentModel;
 use App\Customer\CustomerEloquentModel;
 use App\EmailCode\EmailCodeEloquentModel;
 use App\Favorite\FavoriteEloquentModel;
@@ -53,6 +54,7 @@ enum MorphMapKeyEnum: string
     case Choice = 'choice';
     case Comment = 'comment';
     case Contact = 'contact';
+    case Contract = 'contract';
     case Customer = 'customer';
     case EmailCode = 'email_code';
     case Favorite = 'favorite';
@@ -107,6 +109,7 @@ enum MorphMapKeyEnum: string
             self::Choice => ChoiceEloquentModel::class,
             self::Comment => CommentEloquentModel::class,
             self::Contact => ContactEloquentModel::class,
+            self::Contract => ContractEloquentModel::class,
             self::Customer => CustomerEloquentModel::class,
             self::EmailCode => EmailCodeEloquentModel::class,
             self::Favorite => FavoriteEloquentModel::class,

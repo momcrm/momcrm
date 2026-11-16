@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Contract\ContractEloquentModel;
 use App\Customer\CustomerEloquentModel;
 use App\Invoice\InvoiceEloquentModel;
 use App\InvoiceItem\InvoiceItemEloquentModel;
@@ -65,4 +66,20 @@ it("returns not found for another team's customer", function (): void {
     actingAs(UserEloquentModel::factory()->withPersonalTeam()->create())
         ->get(route('customers.show', CustomerEloquentModel::factory()->create()->id))
         ->assertNotFound();
+});
+
+it('lists active contracts that end within 30 days', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $customer = CustomerEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
+    $contract = fn (array $attributes) => ContractEloquentModel::factory()->create([...$attributes, 'team_id' => $user->current_team_id, 'customer_id' => $customer->id]);
+    $contract(['title' => 'Ending soon', 'status' => 'active', 'ends_on' => now()->addDays(20)->toDateString()]);
+    $contract(['title' => 'Ends later', 'status' => 'active', 'ends_on' => now()->addDays(90)->toDateString()]);
+    $contract(['title' => 'Cancelled', 'status' => 'cancelled', 'ends_on' => now()->addDays(20)->toDateString()]);
+
+    actingAs($user)
+        ->get(route('customers.show', $customer->id))
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('expiringContracts', 1)
+            ->where('expiringContracts.0.title', 'Ending soon'),
+        );
 });

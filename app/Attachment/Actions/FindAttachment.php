@@ -85,6 +85,31 @@ final class FindAttachment
     }
 
     /**
+     * The files of several records of one kind, newest first, grouped by the
+     * record's id, for lists that show each record's files.
+     *
+     * @param  array<int, string>  $ids
+     * @return array<string, AttachmentCollection>
+     */
+    public static function forAttachables(MorphMapKeyEnum $type, array $ids): array
+    {
+        $grouped = [];
+
+        AttachmentEloquentModel::query()
+            ->withoutGlobalScopes()
+            ->with(AttachmentRelationship::Uploader->value)
+            ->where(AttachableType::getDatabaseTableColumnName(), $type->value)
+            ->whereIn(AttachableId::getDatabaseTableColumnName(), $ids)
+            ->latest()
+            ->get()
+            ->each(function (AttachmentEloquentModel $model) use (&$grouped): void {
+                $grouped[$model->attachable_id][] = $model;
+            });
+
+        return array_map(fn (array $models): AttachmentCollection => Attachment::collect($models), $grouped);
+    }
+
+    /**
      * A customer's files in one folder, or at the top level for none, by name.
      */
     public static function inCustomerFolder(string $customerId, ?string $folderId): AttachmentCollection

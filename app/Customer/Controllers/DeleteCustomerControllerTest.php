@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Attachment\AttachmentEloquentModel;
 use App\Contact\ContactEloquentModel;
+use App\Contract\ContractEloquentModel;
 use App\Customer\CustomerEloquentModel;
 use App\TeamUser\TeamRoleEnum;
 use App\User\UserEloquentModel;
@@ -25,17 +26,22 @@ it('deletes a customer and their contacts', function (): void {
     assertModelMissing($contact);
 });
 
-it('deletes the customer\'s files and their stored copies', function (): void {
+it('deletes the customer\'s files and contract documents, with their stored copies', function (): void {
     Storage::fake('local');
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
     $customer = CustomerEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
     $file = AttachmentEloquentModel::factory()->on($customer)->create(['path' => 'attachments/contract.pdf']);
+    $document = AttachmentEloquentModel::factory()
+        ->on(ContractEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'customer_id' => $customer->id]))
+        ->create(['path' => 'attachments/signed.pdf']);
     Storage::disk('local')->put('attachments/contract.pdf', 'PDF');
+    Storage::disk('local')->put('attachments/signed.pdf', 'PDF');
 
     actingAs($user)->delete(route('customers.destroy', $customer->id));
 
     assertModelMissing($file);
-    Storage::disk('local')->assertMissing('attachments/contract.pdf');
+    assertModelMissing($document);
+    Storage::disk('local')->assertMissing(['attachments/contract.pdf', 'attachments/signed.pdf']);
 });
 
 it("returns not found for another team's customer", function (): void {
