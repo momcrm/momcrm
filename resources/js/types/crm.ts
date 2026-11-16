@@ -226,6 +226,12 @@ export type TicketDrawerData = Omit<
         status_id: string | null;
     }[];
     is_favorite: boolean;
+    contact: {
+        name: string;
+        email: string | null;
+        phone: string | null;
+    } | null;
+    location_name: string | null;
     can: Abilities;
     attachment_can: Abilities;
     comments: TicketComment[];

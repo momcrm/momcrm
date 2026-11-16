@@ -1,55 +1,18 @@
-import { Form, Head, Link, setLayoutProps } from '@inertiajs/react';
-import PageHeader from '@/components/page-header';
-import {
-    useIsClosedStatus,
-    ChoiceTag,
-    useChoice,
-    usePriority,
-} from '@/components/tickets/ticket-meta';
-import {
-    TicketPriorityBadge,
-    TicketStatusBadge,
-} from '@/components/tickets/ticket-badges';
-import { Button } from '@/components/ui/button';
-import CloseTicketController from '@/actions/App/Ticket/Controllers/CloseTicketController';
-import ReopenTicketController from '@/actions/App/Ticket/Controllers/ReopenTicketController';
-import { show as showCustomer } from '@/routes/customers';
-import { edit, index, show } from '@/routes/tickets';
-import type {
-    Contact,
-    Customer,
-    Location,
-    Option,
-    Project,
-    Ticket,
-} from '@/types';
+import { Head, setLayoutProps } from '@inertiajs/react';
+import { TicketDetails } from '@/components/tickets/ticket-drawer';
+import { index, show } from '@/routes/tickets';
+import type { TicketDrawerData, TicketPickerOptions } from '@/types';
 
-const dateFormatter = new Intl.DateTimeFormat(undefined, {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-});
-
-const dayFormatter = new Intl.DateTimeFormat(undefined, {
-    dateStyle: 'medium',
-});
-
+/**
+ * A ticket's own page: the same details as the drawer's full-page view,
+ * every field editable in place.
+ */
 export default function ShowTicket({
-    ticket,
-    customer,
-    project,
-    contact,
-    location,
-    group,
-    assigneeName,
+    drawer: ticket,
+    options,
 }: {
-    ticket: Ticket;
-    customer: Customer | null;
-    project: Project | null;
-    contact: Contact | null;
-    location: Location | null;
-    group: { id: string; name: string; hue: number | null } | null;
-    assigneeName: string | null;
-    statuses: Option[];
+    drawer: TicketDrawerData;
+    options: TicketPickerOptions;
 }) {
     setLayoutProps({
         breadcrumbs: [
@@ -58,134 +21,19 @@ export default function ShowTicket({
         ],
     });
 
-    const isClosed = useIsClosedStatus()(ticket.status_id);
-    const priority = usePriority(ticket.priority_id);
-    const type = useChoice('ticket_type', ticket.type_id);
-
-    const details = [
-        {
-            label: 'Customer',
-            value: customer ? (
-                <Link
-                    href={showCustomer(customer.id)}
-                    className="underline-offset-4 hover:underline"
-                >
-                    {customer.name}
-                </Link>
-            ) : (
-                '—'
-            ),
-        },
-        ...(project ? [{ label: 'Project', value: project.name }] : []),
-        {
-            label: 'Contact',
-            value: contact
-                ? [contact.full_name, contact.email, contact.work_phone]
-                      .filter(Boolean)
-                      .join(' · ')
-                : '—',
-        },
-        { label: 'Location', value: location?.name ?? '—' },
-        { label: 'Assigned to', value: assigneeName ?? 'Unassigned' },
-        {
-            label: 'Priority',
-            value: priority?.name ?? '—',
-        },
-        {
-            label: 'Type',
-            value: type ? <ChoiceTag choice={type} /> : '—',
-        },
-        {
-            label: 'Group',
-            value: group ? <ChoiceTag choice={group} /> : '—',
-        },
-        {
-            label: 'Due',
-            value: ticket.due_on
-                ? dayFormatter.format(new Date(`${ticket.due_on}T00:00:00`))
-                : '—',
-        },
-        {
-            label: 'Opened',
-            value: ticket.created_at
-                ? dateFormatter.format(new Date(ticket.created_at))
-                : '—',
-        },
-        ...(ticket.closed_at
-            ? [
-                  {
-                      label: 'Closed',
-                      value: dateFormatter.format(new Date(ticket.closed_at)),
-                  },
-              ]
-            : []),
-    ];
-
     return (
         <>
             <Head title={`#${ticket.number} ${ticket.title}`} />
 
-            <div className="flex flex-col gap-8 p-4 md:p-6">
-                <PageHeader
-                    title={ticket.title}
-                    description={
-                        <span className="flex items-center gap-2">
-                            Ticket #{ticket.number}
-                            <TicketStatusBadge statusId={ticket.status_id} />
-                            <TicketPriorityBadge
-                                priorityId={ticket.priority_id}
-                            />
-                        </span>
-                    }
-                    actions={
-                        <>
-                            <Button variant="outline" asChild>
-                                <Link href={edit(ticket.id)}>Edit</Link>
-                            </Button>
-                            <Form
-                                {...(isClosed
-                                    ? ReopenTicketController.form(ticket.id)
-                                    : CloseTicketController.form(ticket.id))}
-                            >
-                                {({ processing }) => (
-                                    <Button
-                                        disabled={processing}
-                                        variant={
-                                            isClosed ? 'outline' : 'default'
-                                        }
-                                        data-test="toggle-ticket-button"
-                                    >
-                                        {isClosed
-                                            ? 'Reopen ticket'
-                                            : 'Close ticket'}
-                                    </Button>
-                                )}
-                            </Form>
-                        </>
-                    }
-                />
-
-                <dl className="grid gap-4 rounded-lg border p-4 sm:grid-cols-2">
-                    {details.map((detail) => (
-                        <div key={detail.label}>
-                            <dt className="text-sm text-muted-foreground">
-                                {detail.label}
-                            </dt>
-                            <dd className="break-words">{detail.value}</dd>
-                        </div>
-                    ))}
-                </dl>
-
-                <section className="space-y-2">
-                    <h2 className="font-medium">Details</h2>
-                    <p className="text-sm whitespace-pre-line">
-                        {ticket.description || (
-                            <span className="text-muted-foreground">
-                                No details added.
-                            </span>
-                        )}
-                    </p>
-                </section>
+            <div className="p-0 sm:p-6">
+                <article className="mx-auto max-w-[980px] overflow-hidden bg-card sm:rounded-xl sm:border sm:shadow-xs">
+                    <TicketDetails
+                        key={ticket.id}
+                        ticket={ticket}
+                        options={options}
+                        layout="page"
+                    />
+                </article>
             </div>
         </>
     );
