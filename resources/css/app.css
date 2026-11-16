@@ -290,3 +290,18 @@ html[data-density='compact'] {
         color: oklch(0.82 calc(0.12 * var(--hue-chroma, 1)) var(--hue, 0));
     }
 }
+
+/*
+ * The chevron NativeSelect draws in place of the browser's own arrow, so it
+ * sits inside the same padding as the text. Its size and inset are set in the
+ * component, where callers can override them.
+ */
+@utility select-chevron {
+    appearance: none;
+    background-repeat: no-repeat;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b6760' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+
+    &:is(.dark *) {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239a968f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    }
+}

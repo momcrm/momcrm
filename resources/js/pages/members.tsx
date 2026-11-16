@@ -2,6 +2,7 @@ import { Form, Head, Link, router, usePage } from '@inertiajs/react';
 import {
     Copy,
     Crown,
+    FolderKanban,
     MoreHorizontal,
     Plus,
     Search,
@@ -9,6 +10,7 @@ import {
     Ticket,
     UserMinus,
     UserPlus,
+    Users,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState } from 'react';
@@ -17,6 +19,7 @@ import EmptyState from '@/components/empty-state';
 import GroupFormDialog from '@/components/groups/group-form-dialog';
 import InviteForm from '@/components/invite-form';
 import PageHeader from '@/components/page-header';
+import { MemberAvatars, ProjectIcon } from '@/components/projects/project-meta';
 import StatusPill from '@/components/status-pill';
 import { AssigneeAvatar } from '@/components/tickets/ticket-meta';
 import { Button } from '@/components/ui/button';
@@ -81,6 +84,7 @@ type Invitation = {
     email: string;
     role: Role;
     expires_at: string | null;
+    group_id: string | null;
 };
 
 type Group = {
@@ -91,6 +95,7 @@ type Group = {
     icon: string | null;
     members_count: number;
     projects_count: number;
+    members: { id: string; name: string }[];
 };
 
 type Tab = 'members' | 'groups' | 'roles';
@@ -183,7 +188,7 @@ function memberColumns({
                                 { preserveScroll: true },
                             )
                         }
-                        className="h-7 w-auto pr-7 pl-2 text-xs"
+                        className="h-7 w-auto bg-size-[0.875rem] bg-position-[right_0.5rem_center] pr-7 pl-2 text-xs"
                     >
                         <option value="admin">Admin</option>
                         <option value="member">Member</option>
@@ -328,6 +333,40 @@ function RowActions({
     );
 }
 
+function GroupCard({ group }: { group: Group }) {
+    return (
+        <Link
+            href={showGroup(group.id)}
+            className="flex flex-col gap-3 rounded-xl border bg-card p-4 shadow-xs hover:border-border-strong"
+        >
+            <span className="flex items-center gap-2.5 font-medium">
+                <ProjectIcon icon={group.icon} hue={group.hue} />
+                {group.name}
+            </span>
+            <span className="line-clamp-2 min-h-10 text-sm text-muted-foreground">
+                {group.description ?? 'No description.'}
+            </span>
+            <span className="flex items-center gap-3 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1">
+                    <Users className="size-3.5" />
+                    {group.members_count}{' '}
+                    {group.members_count === 1 ? 'member' : 'members'}
+                </span>
+                <span className="flex items-center gap-1">
+                    <FolderKanban className="size-3.5" />
+                    {group.projects_count}{' '}
+                    {group.projects_count === 1 ? 'project' : 'projects'}
+                </span>
+                {group.members.length > 0 && (
+                    <span className="ml-auto">
+                        <MemberAvatars members={group.members} max={3} />
+                    </span>
+                )}
+            </span>
+        </Link>
+    );
+}
+
 export default function Members({
     teamName,
     tab,
@@ -361,7 +400,9 @@ export default function Members({
             name: invitation.email,
             email: invitation.email,
             role: invitation.role,
-            groups: [],
+            groups: groups
+                .filter((group) => group.id === invitation.group_id)
+                .map(({ id, name, hue }) => ({ id, name, hue })),
             active_projects: null,
             open_tickets: null,
             last_active_at: null,
@@ -394,12 +435,7 @@ export default function Members({
                     title="Members"
                     description={`${members.length} ${members.length === 1 ? 'person' : 'people'} in ${teamName}${invitations.length > 0 ? ` · ${invitations.length} pending` : ''}`}
                     actions={
-                        tab === 'groups' ? (
-                            <Button onClick={() => setCreatingGroup(true)}>
-                                <Plus />
-                                New group
-                            </Button>
-                        ) : canInvite ? (
+                        canInvite ? (
                             <Button onClick={() => setInviting(true)}>
                                 <UserPlus />
                                 Invite member
@@ -500,39 +536,27 @@ export default function Members({
                             }
                         />
                     ) : (
-                        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                            {groups.map((group) => (
-                                <Link
-                                    key={group.id}
-                                    href={showGroup(group.id)}
-                                    className="flex flex-col gap-2 rounded-xl border bg-card p-4 shadow-xs hover:border-border-strong"
+                        <>
+                            <div className="flex items-center justify-between">
+                                <span className="text-sm text-muted-foreground">
+                                    {groups.length}{' '}
+                                    {groups.length === 1 ? 'group' : 'groups'}
+                                </span>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setCreatingGroup(true)}
                                 >
-                                    <span className="flex items-center gap-2 font-medium">
-                                        <span
-                                            className={cn(
-                                                'hue-dot',
-                                                'size-3 rounded-[4px]',
-                                            )}
-                                            style={hueStyle(group.hue)}
-                                        />
-                                        {group.name}
-                                    </span>
-                                    <span className="line-clamp-2 min-h-10 text-sm text-muted-foreground">
-                                        {group.description ?? 'No description.'}
-                                    </span>
-                                    <span className="text-xs text-muted-foreground">
-                                        {group.members_count}{' '}
-                                        {group.members_count === 1
-                                            ? 'member'
-                                            : 'members'}{' '}
-                                        · {group.projects_count}{' '}
-                                        {group.projects_count === 1
-                                            ? 'project'
-                                            : 'projects'}
-                                    </span>
-                                </Link>
-                            ))}
-                        </div>
+                                    <Plus />
+                                    New group
+                                </Button>
+                            </div>
+                            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                                {groups.map((group) => (
+                                    <GroupCard key={group.id} group={group} />
+                                ))}
+                            </div>
+                        </>
                     ))}
 
                 {tab === 'roles' && (
@@ -645,7 +669,18 @@ export default function Members({
                     <DialogDescription>
                         They'll get an email with a link to join the team.
                     </DialogDescription>
-                    <InviteForm action={StoreTeamInvitationController.form()} />
+                    <InviteForm
+                        action={StoreTeamInvitationController.form()}
+                        groups={groups}
+                        onSuccess={() => setInviting(false)}
+                        secondaryAction={
+                            <DialogClose asChild>
+                                <Button variant="secondary" type="button">
+                                    Cancel
+                                </Button>
+                            </DialogClose>
+                        }
+                    />
                 </DialogContent>
             </Dialog>
 

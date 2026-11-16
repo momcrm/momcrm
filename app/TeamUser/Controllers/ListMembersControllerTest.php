@@ -6,6 +6,7 @@ use App\Activity\Actions\RecordActivity;
 use App\Activity\ActivityTypeEnum;
 use App\Group\GroupEloquentModel;
 use App\Project\ProjectEloquentModel;
+use App\TeamInvitation\TeamInvitationEloquentModel;
 use App\TeamUser\TeamUserEloquentModel;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
@@ -42,6 +43,7 @@ it('lists members with their groups, open work and last activity', function (): 
             ->where('members.1.can_remove', true)
             ->where('teamName', $owner->currentTeam->name)
             ->where('groups.0.members_count', 1)
+            ->where('groups.0.members.0.name', 'Ben')
             ->where('canChangeRoles', true)
             ->where('canInvite', true),
         );
@@ -60,5 +62,18 @@ it('does not let plain members change roles or see invitations', function (): vo
             ->where('invitations', [])
             ->where('members.0.can_remove', false)
             ->where('members.1.can_remove', false),
+        );
+});
+
+it('lists pending invitations with the group they will join', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $group = GroupEloquentModel::factory()->create(['team_id' => $owner->current_team_id]);
+    TeamInvitationEloquentModel::factory()->create(['team_id' => $owner->current_team_id, 'email' => 'sam@acme.test', 'group_id' => $group->id]);
+
+    actingAs($owner)
+        ->get(route('members'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('invitations.0.email', 'sam@acme.test')
+            ->where('invitations.0.group_id', $group->id),
         );
 });

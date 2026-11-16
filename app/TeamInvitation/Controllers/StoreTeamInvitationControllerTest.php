@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Activity\ActivityEloquentModel;
 use App\Activity\ActivityTypeEnum;
+use App\Group\GroupEloquentModel;
 use App\TeamInvitation\Notifications\TeamInvitationNotification;
 use App\TeamInvitation\TeamInvitationEloquentModel;
 use App\TeamUser\Actions\CreateTeamUser;
@@ -23,12 +24,12 @@ it('invites each address and emails them a link to join', function (): void {
     travelTo('2026-11-14 10:00:00');
     $owner = UserEloquentModel::factory()->withPersonalTeam()->create(['name' => 'Jane Smith']);
 
-    $response = actingAs($owner)->post(route('team.invitations.store'), [
+    $response = actingAs($owner)->from(route('members'))->post(route('team.invitations.store'), [
         'emails' => 'sam@acme.test, Lee@Acme.test',
         'role' => 'admin',
     ]);
 
-    $response->assertRedirectToRoute('team.edit');
+    $response->assertRedirectToRoute('members');
     expect(TeamInvitationEloquentModel::query()->withoutGlobalScopes()->orderBy('email')->get(['email', 'role', 'team_id', 'expires_at'])->toArray())
         ->toBe([
             ['email' => 'lee@acme.test', 'role' => 'admin', 'team_id' => $owner->current_team_id, 'expires_at' => '2026-11-21T10:00:00.000000Z'],
@@ -49,6 +50,7 @@ it('skips addresses that already belong to the team', function (): void {
     CreateTeamUser::fromIds(teamId: $owner->current_team_id, userId: $member->id);
 
     actingAs($owner)
+        ->from(route('team.edit'))
         ->post(route('team.invitations.store'), ['emails' => 'member@acme.test'])
         ->assertRedirectToRoute('team.edit');
 
@@ -95,4 +97,25 @@ it('forbids members who are not owners or admins', function (): void {
         ->assertForbidden();
 
     Notification::assertNothingSent();
+});
+
+it('invites people into one of the team groups', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $group = GroupEloquentModel::factory()->create(['team_id' => $owner->current_team_id]);
+
+    actingAs($owner)
+        ->post(route('team.invitations.store'), ['emails' => 'sam@acme.test', 'role' => 'member', 'group_id' => $group->id])
+        ->assertSessionHasNoErrors();
+
+    expect(TeamInvitationEloquentModel::query()->withoutGlobalScopes()->sole()->group_id)->toBe($group->id);
+});
+
+it("rejects another team's group", function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+
+    actingAs($owner)
+        ->post(route('team.invitations.store'), ['emails' => 'sam@acme.test', 'group_id' => GroupEloquentModel::factory()->create()->id])
+        ->assertSessionHasErrors(['group_id' => 'Pick a group from this team.']);
+
+    expect(TeamInvitationEloquentModel::query()->withoutGlobalScopes()->count())->toBe(0);
 });

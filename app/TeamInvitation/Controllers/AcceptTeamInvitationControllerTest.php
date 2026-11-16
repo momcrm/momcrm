@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Activity\ActivityEloquentModel;
 use App\Activity\ActivityTypeEnum;
+use App\Group\GroupEloquentModel;
 use App\Team\TeamEloquentModel;
 use App\TeamInvitation\TeamInvitationEloquentModel;
 use App\TeamUser\Actions\FindTeamUser;
@@ -61,4 +62,21 @@ it('returns not found for an expired invitation', function (): void {
     actingAs(UserEloquentModel::factory()->withPersonalTeam()->create(['email' => 'sam@acme.test']))
         ->post(route('team-invitations.accept', 'secret-token'))
         ->assertNotFound();
+});
+
+it('adds the user to the group the invitation names', function (): void {
+    $team = TeamEloquentModel::factory()->create();
+    $group = GroupEloquentModel::factory()->create(['team_id' => $team->id]);
+    TeamInvitationEloquentModel::factory()->create([
+        'team_id' => $team->id,
+        'email' => 'sam@acme.test',
+        'group_id' => $group->id,
+        'token_hash' => hash('sha256', 'secret-token'),
+    ]);
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create(['email' => 'sam@acme.test']);
+
+    actingAs($user)->post(route('team-invitations.accept', 'secret-token'))->assertRedirectToRoute('dashboard');
+
+    expect($group->members()->sole()->id)->toBe($user->id)
+        ->and($group->members()->sole()->pivot->role)->toBe('member');
 });

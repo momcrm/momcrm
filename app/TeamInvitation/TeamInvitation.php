@@ -9,6 +9,7 @@ use App\TeamInvitation\Properties\AcceptedAt;
 use App\TeamInvitation\Properties\CreatedAt;
 use App\TeamInvitation\Properties\Email;
 use App\TeamInvitation\Properties\ExpiresAt;
+use App\TeamInvitation\Properties\GroupId;
 use App\TeamInvitation\Properties\Id;
 use App\TeamInvitation\Properties\InvitedById;
 use App\TeamInvitation\Properties\Role;
@@ -29,6 +30,7 @@ final class TeamInvitation extends AbstractData
         public CreatedAt $createdAt,
         public Email $email,
         public ExpiresAt $expiresAt,
+        public GroupId $groupId,
         public Id $id,
         public InvitedById $invitedById,
         public Role $role,
@@ -124,6 +126,18 @@ final class TeamInvitation extends AbstractData
     public function setId(mixed $id): self
     {
         $this->id = new Id($id instanceof AbstractValue ? $id->toValue() : $id);
+
+        return $this;
+    }
+
+    public function getGroupId(): GroupId
+    {
+        return $this->groupId;
+    }
+
+    public function setGroupId(mixed $groupId): self
+    {
+        $this->groupId = new GroupId($groupId instanceof AbstractValue ? $groupId->toValue() : $groupId);
 
         return $this;
     }
