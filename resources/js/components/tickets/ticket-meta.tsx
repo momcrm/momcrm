@@ -1,13 +1,6 @@
-import {
-    CalendarDays,
-    ChevronDown,
-    ChevronUp,
-    ChevronsUp,
-    Equal,
-    Minus,
-} from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+import { CalendarDays } from 'lucide-react';
 import { usePage } from '@inertiajs/react';
+import type { ComponentType, SVGProps } from 'react';
 import StatusPill from '@/components/status-pill';
 import {
     Tooltip,
@@ -105,14 +98,162 @@ export function TicketStatusPill({ statusId }: { statusId: string | null }) {
 }
 
 /**
- * The icons a priority can show, by the name stored on the choice.
+ * A status as a small circle in its colour, filling up as tickets move
+ * through the open statuses and becoming a check once closed.
  */
-export const priorityIcons: Record<string, LucideIcon> = {
-    'chevrons-up': ChevronsUp,
-    'chevron-up': ChevronUp,
-    equal: Equal,
-    'chevron-down': ChevronDown,
-    minus: Minus,
+export function StatusGlyph({
+    status,
+    className,
+}: {
+    status: Choice | undefined;
+    className?: string;
+}) {
+    const statuses = useAllTicketStatuses().filter(
+        (choice) => choice.category !== 'closed',
+    );
+    const classes = cn('size-3.5 shrink-0 hue-text', className);
+    const style = hueStyle(status?.hue ?? null);
+
+    if (status?.category === 'closed') {
+        return (
+            <svg
+                viewBox="0 0 14 14"
+                aria-hidden
+                className={classes}
+                style={style}
+            >
+                <circle cx="7" cy="7" r="6.2" fill="currentColor" />
+                <path
+                    d="M4.4 7.2 6.2 9 9.7 5.3"
+                    fill="none"
+                    stroke="var(--card)"
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                />
+            </svg>
+        );
+    }
+
+    const index = Math.max(
+        0,
+        statuses.findIndex((choice) => choice.id === status?.id),
+    );
+    const fraction = statuses.length > 1 ? index / statuses.length : 0;
+    const angle = fraction * 2 * Math.PI;
+    const end = {
+        x: 7 + 3.6 * Math.sin(angle),
+        y: 7 - 3.6 * Math.cos(angle),
+    };
+
+    return (
+        <svg viewBox="0 0 14 14" aria-hidden className={classes} style={style}>
+            <circle
+                cx="7"
+                cy="7"
+                r="5.4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeDasharray={status ? undefined : '1.9 2.1'}
+            />
+            {fraction > 0 && (
+                <path
+                    d={`M7 3.4A3.6 3.6 0 ${fraction > 0.5 ? 1 : 0} 1 ${end.x.toFixed(2)} ${end.y.toFixed(2)}L7 7Z`}
+                    fill="currentColor"
+                />
+            )}
+        </svg>
+    );
+}
+
+/**
+ * A ticket's status as its glyph and name.
+ */
+export function TicketStatusLabel({
+    statusId,
+    className,
+}: {
+    statusId: string | null;
+    className?: string;
+}) {
+    const status = useTicketStatus(statusId);
+
+    return (
+        <span
+            className={cn(
+                'inline-flex min-w-0 items-center gap-1.5',
+                className,
+            )}
+        >
+            <StatusGlyph status={status} />
+            <span className="truncate">{status?.name ?? 'No status'}</span>
+        </span>
+    );
+}
+
+type GlyphProps = SVGProps<SVGSVGElement>;
+
+/**
+ * Signal bars for a priority: `filled` of the three bars in the current
+ * colour, the rest in the border colour.
+ */
+function Bars({ filled, ...props }: GlyphProps & { filled: number }) {
+    return (
+        <svg viewBox="0 0 14 14" width="14" height="14" {...props}>
+            {[
+                { x: 1.8, y: 7.5, height: 4.5 },
+                { x: 5.7, y: 4.5, height: 7.5 },
+                { x: 9.6, y: 1.5, height: 10.5 },
+            ].map((bar, index) => (
+                <rect
+                    key={bar.x}
+                    x={bar.x}
+                    y={bar.y}
+                    width="2.6"
+                    height={bar.height}
+                    rx="1"
+                    fill={
+                        index < filled ? 'currentColor' : 'var(--border-strong)'
+                    }
+                />
+            ))}
+        </svg>
+    );
+}
+
+function AlertSquare(props: GlyphProps) {
+    return (
+        <svg viewBox="0 0 14 14" width="14" height="14" {...props}>
+            <rect
+                x="1"
+                y="1"
+                width="12"
+                height="12"
+                rx="3"
+                fill="currentColor"
+            />
+            <path
+                d="M7 3.8v4"
+                stroke="#fff"
+                strokeWidth="1.7"
+                strokeLinecap="round"
+            />
+            <circle cx="7" cy="10.1" r=".95" fill="#fff" />
+        </svg>
+    );
+}
+
+/**
+ * The glyphs a priority can show, by the icon name stored on the choice:
+ * an alert for the most urgent, then three, two, one or no signal bars.
+ */
+export const priorityIcons: Record<string, ComponentType<GlyphProps>> = {
+    'chevrons-up': AlertSquare,
+    'chevron-up': (props) => <Bars filled={3} {...props} />,
+    equal: (props) => <Bars filled={2} {...props} />,
+    'chevron-down': (props) => <Bars filled={1} {...props} />,
+    minus: (props) => <Bars filled={0} {...props} />,
 };
 
 function useAllTicketPriorities(): Choice[] {
@@ -149,17 +290,19 @@ export function PriorityGlyph({
     priority: Choice | undefined;
     className?: string;
 }) {
-    const Icon = (priority?.icon && priorityIcons[priority.icon]) || Minus;
+    const Icon =
+        (priority?.icon && priorityIcons[priority.icon]) || priorityIcons.minus;
+    const isAlert = priority?.icon === 'chevrons-up';
 
     return (
         <Icon
             aria-hidden
             className={cn(
                 'size-3.5 shrink-0',
-                priority ? 'hue-text' : 'text-subtle-foreground',
+                isAlert ? 'hue-text' : 'text-soft-foreground',
                 className,
             )}
-            style={priority ? hueStyle(priority.hue) : undefined}
+            style={isAlert ? hueStyle(priority?.hue ?? 0) : undefined}
         />
     );
 }
@@ -272,9 +415,13 @@ export function formatDay(date: string): string {
 export function DueChip({
     dueOn,
     isClosed,
+    showIcon = true,
+    className,
 }: {
     dueOn: string | null;
     isClosed: boolean;
+    showIcon?: boolean;
+    className?: string;
 }) {
     if (!dueOn) {
         return null;
@@ -287,31 +434,54 @@ export function DueChip({
             className={cn(
                 'inline-flex items-center gap-1 text-xs whitespace-nowrap',
                 !isClosed && days < 0
-                    ? 'font-medium text-destructive'
+                    ? 'text-destructive'
                     : !isClosed && days <= 1
                       ? 'text-warning'
-                      : 'text-muted-foreground',
+                      : 'text-soft-foreground',
+                className,
             )}
         >
-            <CalendarDays className="size-3" />
+            {showIcon && <CalendarDays className="size-3" />}
             {formatDay(dueOn)}
         </span>
     );
 }
 
+/**
+ * An estimate in minutes, shortened: 30m, 4h, 1.5h, or 2d (of eight hours).
+ */
+export function formatEstimate(minutes: number): string {
+    if (minutes < 60) {
+        return `${minutes}m`;
+    }
+
+    if (minutes < 480) {
+        return `${Math.round((minutes / 60) * 10) / 10}h`;
+    }
+
+    return `${Math.round((minutes / 480) * 10) / 10}d`;
+}
+
 export function ProjectTag({
     name,
     hue,
+    className,
 }: {
     name: string | null;
     hue: number | null;
+    className?: string;
 }) {
     if (!name) {
         return null;
     }
 
     return (
-        <span className="inline-flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
+        <span
+            className={cn(
+                'inline-flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground',
+                className,
+            )}
+        >
             <span
                 aria-hidden
                 className="size-2 shrink-0 rounded-[3px] hue-dot"
@@ -320,6 +490,19 @@ export function ProjectTag({
             <span className="truncate">{name}</span>
         </span>
     );
+}
+
+/**
+ * A steady hue for a person's avatar, picked from their name.
+ */
+export function nameHue(name: string): number {
+    let hash = 0;
+
+    for (const character of name) {
+        hash = (hash * 31 + character.charCodeAt(0)) % 360;
+    }
+
+    return (hash * 7) % 360;
 }
 
 export function AssigneeAvatar({
@@ -349,9 +532,10 @@ export function AssigneeAvatar({
                 <span
                     aria-label={name}
                     className={cn(
-                        'inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-accent text-[9px] font-semibold text-muted-foreground',
+                        'inline-flex size-5 shrink-0 items-center justify-center rounded-full hue-soft text-[8px] font-semibold tracking-[0.01em] shadow-[0_0_0_1.5px_var(--card)]',
                         className,
                     )}
+                    style={hueStyle(nameHue(name))}
                 >
                     {getInitials(name)}
                 </span>

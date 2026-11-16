@@ -128,6 +128,21 @@ it('filters by type and group, or by having none', function (): void {
         ->assertInertia(fn (Assert $page) => $page->where('tickets.total', 1)->where('tickets.data.0.id', $untyped->id));
 });
 
+it('sorts by when tickets were created', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $middle = ticketFor($user, ['number' => 1, 'created_at' => now()->subDay()]);
+    $newest = ticketFor($user, ['number' => 2, 'created_at' => now()]);
+    $oldest = ticketFor($user, ['number' => 3, 'created_at' => now()->subWeek()]);
+    $sorted = fn (string $direction): array => collect(actingAs($user)
+        ->get(route('tickets.index', ['view' => 'table', 'sort' => 'created_at', 'direction' => $direction]))
+        ->inertiaProps('tickets.data'))
+        ->pluck('id')
+        ->all();
+
+    expect($sorted('asc'))->toBe([$oldest->id, $middle->id, $newest->id])
+        ->and($sorted('desc'))->toBe([$newest->id, $middle->id, $oldest->id]);
+});
+
 it("sorts the table by priority, in the team's order", function (): void {
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
     [$urgent, $normal, $low] = array_map(fn (string $name): string => FindChoice::byNameForTeam($user->current_team_id, ChoiceListEnum::TicketPriority, $name)->getId()->toString(), ['Urgent', 'Normal', 'Low']);

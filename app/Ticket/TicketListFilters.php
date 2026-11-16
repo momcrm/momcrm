@@ -35,6 +35,7 @@ final readonly class TicketListFilters
         'status' => 'status',
         'priority' => 'priority',
         'due_on' => 'due_on',
+        'created_at' => 'created_at',
         'updated_at' => 'updated_at',
     ];
 

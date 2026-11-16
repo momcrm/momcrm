@@ -1,10 +1,12 @@
 import { Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { DragEvent } from 'react';
-import StatusPill from '@/components/status-pill';
 import QuickAddTicket from '@/components/tickets/quick-add-ticket';
 import TicketCard from '@/components/tickets/ticket-card';
-import { useTicketStatuses } from '@/components/tickets/ticket-meta';
+import {
+    StatusGlyph,
+    useTicketStatuses,
+} from '@/components/tickets/ticket-meta';
 import { useTicketActions } from '@/hooks/use-ticket-actions';
 
 import { cn } from '@/lib/utils';
@@ -104,7 +106,7 @@ export default function TicketBoard({
         };
 
     return (
-        <div className="-mx-4 flex min-h-[60vh] gap-3 overflow-x-auto px-4 pb-4 md:-mx-6 md:px-6">
+        <div className="flex min-h-[60vh] items-start gap-3 overflow-x-auto px-4 pt-3.5 pb-6 after:flex-[0_0_8px] after:content-[''] md:px-6">
             {columns.map((column) => (
                 <section
                     key={column.id}
@@ -115,17 +117,19 @@ export default function TicketBoard({
                         drop(column.id, target?.beforeId ?? null);
                     }}
                     className={cn(
-                        'flex w-72 shrink-0 flex-col rounded-xl p-1',
-                        target?.statusId === column.id && 'ring-2 ring-ring/40',
+                        'group/col flex w-[284px] shrink-0 flex-col rounded-[10px] border border-divider bg-sunken',
+                        target?.statusId === column.id &&
+                            'border-primary/40 bg-[color-mix(in_srgb,var(--primary)_6%,var(--sunken))]',
                     )}
                 >
-                    <header className="flex items-center gap-2 px-1.5 pt-0.5 pb-2">
-                        <StatusPill hue={column.hue}>{column.name}</StatusPill>
-                        <span className="text-xs text-subtle-foreground">
+                    <header className="flex items-center gap-[7px] pt-2.5 pr-2 pb-1.5 pl-3 text-[12.5px] font-semibold">
+                        <StatusGlyph status={column} />
+                        {column.name}
+                        <span className="font-medium text-muted-foreground">
                             {column.tickets.length}
                         </span>
                         {column.is_archived ? (
-                            <span className="ml-auto text-xs text-subtle-foreground">
+                            <span className="ml-auto text-xs font-normal text-subtle-foreground">
                                 Archived
                             </span>
                         ) : (
@@ -133,13 +137,13 @@ export default function TicketBoard({
                                 type="button"
                                 onClick={() => setAddingTo(column.id)}
                                 aria-label={`Add a ticket to ${column.name}`}
-                                className="ml-auto rounded p-0.5 text-subtle-foreground hover:bg-accent hover:text-foreground"
+                                className="ml-auto flex size-[22px] items-center justify-center rounded-md text-soft-foreground opacity-55 transition-opacity group-hover/col:opacity-100 hover:bg-accent hover:text-foreground"
                             >
-                                <Plus className="size-4" />
+                                <Plus className="size-3.5" />
                             </button>
                         )}
                     </header>
-                    <ol className="flex flex-col gap-2">
+                    <ol className="flex min-h-[60px] flex-col gap-1.5 px-2 pt-1 pb-2">
                         {column.tickets.map((ticket) => (
                             <li
                                 key={ticket.id}
@@ -155,7 +159,7 @@ export default function TicketBoard({
                                 onDragOver={allowDrop(column.id, ticket.id)}
                                 className={cn(
                                     target?.beforeId === ticket.id &&
-                                        'border-t-2 border-primary pt-1',
+                                        'relative before:absolute before:inset-x-0.5 before:-top-1 before:h-0.5 before:rounded-full before:bg-primary',
                                 )}
                             >
                                 <TicketCard
@@ -167,27 +171,26 @@ export default function TicketBoard({
                             </li>
                         ))}
                     </ol>
-                    {column.tickets.length === 0 && (
-                        <p className="rounded-lg border border-dashed px-2 py-6 text-center text-xs text-subtle-foreground">
-                            Drop tickets here
-                        </p>
-                    )}
                     {column.is_archived ? null : addingTo === column.id ? (
-                        <QuickAddTicket
-                            statusId={column.id}
-                            options={options}
-                            projectId={projectId}
-                            onClose={() => setAddingTo(null)}
-                        />
+                        <div className="px-2 pb-2">
+                            <QuickAddTicket
+                                statusId={column.id}
+                                options={options}
+                                projectId={projectId}
+                                onClose={() => setAddingTo(null)}
+                            />
+                        </div>
                     ) : (
-                        <button
-                            type="button"
-                            onClick={() => setAddingTo(column.id)}
-                            className="mt-1 flex items-center gap-1.5 rounded-md px-1.5 py-1 text-left text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
-                        >
-                            <Plus className="size-3.5" />
-                            Add ticket
-                        </button>
+                        <div className="px-2 pb-2">
+                            <button
+                                type="button"
+                                onClick={() => setAddingTo(column.id)}
+                                className="flex h-[30px] w-full items-center gap-1.5 rounded-md px-2 text-left text-[12.5px] text-muted-foreground hover:bg-accent hover:text-foreground"
+                            >
+                                <Plus className="size-3.5" />
+                                Add ticket
+                            </button>
+                        </div>
                     )}
                 </section>
             ))}
