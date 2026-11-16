@@ -315,7 +315,7 @@ export function TicketBulkBar({
     );
 }
 
-function BarButton({
+export function BarButton({
     children,
     className,
     ...props
@@ -334,7 +334,7 @@ function BarButton({
     );
 }
 
-function BarMenu({
+export function BarMenu({
     icon,
     label,
     disabled,

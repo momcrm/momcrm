@@ -11,5 +11,6 @@ enum CustomerRelationship: string
     use Enum;
 
     case Contacts = 'contacts';
+    case Services = 'services';
     case Team = 'team';
 }

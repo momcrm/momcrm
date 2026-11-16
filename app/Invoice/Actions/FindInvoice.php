@@ -20,6 +20,7 @@ use App\InvoiceItem\InvoiceItemEloquentModel;
 use App\InvoiceItem\Properties\InvoiceId;
 use App\InvoiceItem\Properties\Position;
 use App\Team\Scopes\CurrentTeamScope;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -50,6 +51,38 @@ final class FindInvoice
             ->paginate($perPage)
             ->withQueryString()
             ->through(fn (InvoiceEloquentModel $model): Invoice => Invoice::fromEloquentModel($model));
+    }
+
+    /**
+     * What each customer owes on invoices that were sent and not yet paid, in
+     * cents: everything, what isn't due yet (due today or later) and what is
+     * overdue. Customers who owe nothing are left out.
+     *
+     * @param  array<int, string>|null  $customerIds  null for every customer
+     * @return array<string, array{balance_in_cents: int, current_in_cents: int, overdue_in_cents: int}>
+     */
+    public static function balancesForCustomers(string $teamId, ?array $customerIds = null): array
+    {
+        $today = CarbonImmutable::today()->toDateString();
+        $balances = [];
+
+        self::query($teamId)
+            ->with(InvoiceRelationship::Items->value)
+            ->where(Status::getDatabaseTableColumnName(), InvoiceStatusEnum::Sent->value)
+            ->when($customerIds !== null, fn (Builder $query) => $query->whereIn(CustomerId::getDatabaseTableColumnName(), $customerIds ?? []))
+            ->get()
+            ->each(function (InvoiceEloquentModel $model) use (&$balances, $today): void {
+                $invoice = Invoice::fromEloquentModel($model);
+                $total = InvoiceTotals::fromItems($invoice->getItems()->toDataCollection(), $invoice->getTaxRateBasisPoints()->toInteger())->totalInCents;
+                $customerId = $invoice->getCustomerId()->toString();
+                $isOverdue = $invoice->getDueOn()->toCarbon()->toDateString() < $today;
+
+                $balances[$customerId] ??= ['balance_in_cents' => 0, 'current_in_cents' => 0, 'overdue_in_cents' => 0];
+                $balances[$customerId]['balance_in_cents'] += $total;
+                $balances[$customerId][$isOverdue ? 'overdue_in_cents' : 'current_in_cents'] += $total;
+            });
+
+        return $balances;
     }
 
     public static function itemsFor(Invoice $invoice): InvoiceItemCollection

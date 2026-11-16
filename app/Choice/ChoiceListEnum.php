@@ -20,6 +20,7 @@ enum ChoiceListEnum: string
     use Enum;
     use EnumOptions;
 
+    case CustomerType = 'customer_type';
     case Label = 'label';
     case TicketPriority = 'ticket_priority';
     case TicketStatus = 'ticket_status';
@@ -28,6 +29,7 @@ enum ChoiceListEnum: string
     public function label(): string
     {
         return match ($this) {
+            self::CustomerType => 'Customer types',
             self::Label => 'Labels',
             self::TicketPriority => 'Ticket priorities',
             self::TicketStatus => 'Ticket statuses',
@@ -41,6 +43,7 @@ enum ChoiceListEnum: string
     public function description(): string
     {
         return match ($this) {
+            self::CustomerType => 'What kind of customer someone is, for sorting and filtering the customer list.',
             self::Label => 'Tags for sorting and finding tickets, projects and assets. Each can have several.',
             self::TicketPriority => 'How urgent a ticket is, most urgent first.',
             self::TicketStatus => 'Where a ticket is in its life, grouped by whether it is still open.',
@@ -57,7 +60,7 @@ enum ChoiceListEnum: string
     public function categoryEnum(): ?string
     {
         return match ($this) {
-            self::Label, self::TicketPriority, self::TicketType => null,
+            self::CustomerType, self::Label, self::TicketPriority, self::TicketType => null,
             self::TicketStatus => TicketStatusCategoryEnum::class,
         };
     }
@@ -70,7 +73,7 @@ enum ChoiceListEnum: string
     public function categoryOptions(): array
     {
         return match ($this) {
-            self::Label, self::TicketPriority, self::TicketType => [],
+            self::CustomerType, self::Label, self::TicketPriority, self::TicketType => [],
             self::TicketStatus => TicketStatusCategoryEnum::options(),
         };
     }
@@ -84,7 +87,7 @@ enum ChoiceListEnum: string
     {
         return match ($this) {
             self::TicketPriority => ['chevrons-up', 'chevron-up', 'equal', 'chevron-down', 'minus'],
-            self::Label, self::TicketStatus, self::TicketType => [],
+            self::CustomerType, self::Label, self::TicketStatus, self::TicketType => [],
         };
     }
 
@@ -98,6 +101,7 @@ enum ChoiceListEnum: string
     public function usages(): array
     {
         return match ($this) {
+            self::CustomerType => [['table' => Table::Customers, 'column' => 'type_id', 'isPivot' => false]],
             self::Label => array_values(array_map(
                 fn (LabelTargetEnum $target): array => ['table' => $target->table(), 'column' => 'label_id', 'isPivot' => true],
                 LabelTargetEnum::cases(),
@@ -117,7 +121,7 @@ enum ChoiceListEnum: string
     public function isOptional(): bool
     {
         return match ($this) {
-            self::Label, self::TicketType => true,
+            self::CustomerType, self::Label, self::TicketType => true,
             self::TicketPriority, self::TicketStatus => false,
         };
     }
@@ -144,6 +148,10 @@ enum ChoiceListEnum: string
     public function defaults(): array
     {
         return match ($this) {
+            self::CustomerType => [
+                ['name' => 'Business', 'hue' => HuePalette::BLUE, 'icon' => null, 'category' => null, 'is_default' => false],
+                ['name' => 'Residential', 'hue' => HuePalette::GREEN, 'icon' => null, 'category' => null, 'is_default' => false],
+            ],
             self::Label => [
                 ['name' => 'Hardware', 'hue' => HuePalette::AMBER, 'icon' => null, 'category' => null, 'is_default' => false],
                 ['name' => 'Software', 'hue' => HuePalette::INDIGO, 'icon' => null, 'category' => null, 'is_default' => false],

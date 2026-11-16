@@ -5,7 +5,13 @@ import StoreCustomerController from '@/actions/App/Customer/Controllers/StoreCus
 import { create, index } from '@/routes/customers';
 import type { Option } from '@/types';
 
-export default function CreateCustomer({ statuses }: { statuses: Option[] }) {
+export default function CreateCustomer({
+    statuses,
+    billingTypes,
+}: {
+    statuses: Option[];
+    billingTypes: Option[];
+}) {
     return (
         <>
             <Head title="Add customer" />
@@ -18,6 +24,7 @@ export default function CreateCustomer({ statuses }: { statuses: Option[] }) {
                 <CustomerForm
                     action={StoreCustomerController.form()}
                     statuses={statuses}
+                    billingTypes={billingTypes}
                     submitLabel="Add customer"
                     cancelHref={index().url}
                 />

@@ -19,6 +19,7 @@ use App\Contact\Controllers\EditContactController;
 use App\Contact\Controllers\ListContactsController;
 use App\Contact\Controllers\StoreContactController;
 use App\Contact\Controllers\UpdateContactController;
+use App\Customer\Controllers\BulkUpdateCustomersController;
 use App\Customer\Controllers\CreateCustomerController;
 use App\Customer\Controllers\DeleteCustomerController;
 use App\Customer\Controllers\EditCustomerController;
@@ -99,6 +100,7 @@ Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function 
     Route::get('customers', ListCustomersController::class)->name('customers.index');
     Route::get('customers/create', CreateCustomerController::class)->name('customers.create');
     Route::post('customers', StoreCustomerController::class)->name('customers.store');
+    Route::patch('customers/bulk', BulkUpdateCustomersController::class)->name('customers.bulk.update');
     Route::get('customers/import', ShowImportCustomersController::class)->name('customers.import');
     Route::post('customers/import', ImportCustomersController::class)->name('customers.import.store');
     Route::delete('sample-data', RemoveSampleDataController::class)->name('sample-data.destroy');

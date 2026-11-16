@@ -62,4 +62,12 @@ final class ChoiceFactory extends Factory
             Category::getDatabaseTableColumnName() => null,
         ]);
     }
+
+    public function customerType(): self
+    {
+        return $this->state([
+            ListName::getDatabaseTableColumnName() => ChoiceListEnum::CustomerType->value,
+            Category::getDatabaseTableColumnName() => null,
+        ]);
+    }
 }

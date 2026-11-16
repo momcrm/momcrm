@@ -8,9 +8,11 @@ import type { Customer, Option } from '@/types';
 export default function EditCustomer({
     customer,
     statuses,
+    billingTypes,
 }: {
     customer: Customer;
     statuses: Option[];
+    billingTypes: Option[];
 }) {
     setLayoutProps({
         breadcrumbs: [
@@ -30,6 +32,7 @@ export default function EditCustomer({
                     action={UpdateCustomerController.form(customer.id)}
                     customer={customer}
                     statuses={statuses}
+                    billingTypes={billingTypes}
                     submitLabel="Save"
                     cancelHref={show(customer.id).url}
                 />

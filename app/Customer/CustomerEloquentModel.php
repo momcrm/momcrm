@@ -13,6 +13,8 @@ use App\Customer\Properties\Id;
 use App\Customer\Properties\IsSample;
 use App\Customer\Properties\Number;
 use App\Customer\Properties\TeamId;
+use App\Service\Properties\CustomerId as ServiceCustomerId;
+use App\Service\ServiceEloquentModel;
 use App\Shared\Table;
 use App\Team\Scopes\CurrentTeamScope;
 use App\Team\TeamEloquentModel;
@@ -27,6 +29,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property string|null $abn
+ * @property string $billing_type
  * @property CarbonImmutable|null $created_at
  * @property string|null $email
  * @property string $id
@@ -35,8 +38,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $notes
  * @property int $number
  * @property string|null $phone
+ * @property string|null $prefix
  * @property string $status
  * @property string $team_id
+ * @property string|null $type_id
  * @property CarbonImmutable|null $updated_at
  * @property string|null $website
  */
@@ -86,6 +91,17 @@ final class CustomerEloquentModel extends Model implements Auditable
         return $this->hasMany(
             related: ContactEloquentModel::class,
             foreignKey: CustomerId::getDatabaseTableColumnName(),
+        );
+    }
+
+    /**
+     * @return HasMany<ServiceEloquentModel, $this>
+     */
+    public function services(): HasMany
+    {
+        return $this->hasMany(
+            related: ServiceEloquentModel::class,
+            foreignKey: ServiceCustomerId::getDatabaseTableColumnName(),
         );
     }
 

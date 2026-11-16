@@ -6,6 +6,7 @@ namespace App\Customer;
 
 use App\Customer\Factories\CustomerFactory;
 use App\Customer\Properties\Abn;
+use App\Customer\Properties\BillingType;
 use App\Customer\Properties\ContactsCount;
 use App\Customer\Properties\CreatedAt;
 use App\Customer\Properties\Email;
@@ -15,8 +16,11 @@ use App\Customer\Properties\Name;
 use App\Customer\Properties\Notes;
 use App\Customer\Properties\Number;
 use App\Customer\Properties\Phone;
+use App\Customer\Properties\Prefix;
+use App\Customer\Properties\ServicesCount;
 use App\Customer\Properties\Status;
 use App\Customer\Properties\TeamId;
+use App\Customer\Properties\TypeId;
 use App\Customer\Properties\UpdatedAt;
 use App\Customer\Properties\Website;
 use Illuminate\Support\Collection;
@@ -30,6 +34,7 @@ final class Customer extends AbstractData
 {
     public function __construct(
         public Abn $abn,
+        public BillingType $billingType,
         public ContactsCount $contactsCount,
         public CreatedAt $createdAt,
         public Email $email,
@@ -39,8 +44,11 @@ final class Customer extends AbstractData
         public Notes $notes,
         public Number $number,
         public Phone $phone,
+        public Prefix $prefix,
+        public ServicesCount $servicesCount,
         public Status $status,
         public TeamId $teamId,
+        public TypeId $typeId,
         public UpdatedAt $updatedAt,
         public Website $website,
     ) {}
@@ -70,7 +78,7 @@ final class Customer extends AbstractData
     /**
      * The fields the customer pages show.
      *
-     * @return array{id: string, number: int, name: string, abn: ?string, email: ?string, phone: ?string, website: ?string, status: string, notes: ?string, is_sample: bool}
+     * @return array{id: string, number: int, name: string, prefix: ?string, type_id: ?string, abn: ?string, email: ?string, phone: ?string, website: ?string, status: string, billing_type: string, notes: ?string, is_sample: bool}
      */
     public function toSummary(): array
     {
@@ -78,11 +86,14 @@ final class Customer extends AbstractData
             'id' => $this->getId()->toString(),
             'number' => $this->getNumber()->toInteger(),
             'name' => $this->getName()->toString(),
+            'prefix' => $this->getPrefix()->toNullableString(),
+            'type_id' => $this->getTypeId()->toNullableString(),
             'abn' => $this->getAbn()->toNullableString(),
             'email' => $this->getEmail()->toNullableString(),
             'phone' => $this->getPhone()->toNullableString(),
             'website' => $this->getWebsite()->toNullableString(),
             'status' => $this->getStatus()->toString(),
+            'billing_type' => $this->getBillingType()->toEnum()->value,
             'notes' => $this->getNotes()->toNullableString(),
             'is_sample' => $this->getIsSample()->toBoolean(),
         ];
@@ -233,5 +244,46 @@ final class Customer extends AbstractData
     public function getContactsCount(): ContactsCount
     {
         return $this->contactsCount;
+    }
+
+    public function getBillingType(): BillingType
+    {
+        return $this->billingType;
+    }
+
+    public function setBillingType(mixed $billingType): self
+    {
+        $this->billingType = new BillingType($billingType instanceof AbstractValue ? $billingType->toValue() : $billingType);
+
+        return $this;
+    }
+
+    public function getPrefix(): Prefix
+    {
+        return $this->prefix;
+    }
+
+    public function setPrefix(mixed $prefix): self
+    {
+        $this->prefix = new Prefix(Prefix::normalise($prefix instanceof AbstractValue ? $prefix->toValue() : $prefix));
+
+        return $this;
+    }
+
+    public function getServicesCount(): ServicesCount
+    {
+        return $this->servicesCount;
+    }
+
+    public function getTypeId(): TypeId
+    {
+        return $this->typeId;
+    }
+
+    public function setTypeId(mixed $typeId): self
+    {
+        $this->typeId = new TypeId($typeId instanceof AbstractValue ? $typeId->toValue() : $typeId);
+
+        return $this;
     }
 }
