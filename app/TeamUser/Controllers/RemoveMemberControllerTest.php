@@ -72,3 +72,13 @@ it('returns not found for someone outside the team', function (): void {
 
     actingAs($owner)->delete(route('members.destroy', UserEloquentModel::factory()->create()->id))->assertNotFound();
 });
+
+it("goes to the members list when removed from the member's own page", function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $member = addToTeam($owner);
+
+    actingAs($owner)
+        ->from(route('members.show', $member->id))
+        ->delete(route('members.destroy', $member->id))
+        ->assertRedirectToRoute('members');
+});

@@ -55,6 +55,10 @@ final class RemoveMemberFormRequest extends FormRequest
         return [];
     }
 
+    /**
+     * Goes back to where they were removed from, or to the members list when
+     * that was the removed member's own page.
+     */
     public function process(): RedirectResponse
     {
         RemoveTeamMember::fromTeamUser($this->membership);
@@ -63,6 +67,8 @@ final class RemoveMemberFormRequest extends FormRequest
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __(':name was removed from the team.', ['name' => $name ?? __('They')])]);
 
-        return back();
+        $memberPage = route('members.show', $this->membership->getUserId()->toString());
+
+        return url()->previous() === $memberPage ? to_route('members') : back();
     }
 }

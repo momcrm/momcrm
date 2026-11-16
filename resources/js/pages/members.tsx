@@ -1,23 +1,21 @@
-import { Form, Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
-    Copy,
     Crown,
     FolderKanban,
-    MoreHorizontal,
     Plus,
     Search,
-    SquarePen,
-    Ticket,
-    UserMinus,
     UserPlus,
     Users,
 } from 'lucide-react';
-import { toast } from 'sonner';
 import { useState } from 'react';
 import DataTable, { dataTableColumns } from '@/components/data-table';
 import EmptyState from '@/components/empty-state';
 import GroupFormDialog from '@/components/groups/group-form-dialog';
 import InviteForm from '@/components/invite-form';
+import MemberActionsMenu from '@/components/members/member-actions-menu';
+import { isOnline, roleLabels } from '@/components/members/member-meta';
+import type { MemberTarget, Role } from '@/components/members/member-meta';
+import RemoveMemberDialog from '@/components/members/remove-member-dialog';
 import PageHeader from '@/components/page-header';
 import { MemberAvatars, ProjectIcon } from '@/components/projects/project-meta';
 import StatusPill from '@/components/status-pill';
@@ -29,20 +27,10 @@ import {
     DialogClose,
     DialogContent,
     DialogDescription,
-    DialogFooter,
     DialogTitle,
 } from '@/components/ui/dialog';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import DeleteTeamInvitationController from '@/actions/App/TeamInvitation/Controllers/DeleteTeamInvitationController';
 import StoreTeamInvitationController from '@/actions/App/TeamInvitation/Controllers/StoreTeamInvitationController';
-import RemoveMemberController from '@/actions/App/TeamUser/Controllers/RemoveMemberController';
 import NativeSelect from '@/components/native-select';
 import { hueStyle } from '@/lib/colors';
 import { timeAgo } from '@/lib/format';
@@ -50,10 +38,7 @@ import { cn } from '@/lib/utils';
 import { members as membersRoute } from '@/routes';
 import { index as accessRulesIndex } from '@/routes/access-rules';
 import { show as showGroup } from '@/routes/groups';
-import { update as updateRole } from '@/routes/members';
-import { index as ticketsIndex } from '@/routes/tickets';
-
-type Role = 'owner' | 'admin' | 'member';
+import { show as showMember, update as updateRole } from '@/routes/members';
 
 type Member = {
     id: string;
@@ -100,24 +85,7 @@ type Group = {
 
 type Tab = 'members' | 'groups' | 'roles';
 
-const roleLabels: Record<Role, string> = {
-    owner: 'Owner',
-    admin: 'Admin',
-    member: 'Member',
-};
-
 const column = dataTableColumns<Row>();
-
-/** Activity within this many minutes counts as being online. */
-const onlineWithinMinutes = 5;
-
-function isOnline(lastActiveAt: string | null): boolean {
-    return (
-        lastActiveAt !== null &&
-        Date.now() - new Date(lastActiveAt).getTime() <
-            onlineWithinMinutes * 60_000
-    );
-}
 
 function Count({ value }: { value: number | null }) {
     return (
@@ -129,12 +97,14 @@ function Count({ value }: { value: number | null }) {
 
 function memberColumns({
     canChangeRoles,
+    canInvite,
     onAssign,
     onRemove,
 }: {
     canChangeRoles: boolean;
-    onAssign: (row: Row) => void;
-    onRemove: (row: Row) => void;
+    canInvite: boolean;
+    onAssign: (target: MemberTarget) => void;
+    onRemove: (target: MemberTarget) => void;
 }) {
     return column.columns([
         column.accessor('name', {
@@ -151,7 +121,16 @@ function memberColumns({
                     )}
                     <span className="min-w-0">
                         <span className="block truncate font-medium">
-                            {info.getValue()}
+                            {info.row.original.pending ? (
+                                info.getValue()
+                            ) : (
+                                <Link
+                                    href={showMember(info.row.original.id)}
+                                    className="hover:underline"
+                                >
+                                    {info.getValue()}
+                                </Link>
+                            )}
                             {info.row.original.is_you && (
                                 <span className="font-normal text-muted-foreground">
                                     {' '}
@@ -258,79 +237,16 @@ function memberColumns({
             header: () => <span className="sr-only">Actions</span>,
             meta: { className: 'w-10' },
             cell: (info) => (
-                <RowActions
-                    row={info.row.original}
+                <MemberActionsMenu
+                    target={info.row.original}
+                    canChangeRoles={canChangeRoles}
+                    canInvite={canInvite}
                     onAssign={onAssign}
                     onRemove={onRemove}
                 />
             ),
         }),
     ]);
-}
-
-function RowActions({
-    row,
-    onAssign,
-    onRemove,
-}: {
-    row: Row;
-    onAssign: (row: Row) => void;
-    onRemove: (row: Row) => void;
-}) {
-    const copyEmail = () => {
-        void navigator.clipboard
-            .writeText(row.email)
-            .then(() => toast.success('Email copied.'));
-    };
-
-    return (
-        <DropdownMenu>
-            <DropdownMenuTrigger
-                aria-label={`More for ${row.name}`}
-                className="flex size-7 items-center justify-center rounded-md text-soft-foreground outline-none hover:bg-accent hover:text-foreground data-[state=open]:bg-accent"
-            >
-                <MoreHorizontal className="size-4" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-                {!row.pending && (
-                    <>
-                        <DropdownMenuItem asChild>
-                            <Link
-                                href={ticketsIndex({
-                                    query: { assignee: row.id },
-                                })}
-                            >
-                                <Ticket />
-                                View their tickets
-                            </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => onAssign(row)}>
-                            <SquarePen />
-                            Assign a ticket
-                        </DropdownMenuItem>
-                    </>
-                )}
-                <DropdownMenuItem onSelect={copyEmail}>
-                    <Copy />
-                    Copy email
-                </DropdownMenuItem>
-                {(row.pending || row.can_remove) && (
-                    <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                            variant="destructive"
-                            onSelect={() => onRemove(row)}
-                        >
-                            <UserMinus />
-                            {row.pending
-                                ? 'Revoke invitation'
-                                : 'Remove from team'}
-                        </DropdownMenuItem>
-                    </>
-                )}
-            </DropdownMenuContent>
-        </DropdownMenu>
-    );
 }
 
 function GroupCard({ group }: { group: Group }) {
@@ -390,7 +306,7 @@ export default function Members({
     const [role, setRole] = useState<Role | null>(null);
     const [inviting, setInviting] = useState(false);
     const [creatingGroup, setCreatingGroup] = useState(false);
-    const [removing, setRemoving] = useState<Row | null>(null);
+    const [removing, setRemoving] = useState<MemberTarget | null>(null);
     const { openCreateTicket } = useCreateTicket();
 
     const rows: Row[] = [
@@ -422,6 +338,7 @@ export default function Members({
 
     const columns = memberColumns({
         canChangeRoles,
+        canInvite,
         onAssign: (row) => openCreateTicket({ assigneeId: row.id }),
         onRemove: setRemoving,
     });
@@ -685,53 +602,11 @@ export default function Members({
                 </DialogContent>
             </Dialog>
 
-            <Dialog
-                open={removing !== null}
-                onOpenChange={(open) => !open && setRemoving(null)}
-            >
-                <DialogContent>
-                    <DialogTitle>
-                        {removing?.pending
-                            ? 'Revoke invitation?'
-                            : `Remove ${removing?.name ?? ''} from ${teamName}?`}
-                    </DialogTitle>
-                    <DialogDescription>
-                        {removing?.pending
-                            ? `The invitation link sent to ${removing.email} will stop working.`
-                            : 'They’ll lose access to the team straight away and come off its groups, projects and open tickets. Their closed tickets and comments stay.'}
-                    </DialogDescription>
-                    {removing && (
-                        <Form
-                            {...(removing.pending
-                                ? DeleteTeamInvitationController.form(
-                                      removing.id,
-                                  )
-                                : RemoveMemberController.form(removing.id))}
-                            options={{ preserveScroll: true }}
-                            onSuccess={() => setRemoving(null)}
-                        >
-                            {({ processing }) => (
-                                <DialogFooter className="gap-2">
-                                    <DialogClose asChild>
-                                        <Button
-                                            variant="secondary"
-                                            type="button"
-                                        >
-                                            Cancel
-                                        </Button>
-                                    </DialogClose>
-                                    <Button
-                                        variant="destructive"
-                                        disabled={processing}
-                                    >
-                                        {removing.pending ? 'Revoke' : 'Remove'}
-                                    </Button>
-                                </DialogFooter>
-                            )}
-                        </Form>
-                    )}
-                </DialogContent>
-            </Dialog>
+            <RemoveMemberDialog
+                target={removing}
+                teamName={teamName}
+                onClose={() => setRemoving(null)}
+            />
 
             <GroupFormDialog
                 open={creatingGroup}
