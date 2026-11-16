@@ -87,7 +87,7 @@ export default function TicketDrawer({
             open={ticket !== null}
             onOpenChange={(open) => !open && closeTicket()}
         >
-            <SheetContent className="w-full gap-0 overflow-y-auto p-0 sm:max-w-[34rem] [&>button:last-child]:top-3.5">
+            <SheetContent className="w-full gap-0 overflow-y-auto p-0 sm:max-w-[34rem] [&>button:last-child]:top-2.75">
                 {ticket && (
                     <DrawerBody
                         key={ticket.id}
@@ -128,7 +128,7 @@ function DrawerBody({
 
     return (
         <>
-            <div className="flex h-12 shrink-0 items-center gap-1 border-b px-4 pr-10 text-sm">
+            <div className="flex h-12 shrink-0 items-center gap-1 border-b px-4 pr-10.5 text-sm">
                 <span className="flex min-w-0 items-center gap-1 text-muted-foreground">
                     {ticket.parent && (
                         <>
