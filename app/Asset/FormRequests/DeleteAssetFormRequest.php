@@ -53,6 +53,6 @@ final class DeleteAssetFormRequest extends FormRequest
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __(':name deleted.', ['name' => $this->asset->getName()->toString()])]);
 
-        return to_route('customers.show', $this->asset->getCustomerId()->toString());
+        return to_route('customers.assets', $this->asset->getCustomerId()->toString());
     }
 }

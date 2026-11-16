@@ -15,7 +15,7 @@ it('saves changes to a contact', function (): void {
 
     actingAs($user)
         ->put(route('contacts.update', $contact->id), ['customer_id' => $customer->id, 'first_name' => 'Renamed'])
-        ->assertRedirectToRoute('customers.show', $customer->id);
+        ->assertRedirectToRoute('customers.contacts', $customer->id);
 
     expect($contact->fresh())
         ->first_name->toBe('Renamed')

@@ -53,6 +53,6 @@ final class DeleteLocationFormRequest extends FormRequest
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __(':name deleted.', ['name' => $this->location->getName()->toString()])]);
 
-        return to_route('customers.show', $this->location->getCustomerId()->toString());
+        return to_route('customers.locations', $this->location->getCustomerId()->toString());
     }
 }

@@ -5,6 +5,7 @@ import { initializeTheme } from '@/hooks/use-appearance';
 import { initializePreferences } from '@/hooks/use-preferences';
 import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
+import CustomerLayout from '@/layouts/customer/layout';
 import OnboardingLayout from '@/layouts/onboarding-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 
@@ -26,6 +27,8 @@ void createInertiaApp({
                 return OnboardingLayout;
             case name.startsWith('settings/'):
                 return [AppLayout, SettingsLayout];
+            case name.startsWith('customers/workspace/'):
+                return [AppLayout, CustomerLayout];
             default:
                 return AppLayout;
         }

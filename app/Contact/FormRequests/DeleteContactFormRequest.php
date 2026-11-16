@@ -53,6 +53,6 @@ final class DeleteContactFormRequest extends FormRequest
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __(':name deleted.', ['name' => $this->contact->getFullName()])]);
 
-        return to_route('customers.show', $this->contact->getCustomerId()->toString());
+        return to_route('customers.contacts', $this->contact->getCustomerId()->toString());
     }
 }

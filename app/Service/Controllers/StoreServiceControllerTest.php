@@ -14,7 +14,7 @@ it("adds a service to a customer and returns to the customer's page", function (
 
     actingAs($user)
         ->post(route('services.store', $customer->id), ['name' => 'Managed IT support', 'status' => 'active', 'quantity' => 3, 'unit_price' => '49.95', 'billing_period_in_months' => 1, 'starts_on' => '2026-12-01'])
-        ->assertRedirectToRoute('customers.show', $customer->id);
+        ->assertRedirectToRoute('customers.services', $customer->id);
 
     expect(ServiceEloquentModel::query()->sole())
         ->team_id->toBe($user->current_team_id)

@@ -53,6 +53,6 @@ final class DeleteServiceFormRequest extends FormRequest
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __(':name deleted.', ['name' => $this->service->getName()->toString()])]);
 
-        return to_route('customers.show', $this->service->getCustomerId()->toString());
+        return to_route('customers.services', $this->service->getCustomerId()->toString());
     }
 }

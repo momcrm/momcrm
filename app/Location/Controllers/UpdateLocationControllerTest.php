@@ -15,7 +15,7 @@ it('saves changes to a location', function (): void {
 
     actingAs($user)
         ->put(route('locations.update', $location->id), ['name' => 'Head office', 'street_one' => '1 Hay St', 'suburb' => 'Perth', 'state' => 'WA', 'postcode' => '6000', 'country' => 'Australia', 'is_primary' => '1'])
-        ->assertRedirectToRoute('customers.show', $customer->id);
+        ->assertRedirectToRoute('customers.locations', $customer->id);
 
     expect($location->fresh())
         ->name->toBe('Head office')

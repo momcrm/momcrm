@@ -77,6 +77,6 @@ final class StoreLocationFormRequest extends FormRequest
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __(':name added.', ['name' => $location->getName()->toString()])]);
 
-        return to_route('customers.show', $this->customer->getId()->toString());
+        return to_route('customers.locations', $this->customer->getId()->toString());
     }
 }
