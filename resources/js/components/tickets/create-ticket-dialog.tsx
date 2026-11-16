@@ -153,7 +153,7 @@ export function CreateTicketProvider({ children }: { children: ReactNode }) {
 function LoadingBody() {
     return (
         <div className="space-y-3 px-4 pb-4">
-            <Skeleton className="h-9 w-full" />
+            <Skeleton className="h-control-md w-full" />
             <Skeleton className="h-20 w-full" />
             <div className="flex gap-2">
                 <Skeleton className="h-7 w-24" />
@@ -668,7 +668,7 @@ function CreateTicketForm({
                             ))}
                         </ul>
                     )}
-                    <label className="flex h-9 items-center gap-2 rounded-md border bg-card px-3 focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/20">
+                    <label className="flex h-control-md items-center gap-2 rounded-md border border-border-strong bg-card px-2.5 focus-within:border-primary focus-within:ring-[3px] focus-within:ring-primary/10">
                         <Plus className="size-4 shrink-0 text-subtle-foreground" />
                         <input
                             value={subtaskDraft}

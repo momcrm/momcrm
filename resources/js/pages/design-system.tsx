@@ -24,6 +24,15 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -111,6 +120,10 @@ const colorGroups: { title: string; swatches: Swatch[] }[] = [
                 note: 'Overdue, errors',
             },
             { token: '--info', utility: 'text-info', note: 'Informational' },
+            { token: '--violet', utility: 'text-violet', note: 'Review' },
+            { token: '--teal', utility: 'text-teal', note: 'Tag colour' },
+            { token: '--rose', utility: 'text-rose', note: 'Tag colour' },
+            { token: '--orange', utility: 'text-orange', note: 'Tag colour' },
         ],
     },
     {
@@ -141,29 +154,52 @@ const typeScale: {
         className: 'text-xl font-semibold tracking-tight',
     },
     {
-        utility: 'text-lg',
-        size: '18px',
-        use: 'Dialog title',
-        className: 'text-lg font-semibold',
-    },
-    {
         utility: 'text-base',
         size: '16px',
         use: 'Section heading',
         className: 'text-base font-medium',
     },
     {
+        utility: 'text-title',
+        size: '14.5px',
+        use: 'Dialog and card titles',
+        className: 'text-title font-semibold',
+    },
+    {
         utility: 'text-sm',
         size: '13.5px',
-        use: 'Body, controls, tables',
+        use: 'Body, fields, menus, tables',
         className: 'text-sm',
+    },
+    {
+        utility: 'text-ui',
+        size: '12.5px',
+        use: 'Buttons, labels',
+        className: 'text-ui font-medium',
     },
     {
         utility: 'text-xs',
         size: '12px',
-        use: 'Labels, meta, badges',
+        use: 'Hints, meta, badges, small buttons',
         className: 'text-xs text-muted-foreground',
     },
+    {
+        utility: 'text-2xs',
+        size: '11px',
+        use: 'Tooltips, counts',
+        className: 'text-2xs font-medium text-muted-foreground',
+    },
+];
+
+const controlHeights = [
+    { utility: 'h-control-xs', size: '22px', use: 'Tiny icon buttons' },
+    { utility: 'h-control-sm', size: '26px', use: 'Small buttons, toolbars' },
+    {
+        utility: 'h-control-md',
+        size: '30px',
+        use: 'Buttons, fields, menu rows',
+    },
+    { utility: 'h-control-lg', size: '36px', use: 'Large buttons' },
 ];
 
 const radii = [
@@ -171,13 +207,15 @@ const radii = [
     { utility: 'rounded-md', size: '6px' },
     { utility: 'rounded-lg', size: '8px' },
     { utility: 'rounded-xl', size: '10px' },
+    { utility: 'rounded-[12px]', size: '12px' },
     { utility: 'rounded-full', size: '999px' },
 ];
 
 const shadows = [
     { utility: 'shadow-xs', use: 'Buttons, fields' },
     { utility: 'shadow-card', use: 'Cards on the page' },
-    { utility: 'shadow-pop', use: 'Menus, popovers' },
+    { utility: 'shadow-pop', use: 'Menus, popovers, dialogs' },
+    { utility: 'shadow-drag', use: 'Cards being dragged' },
 ];
 
 const spacing = [1, 2, 3, 4, 5, 6, 8, 10, 12];
@@ -533,9 +571,35 @@ export default function DesignSystem() {
                 <Section
                     id="shape"
                     title="Shape & depth"
-                    description="Small radii, a 4px spacing grid and hairline shadows. Depth comes from a 1px ring, not from blur."
+                    description="Compact 22/26/30/36px controls, small radii, a 4px spacing grid and hairline shadows. Depth comes from a 1px ring, not from blur."
                 >
-                    <div className="grid gap-4 md:grid-cols-3">
+                    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                        <Panel title="Control heights">
+                            <div className="space-y-2">
+                                {controlHeights.map((height) => (
+                                    <div
+                                        key={height.utility}
+                                        className="flex items-center gap-3"
+                                    >
+                                        <span
+                                            className={cn(
+                                                'w-8 shrink-0 rounded-md border-2 border-primary/40 bg-primary/10',
+                                                height.utility,
+                                            )}
+                                        />
+                                        <span className="min-w-0">
+                                            <span className="block text-sm font-medium">
+                                                {height.utility}{' '}
+                                                <Token>{height.size}</Token>
+                                            </span>
+                                            <span className="block text-xs text-muted-foreground">
+                                                {height.use}
+                                            </span>
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        </Panel>
                         <Panel title="Radius">
                             <div className="space-y-2">
                                 {radii.map((radius) => (
@@ -602,7 +666,7 @@ export default function DesignSystem() {
                 <Section
                     id="buttons"
                     title="Buttons"
-                    description="One primary action per view. Outline for secondary actions next to it, ghost inside toolbars and rows."
+                    description="One primary action per view. Outline (or secondary, which looks the same) for actions next to it, ghost inside toolbars and rows. 30px by default, 26px small, 36px large."
                 >
                     <Panel>
                         <div className="space-y-5">
@@ -623,6 +687,12 @@ export default function DesignSystem() {
                                 <Button>Default</Button>
                                 <Button size="lg">Large</Button>
                                 <Button size="icon" variant="outline">
+                                    <Calendar />
+                                </Button>
+                                <Button size="icon-sm" variant="ghost">
+                                    <Calendar />
+                                </Button>
+                                <Button size="icon-xs" variant="ghost">
                                     <Calendar />
                                 </Button>
                                 <Button disabled>
@@ -746,6 +816,39 @@ export default function DesignSystem() {
                                 </Label>
                             </div>
                         </div>
+                    </Panel>
+                    <Panel title="Dialog">
+                        <p className="mb-3 text-sm text-muted-foreground">
+                            12px corners, a 14.5px title, and the actions in a
+                            full-width footer on a divider.
+                        </p>
+                        <Dialog>
+                            <DialogTrigger asChild>
+                                <Button variant="outline">Open a dialog</Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <DialogTitle>Rename customer</DialogTitle>
+                                <DialogDescription>
+                                    Invoices already sent keep the old name.
+                                </DialogDescription>
+                                <FormField id="ds-dialog-name" label="Name">
+                                    <Input
+                                        id="ds-dialog-name"
+                                        defaultValue="Harbour Dental"
+                                    />
+                                </FormField>
+                                <DialogFooter>
+                                    <DialogClose asChild>
+                                        <Button variant="outline">
+                                            Cancel
+                                        </Button>
+                                    </DialogClose>
+                                    <DialogClose asChild>
+                                        <Button>Save</Button>
+                                    </DialogClose>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
                     </Panel>
                 </Section>
 

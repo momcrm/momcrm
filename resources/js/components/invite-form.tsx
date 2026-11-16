@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import InputError from '@/components/input-error';
 import NativeSelect from '@/components/native-select';
 import { Button } from '@/components/ui/button';
+import { DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
@@ -20,13 +21,18 @@ export default function InviteForm({
     secondaryAction,
     groups,
     onSuccess,
+    inDialog = false,
 }: {
     action: Action;
     submitLabel?: string;
     secondaryAction?: ReactNode;
     groups?: { id: string; name: string }[];
     onSuccess?: () => void;
+    /** Put the buttons in a dialog footer, full width on a divider. */
+    inDialog?: boolean;
 }) {
+    const Actions = inDialog ? DialogFooter : 'div';
+
     const hasGroups = groups !== undefined && groups.length > 0;
 
     return (
@@ -34,7 +40,7 @@ export default function InviteForm({
             {...action}
             resetOnSuccess={['emails']}
             onSuccess={onSuccess}
-            className="space-y-6"
+            className={inDialog ? 'space-y-4' : 'space-y-6'}
         >
             {({ processing, errors }) => {
                 const emailError =
@@ -105,7 +111,7 @@ export default function InviteForm({
                             )}
                         </div>
 
-                        <div className="flex items-center justify-end gap-2">
+                        <Actions className="flex items-center justify-end gap-2">
                             {secondaryAction}
                             <Button
                                 disabled={processing}
@@ -114,7 +120,7 @@ export default function InviteForm({
                                 {processing && <Spinner />}
                                 {submitLabel}
                             </Button>
-                        </div>
+                        </Actions>
                     </>
                 );
             }}

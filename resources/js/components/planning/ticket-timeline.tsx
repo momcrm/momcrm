@@ -252,8 +252,7 @@ export default function TicketTimeline({
                 <div className="flex items-center gap-1">
                     <Button
                         variant="outline"
-                        size="icon"
-                        className="size-8"
+                        size="icon-sm"
                         aria-label="Earlier"
                         onClick={() => step(-1)}
                     >
@@ -262,7 +261,6 @@ export default function TicketTimeline({
                     <Button
                         variant="outline"
                         size="sm"
-                        className="h-8"
                         onClick={() =>
                             go(
                                 timeline.zoom === 'weeks'
@@ -275,8 +273,7 @@ export default function TicketTimeline({
                     </Button>
                     <Button
                         variant="outline"
-                        size="icon"
-                        className="size-8"
+                        size="icon-sm"
                         aria-label="Later"
                         onClick={() => step(1)}
                     >

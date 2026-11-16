@@ -113,25 +113,18 @@ export default function TicketCalendar({
                 <div className="flex items-center gap-1">
                     <Button
                         variant="outline"
-                        size="icon"
-                        className="size-8"
+                        size="icon-sm"
                         aria-label="Previous"
                         onClick={() => step(-1)}
                     >
                         <ChevronLeft />
                     </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8"
-                        onClick={() => go(now)}
-                    >
+                    <Button variant="outline" size="sm" onClick={() => go(now)}>
                         Today
                     </Button>
                     <Button
                         variant="outline"
-                        size="icon"
-                        className="size-8"
+                        size="icon-sm"
                         aria-label="Next"
                         onClick={() => step(1)}
                     >

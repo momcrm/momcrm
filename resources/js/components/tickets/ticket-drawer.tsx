@@ -701,7 +701,7 @@ function EstimateField({
                 aria-label="Estimate in hours"
                 placeholder="—"
                 defaultValue={minutes === null ? '' : minutes / 60}
-                className="h-8 w-20 border-transparent bg-transparent px-2 shadow-none hover:border-border"
+                className="h-control-md w-20 border-transparent bg-transparent px-2 shadow-none hover:border-border"
                 onBlur={(event) => {
                     const hours = event.target.value;
                     const next =

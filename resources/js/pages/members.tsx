@@ -188,7 +188,7 @@ function memberColumns({
                                 { preserveScroll: true },
                             )
                         }
-                        className="h-7 w-auto bg-size-[0.875rem] bg-position-[right_0.5rem_center] pr-7 pl-2 text-xs"
+                        className="h-control-sm w-auto bg-position-[right_0.4375rem_center] pr-6 pl-2 text-xs"
                     >
                         <option value="admin">Admin</option>
                         <option value="member">Member</option>
@@ -672,6 +672,7 @@ export default function Members({
                     <InviteForm
                         action={StoreTeamInvitationController.form()}
                         groups={groups}
+                        inDialog
                         onSuccess={() => setInviting(false)}
                         secondaryAction={
                             <DialogClose asChild>

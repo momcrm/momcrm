@@ -377,8 +377,7 @@ export default function AccessRuleFormDialog({
                                                 <Button
                                                     type="button"
                                                     variant="ghost"
-                                                    size="icon"
-                                                    className="size-8"
+                                                    size="icon-sm"
                                                     aria-label="Remove condition"
                                                     onClick={() =>
                                                         setConditions(

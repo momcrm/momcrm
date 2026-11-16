@@ -15,8 +15,21 @@
     --font-mono:
         'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
+    /* Type steps (gr8r): 11 / 12 / 12.5 controls / 13.5 body / 14.5 titles. */
+    --text-2xs: 0.6875rem;
+    --text-2xs--line-height: 1rem;
+    --text-ui: 0.78125rem;
+    --text-ui--line-height: 1rem;
     --text-sm: 0.84375rem;
     --text-sm--line-height: 1.25rem;
+    --text-title: 0.90625rem;
+    --text-title--line-height: 1.25rem;
+
+    /* Control heights (gr8r): h-control-xs/sm/md/lg, size-control-*. */
+    --spacing-control-xs: 22px;
+    --spacing-control-sm: 26px;
+    --spacing-control-md: 30px;
+    --spacing-control-lg: 36px;
 
     --radius-xl: calc(var(--radius) + 2px);
     --radius-lg: var(--radius);
@@ -28,6 +41,8 @@
     --shadow-pop:
         0 12px 32px -8px rgb(28 25 20 / 0.16),
         0 2px 6px -2px rgb(28 25 20 / 0.06), 0 0 0 1px var(--border);
+    --shadow-drag:
+        0 16px 36px -10px rgb(28 25 20 / 0.28), 0 0 0 1px var(--border-strong);
 
     --ease-snappy: cubic-bezier(0.23, 1, 0.32, 1);
 
@@ -63,6 +78,10 @@
     --color-success: var(--success);
     --color-warning: var(--warning);
     --color-info: var(--info);
+    --color-violet: var(--violet);
+    --color-teal: var(--teal);
+    --color-rose: var(--rose);
+    --color-orange: var(--orange);
 
     --color-border: var(--border);
     --color-border-strong: var(--border-strong);
@@ -109,6 +128,10 @@
     --success: #25754b;
     --warning: #8f5e0e;
     --info: #3570c4;
+    --violet: #7652c2;
+    --teal: #1e8580;
+    --rose: #bc4270;
+    --orange: #c0612b;
     --border: #e9e7e2;
     --border-strong: #dad7d0;
     --input: #dad7d0;
@@ -153,6 +176,10 @@
     --success: #5cba86;
     --warning: #d8a443;
     --info: #72a5ea;
+    --violet: #a98deb;
+    --teal: #58c0b6;
+    --rose: #e68aab;
+    --orange: #e3925f;
     --border: #2c2b29;
     --border-strong: #3a3936;
     --input: #3a3936;
@@ -170,6 +197,12 @@
     --sidebar-accent-foreground: #eceae5;
     --sidebar-border: #2c2b29;
     --sidebar-ring: color-mix(in srgb, #8e9af3 38%, transparent);
+    --shadow-xs: 0 1px 2px rgb(0 0 0 / 0.3);
+    --shadow-card: 0 0 0 1px var(--border);
+    --shadow-pop:
+        0 16px 40px -10px rgb(0 0 0 / 0.6), 0 0 0 1px var(--border-strong);
+    --shadow-drag:
+        0 18px 40px -10px rgb(0 0 0 / 0.7), 0 0 0 1px var(--border-strong);
 }
 
 @layer base {
@@ -179,6 +212,18 @@
 
     body {
         @apply bg-background text-foreground;
+        line-height: 1.45;
+        font-feature-settings: 'ss01', 'cv11';
+    }
+
+    ::selection {
+        background-color: color-mix(in srgb, var(--primary) 22%, transparent);
+    }
+
+    input,
+    textarea,
+    [contenteditable] {
+        caret-color: var(--primary);
     }
 }
 
