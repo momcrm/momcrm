@@ -247,8 +247,7 @@ export default function ShowProject(props: Props) {
                                 <DropdownMenuTrigger asChild>
                                     <Button
                                         variant="ghost"
-                                        size="icon"
-                                        className="size-8"
+                                        size="icon-sm"
                                         aria-label="More"
                                     >
                                         <MoreHorizontal />

@@ -19,10 +19,10 @@ export default function FormField({
     children: ReactNode;
 }) {
     return (
-        <div className="grid gap-2">
+        <div className="grid content-start gap-1.5">
             <Label htmlFor={id}>{label}</Label>
             {children}
-            {hint && <p className="text-sm text-muted-foreground">{hint}</p>}
+            {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
             <InputError message={error} />
         </div>
     );

@@ -120,7 +120,7 @@ export default function ActivityPage({
                                 { only },
                             )
                         }
-                        className="ml-auto h-8 w-48"
+                        className="ml-auto h-control-sm w-48"
                     >
                         <option value="">Everyone</option>
                         {members.map((member) => (

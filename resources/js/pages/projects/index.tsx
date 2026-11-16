@@ -119,7 +119,7 @@ export default function ProjectsIndex({
                                 { only },
                             )
                         }
-                        className="h-8 w-40"
+                        className="h-control-sm w-40"
                     >
                         <option value="">Any status</option>
                         {projectStatuses.map((status) => (
@@ -138,7 +138,7 @@ export default function ProjectsIndex({
                                     { only },
                                 )
                             }
-                            className="h-8 w-40"
+                            className="h-control-sm w-40"
                         >
                             <option value="">Any label</option>
                             {labels.map((label) => (
@@ -164,7 +164,7 @@ export default function ProjectsIndex({
                                     { only },
                                 )
                             }
-                            className="h-8 w-48"
+                            className="h-control-sm w-48"
                         >
                             {sorts.map((sort) => (
                                 <option key={sort.value} value={sort.value}>

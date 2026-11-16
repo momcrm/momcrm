@@ -162,8 +162,7 @@ export default function AccessRules({
                                     </div>
                                     <Button
                                         variant="ghost"
-                                        size="icon"
-                                        className="size-8"
+                                        size="icon-sm"
                                         aria-label={`Edit ${rule.name}`}
                                         onClick={() => setEditing(rule)}
                                     >
