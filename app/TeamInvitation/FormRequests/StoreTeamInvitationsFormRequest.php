@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\TeamInvitation\FormRequests;
 
+use App\Group\Properties\Id as GroupIdColumn;
+use App\Group\Properties\TeamId as GroupTeamId;
 use App\Shared\Table;
 use App\Shared\Types;
 use App\Team\Actions\FindTeam;
@@ -11,6 +13,7 @@ use App\Team\Exceptions\CouldNotUpdateTeam;
 use App\Team\Team;
 use App\TeamInvitation\Actions\CreateTeamInvitation;
 use App\TeamInvitation\Properties\Email;
+use App\TeamInvitation\Properties\GroupId;
 use App\TeamInvitation\Properties\Role;
 use App\TeamUser\Properties\TeamId;
 use App\TeamUser\TeamRoleEnum;
@@ -22,10 +25,12 @@ use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 /**
- * Invites one or more email addresses, typed as a comma- or space-separated list.
+ * Invites one or more email addresses, typed as a comma- or space-separated
+ * list, optionally into one of the team's groups.
  */
 final class StoreTeamInvitationsFormRequest extends FormRequest
 {
@@ -67,6 +72,12 @@ final class StoreTeamInvitationsFormRequest extends FormRequest
             'email_list' => ['required', 'array', 'max:'.self::MAX_INVITES],
             'email_list.*' => Email::getValidationRulesForCreate($this),
             Role::getNameForValidation() => Role::getValidationRulesForCreate($this),
+            GroupId::getNameForValidation() => [
+                'nullable',
+                'uuid',
+                Rule::exists(Table::Groups->value, GroupIdColumn::getDatabaseTableColumnName())
+                    ->where(GroupTeamId::getDatabaseTableColumnName(), $this->team->getId()->toString()),
+            ],
         ];
     }
 
@@ -80,18 +91,21 @@ final class StoreTeamInvitationsFormRequest extends FormRequest
             'email_list.required' => __('Add at least one email address.'),
             'email_list.max' => __('You can invite up to :max people at a time.', ['max' => self::MAX_INVITES]),
             'email_list.*.email' => __(':input is not a valid email address.'),
+            'group_id.exists' => __('Pick a group from this team.'),
         ];
     }
 
     /**
-     * Sends the invitations, skipping addresses that already belong to the team.
+     * Sends the invitations, skipping addresses that already belong to the
+     * team, then goes to the given route or back to the page they came from.
      */
-    public function process(string $redirectRoute): RedirectResponse
+    public function process(?string $redirectRoute = null): RedirectResponse
     {
         /** @var array<int, string> $emails */
         $emails = $this->validated('email_list');
         $role = TeamRoleEnum::from(Types::string($this->validated(Role::getNameForValidation())));
         $inviter = User::fromEloquentModel($this->user());
+        $groupId = $this->validated(GroupId::getNameForValidation());
 
         $members = UserEloquentModel::query()
             ->whereIn(UserEmail::getDatabaseTableColumnName(), $emails)
@@ -103,7 +117,7 @@ final class StoreTeamInvitationsFormRequest extends FormRequest
         $invited = array_values(array_diff($emails, $members));
 
         foreach ($invited as $email) {
-            CreateTeamInvitation::forTeam(team: $this->team, email: $email, role: $role, inviter: $inviter);
+            CreateTeamInvitation::forTeam(team: $this->team, email: $email, role: $role, inviter: $inviter, groupId: is_string($groupId) ? $groupId : null);
         }
 
         Inertia::flash('toast', match (true) {
@@ -112,7 +126,7 @@ final class StoreTeamInvitationsFormRequest extends FormRequest
             default => ['type' => 'success', 'message' => __(':count invites sent.', ['count' => count($invited)])],
         });
 
-        return to_route($redirectRoute);
+        return $redirectRoute === null ? back() : to_route($redirectRoute);
     }
 
     protected function prepareForValidation(): void
@@ -122,6 +136,7 @@ final class StoreTeamInvitationsFormRequest extends FormRequest
         $this->merge([
             'email_list' => array_values(array_unique(array_map(mb_strtolower(...), $emails))),
             Role::getNameForValidation() => $this->input(Role::getNameForValidation(), TeamRoleEnum::Member->value),
+            GroupId::getNameForValidation() => $this->filled(GroupId::getNameForValidation()) ? $this->input(GroupId::getNameForValidation()) : null,
         ]);
     }
 }

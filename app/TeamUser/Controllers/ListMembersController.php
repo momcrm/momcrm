@@ -131,6 +131,7 @@ final class ListMembersController
                         'email' => $invitation->getEmail()->toString(),
                         'role' => $invitation->getRole()->toString(),
                         'expires_at' => $invitation->getExpiresAt()->toNullableISOString(),
+                        'group_id' => $invitation->getGroupId()->toNullableString(),
                     ])
                     ->values()
                     ->all()
@@ -138,6 +139,7 @@ final class ListMembersController
             'groups' => GroupEloquentModel::query()
                 ->withoutGlobalScopes()
                 ->where(GroupTeamId::getDatabaseTableColumnName(), $teamId)
+                ->with(GroupRelationship::Members->value)
                 ->withCount([GroupRelationship::Members->value, GroupRelationship::Projects->value])
                 ->orderBy(GroupName::getDatabaseTableColumnName())
                 ->get()
@@ -149,6 +151,10 @@ final class ListMembersController
                     'icon' => $group->icon,
                     'members_count' => Types::intOrZero($group->getAttribute('members_count')),
                     'projects_count' => Types::intOrZero($group->getAttribute('projects_count')),
+                    'members' => $group->members
+                        ->map(fn (UserEloquentModel $member): array => ['id' => $member->id, 'name' => $member->name])
+                        ->values()
+                        ->all(),
                 ])
                 ->values(),
             'canInvite' => $canInvite,

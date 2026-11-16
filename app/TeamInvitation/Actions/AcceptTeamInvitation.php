@@ -6,6 +6,9 @@ namespace App\TeamInvitation\Actions;
 
 use App\Activity\Actions\RecordActivity;
 use App\Activity\ActivityTypeEnum;
+use App\Group\GroupEloquentModel;
+use App\Group\GroupRoleEnum;
+use App\Group\Properties\TeamId as GroupTeamId;
 use App\Team\Actions\FindTeam;
 use App\Team\Actions\SwitchCurrentTeam;
 use App\TeamInvitation\TeamInvitation;
@@ -18,7 +21,8 @@ use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Adds the user to the invitation's team and makes it their current team.
+ * Adds the user to the invitation's team, and to its group if it names one,
+ * and makes the team their current team.
  *
  * Someone joining an existing team skips the workspace onboarding steps.
  */
@@ -38,6 +42,13 @@ final readonly class AcceptTeamInvitation
             if (FindTeamUser::byTeamAndUser(teamId: $teamId, userId: $userId)->isNull()) {
                 CreateTeamUser::fromIds(teamId: $teamId, userId: $userId, role: $this->invitation->getRole()->toEnum());
             }
+
+            GroupEloquentModel::query()
+                ->withoutGlobalScopes()
+                ->where(GroupTeamId::getDatabaseTableColumnName(), $teamId)
+                ->find($this->invitation->getGroupId()->toNullableString())
+                ?->members()
+                ->syncWithoutDetaching([$userId => ['role' => GroupRoleEnum::Member->value]]);
 
             TeamInvitationEloquentModel::query()
                 ->withoutGlobalScopes()

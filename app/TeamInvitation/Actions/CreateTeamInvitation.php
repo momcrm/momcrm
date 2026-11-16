@@ -21,7 +21,8 @@ use Illuminate\Support\Str;
 /**
  * Invites an email address to a team and emails them a link to join.
  *
- * Inviting an address again replaces its earlier link and restarts the 7 days.
+ * Inviting an address again replaces its earlier link, role and group and
+ * restarts the 7 days.
  */
 final readonly class CreateTeamInvitation
 {
@@ -32,6 +33,7 @@ final readonly class CreateTeamInvitation
         private string $email,
         private TeamRoleEnum $role,
         private User $inviter,
+        private ?string $groupId = null,
     ) {}
 
     public function __invoke(): TeamInvitation
@@ -45,6 +47,7 @@ final readonly class CreateTeamInvitation
             ->setTeamId($this->team->getId())
             ->setEmail($this->email)
             ->setRole($this->role)
+            ->setGroupId($this->groupId)
             ->setTokenHash(FindTeamInvitation::hashToken($token))
             ->setInvitedById($this->inviter->getId())
             ->setAcceptedAt(null)
@@ -70,15 +73,15 @@ final readonly class CreateTeamInvitation
             type: ActivityTypeEnum::InvitationSent,
             userId: $this->inviter->getId()->toString(),
             teamId: $this->team->getId()->toString(),
-            details: ['email' => $this->email, 'role' => $this->role->value],
+            details: array_filter(['email' => $this->email, 'role' => $this->role->value, 'group_id' => $this->groupId]),
         );
 
         return $invitation;
     }
 
-    public static function forTeam(Team $team, string $email, TeamRoleEnum $role, User $inviter): TeamInvitation
+    public static function forTeam(Team $team, string $email, TeamRoleEnum $role, User $inviter, ?string $groupId = null): TeamInvitation
     {
-        return new self($team, $email, $role, $inviter)->handle();
+        return new self($team, $email, $role, $inviter, $groupId)->handle();
     }
 
     public function handle(): TeamInvitation

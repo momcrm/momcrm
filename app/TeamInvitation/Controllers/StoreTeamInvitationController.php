@@ -11,6 +11,6 @@ final class StoreTeamInvitationController
 {
     public function __invoke(StoreTeamInvitationsFormRequest $request): RedirectResponse
     {
-        return $request->process(redirectRoute: 'team.edit');
+        return $request->process();
     }
 }
