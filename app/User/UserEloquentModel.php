@@ -75,6 +75,16 @@ final class UserEloquentModel extends Authenticatable implements Auditable, Must
         return $this->password !== null;
     }
 
+    /**
+     * Laravel ignores the remember-me cookie when this is not a string, which
+     * would log passwordless people out whenever their session expires. An empty
+     * hash still never matches a password, so password log-in stays closed.
+     */
+    public function getAuthPassword(): string
+    {
+        return $this->password ?? '';
+    }
+
     public function auditTeamId(): ?string
     {
         return null;
