@@ -50,86 +50,78 @@ type WorkspaceLink = {
     exact?: boolean;
 };
 
-function links(workspace: CustomerWorkspace): WorkspaceLink[][] {
+function links(workspace: CustomerWorkspace): WorkspaceLink[] {
     const id = workspace.customer.id;
     const { counts } = workspace;
 
     return [
-        [
-            {
-                title: 'Dashboard',
-                href: show(id),
-                icon: LayoutDashboard,
-                exact: true,
-            },
-            {
-                title: 'Tickets',
-                href: tickets(id),
-                icon: Ticket,
-                count: counts.tickets,
-            },
-            {
-                title: 'Projects',
-                href: projects(id),
-                icon: FolderKanban,
-                count: counts.projects,
-            },
-        ],
-        [
-            {
-                title: 'Contacts',
-                href: contacts(id),
-                icon: UsersRound,
-                count: counts.contacts,
-            },
-            {
-                title: 'Locations',
-                href: locations(id),
-                icon: MapPin,
-                count: counts.locations,
-            },
-            {
-                title: 'Assets',
-                href: assets(id),
-                icon: Boxes,
-                count: counts.assets,
-            },
-            {
-                title: 'Services',
-                href: services(id),
-                icon: Server,
-                count: counts.services,
-            },
-        ],
-        [
-            {
-                title: 'Contracts',
-                href: contracts(id),
-                icon: FileSignature,
-                count: counts.contracts,
-            },
-            {
-                title: 'Files',
-                href: files(id),
-                icon: FileStack,
-                count: counts.files,
-            },
-            {
-                title: 'Secrets',
-                href: secrets(id),
-                icon: KeyRound,
-                count: counts.secrets,
-            },
-        ],
-        [
-            {
-                title: 'Invoices',
-                href: invoices(id),
-                icon: Receipt,
-                count: counts.invoices,
-            },
-        ],
-        [{ title: 'Settings', href: edit(id), icon: Settings }],
+        {
+            title: 'Dashboard',
+            href: show(id),
+            icon: LayoutDashboard,
+            exact: true,
+        },
+        {
+            title: 'Tickets',
+            href: tickets(id),
+            icon: Ticket,
+            count: counts.tickets,
+        },
+        {
+            title: 'Projects',
+            href: projects(id),
+            icon: FolderKanban,
+            count: counts.projects,
+        },
+        {
+            title: 'Contacts',
+            href: contacts(id),
+            icon: UsersRound,
+            count: counts.contacts,
+        },
+        {
+            title: 'Locations',
+            href: locations(id),
+            icon: MapPin,
+            count: counts.locations,
+        },
+        {
+            title: 'Assets',
+            href: assets(id),
+            icon: Boxes,
+            count: counts.assets,
+        },
+        {
+            title: 'Services',
+            href: services(id),
+            icon: Server,
+            count: counts.services,
+        },
+        {
+            title: 'Contracts',
+            href: contracts(id),
+            icon: FileSignature,
+            count: counts.contracts,
+        },
+        {
+            title: 'Files',
+            href: files(id),
+            icon: FileStack,
+            count: counts.files,
+        },
+        {
+            title: 'Secrets',
+            href: secrets(id),
+            icon: KeyRound,
+            count: counts.secrets,
+        },
+        {
+            title: 'Invoices',
+            href: invoices(id),
+            icon: Receipt,
+            count: counts.invoices,
+        },
+        { title: 'Settings', href: edit(id), icon: Settings },
     ];
 }
 
@@ -193,47 +185,36 @@ export default function CustomerLayout({ children }: PropsWithChildren) {
                 <aside className="w-full shrink-0 md:w-48">
                     <nav
                         aria-label={`${workspace.customer.name} sections`}
-                        className="-mx-1 flex gap-1 overflow-x-auto px-1 md:mx-0 md:flex-col md:gap-3 md:overflow-visible md:px-0"
+                        className="-mx-1 flex gap-1 overflow-x-auto px-1 md:mx-0 md:flex-col md:gap-0.5 md:overflow-visible md:px-0"
                     >
-                        {links(workspace).map((group, groupIndex) => (
-                            <div
-                                key={groupIndex}
-                                className="flex gap-1 md:flex-col md:gap-0.5"
-                            >
-                                {group.map((link) => {
-                                    const isActive = link.exact
-                                        ? isCurrentUrl(link.href)
-                                        : isCurrentOrParentUrl(link.href);
+                        {links(workspace).map((link) => {
+                            const isActive = link.exact
+                                ? isCurrentUrl(link.href)
+                                : isCurrentOrParentUrl(link.href);
 
-                                    return (
-                                        <Link
-                                            key={toUrl(link.href)}
-                                            href={link.href}
-                                            preserveScroll
-                                            aria-current={
-                                                isActive ? 'page' : undefined
-                                            }
-                                            className={cn(
-                                                'flex h-8 shrink-0 items-center gap-2.5 rounded-md px-2 text-sm whitespace-nowrap text-muted-foreground hover:bg-accent hover:text-foreground',
-                                                isActive &&
-                                                    'bg-card font-medium text-foreground shadow-card',
-                                            )}
-                                        >
-                                            <link.icon className="size-4" />
-                                            <span className="flex-1">
-                                                {link.title}
+                            return (
+                                <Link
+                                    key={toUrl(link.href)}
+                                    href={link.href}
+                                    preserveScroll
+                                    aria-current={isActive ? 'page' : undefined}
+                                    className={cn(
+                                        'flex h-8 shrink-0 items-center gap-2.5 rounded-md px-2 text-sm whitespace-nowrap text-muted-foreground hover:bg-accent hover:text-foreground',
+                                        isActive &&
+                                            'bg-card font-medium text-foreground shadow-card',
+                                    )}
+                                >
+                                    <link.icon className="size-4" />
+                                    <span className="flex-1">{link.title}</span>
+                                    {link.count !== undefined &&
+                                        link.count > 0 && (
+                                            <span className="text-xs text-subtle-foreground tabular-nums">
+                                                {link.count}
                                             </span>
-                                            {link.count !== undefined &&
-                                                link.count > 0 && (
-                                                    <span className="text-xs text-subtle-foreground tabular-nums">
-                                                        {link.count}
-                                                    </span>
-                                                )}
-                                        </Link>
-                                    );
-                                })}
-                            </div>
-                        ))}
+                                        )}
+                                </Link>
+                            );
+                        })}
                     </nav>
                 </aside>
 
