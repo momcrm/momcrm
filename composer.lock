@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "db07a5e1e5057bc85422bde4f02b38b8",
+    "content-hash": "b51fb6b21c21fe108c3036756f4d4b02",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -2842,7 +2842,7 @@
             "version": "v6.2.2",
             "source": {
                 "type": "git",
-                "url": "https://github.com/momphp/data",
+                "url": "https://github.com/momphp/data.git",
                 "reference": "192e3375bcf9884712bf4decfefaea9133118c0b"
             },
             "dist": {
@@ -2867,16 +2867,7 @@
                     "Mom\\Data\\": "src/"
                 }
             },
-            "autoload-dev": {
-                "psr-4": {
-                    "Mom\\Data\\Tests\\": "tests/"
-                }
-            },
-            "scripts": {
-                "test": [
-                    "pest"
-                ]
-            },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -2887,7 +2878,12 @@
                 }
             ],
             "description": "A simple DTO package.",
-            "time": "2026-11-14T04:46:49+00:00"
+            "support": {
+                "issues": "https://github.com/momphp/data/issues",
+                "source": "https://github.com/momphp/data/tree/v6.2.2"
+            },
+            "time": "2026-11-14T04:46:49+00:00",
+            "published-time": "2026-11-14T05:36:59+00:00"
         },
         {
             "name": "monolog/monolog",
