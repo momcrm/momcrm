@@ -2,6 +2,7 @@ import { Link, setLayoutProps, usePage } from '@inertiajs/react';
 import type { InertiaLinkProps } from '@inertiajs/react';
 import {
     Boxes,
+    FileStack,
     FolderKanban,
     LayoutDashboard,
     MapPin,
@@ -25,6 +26,7 @@ import {
     assets,
     contacts,
     edit,
+    files,
     index,
     invoices,
     locations,
@@ -93,6 +95,14 @@ function links(workspace: CustomerWorkspace): WorkspaceLink[][] {
                 href: services(id),
                 icon: Server,
                 count: counts.services,
+            },
+        ],
+        [
+            {
+                title: 'Files',
+                href: files(id),
+                icon: FileStack,
+                count: counts.files,
             },
         ],
         [

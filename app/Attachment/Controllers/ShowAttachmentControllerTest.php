@@ -22,7 +22,8 @@ it('downloads a file under its original name', function (): void {
     actingAs($user)
         ->get(route('attachments.show', $attachment->id))
         ->assertOk()
-        ->assertDownload('quote.pdf');
+        ->assertDownload('quote.pdf')
+        ->assertHeader('X-Content-Type-Options', 'nosniff');
 });
 
 it("returns not found for another team's file", function (): void {

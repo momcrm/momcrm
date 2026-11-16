@@ -40,8 +40,12 @@ export type CustomerWorkspace = {
         assets: number;
         services: number;
         invoices: number;
+        files: number;
     };
 };
+
+/** A folder of a customer's files; top-level folders have no parent. */
+export type FolderItem = { id: string; parent_id: string | null; name: string };
 
 /** What a customer owes on sent invoices, in cents. */
 export type CustomerMoney = {
@@ -204,6 +208,8 @@ export type TicketComment = {
 export type AttachmentItem = {
     id: string;
     name: string;
+    description?: string | null;
+    folder_id?: string | null;
     size: number;
     mime_type: string;
     uploaded_by: string | null;

@@ -2,10 +2,12 @@
 
 declare(strict_types=1);
 
+use App\Attachment\AttachmentEloquentModel;
 use App\Contact\ContactEloquentModel;
 use App\Customer\CustomerEloquentModel;
 use App\TeamUser\TeamRoleEnum;
 use App\User\UserEloquentModel;
+use Illuminate\Support\Facades\Storage;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\assertModelMissing;
@@ -21,6 +23,19 @@ it('deletes a customer and their contacts', function (): void {
 
     assertModelMissing($customer);
     assertModelMissing($contact);
+});
+
+it('deletes the customer\'s files and their stored copies', function (): void {
+    Storage::fake('local');
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $customer = CustomerEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
+    $file = AttachmentEloquentModel::factory()->on($customer)->create(['path' => 'attachments/contract.pdf']);
+    Storage::disk('local')->put('attachments/contract.pdf', 'PDF');
+
+    actingAs($user)->delete(route('customers.destroy', $customer->id));
+
+    assertModelMissing($file);
+    Storage::disk('local')->assertMissing('attachments/contract.pdf');
 });
 
 it("returns not found for another team's customer", function (): void {

@@ -16,7 +16,7 @@ use Illuminate\Http\UploadedFile;
 
 /**
  * Stores an uploaded file on the private disk under its team's folder and
- * attaches it to a ticket or project.
+ * attaches it to a ticket, project or customer (into one of its folders).
  */
 final readonly class CreateAttachment
 {
@@ -26,6 +26,7 @@ final readonly class CreateAttachment
         private UploadedFile $file,
         private Model $attachable,
         private ?string $uploadedById = null,
+        private ?string $folderId = null,
     ) {}
 
     public function __invoke(): Attachment
@@ -40,6 +41,7 @@ final readonly class CreateAttachment
             ->setAttachableType(MorphMapKeyEnum::fromModel($this->attachable))
             ->setAttachableId(Types::string($this->attachable->getKey()))
             ->setUploadedById($this->uploadedById)
+            ->setFolderId($this->folderId)
             ->setName($this->file->getClientOriginalName())
             ->setPath((string) $path)
             ->setSize($this->file->getSize())
@@ -63,9 +65,9 @@ final readonly class CreateAttachment
         return Attachment::fromEloquentModel($model);
     }
 
-    public static function for(UploadedFile $file, Model $attachable, ?string $uploadedById = null): Attachment
+    public static function for(UploadedFile $file, Model $attachable, ?string $uploadedById = null, ?string $folderId = null): Attachment
     {
-        return new self($file, $attachable, $uploadedById)->handle();
+        return new self($file, $attachable, $uploadedById, $folderId)->handle();
     }
 
     public function handle(): Attachment

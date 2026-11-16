@@ -70,6 +70,7 @@ final class ListWorkspaceActivityController
                     'url' => match ($model->getAttribute(SubjectType::getDatabaseTableColumnName())) {
                         MorphMapKeyEnum::Ticket->value => route('tickets.index', ['ticket' => Types::string($model->getAttribute(SubjectId::getDatabaseTableColumnName()))]),
                         MorphMapKeyEnum::Project->value => route('projects.show', Types::string($model->getAttribute(SubjectId::getDatabaseTableColumnName()))),
+                        MorphMapKeyEnum::Customer->value => route('customers.files', Types::string($model->getAttribute(SubjectId::getDatabaseTableColumnName()))),
                         default => null,
                     },
                 ]),

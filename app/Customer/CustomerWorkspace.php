@@ -7,6 +7,7 @@ namespace App\Customer;
 use App\AccessRule\AccessResourceEnum;
 use App\AccessRule\Engine\AccessAbilities;
 use App\Asset\Actions\FindAsset;
+use App\Attachment\Actions\FindAttachment;
 use App\Contact\Actions\FindContact;
 use App\Customer\Actions\FindCustomer;
 use App\Customer\Exceptions\CouldNotFindCustomer;
@@ -83,6 +84,7 @@ final readonly class CustomerWorkspace
             'locations' => FindLocation::forCustomer($customerId, $this->teamId)->count(),
             'assets' => FindAsset::forCustomer($customerId, $this->teamId)->count(),
             'services' => FindService::forCustomer($customerId, $this->teamId)->count(),
+            'files' => FindAttachment::countForCustomer($customerId),
             'invoices' => FindInvoice::paginateForTeam($this->teamId, customerId: $customerId, perPage: 1)->total(),
         ];
     }
