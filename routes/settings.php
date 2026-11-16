@@ -16,6 +16,7 @@ use App\Choice\Controllers\UpdateChoiceController;
 use App\Team\Controllers\EditTeamController;
 use App\Team\Controllers\UpdateTeamController;
 use App\TeamInvitation\Controllers\DeleteTeamInvitationController;
+use App\TeamInvitation\Controllers\ResendTeamInvitationController;
 use App\TeamInvitation\Controllers\StoreTeamInvitationController;
 use App\User\Controllers\DeleteProfileController;
 use App\User\Controllers\EditProfileController;
@@ -49,6 +50,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('settings/team', UpdateTeamController::class)->name('team.update');
     Route::post('settings/team/invitations', StoreTeamInvitationController::class)->name('team.invitations.store');
     Route::delete('settings/team/invitations/{invitation}', DeleteTeamInvitationController::class)->name('team.invitations.destroy');
+    Route::post('settings/team/invitations/{invitation}/resend', ResendTeamInvitationController::class)->name('team.invitations.resend');
     Route::get('settings/team/activity', ListTeamActivityController::class)->name('team-activity.index');
 
     Route::get('settings/access-rules', ListAccessRulesController::class)->name('access-rules.index');
