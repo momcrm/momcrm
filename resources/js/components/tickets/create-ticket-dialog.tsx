@@ -121,7 +121,7 @@ export function CreateTicketProvider({ children }: { children: ReactNode }) {
                 open={defaults !== null}
                 onOpenChange={(open) => !open && setDefaults(null)}
             >
-                <DialogContent className="top-[10vh] max-h-[85vh] translate-y-0 gap-0 overflow-y-auto p-0 shadow-pop sm:max-w-[34rem] [&>button:last-child]:top-4.5">
+                <DialogContent className="top-[10vh] max-h-[85vh] translate-y-0 gap-0 overflow-y-auto p-0 shadow-pop sm:max-w-[34rem] [&>button:last-child]:top-3.25">
                     <DialogTitle className="px-4 pt-4 pb-3 text-base">
                         New ticket
                     </DialogTitle>
