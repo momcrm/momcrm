@@ -9,7 +9,7 @@ export default function ImportCustomers({ maxRows }: { maxRows: number }) {
         <>
             <Head title="Import customers" />
 
-            <div className="flex max-w-2xl flex-col gap-6 p-4 md:p-6">
+            <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-4 md:p-6">
                 <PageHeader
                     title="Import customers"
                     description="Upload a CSV from your spreadsheet or old CRM."
