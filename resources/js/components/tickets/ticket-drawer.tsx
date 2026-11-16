@@ -1,4 +1,4 @@
-import { router } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import {
     AlertTriangle,
     Archive,
@@ -59,6 +59,8 @@ import {
 import { useTicketActions } from '@/hooks/use-ticket-actions';
 import { hueStyle } from '@/lib/colors';
 import { cn } from '@/lib/utils';
+import { show as showCustomer } from '@/routes/customers';
+import { show as showProject } from '@/routes/projects';
 import { index, show } from '@/routes/tickets';
 import { store as storeAttachment } from '@/routes/tickets/attachments';
 import type {
@@ -192,6 +194,35 @@ export function TicketDetails({
                 )}
             >
                 <span className="flex min-w-0 items-center gap-1 text-muted-foreground">
+                    {ticket.project_id && ticket.project_name ? (
+                        <Link
+                            href={showProject(ticket.project_id)}
+                            className="flex h-6.5 min-w-0 items-center gap-1.5 rounded-md px-1.5 text-ui text-foreground hover:bg-accent"
+                        >
+                            <span
+                                aria-hidden
+                                className="size-2 shrink-0 rounded-[3px] hue-dot"
+                                style={hueStyle(ticket.project_hue)}
+                            />
+                            <span className="truncate">
+                                {ticket.project_name}
+                            </span>
+                        </Link>
+                    ) : ticket.customer_id && ticket.customer_name ? (
+                        <Link
+                            href={showCustomer(ticket.customer_id)}
+                            className="flex h-6.5 min-w-0 items-center rounded-md px-1.5 text-ui text-foreground hover:bg-accent"
+                        >
+                            <span className="truncate">
+                                {ticket.customer_name}
+                            </span>
+                        </Link>
+                    ) : null}
+                    {(ticket.project_name || ticket.customer_name) && (
+                        <span aria-hidden className="text-subtle-foreground">
+                            /
+                        </span>
+                    )}
                     {ticket.parent && (
                         <>
                             <button
@@ -204,7 +235,9 @@ export function TicketDetails({
                             <ChevronRight className="size-3.5 shrink-0" />
                         </>
                     )}
-                    <span className="font-mono text-xs">#{ticket.number}</span>
+                    <span className="shrink-0 px-1.5 font-mono text-[11.5px] text-subtle-foreground">
+                        #{ticket.number}
+                    </span>
                 </span>
                 <div className="ml-auto flex items-center gap-0.5">
                     {(isClosed ? ticket.can.reopen : ticket.can.close) && (
