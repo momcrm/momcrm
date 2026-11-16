@@ -21,6 +21,7 @@ use App\Location\Location;
 use App\Location\LocationPolicy;
 use App\Milestone\Milestone;
 use App\Milestone\MilestonePolicy;
+use App\Passkey\FormRequests\PasskeyVerificationFormRequest;
 use App\Passkey\PasskeyEloquentModel;
 use App\Project\Project;
 use App\Project\ProjectPolicy;
@@ -47,6 +48,7 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 use Inertia\ExceptionResponse;
 use Inertia\Inertia;
+use Laravel\Passkeys\Http\Requests\PasskeyVerificationRequest;
 use Laravel\Passkeys\Passkeys;
 use SocialiteProviders\Manager\SocialiteWasCalled;
 use SocialiteProviders\Microsoft\Provider as MicrosoftProvider;
@@ -58,7 +60,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(PasskeyVerificationRequest::class, PasskeyVerificationFormRequest::class);
     }
 
     /**
