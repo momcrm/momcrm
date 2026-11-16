@@ -1,4 +1,5 @@
 import { Form, Link } from '@inertiajs/react';
+import type { ReactNode } from 'react';
 import { useCustomerTypes } from '@/components/customers/customer-meta';
 import FormField from '@/components/form-field';
 import NativeSelect from '@/components/native-select';
@@ -17,13 +18,16 @@ export default function CustomerForm({
     billingTypes,
     submitLabel,
     cancelHref,
+    children,
 }: {
     action: Action;
     customer?: Customer;
     statuses: Option[];
     billingTypes: Option[];
     submitLabel: string;
-    cancelHref: string;
+    cancelHref?: string;
+    /** Extra fields, given the form's errors, shown above the buttons. */
+    children?: (errors: Record<string, string>) => ReactNode;
 }) {
     const types = useCustomerTypes(customer?.type_id);
 
@@ -178,6 +182,8 @@ export default function CustomerForm({
                         />
                     </FormField>
 
+                    {children?.(errors)}
+
                     <div className="flex items-center gap-2">
                         <Button
                             disabled={processing}
@@ -186,9 +192,11 @@ export default function CustomerForm({
                             {processing && <Spinner />}
                             {submitLabel}
                         </Button>
-                        <Button variant="ghost" asChild>
-                            <Link href={cancelHref}>Cancel</Link>
-                        </Button>
+                        {cancelHref && (
+                            <Button variant="ghost" asChild>
+                                <Link href={cancelHref}>Cancel</Link>
+                            </Button>
+                        )}
                     </div>
                 </>
             )}

@@ -83,7 +83,7 @@ final class StoreServiceFormRequest extends FormRequest
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __(':name added.', ['name' => $service->getName()->toString()])]);
 
-        return to_route('customers.show', $this->customer->getId()->toString());
+        return to_route('customers.services', $this->customer->getId()->toString());
     }
 
     /**

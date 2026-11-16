@@ -88,7 +88,7 @@ final class UpdateServiceFormRequest extends FormRequest
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __(':name saved.', ['name' => $service->getName()->toString()])]);
 
-        return to_route('customers.show', $this->customer->getId()->toString());
+        return to_route('customers.services', $this->customer->getId()->toString());
     }
 
     /**

@@ -84,6 +84,6 @@ final class StoreAssetFormRequest extends FormRequest
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __(':name added.', ['name' => $asset->getName()->toString()])]);
 
-        return to_route('customers.show', $this->customer->getId()->toString());
+        return to_route('customers.assets', $this->customer->getId()->toString());
     }
 }

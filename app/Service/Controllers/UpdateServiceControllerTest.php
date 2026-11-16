@@ -15,7 +15,7 @@ it('saves changes to a service', function (): void {
 
     actingAs($user)
         ->put(route('services.update', $service->id), ['name' => 'Managed IT support', 'status' => 'active', 'quantity' => 3, 'unit_price' => '49.95', 'billing_period_in_months' => 1, 'starts_on' => '2026-12-01'])
-        ->assertRedirectToRoute('customers.show', $customer->id);
+        ->assertRedirectToRoute('customers.services', $customer->id);
 
     expect($service->fresh())
         ->name->toBe('Managed IT support')

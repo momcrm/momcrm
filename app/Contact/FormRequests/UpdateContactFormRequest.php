@@ -90,6 +90,6 @@ final class UpdateContactFormRequest extends FormRequest
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __(':name saved.', ['name' => $contact->getFullName()])]);
 
-        return to_route('customers.show', $contact->getCustomerId()->toString());
+        return to_route('customers.contacts', $contact->getCustomerId()->toString());
     }
 }

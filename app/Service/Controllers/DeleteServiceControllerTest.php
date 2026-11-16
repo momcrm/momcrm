@@ -14,7 +14,7 @@ it('deletes a service', function (): void {
 
     actingAs($user)
         ->delete(route('services.destroy', $service->id))
-        ->assertRedirectToRoute('customers.show', $service->customer_id);
+        ->assertRedirectToRoute('customers.services', $service->customer_id);
 
     assertModelMissing($service);
 });

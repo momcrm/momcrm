@@ -26,6 +26,30 @@ export type Customer = {
 
 export type CustomerBillingType = 'automatic' | 'manual' | 'excluded';
 
+/**
+ * The header and nav every tab of a customer's workspace shares.
+ */
+export type CustomerWorkspace = {
+    customer: Customer;
+    can: Abilities;
+    counts: {
+        tickets: number;
+        projects: number;
+        contacts: number;
+        locations: number;
+        assets: number;
+        services: number;
+        invoices: number;
+    };
+};
+
+/** What a customer owes on sent invoices, in cents. */
+export type CustomerMoney = {
+    balance_in_cents: number;
+    current_in_cents: number;
+    overdue_in_cents: number;
+};
+
 export type CustomerListItem = Customer & {
     contacts_count: number;
     services_count: number;

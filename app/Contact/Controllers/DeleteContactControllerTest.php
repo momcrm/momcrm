@@ -14,7 +14,7 @@ it('deletes a contact', function (): void {
 
     actingAs($user)
         ->delete(route('contacts.destroy', $contact->id))
-        ->assertRedirectToRoute('customers.show', $contact->customer_id);
+        ->assertRedirectToRoute('customers.contacts', $contact->customer_id);
 
     assertModelMissing($contact);
 });

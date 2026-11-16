@@ -16,7 +16,7 @@ it("adds a asset to a customer and returns to the customer's page", function ():
 
     actingAs($user)
         ->post(route('assets.store', $customer->id), ['name' => 'Reception PC', 'serial_number' => 'SN-1', 'status' => 'active'])
-        ->assertRedirectToRoute('customers.show', $customer->id);
+        ->assertRedirectToRoute('customers.assets', $customer->id);
 
     expect(AssetEloquentModel::query()->sole())
         ->team_id->toBe($user->current_team_id)

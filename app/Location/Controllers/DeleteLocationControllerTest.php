@@ -14,7 +14,7 @@ it('deletes a location', function (): void {
 
     actingAs($user)
         ->delete(route('locations.destroy', $location->id))
-        ->assertRedirectToRoute('customers.show', $location->customer_id);
+        ->assertRedirectToRoute('customers.locations', $location->customer_id);
 
     assertModelMissing($location);
 });

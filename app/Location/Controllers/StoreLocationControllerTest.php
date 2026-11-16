@@ -14,7 +14,7 @@ it("adds a location to a customer and returns to the customer's page", function 
 
     actingAs($user)
         ->post(route('locations.store', $customer->id), ['name' => 'Head office', 'street_one' => '1 Hay St', 'suburb' => 'Perth', 'state' => 'WA', 'postcode' => '6000', 'country' => 'Australia', 'is_primary' => '1'])
-        ->assertRedirectToRoute('customers.show', $customer->id);
+        ->assertRedirectToRoute('customers.locations', $customer->id);
 
     expect(LocationEloquentModel::query()->sole())
         ->team_id->toBe($user->current_team_id)

@@ -21,7 +21,7 @@ it("adds a contact to a customer and returns to the customer's page", function (
             'position' => 'Office manager',
             'is_primary' => '1',
         ])
-        ->assertRedirectToRoute('customers.show', $customer->id);
+        ->assertRedirectToRoute('customers.contacts', $customer->id);
 
     expect(ContactEloquentModel::query()->sole())
         ->team_id->toBe($user->current_team_id)

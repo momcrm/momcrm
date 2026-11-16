@@ -14,7 +14,7 @@ it('deletes a asset', function (): void {
 
     actingAs($user)
         ->delete(route('assets.destroy', $asset->id))
-        ->assertRedirectToRoute('customers.show', $asset->customer_id);
+        ->assertRedirectToRoute('customers.assets', $asset->customer_id);
 
     assertModelMissing($asset);
 });

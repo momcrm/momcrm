@@ -16,7 +16,7 @@ it('saves changes to a asset', function (): void {
 
     actingAs($user)
         ->put(route('assets.update', $asset->id), ['name' => 'Reception PC', 'serial_number' => 'SN-1', 'status' => 'active'])
-        ->assertRedirectToRoute('customers.show', $customer->id);
+        ->assertRedirectToRoute('customers.assets', $customer->id);
 
     expect($asset->fresh())
         ->name->toBe('Reception PC')
