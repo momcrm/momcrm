@@ -85,8 +85,7 @@ export default function ProjectsIndex({
                 <div className="flex flex-wrap items-center gap-2">
                     <ToggleGroup
                         type="single"
-                        variant="outline"
-                        size="sm"
+                        variant="segmented"
                         value={filters.view}
                         onValueChange={(view) =>
                             view &&
@@ -96,16 +95,14 @@ export default function ProjectsIndex({
                             )
                         }
                         aria-label="View"
-                        className="bg-card"
                     >
                         {views.map((view) => (
                             <ToggleGroupItem
                                 key={view.value}
                                 value={view.value}
                                 aria-label={view.label}
-                                className="gap-1.5 px-2.5"
                             >
-                                <view.icon className="size-3.5" />
+                                <view.icon />
                                 {view.label}
                             </ToggleGroupItem>
                         ))}
