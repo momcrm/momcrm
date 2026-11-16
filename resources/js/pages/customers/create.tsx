@@ -16,7 +16,7 @@ export default function CreateCustomer({
         <>
             <Head title="Add customer" />
 
-            <div className="flex flex-col gap-6 p-4 md:p-6">
+            <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-4 md:p-6">
                 <PageHeader
                     title="Add customer"
                     description="Start with a client you're working with this week."

@@ -134,7 +134,7 @@ export default function CustomerSettings({
                 description="How this customer is named, billed and reached."
             />
 
-            <form onSubmit={save} className="max-w-3xl space-y-5 pb-4">
+            <form onSubmit={save} className="space-y-5 pb-4">
                 <SettingsSection
                     title="Identity"
                     description={
@@ -410,7 +410,7 @@ export default function CustomerSettings({
             </form>
 
             {can.delete && (
-                <div className="mt-5 max-w-3xl">
+                <div className="mt-5">
                     <SettingsSection title="Danger zone" tone="destructive">
                         <div className="flex flex-wrap items-center justify-between gap-4 px-4 py-3.5">
                             <div className="min-w-0 flex-1 basis-64">

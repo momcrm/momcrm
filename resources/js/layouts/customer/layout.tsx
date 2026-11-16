@@ -178,7 +178,7 @@ export default function CustomerLayout({ children }: PropsWithChildren) {
     const { isCurrentUrl, isCurrentOrParentUrl } = useCurrentUrl();
 
     return (
-        <div className="flex flex-col gap-5 p-4 md:p-6">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 p-4 md:p-6">
             <WorkspaceHeader customer={workspace.customer} />
 
             <div className="flex flex-col gap-6 md:flex-row md:gap-8">
