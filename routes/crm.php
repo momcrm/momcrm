@@ -72,6 +72,7 @@ use App\Service\Controllers\EditServiceController;
 use App\Service\Controllers\StoreServiceController;
 use App\Service\Controllers\UpdateServiceController;
 use App\TeamUser\Controllers\ListMembersController;
+use App\TeamUser\Controllers\RemoveMemberController;
 use App\TeamUser\Controllers\UpdateMemberRoleController;
 use App\Ticket\Controllers\ArchiveTicketController;
 use App\Ticket\Controllers\BulkArchiveTicketsController;
@@ -166,6 +167,7 @@ Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function 
     Route::get('overview', ShowOverviewController::class)->name('overview');
     Route::get('members', ListMembersController::class)->name('members');
     Route::patch('members/{member}', UpdateMemberRoleController::class)->whereUuid('member')->name('members.update');
+    Route::delete('members/{member}', RemoveMemberController::class)->whereUuid('member')->name('members.destroy');
     Route::post('groups', StoreGroupController::class)->name('groups.store');
     Route::get('groups/{group}', ShowGroupController::class)->whereUuid('group')->name('groups.show');
     Route::put('groups/{group}', UpdateGroupController::class)->whereUuid('group')->name('groups.update');

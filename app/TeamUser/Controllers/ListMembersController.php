@@ -18,6 +18,7 @@ use App\Team\Actions\FindTeam;
 use App\Team\Exceptions\CouldNotViewTeam;
 use App\TeamInvitation\Actions\FindTeamInvitation;
 use App\TeamInvitation\TeamInvitation;
+use App\TeamUser\Actions\FindTeamUser;
 use App\TeamUser\Properties\Role;
 use App\TeamUser\Properties\TeamId;
 use App\TeamUser\Properties\UserId;
@@ -52,6 +53,8 @@ final class ListMembersController
 
         $teamId = $team->getId()->toString();
         $canInvite = Gate::allows('invite', $team);
+        $viewerId = (string) $request->user()?->id;
+        $viewerRole = FindTeamUser::byTeamAndUser($teamId, $viewerId)->getRole()->toNullableEnum();
 
         $groupsByUser = [];
 
@@ -95,6 +98,7 @@ final class ListMembersController
             ->pluck('last_active_at', 'user_id');
 
         return Inertia::render('members', [
+            'teamName' => $team->getName()->toString(),
             'tab' => in_array($request->query('tab'), ['groups', 'roles'], true) ? $request->query('tab') : 'members',
             'members' => UserEloquentModel::query()
                 ->join(Table::TeamUser->value, UserId::getDatabaseTableColumnNameWithTable(Table::TeamUser), '=', Id::getDatabaseTableColumnNameWithTable(Table::Users))
@@ -111,6 +115,9 @@ final class ListMembersController
                     'name' => $member->name,
                     'email' => $member->email,
                     'role' => $member->getAttribute(Role::getDatabaseTableColumnName()),
+                    'is_you' => $member->id === $viewerId,
+                    'can_remove' => $member->id !== $viewerId
+                        && $viewerRole?->canRemove(TeamRoleEnum::tryFrom(Types::string($member->getAttribute(Role::getDatabaseTableColumnName()))) ?? TeamRoleEnum::Owner) === true,
                     'groups' => $groupsByUser[$member->id] ?? [],
                     'active_projects' => Types::intOrZero($activeProjects->get($member->id)),
                     'open_tickets' => Types::intOrZero($openTickets->get($member->id)),

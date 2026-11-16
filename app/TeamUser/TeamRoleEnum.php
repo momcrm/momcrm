@@ -13,4 +13,17 @@ enum TeamRoleEnum: string
     case Admin = 'admin';
     case Member = 'member';
     case Owner = 'owner';
+
+    /**
+     * Owners can remove admins and members, admins can remove members, and
+     * nobody can remove the owner.
+     */
+    public function canRemove(self $role): bool
+    {
+        return match ($this) {
+            self::Owner => $role !== self::Owner,
+            self::Admin => $role === self::Member,
+            self::Member => false,
+        };
+    }
 }

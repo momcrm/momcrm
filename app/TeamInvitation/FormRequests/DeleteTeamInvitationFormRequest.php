@@ -62,6 +62,6 @@ final class DeleteTeamInvitationFormRequest extends FormRequest
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Invitation to :email revoked.', ['email' => $this->invitation->getEmail()->toString()])]);
 
-        return to_route('team.edit');
+        return back();
     }
 }

@@ -6,6 +6,7 @@ namespace App\Team;
 
 use App\TeamUser\Actions\FindTeamUser;
 use App\TeamUser\TeamRoleEnum;
+use App\TeamUser\TeamUser;
 use App\User\UserEloquentModel;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Auth\Access\Response;
@@ -72,6 +73,26 @@ final class TeamPolicy
         return $this->isOwnerOrAdmin($user, $team)
             ? Response::allow()
             : Response::deny('Only team owners and admins can change ticket statuses and priorities.');
+    }
+
+    /**
+     * Owners remove admins and members, admins remove members. Nobody removes
+     * the owner or themselves.
+     */
+    public function removeMember(UserEloquentModel $user, Team $team, TeamUser $membership): Response
+    {
+        $role = FindTeamUser::byTeamAndUser(
+            teamId: $team->getId()->toString(),
+            userId: $user->id,
+        )->getRole()->toNullableEnum();
+        $memberRole = $membership->getRole()->toNullableEnum();
+
+        return $role !== null
+            && $memberRole !== null
+            && $membership->getUserId()->toString() !== $user->id
+            && $role->canRemove($memberRole)
+            ? Response::allow()
+            : Response::deny('You can’t remove this person from the team.');
     }
 
     private function isOwnerOrAdmin(UserEloquentModel $user, Team $team): bool

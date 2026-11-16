@@ -1,23 +1,45 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import { Plus, Search, UserPlus } from 'lucide-react';
+import { Form, Head, Link, router, usePage } from '@inertiajs/react';
+import {
+    Copy,
+    Crown,
+    MoreHorizontal,
+    Plus,
+    Search,
+    SquarePen,
+    Ticket,
+    UserMinus,
+    UserPlus,
+} from 'lucide-react';
+import { toast } from 'sonner';
 import { useState } from 'react';
 import DataTable, { dataTableColumns } from '@/components/data-table';
 import EmptyState from '@/components/empty-state';
 import GroupFormDialog from '@/components/groups/group-form-dialog';
 import InviteForm from '@/components/invite-form';
 import PageHeader from '@/components/page-header';
-import SoftBadge from '@/components/soft-badge';
 import StatusPill from '@/components/status-pill';
 import { AssigneeAvatar } from '@/components/tickets/ticket-meta';
 import { Button } from '@/components/ui/button';
+import { useCreateTicket } from '@/components/tickets/create-ticket-dialog';
 import {
     Dialog,
+    DialogClose,
     DialogContent,
     DialogDescription,
+    DialogFooter,
     DialogTitle,
 } from '@/components/ui/dialog';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
+import DeleteTeamInvitationController from '@/actions/App/TeamInvitation/Controllers/DeleteTeamInvitationController';
 import StoreTeamInvitationController from '@/actions/App/TeamInvitation/Controllers/StoreTeamInvitationController';
+import RemoveMemberController from '@/actions/App/TeamUser/Controllers/RemoveMemberController';
 import NativeSelect from '@/components/native-select';
 import { hueStyle } from '@/lib/colors';
 import { timeAgo } from '@/lib/format';
@@ -26,6 +48,7 @@ import { members as membersRoute } from '@/routes';
 import { index as accessRulesIndex } from '@/routes/access-rules';
 import { show as showGroup } from '@/routes/groups';
 import { update as updateRole } from '@/routes/members';
+import { index as ticketsIndex } from '@/routes/tickets';
 
 type Role = 'owner' | 'admin' | 'member';
 
@@ -38,7 +61,20 @@ type Member = {
     active_projects: number;
     open_tickets: number;
     last_active_at: string | null;
+    is_you: boolean;
+    can_remove: boolean;
 };
+
+/**
+ * A row of the members table: someone in the team, or a pending invitation.
+ */
+type Row =
+    | (Member & { pending: false })
+    | (Omit<Member, 'active_projects' | 'open_tickets'> & {
+          pending: true;
+          active_projects: null;
+          open_tickets: null;
+      });
 
 type Invitation = {
     id: string;
@@ -65,25 +101,64 @@ const roleLabels: Record<Role, string> = {
     member: 'Member',
 };
 
-const column = dataTableColumns<Member>();
+const column = dataTableColumns<Row>();
 
-function memberColumns(canChangeRoles: boolean) {
+/** Activity within this many minutes counts as being online. */
+const onlineWithinMinutes = 5;
+
+function isOnline(lastActiveAt: string | null): boolean {
+    return (
+        lastActiveAt !== null &&
+        Date.now() - new Date(lastActiveAt).getTime() <
+            onlineWithinMinutes * 60_000
+    );
+}
+
+function Count({ value }: { value: number | null }) {
+    return (
+        <span className="text-muted-foreground tabular-nums">
+            {value ?? '—'}
+        </span>
+    );
+}
+
+function memberColumns({
+    canChangeRoles,
+    onAssign,
+    onRemove,
+}: {
+    canChangeRoles: boolean;
+    onAssign: (row: Row) => void;
+    onRemove: (row: Row) => void;
+}) {
     return column.columns([
         column.accessor('name', {
             header: 'Member',
             cell: (info) => (
                 <span className="flex min-w-0 items-center gap-2.5">
-                    <AssigneeAvatar
-                        name={info.getValue()}
-                        className="size-7 text-[10px]"
-                    />
+                    {info.row.original.pending ? (
+                        <span className="size-7 shrink-0 rounded-full border border-dashed border-border-strong" />
+                    ) : (
+                        <AssigneeAvatar
+                            name={info.getValue()}
+                            className="size-7 text-[10px]"
+                        />
+                    )}
                     <span className="min-w-0">
                         <span className="block truncate font-medium">
                             {info.getValue()}
+                            {info.row.original.is_you && (
+                                <span className="font-normal text-muted-foreground">
+                                    {' '}
+                                    (you)
+                                </span>
+                            )}
                         </span>
-                        <span className="block truncate text-xs text-muted-foreground">
-                            {info.row.original.email}
-                        </span>
+                        {!info.row.original.pending && (
+                            <span className="block truncate text-xs text-muted-foreground">
+                                {info.row.original.email}
+                            </span>
+                        )}
                     </span>
                 </span>
             ),
@@ -92,7 +167,12 @@ function memberColumns(canChangeRoles: boolean) {
             header: 'Role',
             meta: { className: 'w-36' },
             cell: (info) =>
-                canChangeRoles && info.getValue() !== 'owner' ? (
+                info.getValue() === 'owner' ? (
+                    <span className="flex items-center gap-1.5">
+                        <Crown className="size-3.5 text-muted-foreground" />
+                        Owner
+                    </span>
+                ) : canChangeRoles && !info.row.original.pending ? (
                     <NativeSelect
                         aria-label={`Role for ${info.row.original.name}`}
                         value={info.getValue()}
@@ -103,19 +183,13 @@ function memberColumns(canChangeRoles: boolean) {
                                 { preserveScroll: true },
                             )
                         }
-                        className="h-7 w-28 text-xs"
+                        className="h-7 w-auto pr-7 pl-2 text-xs"
                     >
                         <option value="admin">Admin</option>
                         <option value="member">Member</option>
                     </NativeSelect>
                 ) : (
-                    <SoftBadge
-                        tone={
-                            info.getValue() === 'owner' ? 'primary' : 'neutral'
-                        }
-                    >
-                        {roleLabels[info.getValue()]}
-                    </SoftBadge>
+                    <span>{roleLabels[info.getValue()]}</span>
                 ),
         }),
         column.accessor('groups', {
@@ -144,40 +218,118 @@ function memberColumns(canChangeRoles: boolean) {
         column.accessor('active_projects', {
             header: 'Projects',
             meta: { className: 'hidden md:table-cell w-24 text-right' },
-            cell: (info) => (
-                <span className="text-muted-foreground tabular-nums">
-                    {info.getValue()}
-                </span>
-            ),
+            cell: (info) => <Count value={info.getValue()} />,
         }),
         column.accessor('open_tickets', {
             header: 'Open tickets',
             meta: { className: 'hidden md:table-cell w-28 text-right' },
-            cell: (info) => (
-                <span className="text-muted-foreground tabular-nums">
-                    {info.getValue()}
-                </span>
-            ),
+            cell: (info) => <Count value={info.getValue()} />,
         }),
         column.accessor('last_active_at', {
             header: 'Last active',
             meta: { className: 'hidden xl:table-cell w-32' },
-            cell: (info) => (
-                <span className="text-muted-foreground">
-                    {info.getValue() ? timeAgo(info.getValue()) : '—'}
-                </span>
-            ),
+            cell: (info) =>
+                isOnline(info.getValue()) ? (
+                    <span className="text-success">Online</span>
+                ) : (
+                    <span className="text-muted-foreground">
+                        {info.getValue() ? timeAgo(info.getValue()) : '—'}
+                    </span>
+                ),
         }),
         column.display({
             id: 'status',
             header: 'Status',
             meta: { className: 'w-24' },
-            cell: () => <StatusPill tone="success">Active</StatusPill>,
+            cell: (info) =>
+                info.row.original.pending ? (
+                    <StatusPill tone="warning">Invited</StatusPill>
+                ) : (
+                    <StatusPill tone="success">Active</StatusPill>
+                ),
+        }),
+        column.display({
+            id: 'actions',
+            header: () => <span className="sr-only">Actions</span>,
+            meta: { className: 'w-10' },
+            cell: (info) => (
+                <RowActions
+                    row={info.row.original}
+                    onAssign={onAssign}
+                    onRemove={onRemove}
+                />
+            ),
         }),
     ]);
 }
 
+function RowActions({
+    row,
+    onAssign,
+    onRemove,
+}: {
+    row: Row;
+    onAssign: (row: Row) => void;
+    onRemove: (row: Row) => void;
+}) {
+    const copyEmail = () => {
+        void navigator.clipboard
+            .writeText(row.email)
+            .then(() => toast.success('Email copied.'));
+    };
+
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger
+                aria-label={`More for ${row.name}`}
+                className="flex size-7 items-center justify-center rounded-md text-soft-foreground outline-none hover:bg-accent hover:text-foreground data-[state=open]:bg-accent"
+            >
+                <MoreHorizontal className="size-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+                {!row.pending && (
+                    <>
+                        <DropdownMenuItem asChild>
+                            <Link
+                                href={ticketsIndex({
+                                    query: { assignee: row.id },
+                                })}
+                            >
+                                <Ticket />
+                                View their tickets
+                            </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => onAssign(row)}>
+                            <SquarePen />
+                            Assign a ticket
+                        </DropdownMenuItem>
+                    </>
+                )}
+                <DropdownMenuItem onSelect={copyEmail}>
+                    <Copy />
+                    Copy email
+                </DropdownMenuItem>
+                {(row.pending || row.can_remove) && (
+                    <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                            variant="destructive"
+                            onSelect={() => onRemove(row)}
+                        >
+                            <UserMinus />
+                            {row.pending
+                                ? 'Revoke invitation'
+                                : 'Remove from team'}
+                        </DropdownMenuItem>
+                    </>
+                )}
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+}
+
 export default function Members({
+    teamName,
     tab,
     members,
     invitations,
@@ -185,6 +337,7 @@ export default function Members({
     canInvite,
     canChangeRoles,
 }: {
+    teamName: string;
     tab: Tab;
     members: Member[];
     invitations: Invitation[];
@@ -198,23 +351,48 @@ export default function Members({
     const [role, setRole] = useState<Role | null>(null);
     const [inviting, setInviting] = useState(false);
     const [creatingGroup, setCreatingGroup] = useState(false);
+    const [removing, setRemoving] = useState<Row | null>(null);
+    const { openCreateTicket } = useCreateTicket();
 
-    const shown = members.filter(
-        (member) =>
-            (!role || member.role === role) &&
-            `${member.name} ${member.email}`
+    const rows: Row[] = [
+        ...members.map((member) => ({ ...member, pending: false as const })),
+        ...invitations.map((invitation) => ({
+            id: invitation.id,
+            name: invitation.email,
+            email: invitation.email,
+            role: invitation.role,
+            groups: [],
+            active_projects: null,
+            open_tickets: null,
+            last_active_at: null,
+            is_you: false,
+            can_remove: true,
+            pending: true as const,
+        })),
+    ];
+
+    const shown = rows.filter(
+        (row) =>
+            (!role || row.role === role) &&
+            `${row.name} ${row.email}`
                 .toLowerCase()
                 .includes(search.toLowerCase()),
     );
+
+    const columns = memberColumns({
+        canChangeRoles,
+        onAssign: (row) => openCreateTicket({ assigneeId: row.id }),
+        onRemove: setRemoving,
+    });
 
     return (
         <>
             <Head title="Members" />
 
-            <div className="flex flex-col gap-5 p-4 md:p-6">
+            <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 p-4 md:p-6">
                 <PageHeader
                     title="Members"
-                    description="The people in your team, the groups they're in and what they're working on."
+                    description={`${members.length} ${members.length === 1 ? 'person' : 'people'} in ${teamName}${invitations.length > 0 ? ` · ${invitations.length} pending` : ''}`}
                     actions={
                         tab === 'groups' ? (
                             <Button onClick={() => setCreatingGroup(true)}>
@@ -224,7 +402,7 @@ export default function Members({
                         ) : canInvite ? (
                             <Button onClick={() => setInviting(true)}>
                                 <UserPlus />
-                                Invite
+                                Invite member
                             </Button>
                         ) : undefined
                     }
@@ -236,8 +414,8 @@ export default function Members({
                 >
                     {(
                         [
-                            ['members', `Members ${members.length}`],
-                            ['groups', `Groups ${groups.length}`],
+                            ['members', 'Members'],
+                            ['groups', 'Groups'],
                             ['roles', 'Roles & permissions'],
                         ] as const
                     ).map(([value, label]) => (
@@ -271,23 +449,28 @@ export default function Members({
                                     onChange={(event) =>
                                         setSearch(event.target.value)
                                     }
-                                    placeholder="Search members"
+                                    placeholder="Search by name or email"
                                     aria-label="Search members"
                                     className="pl-9"
                                 />
                             </div>
-                            <div className="flex gap-1">
+                            <div
+                                role="group"
+                                aria-label="Filter by role"
+                                className="flex gap-0.5 rounded-md bg-muted p-0.5"
+                            >
                                 {(
                                     [null, 'owner', 'admin', 'member'] as const
                                 ).map((value) => (
                                     <button
                                         key={value ?? 'all'}
                                         type="button"
+                                        aria-pressed={role === value}
                                         onClick={() => setRole(value)}
                                         className={cn(
-                                            'rounded-full border px-2.5 py-0.5 text-xs',
+                                            'rounded-[5px] px-2.5 py-1 text-xs',
                                             role === value
-                                                ? 'border-primary/30 bg-primary/8 text-foreground'
+                                                ? 'bg-card font-medium text-foreground shadow-xs'
                                                 : 'text-muted-foreground hover:text-foreground',
                                         )}
                                     >
@@ -298,35 +481,10 @@ export default function Members({
                         </div>
 
                         <DataTable
-                            columns={memberColumns(canChangeRoles)}
+                            columns={columns}
                             data={shown}
-                            getRowId={(member) => member.id}
+                            getRowId={(row) => row.id}
                         />
-
-                        {invitations.length > 0 && (
-                            <section className="space-y-2">
-                                <h2 className="text-sm font-medium">Invited</h2>
-                                <ul className="divide-y overflow-hidden rounded-lg border bg-card shadow-xs">
-                                    {invitations.map((invitation) => (
-                                        <li
-                                            key={invitation.id}
-                                            className="flex items-center gap-3 px-3 py-2.5 text-sm"
-                                        >
-                                            <span className="size-7 shrink-0 rounded-full border border-dashed border-border-strong" />
-                                            <span className="min-w-0 flex-1 truncate">
-                                                {invitation.email}
-                                            </span>
-                                            <SoftBadge tone="neutral">
-                                                {roleLabels[invitation.role]}
-                                            </SoftBadge>
-                                            <StatusPill tone="warning">
-                                                Invited
-                                            </StatusPill>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </section>
-                        )}
                     </>
                 )}
 
@@ -488,6 +646,54 @@ export default function Members({
                         They'll get an email with a link to join the team.
                     </DialogDescription>
                     <InviteForm action={StoreTeamInvitationController.form()} />
+                </DialogContent>
+            </Dialog>
+
+            <Dialog
+                open={removing !== null}
+                onOpenChange={(open) => !open && setRemoving(null)}
+            >
+                <DialogContent>
+                    <DialogTitle>
+                        {removing?.pending
+                            ? 'Revoke invitation?'
+                            : `Remove ${removing?.name ?? ''} from ${teamName}?`}
+                    </DialogTitle>
+                    <DialogDescription>
+                        {removing?.pending
+                            ? `The invitation link sent to ${removing.email} will stop working.`
+                            : 'They’ll lose access to the team straight away and come off its groups, projects and open tickets. Their closed tickets and comments stay.'}
+                    </DialogDescription>
+                    {removing && (
+                        <Form
+                            {...(removing.pending
+                                ? DeleteTeamInvitationController.form(
+                                      removing.id,
+                                  )
+                                : RemoveMemberController.form(removing.id))}
+                            options={{ preserveScroll: true }}
+                            onSuccess={() => setRemoving(null)}
+                        >
+                            {({ processing }) => (
+                                <DialogFooter className="gap-2">
+                                    <DialogClose asChild>
+                                        <Button
+                                            variant="secondary"
+                                            type="button"
+                                        >
+                                            Cancel
+                                        </Button>
+                                    </DialogClose>
+                                    <Button
+                                        variant="destructive"
+                                        disabled={processing}
+                                    >
+                                        {removing.pending ? 'Revoke' : 'Remove'}
+                                    </Button>
+                                </DialogFooter>
+                            )}
+                        </Form>
+                    )}
                 </DialogContent>
             </Dialog>
 
