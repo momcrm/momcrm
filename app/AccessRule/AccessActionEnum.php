@@ -26,6 +26,7 @@ enum AccessActionEnum: string
     case ManageMembers = 'manage_members';
     case Move = 'move';
     case Reopen = 'reopen';
+    case Reveal = 'reveal';
     case Restore = 'restore';
     case Update = 'update';
 
@@ -42,6 +43,7 @@ enum AccessActionEnum: string
             self::ManageMembers => 'Manage members',
             self::Move => 'Move',
             self::Reopen => 'Reopen',
+            self::Reveal => 'Reveal',
             self::Restore => 'Restore',
             self::Update => 'Edit',
         };

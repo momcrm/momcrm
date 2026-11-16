@@ -104,6 +104,14 @@ abstract class AbstractAccessPolicy
     /**
      * @param  AbstractData<covariant Model>  $record
      */
+    public function reveal(UserEloquentModel $user, AbstractData $record): Response
+    {
+        return AccessEvaluator::decide($user, $this->resource(), AccessActionEnum::Reveal, $record);
+    }
+
+    /**
+     * @param  AbstractData<covariant Model>  $record
+     */
     public function update(UserEloquentModel $user, AbstractData $record): Response
     {
         return AccessEvaluator::decide($user, $this->resource(), AccessActionEnum::Update, $record);

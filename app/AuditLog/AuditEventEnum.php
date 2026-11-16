@@ -13,4 +13,5 @@ enum AuditEventEnum: string
     case Created = 'created';
     case Deleted = 'deleted';
     case Updated = 'updated';
+    case Viewed = 'viewed';
 }

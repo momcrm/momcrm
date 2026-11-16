@@ -19,7 +19,7 @@ it('gives every new team the default rules', function (): void {
     $team = CreateTeam::fromTeam(Team::new()->setName('Acme')->setOwnerId($owner->id));
 
     expect(AccessRuleEloquentModel::query()->withoutGlobalScopes()->where('team_id', $team->getId()->toString())->orderBy('name')->pluck('name')->all())
-        ->toBe(['Everyone can create and edit', 'Everyone can delete comments and files', 'Owners and admins can do everything']);
+        ->toBe(['Everyone can create and edit', 'Everyone can delete comments and files', 'Everyone can reveal secrets', 'Owners and admins can do everything']);
 });
 
 it('lets members create and edit but leaves deleting, archiving and managing access to owners and admins', function (): void {

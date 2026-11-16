@@ -19,6 +19,7 @@ import {
     invoices,
     locations,
     projects,
+    secrets,
     services,
     tickets,
 } from '@/routes/customers';
@@ -230,6 +231,7 @@ export default function CustomerDashboard({
         { label: 'Assets', count: counts.assets, href: assets(id) },
         { label: 'Services', count: counts.services, href: services(id) },
         { label: 'Files', count: counts.files, href: files(id) },
+        { label: 'Secrets', count: counts.secrets, href: secrets(id) },
         { label: 'Invoices', count: counts.invoices, href: invoices(id) },
     ];
 
@@ -318,7 +320,7 @@ export default function CustomerDashboard({
 
                 <section
                     aria-label="In this account"
-                    className="grid grid-cols-2 overflow-hidden rounded-xl border bg-card shadow-xs @lg:grid-cols-4 @3xl:grid-cols-8"
+                    className="grid grid-cols-2 overflow-hidden rounded-xl border bg-card shadow-xs @lg:grid-cols-4 @3xl:grid-cols-9"
                 >
                     {tiles.map((tile) => (
                         <Link

@@ -41,8 +41,22 @@ export type CustomerWorkspace = {
         services: number;
         invoices: number;
         files: number;
+        secrets: number;
     };
 };
+
+/** A customer's secret, without its values. */
+export type SecretItem = {
+    id: string;
+    customer_id: string;
+    asset_id: string | null;
+    title: string;
+    description: string | null;
+    version: number;
+    updated_at: string | null;
+};
+
+export type SecretPair = { key: string; value: string };
 
 /** A folder of a customer's files; top-level folders have no parent. */
 export type FolderItem = { id: string; parent_id: string | null; name: string };

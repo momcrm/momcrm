@@ -1,4 +1,5 @@
-import { Head, setLayoutProps } from '@inertiajs/react';
+import { Head, Link, setLayoutProps } from '@inertiajs/react';
+import { KeyRound } from 'lucide-react';
 import ConfirmDelete from '@/components/confirm-delete';
 import PageHeader from '@/components/page-header';
 import AssetForm from '@/components/assets/asset-form';
@@ -6,6 +7,7 @@ import DeleteAssetController from '@/actions/App/Asset/Controllers/DeleteAssetCo
 import UpdateAssetController from '@/actions/App/Asset/Controllers/UpdateAssetController';
 import {
     index as customersIndex,
+    secrets as customerSecrets,
     show as showCustomer,
 } from '@/routes/customers';
 import type {
@@ -14,6 +16,7 @@ import type {
     Customer,
     CustomerOption,
     Option,
+    SecretItem,
 } from '@/types';
 
 export default function EditAsset({
@@ -22,7 +25,9 @@ export default function EditAsset({
     customer,
     statuses,
     locations,
+    secrets,
 }: {
+    secrets: SecretItem[];
     can: Abilities;
     asset: Asset;
     customer: Customer;
@@ -63,6 +68,41 @@ export default function EditAsset({
                     submitLabel="Save"
                     cancelHref={showCustomer(customer.id).url}
                 />
+
+                <section className="max-w-2xl space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                        <h2 className="font-medium">Secrets</h2>
+                        <Link
+                            href={customerSecrets(customer.id, {
+                                query: { asset: asset.id },
+                            })}
+                            className="text-sm text-muted-foreground hover:text-foreground"
+                        >
+                            {secrets.length > 0
+                                ? 'Open secrets'
+                                : 'Add a secret'}
+                        </Link>
+                    </div>
+                    {secrets.length > 0 ? (
+                        <ul className="divide-y rounded-lg border bg-card">
+                            {secrets.map((secret) => (
+                                <li
+                                    key={secret.id}
+                                    className="flex h-10 items-center gap-2.5 px-3 text-sm"
+                                >
+                                    <KeyRound className="size-4 text-subtle-foreground" />
+                                    <span className="truncate">
+                                        {secret.title}
+                                    </span>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <p className="text-sm text-muted-foreground">
+                            No logins or keys saved for this asset.
+                        </p>
+                    )}
+                </section>
             </div>
         </>
     );

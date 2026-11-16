@@ -25,6 +25,7 @@ enum AccessResourceEnum: string
     case Location = 'location';
     case Milestone = 'milestone';
     case Project = 'project';
+    case Secret = 'secret';
     case Service = 'service';
     case Ticket = 'ticket';
 
@@ -41,6 +42,7 @@ enum AccessResourceEnum: string
             self::Location => 'Locations',
             self::Milestone => 'Milestones',
             self::Project => 'Projects',
+            self::Secret => 'Secrets',
             self::Service => 'Services',
             self::Ticket => 'Tickets',
         };
@@ -92,6 +94,12 @@ enum AccessResourceEnum: string
                 AccessActionEnum::ManageMembers,
                 AccessActionEnum::Archive,
                 AccessActionEnum::Restore,
+                AccessActionEnum::Delete,
+            ],
+            self::Secret => [
+                AccessActionEnum::Create,
+                AccessActionEnum::Update,
+                AccessActionEnum::Reveal,
                 AccessActionEnum::Delete,
             ],
             self::Ticket => [

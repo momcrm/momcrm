@@ -15,8 +15,8 @@ use App\TeamUser\TeamRoleEnum;
 /**
  * The rules every team starts with. Access is refused unless a rule allows
  * it, so these grant: owners and admins everything; everyone creating and
- * editing; and everyone deleting comments and files (comments stay limited
- * to their authors). Deleting, archiving and restoring other records and
+ * editing; everyone deleting comments and files (comments stay limited
+ * to their authors); and everyone revealing secrets. Deleting, archiving and restoring other records and
  * managing project and group access are left to owners and admins, until an
  * admin adds a rule allowing more.
  */
@@ -66,6 +66,16 @@ final readonly class SeedDefaultAccessRules
                 ->setName('Everyone can delete comments and files')
                 ->setResources(self::values([AccessResourceEnum::Attachment, AccessResourceEnum::Comment]))
                 ->setActions(self::values([AccessActionEnum::Delete]))
+                ->setEffect(AccessEffectEnum::Allow->value)
+                ->setConditions([]),
+        );
+
+        CreateAccessRule::fromAccessRule(
+            AccessRule::new()
+                ->setTeamId($this->teamId)
+                ->setName('Everyone can reveal secrets')
+                ->setResources(self::values([AccessResourceEnum::Secret]))
+                ->setActions(self::values([AccessActionEnum::Reveal]))
                 ->setEffect(AccessEffectEnum::Allow->value)
                 ->setConditions([]),
         );

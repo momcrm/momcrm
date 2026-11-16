@@ -3,6 +3,7 @@ import type { InertiaLinkProps } from '@inertiajs/react';
 import {
     Boxes,
     FileStack,
+    KeyRound,
     FolderKanban,
     LayoutDashboard,
     MapPin,
@@ -31,6 +32,7 @@ import {
     invoices,
     locations,
     projects,
+    secrets,
     services,
     show,
     tickets,
@@ -103,6 +105,12 @@ function links(workspace: CustomerWorkspace): WorkspaceLink[][] {
                 href: files(id),
                 icon: FileStack,
                 count: counts.files,
+            },
+            {
+                title: 'Secrets',
+                href: secrets(id),
+                icon: KeyRound,
+                count: counts.secrets,
             },
         ],
         [

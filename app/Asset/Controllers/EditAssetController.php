@@ -11,6 +11,8 @@ use App\Asset\AssetStatusEnum;
 use App\Asset\Exceptions\CouldNotFindAsset;
 use App\Customer\Actions\FindCustomer;
 use App\Location\Actions\FindLocation;
+use App\Secret\Actions\FindSecret;
+use App\Secret\Secret;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -37,6 +39,10 @@ final class EditAssetController
             'locations' => FindLocation::optionsForCustomer($customer->getId()->toString(), (string) $customer->getTeamId()->toString()),
             'statuses' => AssetStatusEnum::options(),
             'can' => AccessAbilities::for($request->user(), AccessResourceEnum::Asset, $found),
+            'secrets' => FindSecret::forCustomer($customer->getId()->toString(), $customer->getTeamId()->toString(), $found->getId()->toString())
+                ->map(fn (Secret $secret): array => $secret->toSummary())
+                ->values()
+                ->all(),
         ]);
     }
 }

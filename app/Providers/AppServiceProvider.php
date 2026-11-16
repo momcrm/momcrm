@@ -25,6 +25,8 @@ use App\Passkey\FormRequests\PasskeyVerificationFormRequest;
 use App\Passkey\PasskeyEloquentModel;
 use App\Project\Project;
 use App\Project\ProjectPolicy;
+use App\Secret\Secret;
+use App\Secret\SecretPolicy;
 use App\Service\Service;
 use App\Service\ServicePolicy;
 use App\Shared\MorphMapKeyEnum;
@@ -146,6 +148,7 @@ class AppServiceProvider extends ServiceProvider
     protected function configurePolicies(): void
     {
         Gate::policy(Asset::class, AssetPolicy::class);
+        Gate::policy(Secret::class, SecretPolicy::class);
         Gate::policy(Attachment::class, AttachmentPolicy::class);
         Gate::policy(Comment::class, CommentPolicy::class);
         Gate::policy(Contact::class, ContactPolicy::class);
