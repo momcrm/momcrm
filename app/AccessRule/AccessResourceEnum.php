@@ -59,7 +59,12 @@ enum AccessResourceEnum: string
                 AccessActionEnum::Update,
                 AccessActionEnum::Delete,
             ],
-            self::Attachment, self::Comment => [
+            self::Attachment => [
+                AccessActionEnum::Create,
+                AccessActionEnum::Update,
+                AccessActionEnum::Delete,
+            ],
+            self::Comment => [
                 AccessActionEnum::Create,
                 AccessActionEnum::Delete,
             ],

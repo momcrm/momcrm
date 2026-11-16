@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Attachment\AttachmentEloquentModel;
 use App\Customer\CustomerEloquentModel;
 use App\Folder\FolderEloquentModel;
+use App\TeamUser\TeamRoleEnum;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
 
@@ -43,4 +44,17 @@ it("returns not found for another team's file", function (): void {
     actingAs(UserEloquentModel::factory()->withPersonalTeam()->create())
         ->patch(route('attachments.update', AttachmentEloquentModel::factory()->create()->id), ['description' => 'Mine'])
         ->assertNotFound();
+});
+
+it('lets members describe and move files under the default rules', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $member = UserEloquentModel::factory()->inTeam($owner->current_team_id, TeamRoleEnum::Member)->create();
+    $customer = CustomerEloquentModel::factory()->create(['team_id' => $owner->current_team_id]);
+    $file = AttachmentEloquentModel::factory()->on($customer)->create();
+
+    actingAs($member)
+        ->patch(route('attachments.update', $file->id), ['description' => 'Floor plan'])
+        ->assertSessionHasNoErrors();
+
+    expect($file->refresh()->description)->toBe('Floor plan');
 });
