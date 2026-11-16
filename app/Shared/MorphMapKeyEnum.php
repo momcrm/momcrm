@@ -15,6 +15,7 @@ use App\Contact\ContactEloquentModel;
 use App\Customer\CustomerEloquentModel;
 use App\EmailCode\EmailCodeEloquentModel;
 use App\Favorite\FavoriteEloquentModel;
+use App\Folder\FolderEloquentModel;
 use App\Group\GroupEloquentModel;
 use App\Invoice\InvoiceEloquentModel;
 use App\InvoiceItem\InvoiceItemEloquentModel;
@@ -54,6 +55,7 @@ enum MorphMapKeyEnum: string
     case Customer = 'customer';
     case EmailCode = 'email_code';
     case Favorite = 'favorite';
+    case Folder = 'folder';
     case Group = 'group';
     case Invoice = 'invoice';
     case InvoiceItem = 'invoice_item';
@@ -106,6 +108,7 @@ enum MorphMapKeyEnum: string
             self::Customer => CustomerEloquentModel::class,
             self::EmailCode => EmailCodeEloquentModel::class,
             self::Favorite => FavoriteEloquentModel::class,
+            self::Folder => FolderEloquentModel::class,
             self::Group => GroupEloquentModel::class,
             self::Invoice => InvoiceEloquentModel::class,
             self::InvoiceItem => InvoiceItemEloquentModel::class,

@@ -8,6 +8,8 @@ use App\Attachment\Factories\AttachmentFactory;
 use App\Attachment\Properties\AttachableId;
 use App\Attachment\Properties\AttachableType;
 use App\Attachment\Properties\CreatedAt;
+use App\Attachment\Properties\Description;
+use App\Attachment\Properties\FolderId;
 use App\Attachment\Properties\Id;
 use App\Attachment\Properties\MimeType;
 use App\Attachment\Properties\Name;
@@ -30,6 +32,8 @@ final class Attachment extends AbstractData
         public AttachableId $attachableId,
         public AttachableType $attachableType,
         public CreatedAt $createdAt,
+        public Description $description,
+        public FolderId $folderId,
         public Id $id,
         public MimeType $mimeType,
         public Name $name,
@@ -184,5 +188,29 @@ final class Attachment extends AbstractData
     public function getUploader(): Uploader
     {
         return $this->uploader;
+    }
+
+    public function getDescription(): Description
+    {
+        return $this->description;
+    }
+
+    public function setDescription(mixed $description): self
+    {
+        $this->description = new Description($description instanceof AbstractValue ? $description->toValue() : $description);
+
+        return $this;
+    }
+
+    public function getFolderId(): FolderId
+    {
+        return $this->folderId;
+    }
+
+    public function setFolderId(mixed $folderId): self
+    {
+        $this->folderId = new FolderId($folderId instanceof AbstractValue ? $folderId->toValue() : $folderId);
+
+        return $this;
     }
 }

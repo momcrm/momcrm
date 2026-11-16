@@ -12,7 +12,8 @@ use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
- * Downloads a file. Only members of its team can.
+ * Downloads a file. Only members of its team can. It is always sent as a
+ * download, never shown inline, and the browser is told not to guess its type.
  */
 final class ShowAttachmentController
 {
@@ -29,6 +30,9 @@ final class ShowAttachmentController
             throw CouldNotFindAttachment::notFound();
         }
 
-        return Storage::disk(CreateAttachment::DISK)->download($path, $found->getName()->toString());
+        $response = Storage::disk(CreateAttachment::DISK)->download($path, $found->getName()->toString());
+        $response->headers->set('X-Content-Type-Options', 'nosniff');
+
+        return $response;
     }
 }

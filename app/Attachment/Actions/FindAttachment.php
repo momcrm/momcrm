@@ -10,7 +10,9 @@ use App\Attachment\AttachmentEloquentModel;
 use App\Attachment\AttachmentRelationship;
 use App\Attachment\Properties\AttachableId;
 use App\Attachment\Properties\AttachableType;
+use App\Attachment\Properties\FolderId;
 use App\Attachment\Properties\Id;
+use App\Attachment\Properties\Name;
 use App\Attachment\Properties\TeamId;
 use App\Project\Actions\FindProject;
 use App\Project\ProjectVisibility;
@@ -83,13 +85,43 @@ final class FindAttachment
     }
 
     /**
-     * @return array{id: string, name: string, size: int, mime_type: string, uploaded_by: ?string, created_at: ?string, url: string}
+     * A customer's files in one folder, or at the top level for none, by name.
+     */
+    public static function inCustomerFolder(string $customerId, ?string $folderId): AttachmentCollection
+    {
+        return Attachment::collect(AttachmentEloquentModel::query()
+            ->withoutGlobalScopes()
+            ->with(AttachmentRelationship::Uploader->value)
+            ->where(AttachableType::getDatabaseTableColumnName(), MorphMapKeyEnum::Customer->value)
+            ->where(AttachableId::getDatabaseTableColumnName(), $customerId)
+            ->where(FolderId::getDatabaseTableColumnName(), $folderId)
+            ->orderBy(Name::getDatabaseTableColumnName())
+            ->get()
+            ->all());
+    }
+
+    /**
+     * How many files a customer has, in any folder.
+     */
+    public static function countForCustomer(string $customerId): int
+    {
+        return AttachmentEloquentModel::query()
+            ->withoutGlobalScopes()
+            ->where(AttachableType::getDatabaseTableColumnName(), MorphMapKeyEnum::Customer->value)
+            ->where(AttachableId::getDatabaseTableColumnName(), $customerId)
+            ->count();
+    }
+
+    /**
+     * @return array{id: string, name: string, description: ?string, folder_id: ?string, size: int, mime_type: string, uploaded_by: ?string, created_at: ?string, url: string}
      */
     public static function listItem(Attachment $attachment): array
     {
         return [
             'id' => $attachment->getId()->toString(),
             'name' => $attachment->getName()->toString(),
+            'description' => $attachment->getDescription()->toNullableString(),
+            'folder_id' => $attachment->getFolderId()->toNullableString(),
             'size' => $attachment->getSize()->toInteger(),
             'mime_type' => $attachment->getMimeType()->toString(),
             'uploaded_by' => $attachment->getUploader()->toNullableData()?->getName()->toString(),

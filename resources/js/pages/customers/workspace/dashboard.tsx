@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import {
     assets,
     contacts,
+    files,
     invoices,
     locations,
     projects,
@@ -228,6 +229,7 @@ export default function CustomerDashboard({
         { label: 'Locations', count: counts.locations, href: locations(id) },
         { label: 'Assets', count: counts.assets, href: assets(id) },
         { label: 'Services', count: counts.services, href: services(id) },
+        { label: 'Files', count: counts.files, href: files(id) },
         { label: 'Invoices', count: counts.invoices, href: invoices(id) },
     ];
 
@@ -316,7 +318,7 @@ export default function CustomerDashboard({
 
                 <section
                     aria-label="In this account"
-                    className="grid grid-cols-2 overflow-hidden rounded-xl border bg-card shadow-xs @lg:grid-cols-4 @3xl:grid-cols-7"
+                    className="grid grid-cols-2 overflow-hidden rounded-xl border bg-card shadow-xs @lg:grid-cols-4 @3xl:grid-cols-8"
                 >
                     {tiles.map((tile) => (
                         <Link

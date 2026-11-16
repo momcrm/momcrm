@@ -17,6 +17,7 @@ enum Table: string
     case Customers = 'customers';
     case EmailCodes = 'email_codes';
     case Favorites = 'favorites';
+    case Folders = 'folders';
     case GroupUser = 'group_user';
     case Groups = 'groups';
     case InvoiceItems = 'invoice_items';
