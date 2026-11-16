@@ -125,11 +125,5 @@
     },
     "minimum-stability": "stable",
     "prefer-stable": true,
-    "homepage": "https://momcrm.app",
-    "repositories": [{
-        "name": "mom-data",
-        "type": "vcs",
-        "url": "https://github.com/momphp/data",
-        "no-api": true
-    }]
+    "homepage": "https://momcrm.app"
 }
