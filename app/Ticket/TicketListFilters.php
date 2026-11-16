@@ -120,6 +120,26 @@ final readonly class TicketListFilters
     }
 
     /**
+     * The same filters, limited to one assignee (the "My tickets" page).
+     */
+    public function forAssignee(string $assignee): self
+    {
+        return new self(
+            view: $this->view,
+            status: $this->status,
+            search: $this->search,
+            priorities: $this->priorities,
+            assignee: $assignee,
+            project: $this->project,
+            label: $this->label,
+            type: $this->type,
+            group: $this->group,
+            sort: $this->sort,
+            direction: $this->direction,
+        );
+    }
+
+    /**
      * @return array{view: string, status: string, search: ?string, priority: array<int, string>, assignee: ?string, project: ?string, label: ?string, type: ?string, group: ?string, sort: string, direction: string}
      */
     public function toArray(): array

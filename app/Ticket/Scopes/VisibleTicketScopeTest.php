@@ -84,7 +84,7 @@ it('shows the tickets to project members and to the assignee', function (): void
     actingAs($outsider)->get(route('tickets.show', $secret->id))->assertOk();
     actingAs($outsider)
         ->get(route('tickets.mine'))
-        ->assertInertia(fn (Assert $page) => $page->where('tickets.0.title', 'Secret ticket'));
+        ->assertInertia(fn (Assert $page) => $page->where('tickets.data.0.title', 'Secret ticket'));
 });
 
 it('leaves activity about hidden projects and their tickets out of the feeds', function (): void {

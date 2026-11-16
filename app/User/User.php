@@ -12,12 +12,14 @@ use App\User\Properties\Email;
 use App\User\Properties\EmailVerifiedAt;
 use App\User\Properties\GettingStartedDismissedAt;
 use App\User\Properties\Id;
+use App\User\Properties\JobTitle;
 use App\User\Properties\Name;
 use App\User\Properties\OnboardedAt;
 use App\User\Properties\OnboardingRole;
 use App\User\Properties\OnboardingTeamSize;
 use App\User\Properties\OnboardingUseCase;
 use App\User\Properties\Password;
+use App\User\Properties\Timezone;
 use App\User\Properties\UpdatedAt;
 use DateTimeInterface;
 use Illuminate\Support\Collection;
@@ -39,12 +41,14 @@ final class User extends AbstractData
         public EmailVerifiedAt $emailVerifiedAt,
         public GettingStartedDismissedAt $gettingStartedDismissedAt,
         public Id $id,
+        public JobTitle $jobTitle,
         public Name $name,
         public OnboardedAt $onboardedAt,
         public OnboardingRole $onboardingRole,
         public OnboardingTeamSize $onboardingTeamSize,
         public OnboardingUseCase $onboardingUseCase,
         public Password $password,
+        public Timezone $timezone,
         public UpdatedAt $updatedAt,
     ) {}
 
@@ -191,6 +195,34 @@ final class User extends AbstractData
         }
 
         $this->id = Id::fromNullableUuid($id);
+
+        return $this;
+    }
+
+    public function getJobTitle(): JobTitle
+    {
+        return $this->jobTitle;
+    }
+
+    public function setJobTitle(JobTitle|AbstractString|string|null $jobTitle): self
+    {
+        $this->jobTitle = $jobTitle instanceof JobTitle
+            ? $jobTitle
+            : JobTitle::fromNullableString($jobTitle instanceof AbstractString ? $jobTitle->toNullableString() : $jobTitle);
+
+        return $this;
+    }
+
+    public function getTimezone(): Timezone
+    {
+        return $this->timezone;
+    }
+
+    public function setTimezone(Timezone|AbstractString|string|null $timezone): self
+    {
+        $this->timezone = $timezone instanceof Timezone
+            ? $timezone
+            : Timezone::fromNullableString($timezone instanceof AbstractString ? $timezone->toNullableString() : $timezone);
 
         return $this;
     }

@@ -5,6 +5,7 @@ import PageHeader from '@/components/page-header';
 import Pager from '@/components/pager';
 import { describe } from '@/components/tickets/ticket-conversation';
 import { AssigneeAvatar } from '@/components/tickets/ticket-meta';
+import { activitySubject as subjectOf } from '@/lib/activity';
 import { timeAgo } from '@/lib/format';
 import { visitWithQuery } from '@/lib/query';
 import { cn } from '@/lib/utils';
@@ -26,23 +27,6 @@ const dayFormatter = new Intl.DateTimeFormat(undefined, {
     day: 'numeric',
     month: 'long',
 });
-
-function subjectOf(item: FeedItem): string | null {
-    const details = item.details ?? {};
-
-    if (
-        typeof details.number === 'number' &&
-        typeof details.title === 'string'
-    ) {
-        return `#${details.number} ${details.title}`;
-    }
-
-    if (typeof details.name === 'string') {
-        return details.name;
-    }
-
-    return typeof details.number === 'number' ? `#${details.number}` : null;
-}
 
 /**
  * Everything the team did on tickets and projects, one sentence per change,

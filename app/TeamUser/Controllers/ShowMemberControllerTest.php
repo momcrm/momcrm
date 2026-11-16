@@ -24,7 +24,7 @@ function teammate(UserEloquentModel $owner, array $attributes = [], string $role
 it("shows a member's tickets, active projects, groups and their own activity", function (): void {
     $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
     $team = ['team_id' => $owner->current_team_id];
-    $member = teammate($owner, ['name' => 'Ben']);
+    $member = teammate($owner, ['name' => 'Ben', 'job_title' => 'Technician', 'timezone' => 'Australia/Perth']);
     GroupEloquentModel::factory()->create([...$team, 'name' => 'Support'])->members()->attach($member->id, ['role' => 'member']);
     ProjectEloquentModel::factory()->create([...$team, 'name' => 'Refit', 'status' => 'in_progress', 'lead_id' => $member->id]);
     ProjectEloquentModel::factory()->create([...$team, 'status' => 'completed', 'lead_id' => $member->id]);
@@ -42,6 +42,8 @@ it("shows a member's tickets, active projects, groups and their own activity", f
         ->assertInertia(fn (Assert $page) => $page
             ->component('members/show')
             ->where('member.name', 'Ben')
+            ->where('member.job_title', 'Technician')
+            ->where('member.timezone', 'Australia/Perth')
             ->where('member.role', 'member')
             ->where('member.can_remove', true)
             ->where('member.groups.0.name', 'Support')
@@ -85,4 +87,19 @@ it('returns not found for someone outside the team', function (): void {
     actingAs($owner)
         ->get(route('members.show', UserEloquentModel::factory()->withPersonalTeam()->create()->id))
         ->assertNotFound();
+});
+
+it('counts a sign-in as being active, and has no last activity for someone who never signed in', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $signedIn = teammate($owner);
+    $neverSignedIn = teammate($owner);
+    RecordActivity::for(ActivityTypeEnum::SignedIn, $signedIn->id);
+
+    actingAs($owner)
+        ->get(route('members.show', $signedIn->id))
+        ->assertInertia(fn (Assert $page) => $page->whereNot('member.last_active_at', null));
+
+    actingAs($owner)
+        ->get(route('members.show', $neverSignedIn->id))
+        ->assertInertia(fn (Assert $page) => $page->where('member.last_active_at', null));
 });

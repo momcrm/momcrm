@@ -100,3 +100,41 @@ it('records nothing when the profile is saved unchanged', function (): void {
 
     expect(ActivityEloquentModel::query()->where('type', ActivityTypeEnum::ProfileUpdated->value)->exists())->toBeFalse();
 });
+
+it('saves a job title and timezone, and clears them when left empty', function (): void {
+    $user = UserEloquentModel::factory()->create();
+    $profile = ['name' => $user->name, 'email' => $user->email];
+
+    actingAs($user)
+        ->patch(route('profile.update'), [...$profile, 'job_title' => '  Head of Support ', 'timezone' => 'Australia/Perth'])
+        ->assertSessionHasNoErrors();
+
+    expect($user->refresh()->only(['job_title', 'timezone']))->toBe(['job_title' => 'Head of Support', 'timezone' => 'Australia/Perth']);
+
+    actingAs($user)
+        ->patch(route('profile.update'), [...$profile, 'job_title' => '', 'timezone' => ''])
+        ->assertSessionHasNoErrors();
+
+    expect($user->refresh()->only(['job_title', 'timezone']))->toBe(['job_title' => null, 'timezone' => null]);
+});
+
+it('keeps the job title and timezone when a save leaves them out', function (): void {
+    $user = UserEloquentModel::factory()->create(['job_title' => 'Designer', 'timezone' => 'Europe/London']);
+
+    actingAs($user)
+        ->patch(route('profile.update'), ['name' => 'New Name', 'email' => $user->email])
+        ->assertSessionHasNoErrors();
+
+    expect($user->refresh()->only(['job_title', 'timezone']))->toBe(['job_title' => 'Designer', 'timezone' => 'Europe/London']);
+});
+
+it('rejects a timezone that does not exist', function (): void {
+    $user = UserEloquentModel::factory()->create();
+
+    actingAs($user)
+        ->from(route('profile.edit'))
+        ->patch(route('profile.update'), ['name' => $user->name, 'email' => $user->email, 'timezone' => 'Mars/Olympus'])
+        ->assertSessionHasErrors('timezone');
+
+    expect($user->refresh()->timezone)->toBeNull();
+});

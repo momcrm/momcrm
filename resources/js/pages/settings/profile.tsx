@@ -7,6 +7,7 @@ import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import NativeSelect from '@/components/native-select';
 import { edit } from '@/routes/profile';
 import type { Auth } from '@/types';
 import { send } from '@/routes/verification';
@@ -14,6 +15,10 @@ import { send } from '@/routes/verification';
 type PageProps = {
     auth: Auth;
 };
+
+/** Every timezone the browser knows, e.g. "Australia/Perth". */
+const timezones: string[] = Intl.supportedValuesOf('timeZone');
+const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 export default function Profile({
     mustVerifyEmail,
@@ -36,7 +41,7 @@ export default function Profile({
                 <Heading
                     variant="small"
                     title="Profile"
-                    description="Update your name and email address"
+                    description="Update your name, email address and what teammates see on your member page"
                 />
 
                 <Form
@@ -111,6 +116,51 @@ export default function Profile({
                                         )}
                                     </div>
                                 )}
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="job_title">Job title</Label>
+
+                                <Input
+                                    id="job_title"
+                                    className="mt-1 block w-full"
+                                    defaultValue={auth.user.job_title ?? ''}
+                                    name="job_title"
+                                    maxLength={100}
+                                    autoComplete="organization-title"
+                                    placeholder="e.g. Head of Support"
+                                />
+
+                                <InputError
+                                    className="mt-2"
+                                    message={errors.job_title}
+                                />
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="timezone">Timezone</Label>
+
+                                <NativeSelect
+                                    id="timezone"
+                                    name="timezone"
+                                    className="mt-1 w-full"
+                                    defaultValue={auth.user.timezone ?? ''}
+                                >
+                                    <option value="">Not set</option>
+                                    {timezones.map((timezone) => (
+                                        <option key={timezone} value={timezone}>
+                                            {timezone.replaceAll('_', ' ')}
+                                            {timezone === browserTimezone
+                                                ? ' (this device)'
+                                                : ''}
+                                        </option>
+                                    ))}
+                                </NativeSelect>
+
+                                <InputError
+                                    className="mt-2"
+                                    message={errors.timezone}
+                                />
+                            </div>
 
                             <div className="flex items-center gap-4">
                                 <Button
