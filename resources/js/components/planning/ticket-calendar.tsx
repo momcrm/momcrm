@@ -9,7 +9,6 @@ import {
     usePriority,
 } from '@/components/tickets/ticket-meta';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { useTicketActions } from '@/hooks/use-ticket-actions';
 import { hueStyle } from '@/lib/colors';
@@ -47,7 +46,6 @@ export default function TicketCalendar({
     tickets,
     projects,
     favoriteIds,
-    showMine = true,
     fullBleed = false,
     projectId,
 }: {
@@ -55,7 +53,6 @@ export default function TicketCalendar({
     tickets: TicketListItem[];
     projects: ProjectOption[];
     favoriteIds: string[];
-    showMine?: boolean;
     fullBleed?: boolean;
     /** The project new tickets from this calendar belong to, if any. */
     projectId?: string;
@@ -146,7 +143,7 @@ export default function TicketCalendar({
             <div
                 className={cn(
                     'flex flex-wrap items-center gap-2',
-                    fullBleed && 'border-t px-4 py-2 md:px-6',
+                    fullBleed && 'px-4 py-2 md:px-6',
                 )}
             >
                 <Button variant="outline" size="sm" onClick={() => go(now)}>
@@ -171,20 +168,6 @@ export default function TicketCalendar({
                     </Button>
                 </div>
                 <h2 className="mr-2 text-[15px] font-semibold">{title}</h2>
-                {showMine && (
-                    <label className="flex items-center gap-2 text-ui text-soft-foreground">
-                        <Checkbox
-                            checked={calendar.mine}
-                            onCheckedChange={(checked) =>
-                                visitWithQuery(
-                                    { mine: checked === true ? '1' : null },
-                                    { only: ONLY },
-                                )
-                            }
-                        />
-                        Only my tickets
-                    </label>
-                )}
                 <div className="ml-auto flex flex-wrap items-center gap-x-4 gap-y-2">
                     {usedProjects.length > 0 && (
                         <ul className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">

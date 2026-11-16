@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Project\ProjectEloquentModel;
 use App\Ticket\TicketEloquentModel;
+use App\Ticket\TicketStatusCategoryEnum;
 use App\User\UserEloquentModel;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -31,7 +32,7 @@ it('shows the Monday-first weeks covering a month, with tickets on their due dat
         );
 });
 
-it('shows one week, or only my tickets', function (): void {
+it('shows one week, narrowed by the toolbar filters', function (): void {
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
     $team = ['team_id' => $user->current_team_id];
     TicketEloquentModel::factory()->create([...$team, 'title' => 'Mine', 'due_on' => '2026-12-09', 'assignee_id' => $user->id]);
@@ -39,14 +40,34 @@ it('shows one week, or only my tickets', function (): void {
     TicketEloquentModel::factory()->create([...$team, 'title' => 'Next week', 'due_on' => '2026-12-15', 'assignee_id' => $user->id]);
 
     actingAs($user)
-        ->get(route('calendar', ['calendar' => 'week', 'date' => '2026-12-10', 'mine' => 1]))
+        ->get(route('calendar', ['calendar' => 'week', 'date' => '2026-12-10', 'assignee' => 'me']))
         ->assertInertia(fn (Assert $page) => $page
             ->where('calendar.from', '2026-12-07')
             ->where('calendar.to', '2026-12-13')
-            ->where('calendar.mine', true)
+            ->where('filters.assignee', 'me')
             ->has('tickets', 1)
             ->where('tickets.0.title', 'Mine'),
         );
+
+    actingAs($user)
+        ->get(route('calendar', ['calendar' => 'week', 'date' => '2026-12-10', 'search' => 'not']))
+        ->assertInertia(fn (Assert $page) => $page->has('tickets', 1)->where('tickets.0.title', 'Not mine'));
+});
+
+it('shows closed tickets too unless a status is picked', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $team = ['team_id' => $user->current_team_id];
+    $closedStatusId = TicketStatusCategoryEnum::Closed->statusIds()->where('team_id', $user->current_team_id)->value('id');
+    TicketEloquentModel::factory()->create([...$team, 'title' => 'Open', 'due_on' => '2026-12-09']);
+    TicketEloquentModel::factory()->create([...$team, 'title' => 'Done', 'due_on' => '2026-12-10', 'status_id' => $closedStatusId]);
+
+    actingAs($user)
+        ->get(route('calendar', ['calendar' => 'week', 'date' => '2026-12-10']))
+        ->assertInertia(fn (Assert $page) => $page->where('filters.status', 'all')->has('tickets', 2));
+
+    actingAs($user)
+        ->get(route('calendar', ['calendar' => 'week', 'date' => '2026-12-10', 'status' => 'open']))
+        ->assertInertia(fn (Assert $page) => $page->has('tickets', 1)->where('tickets.0.title', 'Open'));
 });
 
 it("shows a project's calendar on its page", function (): void {

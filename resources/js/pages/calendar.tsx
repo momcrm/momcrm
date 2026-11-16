@@ -1,18 +1,24 @@
 import { Head } from '@inertiajs/react';
+import { Plus } from 'lucide-react';
 import PageHeader from '@/components/page-header';
 import TicketCalendar from '@/components/planning/ticket-calendar';
+import { useCreateTicket } from '@/components/tickets/create-ticket-dialog';
 import TicketDrawer from '@/components/tickets/ticket-drawer';
+import TicketToolbar from '@/components/tickets/ticket-toolbar';
+import { Button } from '@/components/ui/button';
 import { calendar as calendarRoute } from '@/routes';
 import type {
     CalendarWindow,
     ProjectOption,
     TicketDrawerData,
+    TicketFilters,
     TicketListItem,
     TicketPickerOptions,
 } from '@/types';
 
 export default function CalendarPage({
     calendar,
+    filters,
     tickets,
     projects,
     favoriteTicketIds,
@@ -20,12 +26,15 @@ export default function CalendarPage({
     drawer,
 }: {
     calendar: CalendarWindow;
+    filters: TicketFilters;
     tickets: TicketListItem[];
     projects: ProjectOption[];
     favoriteTicketIds: string[];
     options: TicketPickerOptions;
     drawer: TicketDrawerData | null;
 }) {
+    const { openCreateTicket } = useCreateTicket();
+
     return (
         <>
             <Head title="Calendar" />
@@ -35,8 +44,19 @@ export default function CalendarPage({
                     <PageHeader
                         title="Calendar"
                         description="Tickets on the day they're due. Drag one to another day to reschedule it."
+                        actions={
+                            <Button onClick={() => openCreateTicket()}>
+                                <Plus />
+                                New ticket
+                            </Button>
+                        }
                     />
                 </div>
+                <TicketToolbar
+                    filters={filters}
+                    options={options}
+                    forCalendar
+                />
                 <TicketCalendar
                     calendar={calendar}
                     tickets={tickets}

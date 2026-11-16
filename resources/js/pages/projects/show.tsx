@@ -298,21 +298,31 @@ export default function ShowProject(props: Props) {
 
             {tab === 'list' || tab === 'board' || tab === 'table' ? (
                 <TicketTabs {...props} />
-            ) : (
-                <div className="p-4 md:p-6">
-                    {tab === 'overview' ? (
-                        <Overview {...props} />
-                    ) : tab === 'calendar' &&
-                      props.calendar &&
-                      Array.isArray(props.tickets) ? (
+            ) : tab === 'calendar' &&
+              props.calendar &&
+              props.filters &&
+              Array.isArray(props.tickets) ? (
+                <div className="flex flex-col">
+                    <TicketToolbar
+                        filters={props.filters}
+                        options={options}
+                        inProject
+                        forCalendar
+                    />
+                    <div className="p-4 md:p-6">
                         <TicketCalendar
                             calendar={props.calendar}
                             tickets={props.tickets}
                             projects={props.projects ?? []}
                             favoriteIds={props.favoriteTicketIds}
-                            showMine={false}
                             projectId={project.id}
                         />
+                    </div>
+                </div>
+            ) : (
+                <div className="p-4 md:p-6">
+                    {tab === 'overview' ? (
+                        <Overview {...props} />
                     ) : tab === 'timeline' &&
                       props.timeline &&
                       Array.isArray(props.tickets) ? (

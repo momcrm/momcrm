@@ -57,7 +57,10 @@ final readonly class TicketListFilters
         public string $direction = 'desc',
     ) {}
 
-    public static function fromRequest(Request $request): self
+    /**
+     * @param  ?string  $defaultStatus  The status when the query string sets none; the calendar shows every status.
+     */
+    public static function fromRequest(Request $request, ?string $defaultStatus = null): self
     {
         $view = in_array($request->query('view'), [self::VIEW_BOARD, self::VIEW_TABLE], true) ? (string) $request->query('view') : self::VIEW_LIST;
         $status = (string) $request->query('status', '');
@@ -67,7 +70,7 @@ final readonly class TicketListFilters
             view: $view,
             status: in_array($status, [FindTicket::FILTER_OPEN, FindTicket::FILTER_CLOSED, FindTicket::FILTER_ALL], true)
                 ? $status
-                : ($view === self::VIEW_BOARD ? FindTicket::FILTER_ALL : FindTicket::FILTER_OPEN),
+                : ($defaultStatus ?? ($view === self::VIEW_BOARD ? FindTicket::FILTER_ALL : FindTicket::FILTER_OPEN)),
             search: $request->string('search')->trim()->toString() ?: null,
             priorities: collect(explode(',', (string) $request->query('priority', '')))
                 ->filter(fn (string $priority): bool => Str::isUuid($priority))

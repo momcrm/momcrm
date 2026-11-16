@@ -352,7 +352,6 @@ export type CalendarWindow = {
     date: string;
     from: string;
     to: string;
-    mine: boolean;
 };
 
 export type TimelineWindow = {
