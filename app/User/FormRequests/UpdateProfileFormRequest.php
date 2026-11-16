@@ -8,7 +8,9 @@ use App\Activity\Actions\RecordActivity;
 use App\Activity\ActivityTypeEnum;
 use App\User\Actions\UpdateUser;
 use App\User\Properties\Email;
+use App\User\Properties\JobTitle;
 use App\User\Properties\Name;
+use App\User\Properties\Timezone;
 use App\User\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
@@ -25,6 +27,8 @@ final class UpdateProfileFormRequest extends FormRequest
         return [
             Name::getNameForValidation() => Name::getValidationRulesForUpdate($this),
             Email::getNameForValidation() => Email::getValidationRulesForUpdate($this),
+            JobTitle::getNameForValidation() => JobTitle::getValidationRulesForUpdate($this),
+            Timezone::getNameForValidation() => Timezone::getValidationRulesForUpdate($this),
         ];
     }
 
@@ -33,6 +37,8 @@ final class UpdateProfileFormRequest extends FormRequest
         $user = User::fromEloquentModel($this->user());
         $previousEmail = $user->getEmail()->toString();
         $previousName = $user->getName()->toString();
+        $previousJobTitle = $user->getJobTitle()->toNullableString();
+        $previousTimezone = $user->getTimezone()->toNullableString();
 
         $user->setPropertyIfExists($this->validated());
 
@@ -45,6 +51,8 @@ final class UpdateProfileFormRequest extends FormRequest
         $changedFields = array_keys(array_filter([
             Name::getName() => $user->getName()->toString() !== $previousName,
             Email::getName() => $user->getEmail()->toString() !== $previousEmail,
+            JobTitle::getName() => $user->getJobTitle()->toNullableString() !== $previousJobTitle,
+            Timezone::getName() => $user->getTimezone()->toNullableString() !== $previousTimezone,
         ]));
 
         if ($changedFields !== []) {
@@ -63,6 +71,12 @@ final class UpdateProfileFormRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $email = $this->input(Email::getNameForValidation());
+
+        foreach ([JobTitle::getNameForValidation(), Timezone::getNameForValidation()] as $optional) {
+            if ($this->has($optional)) {
+                $this->merge([$optional => $this->filled($optional) ? trim($this->string($optional)->toString()) : null]);
+            }
+        }
 
         if (config('fortify.lowercase_usernames') && is_string($email)) {
             $this->merge([Email::getNameForValidation() => Str::lower($email)]);

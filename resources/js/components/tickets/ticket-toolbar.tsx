@@ -116,6 +116,7 @@ export default function TicketToolbar({
     options,
     prefs,
     inProject = false,
+    fixedAssignee = false,
     forCalendar = false,
 }: {
     filters: TicketFilters;
@@ -124,6 +125,8 @@ export default function TicketToolbar({
     prefs?: TicketViewPrefs;
     /** On a project's page: the tabs pick the view and the project is fixed. */
     inProject?: boolean;
+    /** On "My tickets": the assignee is fixed, so it isn't a filter. */
+    fixedAssignee?: boolean;
     /** Above the calendar rather than a ticket list. */
     forCalendar?: boolean;
 }) {
@@ -227,28 +230,32 @@ export default function TicketToolbar({
                 </DropdownMenuCheckboxItem>
             )),
         },
-        {
-            key: 'assignee',
-            label: 'Assignee',
-            icon: <UserRound className="size-3.5" />,
-            value: memberName(filters.assignee),
-            canClear: filters.assignee !== null,
-            clear: () => set({ assignee: null }),
-            choices: (
-                <RadioChoices
-                    value={filters.assignee}
-                    onChange={(assignee) => set({ assignee })}
-                    choices={[
-                        { value: 'me', label: 'Me' },
-                        { value: 'none', label: 'Unassigned' },
-                    ]}
-                    more={options.members.map((member) => ({
-                        value: member.id,
-                        label: member.name,
-                    }))}
-                />
-            ),
-        },
+        ...(!fixedAssignee
+            ? [
+                  {
+                      key: 'assignee' as const,
+                      label: 'Assignee',
+                      icon: <UserRound className="size-3.5" />,
+                      value: memberName(filters.assignee),
+                      canClear: filters.assignee !== null,
+                      clear: () => set({ assignee: null }),
+                      choices: (
+                          <RadioChoices
+                              value={filters.assignee}
+                              onChange={(assignee) => set({ assignee })}
+                              choices={[
+                                  { value: 'me', label: 'Me' },
+                                  { value: 'none', label: 'Unassigned' },
+                              ]}
+                              more={options.members.map((member) => ({
+                                  value: member.id,
+                                  label: member.name,
+                              }))}
+                          />
+                      ),
+                  },
+              ]
+            : []),
         ...(!inProject
             ? [
                   {
@@ -377,7 +384,7 @@ export default function TicketToolbar({
         set({
             status: null,
             priority: null,
-            assignee: null,
+            ...(fixedAssignee ? {} : { assignee: null }),
             label: null,
             type: null,
             group: null,
@@ -603,14 +610,22 @@ export default function TicketToolbar({
                                     prefs.setGroupBy(groupBy as TicketGroupBy)
                                 }
                             >
-                                {groupings.map((grouping) => (
-                                    <DropdownMenuRadioItem
-                                        key={grouping.value}
-                                        value={grouping.value}
-                                    >
-                                        {grouping.label}
-                                    </DropdownMenuRadioItem>
-                                ))}
+                                {groupings
+                                    .filter(
+                                        (grouping) =>
+                                            !(
+                                                fixedAssignee &&
+                                                grouping.value === 'assignee'
+                                            ),
+                                    )
+                                    .map((grouping) => (
+                                        <DropdownMenuRadioItem
+                                            key={grouping.value}
+                                            value={grouping.value}
+                                        >
+                                            {grouping.label}
+                                        </DropdownMenuRadioItem>
+                                    ))}
                             </DropdownMenuRadioGroup>
                         </DropdownMenuContent>
                     </DropdownMenu>

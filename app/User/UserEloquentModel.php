@@ -37,6 +37,8 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 /**
  * @property string $id
  * @property string $name
+ * @property string|null $job_title
+ * @property string|null $timezone
  * @property string $email
  * @property CarbonImmutable|null $email_verified_at
  * @property string|null $current_team_id

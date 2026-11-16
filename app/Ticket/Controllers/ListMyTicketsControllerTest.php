@@ -8,15 +8,11 @@ use Inertia\Testing\AssertableInertia as Assert;
 
 use function Pest\Laravel\actingAs;
 
-it("lists the person's open tickets soonest due first, plus recently closed ones", function (): void {
+it("shows the tickets page's views limited to the person's open tickets", function (): void {
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
     $mine = ['team_id' => $user->current_team_id, 'assignee_id' => $user->id];
-    TicketEloquentModel::factory()->create([...$mine, 'title' => 'Later', 'due_on' => '2026-12-20']);
-    TicketEloquentModel::factory()->create([...$mine, 'title' => 'Sooner', 'due_on' => '2026-12-01']);
-    TicketEloquentModel::factory()->create([...$mine, 'title' => 'Undated']);
-    TicketEloquentModel::factory()->create([...$mine, 'title' => 'Just closed', 'status_id' => ticketStatusId($user->current_team_id, 'Closed'), 'closed_at' => now()->subDay()]);
-    TicketEloquentModel::factory()->create([...$mine, 'title' => 'Long closed', 'status_id' => ticketStatusId($user->current_team_id, 'Closed'), 'closed_at' => now()->subMonth()]);
-    TicketEloquentModel::factory()->create([...$mine, 'title' => 'Archived'])->update(['archived_at' => now()]);
+    TicketEloquentModel::factory()->create([...$mine, 'title' => 'Mine']);
+    TicketEloquentModel::factory()->create([...$mine, 'title' => 'Closed', 'status_id' => ticketStatusId($user->current_team_id, 'Closed')]);
     TicketEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'title' => 'Someone else']);
 
     actingAs($user)
@@ -24,11 +20,26 @@ it("lists the person's open tickets soonest due first, plus recently closed ones
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('tickets/mine')
-            ->where('tickets', function ($tickets): bool {
-                $titles = collect($tickets)->pluck('title');
+            ->where('filters.assignee', 'me')
+            ->where('filters.view', 'list')
+            ->has('tickets.data', 1)
+            ->where('tickets.data.0.title', 'Mine'),
+        );
+});
 
-                return $titles->take(2)->all() === ['Sooner', 'Later']
-                    && $titles->slice(2)->sort()->values()->all() === ['Just closed', 'Undated'];
-            }),
+it('keeps to the person whatever assignee the link asks for, and applies the other filters', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $other = UserEloquentModel::factory()->create();
+    TicketEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'assignee_id' => $user->id, 'title' => 'Mine, closed', 'status_id' => ticketStatusId($user->current_team_id, 'Closed')]);
+    TicketEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'assignee_id' => $other->id, 'status_id' => ticketStatusId($user->current_team_id, 'Closed')]);
+
+    actingAs($user)
+        ->get(route('tickets.mine', ['assignee' => $other->id, 'status' => 'closed', 'view' => 'table']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('filters.assignee', 'me')
+            ->where('filters.view', 'table')
+            ->has('tickets.data', 1)
+            ->where('tickets.data.0.title', 'Mine, closed'),
         );
 });

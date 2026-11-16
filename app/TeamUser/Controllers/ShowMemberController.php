@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\TeamUser\Controllers;
 
 use App\Activity\ActivityEloquentModel;
+use App\Activity\ActivityTypeEnum;
 use App\Activity\Properties\CreatedAt as ActivityCreatedAt;
 use App\Activity\Properties\TeamId as ActivityTeamId;
+use App\Activity\Properties\Type as ActivityType;
 use App\Activity\Properties\UserId as ActivityUserId;
 use App\Dashboard\WorkspaceNumbers;
 use App\Favorite\Actions\FindFavorite;
@@ -47,7 +49,8 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * Someone's page in the team: who they are, the tickets assigned to them,
- * the projects they work on and what they have been doing lately. Only
+ * the projects they work on and what they have been doing lately. They were
+ * last active at their latest work in this team or their latest sign-in. Only
  * tickets and projects the viewer may see are counted or listed.
  */
 final class ShowMemberController
@@ -86,8 +89,10 @@ final class ShowMemberController
             ->values();
 
         $lastActiveAt = ActivityEloquentModel::query()
-            ->where(ActivityTeamId::getDatabaseTableColumnName(), $teamId)
             ->where(ActivityUserId::getDatabaseTableColumnName(), $member)
+            ->where(fn (Builder $query) => $query
+                ->where(ActivityTeamId::getDatabaseTableColumnName(), $teamId)
+                ->orWhere(ActivityType::getDatabaseTableColumnName(), ActivityTypeEnum::SignedIn->value))
             ->max(ActivityCreatedAt::getDatabaseTableColumnName());
 
         return Inertia::render('members/show', [
@@ -96,6 +101,8 @@ final class ShowMemberController
                 'id' => $user->getId()->toString(),
                 'name' => $user->getName()->toString(),
                 'email' => $user->getEmail()->toString(),
+                'job_title' => $user->getJobTitle()->toNullableString(),
+                'timezone' => $user->getTimezone()->toNullableString(),
                 'role' => $role->value,
                 'is_you' => $user->getId()->equalsTo($viewer->id),
                 'can_remove' => ! $user->getId()->equalsTo($viewer->id) && $viewerRole?->canRemove($role) === true,

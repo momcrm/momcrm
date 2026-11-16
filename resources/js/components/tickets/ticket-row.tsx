@@ -1,11 +1,13 @@
-import { Star } from 'lucide-react';
+import { Check, Star } from 'lucide-react';
 import {
     AssigneeAvatar,
     DueChip,
     PriorityIcon,
     ProjectTag,
+    StatusGlyph,
     SubtaskProgress,
     useIsClosedStatus,
+    useTicketStatus,
 } from '@/components/tickets/ticket-meta';
 import { LabelChips } from '@/components/labels';
 import { cn } from '@/lib/utils';
@@ -13,25 +15,36 @@ import type { TicketListItem } from '@/types';
 
 /**
  * One line of a ticket list: priority, number, title and labels on the left;
- * project, due date and assignee on the right.
+ * project, due date and assignee on the right. With `onToggleClosed` it
+ * starts with a round tick box that closes or reopens the ticket, and its
+ * status; `showAssignee` leaves the avatar out of lists of one person's tickets.
  */
 export default function TicketRow({
     ticket,
     isFavorite,
     onOpen,
+    onToggleClosed,
+    showAssignee = true,
 }: {
     ticket: TicketListItem;
     isFavorite: boolean;
     onOpen: () => void;
+    onToggleClosed?: () => void;
+    showAssignee?: boolean;
 }) {
     const isClosed = useIsClosedStatus()(ticket.status_id);
+    const status = useTicketStatus(ticket.status_id);
 
-    return (
+    const row = (
         <button
             type="button"
             onClick={onOpen}
-            className="flex h-10 w-full items-center gap-3 px-3 text-left text-sm hover:bg-accent/50"
+            className={cn(
+                'flex h-10 w-full min-w-0 items-center gap-3 text-left text-sm',
+                onToggleClosed ? 'pr-3 pl-2.5' : 'px-3 hover:bg-accent/50',
+            )}
         >
+            {onToggleClosed && <StatusGlyph status={status} />}
             <PriorityIcon priorityId={ticket.priority_id} />
             <span className="w-12 shrink-0 font-mono text-xs text-subtle-foreground">
                 #{ticket.number}
@@ -69,8 +82,33 @@ export default function TicketRow({
                     )}
                 </span>
                 <DueChip dueOn={ticket.due_on} isClosed={isClosed} />
-                <AssigneeAvatar name={ticket.assignee_name} />
+                {showAssignee && <AssigneeAvatar name={ticket.assignee_name} />}
             </span>
         </button>
+    );
+
+    if (!onToggleClosed) {
+        return row;
+    }
+
+    return (
+        <div className="flex items-center pl-3 hover:bg-accent/50">
+            <button
+                type="button"
+                role="checkbox"
+                aria-checked={isClosed}
+                aria-label={`${isClosed ? 'Reopen' : 'Close'} #${ticket.number} ${ticket.title}`}
+                onClick={onToggleClosed}
+                className={cn(
+                    'flex size-4 shrink-0 items-center justify-center rounded-full border-[1.5px] transition-colors',
+                    isClosed
+                        ? 'border-primary bg-primary text-primary-foreground'
+                        : 'border-border-strong bg-card hover:border-subtle-foreground',
+                )}
+            >
+                {isClosed && <Check className="size-2.5" strokeWidth={3} />}
+            </button>
+            {row}
+        </div>
     );
 }

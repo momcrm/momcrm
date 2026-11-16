@@ -64,7 +64,8 @@ export function withoutColumn<TColumn extends { id?: string }>(
 const defaultColumn = { enableSorting: false };
 
 /**
- * The app's dense data table on TanStack Table. Rows link through `onRowClick`;
+ * The app's dense data table on TanStack Table. Rows link through `onRowClick`
+ * (only those `isRowClickable` allows, when given);
  * sortable columns (enableSorting: true) report changes via `onSortChange` so
  * the page can reload sorted data.
  */
@@ -75,6 +76,7 @@ export default function DataTable<TRow extends RowData>({
     sort,
     onSortChange,
     onRowClick,
+    isRowClickable,
     empty,
     groups,
     getGroupKey,
@@ -89,6 +91,7 @@ export default function DataTable<TRow extends RowData>({
     sort?: DataTableSort;
     onSortChange?: (sort: DataTableSort) => void;
     onRowClick?: (row: TRow) => void;
+    isRowClickable?: (row: TRow) => boolean;
     empty?: ReactNode;
     /** Sections of rows, in order, each under a header row. */
     groups?: { key: string; header: ReactNode }[];
@@ -237,47 +240,59 @@ export default function DataTable<TRow extends RowData>({
                                         </td>
                                     </tr>
                                 )}
-                                {section.rows.map((row) => (
-                                    <tr
-                                        key={row.id}
-                                        onClick={
-                                            onRowClick
-                                                ? () => onRowClick(row.original)
-                                                : undefined
-                                        }
-                                        className={cn(
-                                            isFlush
-                                                ? 'group/row'
-                                                : 'border-b last:border-b-0',
-                                            onRowClick &&
-                                                (isFlush
-                                                    ? 'cursor-pointer'
-                                                    : 'cursor-pointer hover:bg-accent/50'),
-                                        )}
-                                    >
-                                        {row.getAllCells().map((cell) => (
-                                            <td
-                                                key={cell.id}
-                                                className={cn(
-                                                    isFlush
-                                                        ? cn(
-                                                              'h-9 truncate border-r border-b border-divider px-2.5 whitespace-nowrap first:pl-4 last:border-r-0 md:first:pl-6',
-                                                              isRowSelected?.(
-                                                                  row.original,
-                                                              )
-                                                                  ? 'bg-[color-mix(in_srgb,var(--primary)_10%,var(--card))]'
-                                                                  : 'bg-card group-hover/row:bg-muted',
+                                {section.rows.map((row) => {
+                                    const clickable =
+                                        onRowClick !== undefined &&
+                                        (isRowClickable?.(row.original) ??
+                                            true);
+
+                                    return (
+                                        <tr
+                                            key={row.id}
+                                            onClick={
+                                                clickable
+                                                    ? () =>
+                                                          onRowClick(
+                                                              row.original,
                                                           )
-                                                        : 'h-10 px-3',
-                                                    cell.column.columnDef.meta
-                                                        ?.className,
-                                                )}
-                                            >
-                                                <table.FlexRender cell={cell} />
-                                            </td>
-                                        ))}
-                                    </tr>
-                                ))}
+                                                    : undefined
+                                            }
+                                            className={cn(
+                                                isFlush
+                                                    ? 'group/row'
+                                                    : 'border-b last:border-b-0',
+                                                clickable &&
+                                                    (isFlush
+                                                        ? 'cursor-pointer'
+                                                        : 'cursor-pointer hover:bg-accent/50'),
+                                            )}
+                                        >
+                                            {row.getAllCells().map((cell) => (
+                                                <td
+                                                    key={cell.id}
+                                                    className={cn(
+                                                        isFlush
+                                                            ? cn(
+                                                                  'h-9 truncate border-r border-b border-divider px-2.5 whitespace-nowrap first:pl-4 last:border-r-0 md:first:pl-6',
+                                                                  isRowSelected?.(
+                                                                      row.original,
+                                                                  )
+                                                                      ? 'bg-[color-mix(in_srgb,var(--primary)_10%,var(--card))]'
+                                                                      : 'bg-card group-hover/row:bg-muted',
+                                                              )
+                                                            : 'h-10 px-3',
+                                                        cell.column.columnDef
+                                                            .meta?.className,
+                                                    )}
+                                                >
+                                                    <table.FlexRender
+                                                        cell={cell}
+                                                    />
+                                                </td>
+                                            ))}
+                                        </tr>
+                                    );
+                                })}
                             </Fragment>
                         ))
                     )}

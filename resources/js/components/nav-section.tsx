@@ -53,7 +53,7 @@ export function NavSection({
                                     className={cn(
                                         'top-[5px] text-[11px]',
                                         item.highlightBadge
-                                            ? 'h-[18px] min-w-[18px] rounded-full bg-primary px-1 text-primary-foreground'
+                                            ? 'h-[18px] min-w-[18px] rounded-full bg-primary px-1 text-primary-foreground peer-hover/menu-button:text-primary-foreground peer-data-[active=true]/menu-button:text-primary-foreground'
                                             : 'text-subtle-foreground',
                                     )}
                                 >

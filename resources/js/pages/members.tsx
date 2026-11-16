@@ -8,6 +8,7 @@ import {
     Users,
 } from 'lucide-react';
 import { useState } from 'react';
+import type { MouseEvent } from 'react';
 import DataTable, { dataTableColumns } from '@/components/data-table';
 import EmptyState from '@/components/empty-state';
 import GroupFormDialog from '@/components/groups/group-form-dialog';
@@ -95,6 +96,13 @@ function Count({ value }: { value: number | null }) {
     );
 }
 
+/**
+ * Keeps a click on a control inside a member row from also opening their page.
+ */
+function stopRowClick(event: MouseEvent): void {
+    event.stopPropagation();
+}
+
 function memberColumns({
     canChangeRoles,
     canInvite,
@@ -126,6 +134,7 @@ function memberColumns({
                             ) : (
                                 <Link
                                     href={showMember(info.row.original.id)}
+                                    onClick={stopRowClick}
                                     className="hover:underline"
                                 >
                                     {info.getValue()}
@@ -160,6 +169,7 @@ function memberColumns({
                     <NativeSelect
                         aria-label={`Role for ${info.row.original.name}`}
                         value={info.getValue()}
+                        onClick={stopRowClick}
                         onChange={(event) =>
                             router.patch(
                                 updateRole.url(info.row.original.id),
@@ -237,13 +247,17 @@ function memberColumns({
             header: () => <span className="sr-only">Actions</span>,
             meta: { className: 'w-10' },
             cell: (info) => (
-                <MemberActionsMenu
-                    target={info.row.original}
-                    canChangeRoles={canChangeRoles}
-                    canInvite={canInvite}
-                    onAssign={onAssign}
-                    onRemove={onRemove}
-                />
+                // The menu renders in a portal, but React still bubbles its
+                // clicks up to the row, so stop them here.
+                <span className="flex" onClick={stopRowClick}>
+                    <MemberActionsMenu
+                        target={info.row.original}
+                        canChangeRoles={canChangeRoles}
+                        canInvite={canInvite}
+                        onAssign={onAssign}
+                        onRemove={onRemove}
+                    />
+                </span>
             ),
         }),
     ]);
@@ -437,6 +451,10 @@ export default function Members({
                             columns={columns}
                             data={shown}
                             getRowId={(row) => row.id}
+                            onRowClick={(row) =>
+                                router.visit(showMember(row.id))
+                            }
+                            isRowClickable={(row) => !row.pending}
                         />
                     </>
                 )}
