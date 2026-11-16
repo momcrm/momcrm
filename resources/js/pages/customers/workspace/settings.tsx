@@ -1,5 +1,5 @@
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import { Check } from 'lucide-react';
+import { useState } from 'react';
 import type { FormEvent } from 'react';
 import ConfirmDelete from '@/components/confirm-delete';
 import { PrefixCode } from '@/components/customers/customer-meta';
@@ -10,9 +10,11 @@ import { ChoiceTag } from '@/components/tickets/ticket-meta';
 import { useCustomerTypes } from '@/components/customers/customer-meta';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import UnsavedChangesBar, {
+    countChanges,
+} from '@/components/unsaved-changes-bar';
 import DeleteCustomerController from '@/actions/App/Customer/Controllers/DeleteCustomerController';
 import { useWorkspaceBreadcrumbs } from '@/layouts/customer/layout';
 import { create as createContact } from '@/routes/contacts';
@@ -106,6 +108,7 @@ export default function CustomerSettings({
         main_contact_id: mainContactId ?? '',
         main_location_id: mainLocationId ?? '',
     });
+    const [saved, setSaved] = useState(form.data);
     const types = useCustomerTypes(form.data.type_id);
     const type = types.find((choice) => choice.id === form.data.type_id);
     const canEdit = Boolean(can.update);
@@ -114,7 +117,10 @@ export default function CustomerSettings({
         event.preventDefault();
         form.put(update.url(customer.id), {
             preserveScroll: true,
-            onSuccess: () => form.setDefaults(),
+            onSuccess: () => {
+                form.setDefaults();
+                setSaved(form.data);
+            },
         });
     };
 
@@ -134,7 +140,7 @@ export default function CustomerSettings({
                 description="How this customer is named, billed and reached."
             />
 
-            <form onSubmit={save} className="space-y-5 pb-4">
+            <form onSubmit={save} className="space-y-5">
                 <SettingsSection
                     title="Identity"
                     description={
@@ -366,46 +372,14 @@ export default function CustomerSettings({
                 </SettingsSection>
 
                 {canEdit && (
-                    <div className="sticky bottom-4 z-10 flex items-center justify-between gap-3 rounded-xl border bg-card/95 px-4 py-2.5 shadow-pop backdrop-blur">
-                        <span className="flex items-center gap-1.5 text-[13px] text-muted-foreground">
-                            {form.isDirty ? (
-                                <>
-                                    <span className="size-1.5 rounded-full bg-warning" />
-                                    Unsaved changes
-                                </>
-                            ) : form.recentlySuccessful ? (
-                                <>
-                                    <Check className="size-3.5 text-success" />
-                                    Saved
-                                </>
-                            ) : (
-                                'All changes saved'
-                            )}
-                        </span>
-                        <div className="flex gap-2">
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                disabled={!form.isDirty || form.processing}
-                                onClick={() => {
-                                    form.reset();
-                                    form.clearErrors();
-                                }}
-                            >
-                                Discard
-                            </Button>
-                            <Button
-                                type="submit"
-                                size="sm"
-                                disabled={!form.isDirty || form.processing}
-                                data-test="save-customer-button"
-                            >
-                                {form.processing && <Spinner />}
-                                Save changes
-                            </Button>
-                        </div>
-                    </div>
+                    <UnsavedChangesBar
+                        count={countChanges(form.data, saved)}
+                        processing={form.processing}
+                        onReset={() => {
+                            form.reset();
+                            form.clearErrors();
+                        }}
+                    />
                 )}
             </form>
 
