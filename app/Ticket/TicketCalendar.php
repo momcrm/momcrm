@@ -58,8 +58,8 @@ final class TicketCalendar
             ->whereBetween(DueOn::getDatabaseTableColumnName(), [$from->toDateString(), $to->toDateString()])
             ->orderBy(DueOn::getDatabaseTableColumnName());
 
-        FindTicket::applyListFilters($query, $filters, $user->id);
-        FindTicket::applyListSort($query, $filters);
+        $filters->narrow($query, $user->id);
+        $filters->sort($query);
 
         return [
             'calendar' => [

@@ -4,7 +4,20 @@ declare(strict_types=1);
 
 namespace App\Ticket;
 
+use App\Choice\ChoiceEloquentModel;
+use App\Choice\Properties\Id as ChoiceId;
+use App\Choice\Properties\Position as ChoicePosition;
+use App\Shared\Table;
 use App\Ticket\Actions\FindTicket;
+use App\Ticket\Properties\AssigneeId;
+use App\Ticket\Properties\GroupId;
+use App\Ticket\Properties\Number;
+use App\Ticket\Properties\PriorityId;
+use App\Ticket\Properties\ProjectId;
+use App\Ticket\Properties\StatusId;
+use App\Ticket\Properties\Title;
+use App\Ticket\Properties\TypeId;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -124,6 +137,72 @@ final readonly class TicketListFilters
             'sort' => $this->sort,
             'direction' => $this->direction,
         ];
+    }
+
+    /**
+     * Narrows a ticket query to what the toolbar's search and filters pick.
+     * Shared by the ticket views and the calendar.
+     *
+     * @param  Builder<TicketEloquentModel>  $query
+     */
+    public function narrow(Builder $query, string $userId): void
+    {
+        $query
+            ->when($this->status === FindTicket::FILTER_OPEN, fn (Builder $query) => $query->whereIn(StatusId::getDatabaseTableColumnName(), TicketStatusCategoryEnum::Open->statusIds()))
+            ->when($this->status === FindTicket::FILTER_CLOSED, fn (Builder $query) => $query->whereIn(StatusId::getDatabaseTableColumnName(), TicketStatusCategoryEnum::Closed->statusIds()))
+            ->when($this->priorities !== [], fn (Builder $query) => $query->whereIn(PriorityId::getDatabaseTableColumnName(), $this->priorities))
+            ->when($this->assignee, fn (Builder $query, string $assignee) => match ($assignee) {
+                self::ASSIGNEE_ME => $query->where(AssigneeId::getDatabaseTableColumnName(), $userId),
+                self::NONE => $query->whereNull(AssigneeId::getDatabaseTableColumnName()),
+                default => $query->where(AssigneeId::getDatabaseTableColumnName(), $assignee),
+            })
+            ->when($this->project, fn (Builder $query, string $project) => $project === self::NONE
+                ? $query->whereNull(ProjectId::getDatabaseTableColumnName())
+                : $query->where(ProjectId::getDatabaseTableColumnName(), $project))
+            ->when($this->label, fn (Builder $query, string $label) => $query->whereHas(
+                TicketRelationship::Labels->value,
+                fn (Builder $query) => $query->whereKey($label),
+            ))
+            ->when($this->type, fn (Builder $query, string $type) => $type === self::NONE
+                ? $query->whereNull(TypeId::getDatabaseTableColumnName())
+                : $query->where(TypeId::getDatabaseTableColumnName(), $type))
+            ->when($this->group, fn (Builder $query, string $group) => $group === self::NONE
+                ? $query->whereNull(GroupId::getDatabaseTableColumnName())
+                : $query->where(GroupId::getDatabaseTableColumnName(), $group))
+            ->when($this->search, fn (Builder $query, string $search) => $query->where(fn (Builder $query) => $query
+                ->where(Title::getDatabaseTableColumnName(), 'like', "%{$search}%")
+                ->orWhere(Number::getDatabaseTableColumnName(), ltrim($search, '#'))));
+    }
+
+    /**
+     * Orders a ticket query by the toolbar's sort.
+     *
+     * @param  Builder<TicketEloquentModel>  $query
+     */
+    public function sort(Builder $query): void
+    {
+        $isAscending = $this->direction === 'asc';
+
+        match ($this->sort) {
+            // The first priority in the team's list is the most urgent, so "descending" runs up the list.
+            'priority' => $query->orderBy(
+                ChoiceEloquentModel::query()
+                    ->withoutGlobalScopes()
+                    ->select(ChoicePosition::getDatabaseTableColumnName())
+                    ->whereColumn(ChoiceId::getDatabaseTableColumnNameWithTable(Table::Choices->value), PriorityId::getDatabaseTableColumnNameWithTable(Table::Tickets->value)),
+                $isAscending ? 'desc' : 'asc',
+            )->orderByDesc(Number::getDatabaseTableColumnName()),
+            'status' => $query->orderBy(
+                ChoiceEloquentModel::query()
+                    ->withoutGlobalScopes()
+                    ->select(ChoicePosition::getDatabaseTableColumnName())
+                    ->whereColumn(ChoiceId::getDatabaseTableColumnNameWithTable(Table::Choices->value), StatusId::getDatabaseTableColumnNameWithTable(Table::Tickets->value)),
+                $isAscending ? 'asc' : 'desc',
+            )->orderByDesc(Number::getDatabaseTableColumnName()),
+            'due_on' => $query->orderByRaw($isAscending ? 'due_on is null, due_on asc' : 'due_on is null, due_on desc')
+                ->orderByDesc(Number::getDatabaseTableColumnName()),
+            default => $query->orderBy(self::SORTS[$this->sort], $this->direction),
+        };
     }
 
     /**
