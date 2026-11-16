@@ -4,26 +4,19 @@ declare(strict_types=1);
 
 namespace App\Ticket\Actions;
 
-use App\Choice\ChoiceEloquentModel;
-use App\Choice\Properties\Id as ChoiceId;
-use App\Choice\Properties\Position as ChoicePosition;
-use App\Shared\Table;
 use App\Team\Scopes\CurrentTeamScope;
 use App\Ticket\Properties\ArchivedAt;
 use App\Ticket\Properties\AssigneeId;
 use App\Ticket\Properties\ClosedAt;
 use App\Ticket\Properties\CustomerId;
-use App\Ticket\Properties\GroupId;
 use App\Ticket\Properties\Id;
 use App\Ticket\Properties\Number;
 use App\Ticket\Properties\ParentId;
 use App\Ticket\Properties\Position;
-use App\Ticket\Properties\PriorityId;
 use App\Ticket\Properties\ProjectId;
 use App\Ticket\Properties\StatusId;
 use App\Ticket\Properties\TeamId;
 use App\Ticket\Properties\Title;
-use App\Ticket\Properties\TypeId;
 use App\Ticket\Ticket;
 use App\Ticket\TicketCollection;
 use App\Ticket\TicketEloquentModel;
@@ -83,9 +76,7 @@ final class FindTicket
      */
     public static function paginateFiltered(string $teamId, string $userId, TicketListFilters $filters, int $perPage): LengthAwarePaginator
     {
-        $isAscending = $filters->direction === 'asc';
-
-        return self::query($teamId)
+        $query = self::query($teamId)
             ->with([
                 TicketRelationship::Customer->value,
                 TicketRelationship::Assignee->value,
@@ -97,55 +88,17 @@ final class FindTicket
                 TicketRelationship::Subtasks->value.' as closed_subtasks_count' => fn (Builder $query) => $query->whereIn(StatusId::getDatabaseTableColumnName(), TicketStatusCategoryEnum::Closed->statusIds()),
             ])
             ->whereNull(ArchivedAt::getDatabaseTableColumnName())
-            ->whereNull(ParentId::getDatabaseTableColumnName())
-            ->when($filters->status === self::FILTER_OPEN, fn (Builder $query) => $query->whereIn(StatusId::getDatabaseTableColumnName(), TicketStatusCategoryEnum::Open->statusIds()))
-            ->when($filters->status === self::FILTER_CLOSED, fn (Builder $query) => $query->whereIn(StatusId::getDatabaseTableColumnName(), TicketStatusCategoryEnum::Closed->statusIds()))
-            ->when($filters->priorities !== [], fn (Builder $query) => $query->whereIn(PriorityId::getDatabaseTableColumnName(), $filters->priorities))
-            ->when($filters->assignee, fn (Builder $query, string $assignee) => match ($assignee) {
-                TicketListFilters::ASSIGNEE_ME => $query->where(AssigneeId::getDatabaseTableColumnName(), $userId),
-                TicketListFilters::NONE => $query->whereNull(AssigneeId::getDatabaseTableColumnName()),
-                default => $query->where(AssigneeId::getDatabaseTableColumnName(), $assignee),
-            })
-            ->when($filters->project, fn (Builder $query, string $project) => $project === TicketListFilters::NONE
-                ? $query->whereNull(ProjectId::getDatabaseTableColumnName())
-                : $query->where(ProjectId::getDatabaseTableColumnName(), $project))
-            ->when($filters->label, fn (Builder $query, string $label) => $query->whereHas(
-                TicketRelationship::Labels->value,
-                fn (Builder $query) => $query->whereKey($label),
-            ))
-            ->when($filters->type, fn (Builder $query, string $type) => $type === TicketListFilters::NONE
-                ? $query->whereNull(TypeId::getDatabaseTableColumnName())
-                : $query->where(TypeId::getDatabaseTableColumnName(), $type))
-            ->when($filters->group, fn (Builder $query, string $group) => $group === TicketListFilters::NONE
-                ? $query->whereNull(GroupId::getDatabaseTableColumnName())
-                : $query->where(GroupId::getDatabaseTableColumnName(), $group))
-            ->when($filters->search, fn (Builder $query, string $search) => $query->where(fn (Builder $query) => $query
-                ->where(Title::getDatabaseTableColumnName(), 'like', "%{$search}%")
-                ->orWhere(Number::getDatabaseTableColumnName(), ltrim($search, '#'))))
-            ->when(
-                $filters->view === TicketListFilters::VIEW_BOARD,
-                fn (Builder $query) => $query->orderBy(Position::getDatabaseTableColumnName())->orderByDesc(Number::getDatabaseTableColumnName()),
-                fn (Builder $query) => match ($filters->sort) {
-                    // The first priority in the team's list is the most urgent, so "descending" runs up the list.
-                    'priority' => $query->orderBy(
-                        ChoiceEloquentModel::query()
-                            ->withoutGlobalScopes()
-                            ->select(ChoicePosition::getDatabaseTableColumnName())
-                            ->whereColumn(ChoiceId::getDatabaseTableColumnNameWithTable(Table::Choices->value), PriorityId::getDatabaseTableColumnNameWithTable(Table::Tickets->value)),
-                        $isAscending ? 'desc' : 'asc',
-                    )->orderByDesc(Number::getDatabaseTableColumnName()),
-                    'status' => $query->orderBy(
-                        ChoiceEloquentModel::query()
-                            ->withoutGlobalScopes()
-                            ->select(ChoicePosition::getDatabaseTableColumnName())
-                            ->whereColumn(ChoiceId::getDatabaseTableColumnNameWithTable(Table::Choices->value), StatusId::getDatabaseTableColumnNameWithTable(Table::Tickets->value)),
-                        $isAscending ? 'asc' : 'desc',
-                    )->orderByDesc(Number::getDatabaseTableColumnName()),
-                    'due_on' => $query->orderByRaw($isAscending ? 'due_on is null, due_on asc' : 'due_on is null, due_on desc')
-                        ->orderByDesc(Number::getDatabaseTableColumnName()),
-                    default => $query->orderBy(TicketListFilters::SORTS[$filters->sort], $filters->direction),
-                },
-            )
+            ->whereNull(ParentId::getDatabaseTableColumnName());
+
+        $filters->narrow($query, $userId);
+
+        if ($filters->view === TicketListFilters::VIEW_BOARD) {
+            $query->orderBy(Position::getDatabaseTableColumnName())->orderByDesc(Number::getDatabaseTableColumnName());
+        } else {
+            $filters->sort($query);
+        }
+
+        return $query
             ->paginate($perPage)
             ->withQueryString()
             ->through(fn (TicketEloquentModel $model): Ticket => Ticket::fromEloquentModel($model));

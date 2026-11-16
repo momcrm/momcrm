@@ -245,13 +245,18 @@ export default function TicketTimeline({
     return (
         <div className="flex flex-col gap-3">
             <div className="flex flex-wrap items-center gap-2">
-                <h2 className="mr-2 text-lg font-semibold">
-                    {dayFormatter.format(parseDay(timeline.from))} –{' '}
-                    {dayFormatter.format(parseDay(timeline.to))}
-                </h2>
-                <div className="flex items-center gap-1">
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                        go(timeline.zoom === 'weeks' ? addDays(now, -14) : now)
+                    }
+                >
+                    Today
+                </Button>
+                <div className="flex items-center">
                     <Button
-                        variant="outline"
+                        variant="ghost"
                         size="icon-sm"
                         aria-label="Earlier"
                         onClick={() => step(-1)}
@@ -259,20 +264,7 @@ export default function TicketTimeline({
                         <ChevronLeft />
                     </Button>
                     <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                            go(
-                                timeline.zoom === 'weeks'
-                                    ? addDays(now, -14)
-                                    : now,
-                            )
-                        }
-                    >
-                        Today
-                    </Button>
-                    <Button
-                        variant="outline"
+                        variant="ghost"
                         size="icon-sm"
                         aria-label="Later"
                         onClick={() => step(1)}
@@ -280,6 +272,10 @@ export default function TicketTimeline({
                         <ChevronRight />
                     </Button>
                 </div>
+                <h2 className="text-[15px] font-semibold">
+                    {dayFormatter.format(parseDay(timeline.from))} –{' '}
+                    {dayFormatter.format(parseDay(timeline.to))}
+                </h2>
                 <ToggleGroup
                     type="single"
                     variant="segmented"
@@ -289,6 +285,7 @@ export default function TicketTimeline({
                         go(timeline.from, zoom as TimelineWindow['zoom'])
                     }
                     aria-label="Zoom"
+                    className="ml-auto"
                 >
                     <ToggleGroupItem value="weeks">Weeks</ToggleGroupItem>
                     <ToggleGroupItem value="months">Months</ToggleGroupItem>

@@ -78,6 +78,7 @@ const groupings: { value: TicketGroupBy; label: string }[] = [
 
 const ANY = '__any__';
 const ONLY = ['tickets', 'filters'];
+const CALENDAR_ONLY = ['tickets', 'filters', 'calendar'];
 
 type FieldKey =
     | 'status'
@@ -106,12 +107,16 @@ type Field = {
  * Group and Columns menus with the view switcher on the right, then a bar
  * of the filters in use. Filters and sort live in the URL; grouping and
  * columns are this browser's preference.
+ *
+ * Above the calendar (`forCalendar`) it is just the one bar: search, Filter
+ * and Sort (the order within a day), with every status shown by default.
  */
 export default function TicketToolbar({
     filters,
     options,
     prefs,
     inProject = false,
+    forCalendar = false,
 }: {
     filters: TicketFilters;
     options: TicketPickerOptions;
@@ -119,15 +124,19 @@ export default function TicketToolbar({
     prefs?: TicketViewPrefs;
     /** On a project's page: the tabs pick the view and the project is fixed. */
     inProject?: boolean;
+    /** Above the calendar rather than a ticket list. */
+    forCalendar?: boolean;
 }) {
+    const only = forCalendar ? CALENDAR_ONLY : ONLY;
     const [addedFields, setAddedFields] = useState<FieldKey[]>([]);
     const set = (changes: Record<string, string | string[] | null>) =>
-        visitWithQuery(changes, { only: ONLY });
+        visitWithQuery(changes, { only });
 
     const priorities = useTicketPriorities(...filters.priority);
     const labels = useLabels(filters.label);
     const types = useTicketTypes(filters.type);
-    const defaultStatus = filters.view === 'board' ? 'all' : 'open';
+    const defaultStatus =
+        forCalendar || filters.view === 'board' ? 'all' : 'open';
 
     const memberName = (id: string | null) =>
         id === 'me'
@@ -376,7 +385,10 @@ export default function TicketToolbar({
         });
     };
 
-    const view = filters.view;
+    const view = forCalendar ? 'list' : filters.view;
+    const sortChoices = forCalendar
+        ? sorts.filter((sort) => sort.value !== 'due_on')
+        : sorts;
     const sortLabel =
         view === 'board'
             ? 'Manual'
@@ -389,7 +401,7 @@ export default function TicketToolbar({
                 <SearchInput
                     value={filters.search}
                     placeholder="Search tickets"
-                    only={ONLY}
+                    only={only}
                     size="sm"
                 />
 
@@ -523,7 +535,7 @@ export default function TicketToolbar({
                                     value={filters.sort}
                                     onValueChange={(sort) => set({ sort })}
                                 >
-                                    {sorts.map((sort) => (
+                                    {sortChoices.map((sort) => (
                                         <DropdownMenuRadioItem
                                             key={sort.value}
                                             value={sort.value}
@@ -648,7 +660,7 @@ export default function TicketToolbar({
 
                 <span className="flex-1" />
 
-                {!inProject && (
+                {!inProject && !forCalendar && (
                     <nav
                         aria-label="View"
                         className="inline-flex gap-0.5 rounded-md bg-accent p-0.5"
@@ -688,54 +700,56 @@ export default function TicketToolbar({
                 )}
             </div>
 
-            <div className="flex flex-wrap items-center gap-1.5 border-b px-4 py-2 text-xs text-muted-foreground md:px-6">
-                <ListFilter className="mr-0.5 size-3.5 text-subtle-foreground" />
-                {shown.map((field, index) => (
-                    <span key={field.key} className="contents">
-                        {index > 0 && <span>and</span>}
-                        <FilterChip
-                            field={field}
-                            onRemove={
-                                field.key === 'status' && !field.canClear
-                                    ? null
-                                    : () => remove(field)
-                            }
-                        />
-                    </span>
-                ))}
-                {hidden.length > 0 && (
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <ToolbarButton>
-                                <Plus className="size-3.5" />
-                                Add
-                            </ToolbarButton>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" className="w-44">
-                            {hidden.map((field) => (
-                                <DropdownMenuItem
-                                    key={field.key}
-                                    onSelect={() => add(field.key)}
-                                >
-                                    <span className="text-subtle-foreground">
-                                        {field.icon}
-                                    </span>
-                                    {field.label}
-                                </DropdownMenuItem>
-                            ))}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                )}
-                {hasClearable && (
-                    <button
-                        type="button"
-                        onClick={clearAll}
-                        className="ml-auto h-[26px] rounded-md px-2 text-xs text-soft-foreground hover:bg-muted hover:text-foreground"
-                    >
-                        Clear all
-                    </button>
-                )}
-            </div>
+            {!forCalendar && (
+                <div className="flex flex-wrap items-center gap-1.5 border-b px-4 py-2 text-xs text-muted-foreground md:px-6">
+                    <ListFilter className="mr-0.5 size-3.5 text-subtle-foreground" />
+                    {shown.map((field, index) => (
+                        <span key={field.key} className="contents">
+                            {index > 0 && <span>and</span>}
+                            <FilterChip
+                                field={field}
+                                onRemove={
+                                    field.key === 'status' && !field.canClear
+                                        ? null
+                                        : () => remove(field)
+                                }
+                            />
+                        </span>
+                    ))}
+                    {hidden.length > 0 && (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <ToolbarButton>
+                                    <Plus className="size-3.5" />
+                                    Add
+                                </ToolbarButton>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" className="w-44">
+                                {hidden.map((field) => (
+                                    <DropdownMenuItem
+                                        key={field.key}
+                                        onSelect={() => add(field.key)}
+                                    >
+                                        <span className="text-subtle-foreground">
+                                            {field.icon}
+                                        </span>
+                                        {field.label}
+                                    </DropdownMenuItem>
+                                ))}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )}
+                    {hasClearable && (
+                        <button
+                            type="button"
+                            onClick={clearAll}
+                            className="ml-auto h-[26px] rounded-md px-2 text-xs text-soft-foreground hover:bg-muted hover:text-foreground"
+                        >
+                            Clear all
+                        </button>
+                    )}
+                </div>
+            )}
         </div>
     );
 }
