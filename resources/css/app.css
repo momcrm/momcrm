@@ -337,6 +337,28 @@ html[data-density='compact'] {
 }
 
 /*
+ * A light wash of the hue with a matching hairline border, for chips that
+ * carry a record's colour while keeping normal text (calendar tickets).
+ */
+@utility hue-tint {
+    background-color: oklch(
+        0.65 calc(0.16 * var(--hue-chroma, 1)) var(--hue, 0) / 0.1
+    );
+    border-color: oklch(
+        0.6 calc(0.16 * var(--hue-chroma, 1)) var(--hue, 0) / 0.22
+    );
+
+    &:is(.dark *) {
+        background-color: oklch(
+            0.7 calc(0.15 * var(--hue-chroma, 1)) var(--hue, 0) / 0.14
+        );
+        border-color: oklch(
+            0.7 calc(0.15 * var(--hue-chroma, 1)) var(--hue, 0) / 0.3
+        );
+    }
+}
+
+/*
  * The chevron NativeSelect draws in place of the browser's own arrow, so it
  * sits inside the same padding as the text. Its size and inset are set in the
  * component, where callers can override them.

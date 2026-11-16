@@ -64,6 +64,7 @@ type Defaults = {
     projectId?: string | null;
     statusId?: string;
     assigneeId?: string;
+    dueOn?: string;
 };
 
 const CreateTicketContext = createContext<{
@@ -72,7 +73,7 @@ const CreateTicketContext = createContext<{
 
 /**
  * Opens the new-ticket dialog from anywhere inside the app layout, optionally
- * starting it for a customer, a project, a status or an assignee.
+ * starting it for a customer, a project, a status, an assignee or a due date.
  */
 export function useCreateTicket(): {
     openCreateTicket: (defaults?: Defaults) => void;
@@ -224,7 +225,7 @@ function CreateTicketForm({
     const [groupId, setGroupId] = useState('');
     const group = options.groups.find((option) => option.id === groupId);
     const [startsOn, setStartsOn] = useState<string | null>(null);
-    const [dueOn, setDueOn] = useState<string | null>(null);
+    const [dueOn, setDueOn] = useState<string | null>(defaults.dueOn ?? null);
     const [labelIds, setLabelIds] = useState<string[]>([]);
     const [subtasks, setSubtasks] = useState<string[]>([]);
     const [subtaskDraft, setSubtaskDraft] = useState('');

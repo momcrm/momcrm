@@ -30,16 +30,19 @@ export default function CalendarPage({
         <>
             <Head title="Calendar" />
 
-            <div className="flex flex-col gap-5 p-4 md:p-6">
-                <PageHeader
-                    title="Calendar"
-                    description="Tickets on the day they're due. Drag one to another day to reschedule it."
-                />
+            <div className="flex flex-1 flex-col">
+                <div className="px-4 pt-6 pb-3 md:px-6">
+                    <PageHeader
+                        title="Calendar"
+                        description="Tickets on the day they're due. Drag one to another day to reschedule it."
+                    />
+                </div>
                 <TicketCalendar
                     calendar={calendar}
                     tickets={tickets}
                     projects={projects}
                     favoriteIds={favoriteTicketIds}
+                    fullBleed
                 />
             </div>
 

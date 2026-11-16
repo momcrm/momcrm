@@ -1,19 +1,19 @@
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useIsClosedStatus } from '@/components/tickets/ticket-meta';
+import type { DragEvent } from 'react';
+import { useCreateTicket } from '@/components/tickets/create-ticket-dialog';
+import {
+    AssigneeAvatar,
+    PriorityGlyph,
+    useIsClosedStatus,
+    usePriority,
+} from '@/components/tickets/ticket-meta';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { useTicketActions } from '@/hooks/use-ticket-actions';
 import { hueStyle } from '@/lib/colors';
-import {
-    addDays,
-    addMonths,
-    eachDay,
-    isWeekend,
-    parseDay,
-    today,
-} from '@/lib/dates';
+import { addDays, addMonths, eachDay, parseDay, today } from '@/lib/dates';
 import { visitWithQuery } from '@/lib/query';
 import { cn } from '@/lib/utils';
 import type { CalendarWindow, ProjectOption, TicketListItem } from '@/types';
@@ -30,9 +30,17 @@ const shortFormatter = new Intl.DateTimeFormat(undefined, {
 const MONTH_CHIPS = 3;
 const ONLY = ['tickets', 'calendar', 'drawer'];
 
+type DragProps = {
+    isDragging: boolean;
+    onDragStart: () => void;
+    onDragEnd: () => void;
+};
+
 /**
- * Tickets on their due dates in a Monday-first month or week. Clicking a chip
- * opens the ticket; dragging it to another day reschedules it.
+ * Tickets on their due dates in a Monday-first month grid or a week of day
+ * columns. Clicking a ticket opens it; dragging it to another day reschedules
+ * it. On the Calendar page it runs edge to edge (`fullBleed`); inside a project
+ * it sits in a card.
  */
 export default function TicketCalendar({
     calendar,
@@ -40,15 +48,20 @@ export default function TicketCalendar({
     projects,
     favoriteIds,
     showMine = true,
+    fullBleed = false,
+    projectId,
 }: {
     calendar: CalendarWindow;
     tickets: TicketListItem[];
     projects: ProjectOption[];
     favoriteIds: string[];
     showMine?: boolean;
+    fullBleed?: boolean;
+    /** The project new tickets from this calendar belong to, if any. */
+    projectId?: string;
 }) {
-    const isClosed = useIsClosedStatus();
     const { openTicket, updateTicket } = useTicketActions();
+    const { openCreateTicket } = useCreateTicket();
     const [items, setItems] = useState(tickets);
     const [dragging, setDragging] = useState<string | null>(null);
     const [over, setOver] = useState<string | null>(null);
@@ -102,28 +115,54 @@ export default function TicketCalendar({
         }
     };
 
+    const dropTarget = (day: string) => ({
+        onDragOver: (event: DragEvent) => {
+            if (dragging) {
+                event.preventDefault();
+                setOver(day);
+            }
+        },
+        onDrop: (event: DragEvent) => {
+            event.preventDefault();
+            drop(day);
+        },
+    });
+
+    const dragProps = (ticket: TicketListItem): DragProps => ({
+        isDragging: dragging === ticket.id,
+        onDragStart: () => setDragging(ticket.id),
+        onDragEnd: () => {
+            setDragging(null);
+            setOver(null);
+        },
+    });
+
     const title = isMonth
         ? monthFormatter.format(parseDay(calendar.date))
         : `${shortFormatter.format(parseDay(calendar.from))} – ${shortFormatter.format(parseDay(calendar.to))}`;
 
     return (
-        <div className="flex flex-col gap-3">
-            <div className="flex flex-wrap items-center gap-2">
-                <h2 className="mr-2 text-lg font-semibold">{title}</h2>
-                <div className="flex items-center gap-1">
+        <div className={cn('flex flex-col', fullBleed ? 'flex-1' : 'gap-3')}>
+            <div
+                className={cn(
+                    'flex flex-wrap items-center gap-2',
+                    fullBleed && 'border-t px-4 py-2 md:px-6',
+                )}
+            >
+                <Button variant="outline" size="sm" onClick={() => go(now)}>
+                    Today
+                </Button>
+                <div className="flex items-center">
                     <Button
-                        variant="outline"
+                        variant="ghost"
                         size="icon-sm"
                         aria-label="Previous"
                         onClick={() => step(-1)}
                     >
                         <ChevronLeft />
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => go(now)}>
-                        Today
-                    </Button>
                     <Button
-                        variant="outline"
+                        variant="ghost"
                         size="icon-sm"
                         aria-label="Next"
                         onClick={() => step(1)}
@@ -131,27 +170,9 @@ export default function TicketCalendar({
                         <ChevronRight />
                     </Button>
                 </div>
-                <ToggleGroup
-                    type="single"
-                    variant="outline"
-                    size="sm"
-                    value={calendar.view}
-                    onValueChange={(view) =>
-                        view &&
-                        go(calendar.date, view as CalendarWindow['view'])
-                    }
-                    className="bg-card"
-                    aria-label="Calendar view"
-                >
-                    <ToggleGroupItem value="month" className="px-3">
-                        Month
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="week" className="px-3">
-                        Week
-                    </ToggleGroupItem>
-                </ToggleGroup>
+                <h2 className="mr-2 text-[15px] font-semibold">{title}</h2>
                 {showMine && (
-                    <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <label className="flex items-center gap-2 text-ui text-soft-foreground">
                         <Checkbox
                             checked={calendar.mine}
                             onCheckedChange={(checked) =>
@@ -164,143 +185,331 @@ export default function TicketCalendar({
                         Only my tickets
                     </label>
                 )}
-                {usedProjects.length > 0 && (
-                    <ul className="ml-auto flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                        {usedProjects.map((project) => (
-                            <li
-                                key={project.id}
-                                className="flex items-center gap-1.5"
-                            >
-                                <span
-                                    className={cn(
-                                        'hue-dot',
-                                        'size-2 rounded-[3px]',
-                                    )}
-                                    style={hueStyle(project.hue)}
-                                />
-                                {project.name}
-                            </li>
-                        ))}
-                    </ul>
-                )}
+                <div className="ml-auto flex flex-wrap items-center gap-x-4 gap-y-2">
+                    {usedProjects.length > 0 && (
+                        <ul className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                            {usedProjects.map((project) => (
+                                <li
+                                    key={project.id}
+                                    className="flex items-center gap-1.5"
+                                >
+                                    <span
+                                        className={cn(
+                                            'hue-dot',
+                                            'size-2 rounded-full',
+                                        )}
+                                        style={hueStyle(project.hue)}
+                                    />
+                                    {project.name}
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                    <ToggleGroup
+                        type="single"
+                        variant="segmented"
+                        value={calendar.view}
+                        onValueChange={(view) =>
+                            view &&
+                            go(calendar.date, view as CalendarWindow['view'])
+                        }
+                        aria-label="Calendar view"
+                    >
+                        <ToggleGroupItem value="month">Month</ToggleGroupItem>
+                        <ToggleGroupItem value="week">Week</ToggleGroupItem>
+                    </ToggleGroup>
+                </div>
             </div>
 
-            <div className="overflow-hidden rounded-lg border bg-card shadow-xs">
-                <div className="grid grid-cols-7 border-b bg-muted/60">
-                    {weekdays.map((weekday) => (
-                        <div
-                            key={weekday}
-                            className="px-2 py-1.5 text-xs font-medium text-muted-foreground"
-                        >
-                            {weekday}
-                        </div>
-                    ))}
-                </div>
-                <div className="grid grid-cols-7">
-                    {days.map((day) => {
-                        const dayTickets = byDay[day] ?? [];
-                        const isExpanded = expanded === day || !isMonth;
-                        const shown = isExpanded
-                            ? dayTickets
-                            : dayTickets.slice(0, MONTH_CHIPS);
-                        const outside =
-                            isMonth && parseDay(day).getMonth() !== month;
-
-                        return (
-                            <div
-                                key={day}
-                                onDragOver={(event) => {
-                                    if (dragging) {
-                                        event.preventDefault();
-                                        setOver(day);
-                                    }
-                                }}
-                                onDrop={(event) => {
-                                    event.preventDefault();
-                                    drop(day);
-                                }}
-                                className={cn(
-                                    'flex flex-col gap-1 border-r border-b p-1.5 [&:nth-child(7n)]:border-r-0',
-                                    isMonth ? 'min-h-28' : 'min-h-[60vh]',
-                                    isWeekend(day) && 'bg-muted/70',
-                                    over === day &&
-                                        'bg-primary/5 ring-2 ring-primary/30 ring-inset',
-                                )}
-                            >
-                                <span
-                                    className={cn(
-                                        'flex size-6 items-center justify-center self-start rounded-full text-xs',
-                                        day === now &&
-                                            'bg-primary font-semibold text-primary-foreground',
-                                        outside &&
-                                            day !== now &&
-                                            'text-subtle-foreground',
-                                    )}
+            <div
+                className={cn(
+                    'flex flex-col',
+                    fullBleed
+                        ? 'flex-1 border-t'
+                        : 'overflow-hidden rounded-lg border bg-card shadow-xs',
+                )}
+            >
+                {isMonth ? (
+                    <>
+                        <div className="grid grid-cols-7 border-b">
+                            {weekdays.map((weekday) => (
+                                <div
+                                    key={weekday}
+                                    className="px-2.5 py-2 text-xs font-medium text-muted-foreground"
                                 >
-                                    {parseDay(day).getDate()}
-                                </span>
-                                {shown.map((ticket) => (
-                                    <button
-                                        key={ticket.id}
-                                        type="button"
-                                        draggable
-                                        onDragStart={(event) => {
-                                            event.dataTransfer.effectAllowed =
-                                                'move';
-                                            setDragging(ticket.id);
-                                        }}
-                                        onDragEnd={() => {
-                                            setDragging(null);
-                                            setOver(null);
-                                        }}
-                                        onClick={() => openTicket(ticket.id)}
-                                        title={`#${ticket.number} ${ticket.title}`}
+                                    {weekday}
+                                </div>
+                            ))}
+                        </div>
+                        <div
+                            className={cn(
+                                'grid grid-cols-7',
+                                fullBleed
+                                    ? 'flex-1 auto-rows-[minmax(7rem,1fr)]'
+                                    : 'auto-rows-[minmax(7rem,auto)]',
+                            )}
+                        >
+                            {days.map((day) => {
+                                const dayTickets = byDay[day] ?? [];
+                                const isExpanded = expanded === day;
+                                const shown = isExpanded
+                                    ? dayTickets
+                                    : dayTickets.slice(0, MONTH_CHIPS);
+
+                                return (
+                                    <div
+                                        key={day}
+                                        {...dropTarget(day)}
                                         className={cn(
-                                            'flex items-center gap-1.5 truncate rounded-[5px] border bg-card px-1.5 py-0.5 text-left text-xs shadow-xs hover:border-border-strong',
-                                            isClosed(ticket.status_id) &&
-                                                'text-muted-foreground line-through',
-                                            dragging === ticket.id &&
-                                                'opacity-40',
+                                            'flex min-w-0 flex-col gap-1 border-r border-b p-1.5 [&:nth-child(7n)]:border-r-0',
+                                            parseDay(day).getMonth() !==
+                                                month && 'bg-sunken',
+                                            over === day &&
+                                                'bg-primary/5 ring-2 ring-primary/30 ring-inset',
                                         )}
                                     >
                                         <span
                                             className={cn(
-                                                'h-3 w-1 shrink-0 rounded-full',
-                                                ticket.project_id
-                                                    ? 'hue-dot'
-                                                    : 'bg-border-strong',
+                                                'flex size-[22px] items-center justify-center self-start rounded-full text-xs font-medium',
+                                                day === now &&
+                                                    'bg-primary text-primary-foreground',
                                             )}
-                                            style={
-                                                ticket.project_id
-                                                    ? hueStyle(
-                                                          ticket.project_hue,
-                                                      )
-                                                    : undefined
-                                            }
-                                        />
-                                        <span className="truncate">
-                                            {favoriteIds.includes(ticket.id) &&
-                                                '★ '}
-                                            {ticket.title}
-                                        </span>
-                                    </button>
-                                ))}
-                                {!isExpanded &&
-                                    dayTickets.length > MONTH_CHIPS && (
-                                        <button
-                                            type="button"
-                                            onClick={() => setExpanded(day)}
-                                            className="px-1.5 text-left text-xs text-muted-foreground hover:text-foreground"
                                         >
-                                            +{dayTickets.length - MONTH_CHIPS}{' '}
-                                            more
-                                        </button>
+                                            {parseDay(day).getDate()}
+                                        </span>
+                                        {shown.map((ticket) => (
+                                            <MonthChip
+                                                key={ticket.id}
+                                                ticket={ticket}
+                                                isFavorite={favoriteIds.includes(
+                                                    ticket.id,
+                                                )}
+                                                onOpen={() =>
+                                                    openTicket(ticket.id)
+                                                }
+                                                {...dragProps(ticket)}
+                                            />
+                                        ))}
+                                        {!isExpanded &&
+                                            dayTickets.length > MONTH_CHIPS && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        setExpanded(day)
+                                                    }
+                                                    className="px-1.5 text-left text-xs text-muted-foreground hover:text-foreground"
+                                                >
+                                                    +
+                                                    {dayTickets.length -
+                                                        MONTH_CHIPS}{' '}
+                                                    more
+                                                </button>
+                                            )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </>
+                ) : (
+                    <div
+                        className={cn(
+                            'grid grid-cols-7',
+                            fullBleed ? 'flex-1' : 'min-h-96',
+                        )}
+                    >
+                        {days.map((day, index) => {
+                            const dayTickets = byDay[day] ?? [];
+                            const isToday = day === now;
+
+                            return (
+                                <div
+                                    key={day}
+                                    {...dropTarget(day)}
+                                    className={cn(
+                                        'flex min-w-0 flex-col border-r last:border-r-0',
+                                        over === day &&
+                                            'bg-primary/5 ring-2 ring-primary/30 ring-inset',
                                     )}
-                            </div>
-                        );
-                    })}
-                </div>
+                                >
+                                    <div className="flex h-10 items-center gap-1.5 border-b pr-1.5 pl-2.5">
+                                        <span
+                                            className={cn(
+                                                'text-[15px] font-semibold tabular-nums',
+                                                isToday && 'text-primary',
+                                            )}
+                                        >
+                                            {parseDay(day).getDate()}
+                                        </span>
+                                        <span className="text-xs text-muted-foreground">
+                                            {weekdays[index]}
+                                        </span>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon-xs"
+                                            className="ml-auto"
+                                            aria-label={`New ticket due ${shortFormatter.format(parseDay(day))}`}
+                                            onClick={() =>
+                                                openCreateTicket({
+                                                    dueOn: day,
+                                                    projectId,
+                                                })
+                                            }
+                                        >
+                                            <Plus />
+                                        </Button>
+                                    </div>
+                                    <div className="flex flex-1 flex-col gap-1.5 p-1.5">
+                                        {dayTickets.length === 0 ? (
+                                            <span className="px-1 py-0.5 text-xs text-subtle-foreground">
+                                                No tickets
+                                            </span>
+                                        ) : (
+                                            dayTickets.map((ticket) => (
+                                                <WeekCard
+                                                    key={ticket.id}
+                                                    ticket={ticket}
+                                                    isFavorite={favoriteIds.includes(
+                                                        ticket.id,
+                                                    )}
+                                                    onOpen={() =>
+                                                        openTicket(ticket.id)
+                                                    }
+                                                    {...dragProps(ticket)}
+                                                />
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
         </div>
+    );
+}
+
+/**
+ * A ticket in the month grid: tinted in its project's colour, with its
+ * priority and assignee. Done tickets stay, struck through.
+ */
+function MonthChip({
+    ticket,
+    isFavorite,
+    onOpen,
+    isDragging,
+    onDragStart,
+    onDragEnd,
+}: {
+    ticket: TicketListItem;
+    isFavorite: boolean;
+    onOpen: () => void;
+} & DragProps) {
+    const isClosed = useIsClosedStatus()(ticket.status_id);
+    const priority = usePriority(ticket.priority_id);
+
+    return (
+        <button
+            type="button"
+            draggable
+            onDragStart={(event) => {
+                event.dataTransfer.effectAllowed = 'move';
+                onDragStart();
+            }}
+            onDragEnd={onDragEnd}
+            onClick={onOpen}
+            title={`#${ticket.number} ${ticket.title}`}
+            className={cn(
+                'flex h-[22px] w-full min-w-0 shrink-0 items-center gap-1.5 rounded-[5px] border px-1.5 text-left text-xs transition-shadow hover:shadow-xs',
+                ticket.project_id ? 'hue-tint' : 'border-border bg-muted',
+                isClosed && 'text-muted-foreground',
+                isDragging && 'opacity-40',
+            )}
+            style={ticket.project_id ? hueStyle(ticket.project_hue) : undefined}
+        >
+            <PriorityGlyph priority={priority} className="size-3" />
+            <span className={cn('flex-1 truncate', isClosed && 'line-through')}>
+                {isFavorite && '★ '}
+                {ticket.title}
+            </span>
+            {ticket.assignee_name && (
+                <AssigneeAvatar
+                    name={ticket.assignee_name}
+                    className="size-4 text-[7px]"
+                />
+            )}
+        </button>
+    );
+}
+
+/**
+ * A ticket in a week column: project dot and title, then its priority,
+ * project and assignee.
+ */
+function WeekCard({
+    ticket,
+    isFavorite,
+    onOpen,
+    isDragging,
+    onDragStart,
+    onDragEnd,
+}: {
+    ticket: TicketListItem;
+    isFavorite: boolean;
+    onOpen: () => void;
+} & DragProps) {
+    const isClosed = useIsClosedStatus()(ticket.status_id);
+    const priority = usePriority(ticket.priority_id);
+
+    return (
+        <button
+            type="button"
+            draggable
+            onDragStart={(event) => {
+                event.dataTransfer.effectAllowed = 'move';
+                onDragStart();
+            }}
+            onDragEnd={onDragEnd}
+            onClick={onOpen}
+            className={cn(
+                'flex w-full min-w-0 flex-col gap-1.5 rounded-md border bg-card p-2 text-left shadow-xs transition-[border-color,box-shadow] hover:border-border-strong',
+                isDragging && 'opacity-40',
+            )}
+        >
+            <span className="flex min-w-0 items-start gap-1.5">
+                <span
+                    className={cn(
+                        'mt-1.5 size-2 shrink-0 rounded-full',
+                        ticket.project_id ? 'hue-dot' : 'bg-border-strong',
+                    )}
+                    style={
+                        ticket.project_id
+                            ? hueStyle(ticket.project_hue)
+                            : undefined
+                    }
+                />
+                <span
+                    className={cn(
+                        'line-clamp-2 text-ui font-medium',
+                        isClosed && 'text-muted-foreground line-through',
+                    )}
+                >
+                    {isFavorite && '★ '}
+                    {ticket.title}
+                </span>
+            </span>
+            <span className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
+                <PriorityGlyph priority={priority} className="size-3" />
+                <span className="flex-1 truncate">
+                    {ticket.project_name ?? `#${ticket.number}`}
+                </span>
+                {ticket.assignee_name && (
+                    <AssigneeAvatar
+                        name={ticket.assignee_name}
+                        className="size-4 text-[7px]"
+                    />
+                )}
+            </span>
+        </button>
     );
 }

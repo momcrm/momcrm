@@ -282,22 +282,16 @@ export default function TicketTimeline({
                 </div>
                 <ToggleGroup
                     type="single"
-                    variant="outline"
-                    size="sm"
+                    variant="segmented"
                     value={timeline.zoom}
                     onValueChange={(zoom) =>
                         zoom &&
                         go(timeline.from, zoom as TimelineWindow['zoom'])
                     }
-                    className="bg-card"
                     aria-label="Zoom"
                 >
-                    <ToggleGroupItem value="weeks" className="px-3">
-                        Weeks
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="months" className="px-3">
-                        Months
-                    </ToggleGroupItem>
+                    <ToggleGroupItem value="weeks">Weeks</ToggleGroupItem>
+                    <ToggleGroupItem value="months">Months</ToggleGroupItem>
                 </ToggleGroup>
             </div>
 

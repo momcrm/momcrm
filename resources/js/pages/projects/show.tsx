@@ -311,6 +311,7 @@ export default function ShowProject(props: Props) {
                             projects={props.projects ?? []}
                             favoriteIds={props.favoriteTicketIds}
                             showMine={false}
+                            projectId={project.id}
                         />
                     ) : tab === 'timeline' &&
                       props.timeline &&
