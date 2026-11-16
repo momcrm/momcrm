@@ -35,7 +35,11 @@ import {
 } from '@/components/projects/project-meta';
 import TicketBoard from '@/components/tickets/ticket-board';
 import TicketDrawer from '@/components/tickets/ticket-drawer';
-import TicketGroups from '@/components/tickets/ticket-groups';
+import {
+    TicketBulkBar,
+    useTicketSelection,
+} from '@/components/tickets/ticket-bulk';
+import TicketList from '@/components/tickets/ticket-list';
 import {
     daysUntil,
     formatDay,
@@ -43,6 +47,7 @@ import {
 } from '@/components/tickets/ticket-meta';
 import TicketRow from '@/components/tickets/ticket-row';
 import TicketTable from '@/components/tickets/ticket-table';
+import { useTicketViewPrefs } from '@/hooks/use-ticket-view-prefs';
 import TicketToolbar from '@/components/tickets/ticket-toolbar';
 import { Button } from '@/components/ui/button';
 import {
@@ -292,44 +297,46 @@ export default function ShowProject(props: Props) {
                 </nav>
             </div>
 
-            <div className="p-4 md:p-6">
-                {tab === 'overview' ? (
-                    <Overview {...props} />
-                ) : tab === 'calendar' &&
-                  props.calendar &&
-                  Array.isArray(props.tickets) ? (
-                    <TicketCalendar
-                        calendar={props.calendar}
-                        tickets={props.tickets}
-                        projects={props.projects ?? []}
-                        favoriteIds={props.favoriteTicketIds}
-                        showMine={false}
-                    />
-                ) : tab === 'timeline' &&
-                  props.timeline &&
-                  Array.isArray(props.tickets) ? (
-                    <TicketTimeline
-                        timeline={props.timeline}
-                        tickets={props.tickets}
-                        projects={props.projects ?? []}
-                        milestones={
-                            (props.milestones ?? []) as TimelineMilestone[]
-                        }
-                        showUngrouped={false}
-                    />
-                ) : tab === 'files' ? (
-                    <div className="max-w-3xl">
-                        <Attachments
-                            attachments={props.attachments ?? []}
-                            uploadUrl={storeAttachment.url(project.id)}
-                            reload={['attachments']}
-                            can={props.attachmentCan ?? {}}
+            {tab === 'list' || tab === 'board' || tab === 'table' ? (
+                <TicketTabs {...props} />
+            ) : (
+                <div className="p-4 md:p-6">
+                    {tab === 'overview' ? (
+                        <Overview {...props} />
+                    ) : tab === 'calendar' &&
+                      props.calendar &&
+                      Array.isArray(props.tickets) ? (
+                        <TicketCalendar
+                            calendar={props.calendar}
+                            tickets={props.tickets}
+                            projects={props.projects ?? []}
+                            favoriteIds={props.favoriteTicketIds}
+                            showMine={false}
                         />
-                    </div>
-                ) : (
-                    <TicketTabs {...props} />
-                )}
-            </div>
+                    ) : tab === 'timeline' &&
+                      props.timeline &&
+                      Array.isArray(props.tickets) ? (
+                        <TicketTimeline
+                            timeline={props.timeline}
+                            tickets={props.tickets}
+                            projects={props.projects ?? []}
+                            milestones={
+                                (props.milestones ?? []) as TimelineMilestone[]
+                            }
+                            showUngrouped={false}
+                        />
+                    ) : tab === 'files' ? (
+                        <div className="max-w-3xl">
+                            <Attachments
+                                attachments={props.attachments ?? []}
+                                uploadUrl={storeAttachment.url(project.id)}
+                                reload={['attachments']}
+                                can={props.attachmentCan ?? {}}
+                            />
+                        </div>
+                    ) : null}
+                </div>
+            )}
 
             <TicketDrawer ticket={drawer} options={options} />
             <ProjectFormDialog
@@ -352,10 +359,11 @@ function TicketTabs({
     options,
     favoriteTicketIds,
 }: Props) {
-    const statuses = useTicketStatuses(
-        ...(tickets && !Array.isArray(tickets) ? tickets.data : []).map(
-            (ticket) => ticket.status_id,
-        ),
+    const prefs = useTicketViewPrefs();
+    const selection = useTicketSelection(
+        tab !== 'board' && tickets && !Array.isArray(tickets)
+            ? tickets.data.map((ticket) => ticket.id)
+            : [],
     );
 
     if (!tickets || Array.isArray(tickets) || !filters) {
@@ -365,8 +373,13 @@ function TicketTabs({
     const page: Paginated<TicketListItem> = tickets;
 
     return (
-        <div className="flex flex-col gap-5">
-            <TicketToolbar filters={filters} options={options} inProject />
+        <div className="flex flex-col">
+            <TicketToolbar
+                filters={filters}
+                options={options}
+                prefs={prefs}
+                inProject
+            />
             {tab === 'board' ? (
                 <TicketBoard
                     tickets={page.data}
@@ -375,13 +388,20 @@ function TicketTabs({
                     projectId={filters.project}
                 />
             ) : page.data.length === 0 ? (
-                <EmptyState
-                    title="No tickets here"
-                    description="Tickets put in this project show up here."
-                />
+                <div className="p-4 md:p-6">
+                    <EmptyState
+                        title="No tickets here"
+                        description="Tickets put in this project show up here."
+                    />
+                </div>
             ) : tab === 'table' ? (
                 <>
                     <TicketTable
+                        flush
+                        hideProject
+                        groupBy={prefs.groupBy}
+                        hiddenColumns={prefs.hiddenColumns}
+                        selection={selection}
                         tickets={page.data}
                         sort={{
                             column: filters.sort,
@@ -394,21 +414,23 @@ function TicketTabs({
                             )
                         }
                     />
-                    <Pager page={page} only="tickets" />
+                    <div className="px-4 py-3 md:px-6">
+                        <Pager page={page} only="tickets" />
+                    </div>
                 </>
             ) : (
-                <TicketGroups
+                <TicketList
                     key={filters.status}
+                    tickets={page.data}
                     favoriteIds={favoriteTicketIds}
-                    groups={statuses.map((status) => ({
-                        key: status.id,
-                        label: status.name,
-                        hue: status.hue,
-                        tickets: page.data.filter(
-                            (ticket) => ticket.status_id === status.id,
-                        ),
-                    }))}
+                    options={options}
+                    groupBy={prefs.groupBy}
+                    projectId={filters.project}
+                    selection={selection}
                 />
+            )}
+            {tab !== 'board' && (
+                <TicketBulkBar selection={selection} options={options} />
             )}
         </div>
     );

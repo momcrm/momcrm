@@ -74,6 +74,8 @@ use App\Service\Controllers\UpdateServiceController;
 use App\TeamUser\Controllers\ListMembersController;
 use App\TeamUser\Controllers\UpdateMemberRoleController;
 use App\Ticket\Controllers\ArchiveTicketController;
+use App\Ticket\Controllers\BulkArchiveTicketsController;
+use App\Ticket\Controllers\BulkUpdateTicketsController;
 use App\Ticket\Controllers\CloseTicketController;
 use App\Ticket\Controllers\DeleteTicketController;
 use App\Ticket\Controllers\EditTicketController;
@@ -133,6 +135,8 @@ Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function 
     Route::get('my-tickets', ListMyTicketsController::class)->name('tickets.mine');
     Route::get('tickets/form-options', ListTicketFormOptionsController::class)->name('tickets.form-options');
     Route::post('tickets', StoreTicketController::class)->name('tickets.store');
+    Route::patch('tickets/bulk', BulkUpdateTicketsController::class)->name('tickets.bulk.update');
+    Route::post('tickets/bulk/archive', BulkArchiveTicketsController::class)->name('tickets.bulk.archive');
     Route::get('tickets/{ticket}', ShowTicketController::class)->whereUuid('ticket')->name('tickets.show');
     Route::get('tickets/{ticket}/edit', EditTicketController::class)->whereUuid('ticket')->name('tickets.edit');
     Route::put('tickets/{ticket}', UpdateTicketController::class)->whereUuid('ticket')->name('tickets.update');

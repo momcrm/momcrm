@@ -33,11 +33,11 @@ export function LabelChips({
             {labels.map((label) => (
                 <span
                     key={label.id}
-                    className="inline-flex items-center gap-1 rounded-[5px] border bg-card px-1.5 py-px text-[11px] font-medium text-muted-foreground"
+                    className="inline-flex h-5 items-center gap-[5px] rounded-[5px] border bg-card pr-[7px] pl-1.5 text-xs whitespace-nowrap text-soft-foreground"
                 >
                     <span
                         aria-hidden
-                        className="size-1.5 rounded-full hue-dot"
+                        className="size-1.5 rounded-[2px] hue-dot"
                         style={hueStyle(label.hue)}
                     />
                     {label.name}
