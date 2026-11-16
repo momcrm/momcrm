@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\AccessRule\AccessRuleEloquentModel;
+use App\Activity\ActivityEloquentModel;
+use App\Activity\ActivityTypeEnum;
 use App\Choice\Actions\FindChoice;
 use App\Choice\ChoiceEloquentModel;
 use App\Choice\ChoiceListEnum;
@@ -56,6 +58,18 @@ it('closes a ticket from the drawer, stamping the closed time', function (): voi
     actingAs($user)->patch(route('tickets.patch', $ticket->id), ['status_id' => ticketStatusId($user->current_team_id, 'Closed')]);
 
     expect($ticket->fresh()->closed_at)->not->toBeNull();
+});
+
+it('reopens a ticket from the drawer, clearing the closed time and recording it', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $ticket = patchableTicket($user, ['status_id' => ticketStatusId($user->current_team_id, 'Closed'), 'closed_at' => now()]);
+
+    actingAs($user)
+        ->patch(route('tickets.patch', $ticket->id), ['status_id' => ticketStatusId($user->current_team_id, 'New')])
+        ->assertSessionHasNoErrors();
+
+    expect($ticket->fresh()->closed_at)->toBeNull()
+        ->and(ActivityEloquentModel::query()->where('type', ActivityTypeEnum::TicketReopened->value)->exists())->toBeTrue();
 });
 
 it('sets the labels', function (): void {
