@@ -14,6 +14,7 @@ use App\Customer\Exceptions\CouldNotFindCustomer;
 use App\Invoice\Actions\FindInvoice;
 use App\Location\Actions\FindLocation;
 use App\Project\Actions\FindProject;
+use App\Secret\Actions\FindSecret;
 use App\Service\Actions\FindService;
 use App\Ticket\Actions\FindTicket;
 use Illuminate\Http\Request;
@@ -85,6 +86,7 @@ final readonly class CustomerWorkspace
             'assets' => FindAsset::forCustomer($customerId, $this->teamId)->count(),
             'services' => FindService::forCustomer($customerId, $this->teamId)->count(),
             'files' => FindAttachment::countForCustomer($customerId),
+            'secrets' => FindSecret::countForCustomer($customerId, $this->teamId),
             'invoices' => FindInvoice::paginateForTeam($this->teamId, customerId: $customerId, perPage: 1)->total(),
         ];
     }

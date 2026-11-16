@@ -39,7 +39,8 @@ final readonly class RecordAudit
     }
 
     /**
-     * Record a change to an Auditable model. Returns a null AuditLog when an
+     * Record a change to an Auditable model, or someone viewing it (such as a
+     * secret revealed), which records no values. Returns a null AuditLog when an
      * update only touched excluded attributes, e.g. the remember token.
      */
     public static function fromModel(Model&Auditable $model, AuditEventEnum $event): AuditLog
@@ -50,6 +51,7 @@ final readonly class RecordAudit
             AuditEventEnum::Created => [null, Arr::except($model->getAttributes(), $excluded)],
             AuditEventEnum::Updated => self::changedValues($model, $excluded),
             AuditEventEnum::Deleted => [Arr::except($model->getAttributes(), $excluded), null],
+            AuditEventEnum::Viewed => [null, null],
         };
 
         if ($event === AuditEventEnum::Updated && $newValues === []) {

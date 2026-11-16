@@ -101,6 +101,7 @@ const eventVariant = {
     created: 'secondary',
     updated: 'outline',
     deleted: 'destructive',
+    viewed: 'outline',
 } as const;
 
 export function AuditTrail({

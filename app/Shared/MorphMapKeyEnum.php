@@ -23,6 +23,7 @@ use App\Location\LocationEloquentModel;
 use App\Milestone\MilestoneEloquentModel;
 use App\Passkey\PasskeyEloquentModel;
 use App\Project\ProjectEloquentModel;
+use App\Secret\SecretEloquentModel;
 use App\Service\ServiceEloquentModel;
 use App\Shared\Traits\Enum;
 use App\SocialAccount\SocialAccountEloquentModel;
@@ -63,6 +64,7 @@ enum MorphMapKeyEnum: string
     case Milestone = 'milestone';
     case Passkey = 'passkey';
     case Project = 'project';
+    case Secret = 'secret';
     case Service = 'service';
     case SocialAccount = 'social_account';
     case Team = 'team';
@@ -116,6 +118,7 @@ enum MorphMapKeyEnum: string
             self::Milestone => MilestoneEloquentModel::class,
             self::Passkey => PasskeyEloquentModel::class,
             self::Project => ProjectEloquentModel::class,
+            self::Secret => SecretEloquentModel::class,
             self::Service => ServiceEloquentModel::class,
             self::SocialAccount => SocialAccountEloquentModel::class,
             self::Team => TeamEloquentModel::class,

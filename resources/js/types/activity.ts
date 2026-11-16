@@ -16,7 +16,7 @@ export type AuditChange = {
 
 export type AuditLogItem = {
     id: string;
-    event: 'created' | 'updated' | 'deleted';
+    event: 'created' | 'updated' | 'deleted' | 'viewed';
     subject: string;
     changes: AuditChange[];
     actor: string | null;

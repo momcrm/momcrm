@@ -18,7 +18,7 @@ it("shows owners and admins the team's rules and what they can be built from", f
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('settings/access-rules')
-                ->has('rules', 3)
+                ->has('rules', 4)
                 ->where('rules.0.name', 'Owners and admins can do everything')
                 ->where('rules.0.conditions.0', ['attribute' => 'subject.team_role', 'operator' => 'in', 'value' => ['owner', 'admin']])
                 ->where('options.resources', fn ($resources): bool => collect($resources)->firstWhere('value', 'project')['actions'] === ['create', 'update', 'change_visibility', 'manage_members', 'archive', 'restore', 'delete'])
