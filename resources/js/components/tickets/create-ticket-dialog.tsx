@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import {
     createContext,
+    Fragment,
     useCallback,
     useContext,
     useMemo,
@@ -23,6 +24,7 @@ import {
 } from 'react';
 import type { KeyboardEvent, ReactNode } from 'react';
 import {
+    assigneeChoices,
     defaultStatusId,
     PriorityGlyph,
     useTicketPriorities,
@@ -42,6 +44,7 @@ import {
     DropdownMenuCheckboxItem,
     DropdownMenuContent,
     DropdownMenuItem,
+    DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
@@ -448,10 +451,7 @@ function CreateTicketForm({
                         placeholder="Assign to…"
                         value={assigneeId}
                         empty="Unassigned"
-                        choices={options.members.map((member) => ({
-                            value: member.id,
-                            label: member.name,
-                        }))}
+                        choices={assigneeChoices(options.members, group)}
                         onChange={setAssigneeId}
                     >
                         <Initials name={assignee?.name ?? null} />
@@ -858,7 +858,13 @@ function SearchPicker({
     placeholder?: string;
     value: string;
     empty?: string;
-    choices: { value: string; label: string; hue?: number | null }[];
+    /** A choice's section, when given, heads it and the choices after it. */
+    choices: {
+        value: string;
+        label: string;
+        hue?: number | null;
+        section?: string;
+    }[];
     onChange: (value: string) => void;
     children: ReactNode;
 }) {
@@ -868,7 +874,7 @@ function SearchPicker({
     const matching = choices.filter((choice) =>
         choice.label.toLowerCase().includes(query.trim().toLowerCase()),
     );
-    const allChoices =
+    const allChoices: typeof choices =
         empty !== undefined && !query
             ? [{ value: '', label: empty }, ...matching]
             : matching;
@@ -937,26 +943,34 @@ function SearchPicker({
                         No matches.
                     </p>
                 )}
-                {allChoices.map((choice) => (
-                    <DropdownMenuItem
-                        key={choice.value || '__none__'}
-                        onSelect={() => onChange(choice.value)}
-                        className="justify-between"
-                    >
-                        <span className="flex min-w-0 items-center gap-2">
-                            {choice.hue !== undefined && (
-                                <span
-                                    aria-hidden
-                                    className="size-2 shrink-0 rounded-[3px] hue-dot"
-                                    style={hueStyle(choice.hue)}
-                                />
+                {allChoices.map((choice, index) => (
+                    <Fragment key={choice.value || '__none__'}>
+                        {choice.section &&
+                            choice.section !==
+                                allChoices[index - 1]?.section && (
+                                <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+                                    {choice.section}
+                                </DropdownMenuLabel>
                             )}
-                            <span className="truncate">{choice.label}</span>
-                        </span>
-                        {choice.value === value && (
-                            <span className="text-primary">✓</span>
-                        )}
-                    </DropdownMenuItem>
+                        <DropdownMenuItem
+                            onSelect={() => onChange(choice.value)}
+                            className="justify-between"
+                        >
+                            <span className="flex min-w-0 items-center gap-2">
+                                {choice.hue !== undefined && (
+                                    <span
+                                        aria-hidden
+                                        className="size-2 shrink-0 rounded-[3px] hue-dot"
+                                        style={hueStyle(choice.hue)}
+                                    />
+                                )}
+                                <span className="truncate">{choice.label}</span>
+                            </span>
+                            {choice.value === value && (
+                                <span className="text-primary">✓</span>
+                            )}
+                        </DropdownMenuItem>
+                    </Fragment>
                 ))}
             </DropdownMenuContent>
         </DropdownMenu>

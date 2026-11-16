@@ -10,11 +10,12 @@ import {
     RotateCcw,
     Star,
 } from 'lucide-react';
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import type { ReactNode } from 'react';
 import { toast } from 'sonner';
 import {
     AssigneeAvatar,
+    assigneeChoices,
     ChoiceTag,
     daysUntil,
     defaultStatusId,
@@ -36,6 +37,7 @@ import {
     DropdownMenu,
     DropdownMenuCheckboxItem,
     DropdownMenuContent,
+    DropdownMenuLabel,
     DropdownMenuRadioGroup,
     DropdownMenuRadioItem,
     DropdownMenuTrigger,
@@ -294,10 +296,12 @@ function DrawerBody({
                             value={ticket.assignee_id ?? NONE}
                             choices={[
                                 { value: NONE, label: 'Unassigned' },
-                                ...options.members.map((member) => ({
-                                    value: member.id,
-                                    label: member.name,
-                                })),
+                                ...assigneeChoices(
+                                    options.members,
+                                    options.groups.find(
+                                        (group) => group.id === ticket.group_id,
+                                    ),
+                                ),
                             ]}
                             onChange={(id) =>
                                 save({ assignee_id: id === NONE ? null : id })
@@ -522,7 +526,13 @@ function Picker({
     children,
 }: {
     value: string;
-    choices: { value: string; label: string; hue?: number | null }[];
+    /** A choice's section, when given, heads it and the choices after it. */
+    choices: {
+        value: string;
+        label: string;
+        hue?: number | null;
+        section?: string;
+    }[];
     onChange: (value: string) => void;
     children: ReactNode;
 }) {
@@ -539,20 +549,26 @@ function Picker({
                     value={value}
                     onValueChange={(next) => next !== value && onChange(next)}
                 >
-                    {choices.map((choice) => (
-                        <DropdownMenuRadioItem
-                            key={choice.value}
-                            value={choice.value}
-                        >
-                            {choice.hue !== undefined && (
-                                <span
-                                    aria-hidden
-                                    className="size-2 rounded-[3px] hue-dot"
-                                    style={hueStyle(choice.hue)}
-                                />
-                            )}
-                            {choice.label}
-                        </DropdownMenuRadioItem>
+                    {choices.map((choice, index) => (
+                        <Fragment key={choice.value}>
+                            {choice.section &&
+                                choice.section !==
+                                    choices[index - 1]?.section && (
+                                    <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+                                        {choice.section}
+                                    </DropdownMenuLabel>
+                                )}
+                            <DropdownMenuRadioItem value={choice.value}>
+                                {choice.hue !== undefined && (
+                                    <span
+                                        aria-hidden
+                                        className="size-2 rounded-[3px] hue-dot"
+                                        style={hueStyle(choice.hue)}
+                                    />
+                                )}
+                                {choice.label}
+                            </DropdownMenuRadioItem>
+                        </Fragment>
                     ))}
                 </DropdownMenuRadioGroup>
             </DropdownMenuContent>

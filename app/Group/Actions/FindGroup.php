@@ -12,22 +12,35 @@ use App\Shared\Table;
 use App\Shared\Types;
 use App\User\UserEloquentModel;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 final class FindGroup
 {
     /**
-     * Every group in the team, for pickers and the sidebar.
+     * Every group in the team with its members' ids, for pickers (which can
+     * offer a ticket's group's members first) and the sidebar.
      *
-     * @return Collection<int, array{id: string, name: string, hue: ?int, icon: ?string}>
+     * @return Collection<int, array{id: string, name: string, hue: ?int, icon: ?string, member_ids: list<string>}>
      */
     public static function optionsForTeam(string $teamId): Collection
     {
-        return GroupEloquentModel::query()
+        $groups = GroupEloquentModel::query()
             ->withoutGlobalScopes()
             ->where(TeamId::getDatabaseTableColumnName(), $teamId)
             ->orderBy(Name::getDatabaseTableColumnName())
-            ->get()
-            ->map(fn (GroupEloquentModel $group): array => ['id' => $group->id, 'name' => $group->name, 'hue' => $group->hue, 'icon' => $group->icon]);
+            ->get();
+        $memberIds = DB::table(Table::GroupUser->value)
+            ->whereIn('group_id', $groups->modelKeys())
+            ->get(['group_id', 'user_id'])
+            ->groupBy('group_id');
+
+        return $groups->map(fn (GroupEloquentModel $group): array => [
+            'id' => $group->id,
+            'name' => $group->name,
+            'hue' => $group->hue,
+            'icon' => $group->icon,
+            'member_ids' => Types::stringList($memberIds->get($group->id, collect())->pluck('user_id')),
+        ]);
     }
 
     /**

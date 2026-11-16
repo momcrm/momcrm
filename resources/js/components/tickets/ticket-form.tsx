@@ -2,6 +2,7 @@ import { Form, Link } from '@inertiajs/react';
 import { useState } from 'react';
 import FormField from '@/components/form-field';
 import {
+    assigneeChoices,
     useTicketPriorities,
     useTicketTypes,
     useTicketStatuses,
@@ -33,6 +34,14 @@ export default function TicketForm({
     const priorities = useTicketPriorities(ticket?.priority_id);
     const statuses = useTicketStatuses(ticket?.status_id);
     const types = useTicketTypes(ticket?.type_id);
+    const [selectedGroup, setSelectedGroup] = useState(ticket?.group_id ?? '');
+    const assignees = assigneeChoices(
+        options.members,
+        options.groups.find((group) => group.id === selectedGroup),
+    );
+    const sections = [
+        ...new Set(assignees.map((assignee) => assignee.section)),
+    ];
     const [selectedCustomer, setSelectedCustomer] = useState(
         ticket?.customer_id ?? customerId ?? '',
     );
@@ -204,11 +213,29 @@ export default function TicketForm({
                                 defaultValue={ticket?.assignee_id ?? ''}
                             >
                                 <option value="">Unassigned</option>
-                                {options.members.map((member) => (
-                                    <option key={member.id} value={member.id}>
-                                        {member.name}
-                                    </option>
-                                ))}
+                                {sections.map((section) => {
+                                    const items = assignees
+                                        .filter(
+                                            (assignee) =>
+                                                assignee.section === section,
+                                        )
+                                        .map((assignee) => (
+                                            <option
+                                                key={assignee.value}
+                                                value={assignee.value}
+                                            >
+                                                {assignee.label}
+                                            </option>
+                                        ));
+
+                                    return section ? (
+                                        <optgroup key={section} label={section}>
+                                            {items}
+                                        </optgroup>
+                                    ) : (
+                                        items
+                                    );
+                                })}
                             </NativeSelect>
                         </FormField>
                         <FormField
@@ -262,7 +289,10 @@ export default function TicketForm({
                             <NativeSelect
                                 id="group_id"
                                 name="group_id"
-                                defaultValue={ticket?.group_id ?? ''}
+                                value={selectedGroup}
+                                onChange={(event) =>
+                                    setSelectedGroup(event.target.value)
+                                }
                             >
                                 <option value="">No group</option>
                                 {options.groups.map((choice) => (

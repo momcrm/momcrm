@@ -17,7 +17,7 @@ import {
 import { useInitials } from '@/hooks/use-initials';
 import { hueStyle } from '@/lib/colors';
 import { cn } from '@/lib/utils';
-import type { Choice, ChoiceList } from '@/types';
+import type { Choice, ChoiceList, GroupOption } from '@/types';
 
 /**
  * The live choices in a list, plus any archived ones still in use by the
@@ -389,4 +389,40 @@ export function SubtaskProgress({
             {done}/{total}
         </span>
     );
+}
+
+/**
+ * The team's members as assignee choices: the ticket's group's members first,
+ * under the group's name, then everyone else. Without a group (or when
+ * everyone or no one is in it), just the members in their usual order.
+ */
+export function assigneeChoices(
+    members: { id: string; name: string }[],
+    group: GroupOption | undefined,
+): { value: string; label: string; section?: string }[] {
+    const inGroup = members.filter((member) =>
+        group?.member_ids.includes(member.id),
+    );
+
+    if (!group || inGroup.length === 0 || inGroup.length === members.length) {
+        return members.map((member) => ({
+            value: member.id,
+            label: member.name,
+        }));
+    }
+
+    return [
+        ...inGroup.map((member) => ({
+            value: member.id,
+            label: member.name,
+            section: group.name,
+        })),
+        ...members
+            .filter((member) => !group.member_ids.includes(member.id))
+            .map((member) => ({
+                value: member.id,
+                label: member.name,
+                section: 'Everyone else',
+            })),
+    ];
 }
