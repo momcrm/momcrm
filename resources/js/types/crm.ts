@@ -17,11 +17,21 @@ export type Customer = {
     phone: string | null;
     website: string | null;
     status: 'active' | 'inactive';
+    billing_type: CustomerBillingType;
+    prefix: string | null;
+    type_id: string | null;
     notes: string | null;
     is_sample: boolean;
 };
 
-export type CustomerListItem = Customer & { contacts_count: number };
+export type CustomerBillingType = 'automatic' | 'manual' | 'excluded';
+
+export type CustomerListItem = Customer & {
+    contacts_count: number;
+    services_count: number;
+    balance_in_cents: number;
+    updated_at: string | null;
+};
 
 export type Contact = {
     id: string;
@@ -81,6 +91,7 @@ export type Service = {
  * The lists a team can customise, as keyed in the shared `choices` prop.
  */
 export type ChoiceList =
+    | 'customer_type'
     | 'label'
     | 'ticket_priority'
     | 'ticket_status'

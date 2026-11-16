@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Choice\ChoiceEloquentModel;
 use App\Customer\CustomerEloquentModel;
 use App\User\UserEloquentModel;
 
@@ -58,4 +59,63 @@ it('rejects an invalid email and website', function (): void {
             'email' => 'The email field must be a valid email address.',
             'website' => 'The website field must be a valid URL.',
         ]);
+});
+
+it('stores the type, billing type and prefix in capitals', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $type = ChoiceEloquentModel::factory()->customerType()->create(['team_id' => $user->current_team_id]);
+
+    actingAs($user)->post(route('customers.store'), [
+        'name' => 'Acme IT',
+        'status' => 'active',
+        'type_id' => $type->id,
+        'billing_type' => 'automatic',
+        'prefix' => ' acme ',
+    ])->assertSessionHasNoErrors();
+
+    expect(CustomerEloquentModel::query()->sole())
+        ->type_id->toBe($type->id)
+        ->billing_type->toBe('automatic')
+        ->prefix->toBe('ACME');
+});
+
+it('bills new customers manually unless told otherwise', function (): void {
+    actingAs(UserEloquentModel::factory()->withPersonalTeam()->create())
+        ->post(route('customers.store'), ['name' => 'Acme IT', 'status' => 'active']);
+
+    expect(CustomerEloquentModel::query()->sole()->billing_type)->toBe('manual');
+});
+
+it('keeps prefixes unique within the team, whatever their case', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    CustomerEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'prefix' => 'ACME']);
+    CustomerEloquentModel::factory()->create(['prefix' => 'ZETA']);
+
+    actingAs($user)
+        ->post(route('customers.store'), ['name' => 'Copy', 'status' => 'active', 'prefix' => 'acme'])
+        ->assertSessionHasErrors(['prefix' => 'Another customer already uses this prefix.']);
+
+    actingAs($user)
+        ->post(route('customers.store'), ['name' => 'Zeta', 'status' => 'active', 'prefix' => 'zeta'])
+        ->assertSessionHasNoErrors();
+});
+
+it('rejects a prefix that is not just letters', function (): void {
+    actingAs(UserEloquentModel::factory()->withPersonalTeam()->create())
+        ->post(route('customers.store'), ['name' => 'Acme', 'status' => 'active', 'prefix' => 'AC-1'])
+        ->assertSessionHasErrors(['prefix' => 'Use letters only.']);
+});
+
+it("rejects another team's customer type and a ticket type", function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $otherTeams = ChoiceEloquentModel::factory()->customerType()->create();
+    $ticketType = ChoiceEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
+
+    foreach ([$otherTeams, $ticketType] as $choice) {
+        actingAs($user)
+            ->post(route('customers.store'), ['name' => 'Acme', 'status' => 'active', 'type_id' => $choice->id])
+            ->assertSessionHasErrors(['type_id' => "Choose one of your team's customer types."]);
+    }
+
+    expect(CustomerEloquentModel::query()->exists())->toBeFalse();
 });

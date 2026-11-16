@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Customer\Controllers;
 
 use App\Customer\Actions\FindCustomer;
+use App\Customer\CustomerBillingTypeEnum;
 use App\Customer\CustomerStatusEnum;
 use App\Customer\Exceptions\CouldNotFindCustomer;
 use Illuminate\Http\Request;
@@ -27,6 +28,7 @@ final class EditCustomerController
         return Inertia::render('customers/edit', [
             'customer' => $found->toSummary(),
             'statuses' => CustomerStatusEnum::options(),
+            'billingTypes' => CustomerBillingTypeEnum::options(),
         ]);
     }
 }

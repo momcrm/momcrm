@@ -2,8 +2,12 @@
 
 declare(strict_types=1);
 
+use App\Choice\ChoiceEloquentModel;
 use App\Contact\ContactEloquentModel;
 use App\Customer\CustomerEloquentModel;
+use App\Invoice\InvoiceEloquentModel;
+use App\InvoiceItem\InvoiceItemEloquentModel;
+use App\Service\ServiceEloquentModel;
 use App\User\UserEloquentModel;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -51,4 +55,36 @@ it('requires finishing onboarding', function (): void {
 
 it('requires authentication', function (): void {
     get(route('customers.index'))->assertRedirectToRoute('login');
+});
+
+it('filters customers by type, billing type and status, and finds them by prefix', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $business = ChoiceEloquentModel::factory()->customerType()->create(['team_id' => $user->current_team_id]);
+    CustomerEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'name' => 'Acme IT', 'prefix' => 'ACME', 'type_id' => $business->id, 'billing_type' => 'automatic']);
+    CustomerEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'name' => 'Zeta', 'status' => 'inactive', 'billing_type' => 'excluded']);
+
+    $names = fn (array $query): array => actingAs($user)->get(route('customers.index', $query))
+        ->viewData('page')['props']['customers']['data'];
+
+    expect(array_column($names(['type' => $business->id]), 'name'))->toBe(['Acme IT'])
+        ->and(array_column($names(['billing' => 'excluded']), 'name'))->toBe(['Zeta'])
+        ->and(array_column($names(['status' => 'inactive']), 'name'))->toBe(['Zeta'])
+        ->and(array_column($names(['search' => 'acm']), 'name'))->toBe(['Acme IT']);
+});
+
+it('shows what each customer owes on sent invoices and how many services they have', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $customer = CustomerEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
+    $invoice = fn (string $status) => InvoiceEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'customer_id' => $customer->id, 'status' => $status, 'tax_rate_basis_points' => 1000]);
+    foreach (['sent', 'sent', 'draft', 'paid'] as $status) {
+        InvoiceItemEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'invoice_id' => $invoice($status)->id, 'quantity' => 2, 'unit_price_in_cents' => 5000]);
+    }
+    ServiceEloquentModel::factory()->count(3)->create(['team_id' => $user->current_team_id, 'customer_id' => $customer->id]);
+
+    actingAs($user)
+        ->get(route('customers.index'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('customers.data.0.balance_in_cents', 22000)
+            ->where('customers.data.0.services_count', 3),
+        );
 });

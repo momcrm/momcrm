@@ -6,7 +6,11 @@ namespace App\Customer\Controllers;
 
 use App\Customer\Actions\FindCustomer;
 use App\Customer\Customer;
+use App\Customer\CustomerBillingTypeEnum;
+use App\Customer\CustomerStatusEnum;
+use App\Invoice\Actions\FindInvoice;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -14,15 +18,33 @@ final class ListCustomersController
 {
     public function __invoke(Request $request): Response
     {
+        $teamId = (string) $request->user()?->current_team_id;
         $search = $request->string('search')->trim()->toString() ?: null;
+        $typeId = Str::isUuid($request->string('type')->toString()) ? $request->string('type')->toString() : null;
+        $billingType = CustomerBillingTypeEnum::tryFrom($request->string('billing')->toString());
+        $status = CustomerStatusEnum::tryFrom($request->string('status')->toString());
+
+        $customers = FindCustomer::paginateForTeam($teamId, $search, $typeId, $billingType, $status);
+        $balances = FindInvoice::balancesForCustomers($teamId, $customers->getCollection()
+            ->map(fn (Customer $customer): string => $customer->getId()->toString())
+            ->all());
 
         return Inertia::render('customers/index', [
-            'customers' => FindCustomer::paginateForTeam((string) $request->user()?->current_team_id, $search)
-                ->through(fn (Customer $customer): array => [
-                    ...$customer->toSummary(),
-                    'contacts_count' => $customer->getContactsCount()->toInteger(),
-                ]),
-            'filters' => ['search' => $search],
+            'customers' => $customers->through(fn (Customer $customer): array => [
+                ...$customer->toSummary(),
+                'contacts_count' => $customer->getContactsCount()->toInteger(),
+                'services_count' => $customer->getServicesCount()->toInteger(),
+                'balance_in_cents' => $balances[$customer->getId()->toString()]['balance_in_cents'] ?? 0,
+                'updated_at' => $customer->getUpdatedAt()->toNullableCarbon()?->toIso8601String(),
+            ]),
+            'filters' => [
+                'search' => $search,
+                'type' => $typeId,
+                'billing' => $billingType?->value,
+                'status' => $status?->value,
+            ],
+            'billingTypes' => CustomerBillingTypeEnum::options(),
+            'statuses' => CustomerStatusEnum::options(),
         ]);
     }
 }

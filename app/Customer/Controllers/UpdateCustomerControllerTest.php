@@ -30,3 +30,17 @@ it("returns not found for another team's customer", function (): void {
 
     expect($other->fresh()->name)->toBe('Theirs');
 });
+
+it('lets a customer keep its own prefix', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $customer = CustomerEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'prefix' => 'ACME']);
+
+    actingAs($user)
+        ->put(route('customers.update', $customer->id), ['name' => 'Acme renamed', 'status' => 'active', 'prefix' => 'acme', 'billing_type' => 'excluded'])
+        ->assertSessionHasNoErrors();
+
+    expect($customer->refresh())
+        ->name->toBe('Acme renamed')
+        ->prefix->toBe('ACME')
+        ->billing_type->toBe('excluded');
+});

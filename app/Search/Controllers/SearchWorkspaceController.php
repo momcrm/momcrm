@@ -51,7 +51,7 @@ final class SearchWorkspaceController
                 ])
                 ->values()
                 ->all(),
-            'customers' => FindCustomer::paginateForTeam($teamId, $term, self::RESULTS_PER_GROUP)
+            'customers' => FindCustomer::paginateForTeam($teamId, $term, perPage: self::RESULTS_PER_GROUP)
                 ->getCollection()
                 ->map(fn (Customer $customer): array => [
                     'id' => $customer->getId()->toString(),

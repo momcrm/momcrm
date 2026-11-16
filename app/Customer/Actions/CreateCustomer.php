@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Customer\Actions;
 
 use App\Customer\Customer;
+use App\Customer\CustomerBillingTypeEnum;
 use App\Customer\CustomerEloquentModel;
 use App\Customer\Properties\Id;
 use App\Shared\Actions\NextTeamNumber;
@@ -22,6 +23,10 @@ final readonly class CreateCustomer
         return DB::transaction(function (): Customer {
             if ($this->customer->getId()->isNull()) {
                 $this->customer->setId(Id::generate());
+            }
+
+            if ($this->customer->getBillingType()->isNull()) {
+                $this->customer->setBillingType(CustomerBillingTypeEnum::Manual->value);
             }
 
             $this->customer->setNumber(NextTeamNumber::for(Table::Customers, $this->customer->getTeamId()->toString()));

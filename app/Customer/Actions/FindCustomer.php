@@ -5,13 +5,19 @@ declare(strict_types=1);
 namespace App\Customer\Actions;
 
 use App\Customer\Customer;
+use App\Customer\CustomerBillingTypeEnum;
 use App\Customer\CustomerCollection;
 use App\Customer\CustomerEloquentModel;
 use App\Customer\CustomerRelationship;
+use App\Customer\CustomerStatusEnum;
+use App\Customer\Properties\BillingType;
 use App\Customer\Properties\Email;
 use App\Customer\Properties\Id;
 use App\Customer\Properties\Name;
+use App\Customer\Properties\Prefix;
+use App\Customer\Properties\Status;
 use App\Customer\Properties\TeamId;
+use App\Customer\Properties\TypeId;
 use App\Team\Scopes\CurrentTeamScope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -29,15 +35,28 @@ final class FindCustomer
     }
 
     /**
+     * A page of the team's customers, by name, with their contact and service
+     * counts.
+     *
      * @return LengthAwarePaginator<int, Customer>
      */
-    public static function paginateForTeam(string $teamId, ?string $search = null, int $perPage = 25): LengthAwarePaginator
-    {
+    public static function paginateForTeam(
+        string $teamId,
+        ?string $search = null,
+        ?string $typeId = null,
+        ?CustomerBillingTypeEnum $billingType = null,
+        ?CustomerStatusEnum $status = null,
+        int $perPage = 25,
+    ): LengthAwarePaginator {
         return self::query($teamId)
             ->when($search, fn ($query, string $search) => $query->where(fn ($query) => $query
                 ->where(Name::getDatabaseTableColumnName(), 'like', "%{$search}%")
+                ->orWhere(Prefix::getDatabaseTableColumnName(), 'like', "%{$search}%")
                 ->orWhere(Email::getDatabaseTableColumnName(), 'like', "%{$search}%")))
-            ->withCount(CustomerRelationship::Contacts->value)
+            ->when($typeId, fn ($query, string $typeId) => $query->where(TypeId::getDatabaseTableColumnName(), $typeId))
+            ->when($billingType, fn ($query, CustomerBillingTypeEnum $billingType) => $query->where(BillingType::getDatabaseTableColumnName(), $billingType->value))
+            ->when($status, fn ($query, CustomerStatusEnum $status) => $query->where(Status::getDatabaseTableColumnName(), $status->value))
+            ->withCount([CustomerRelationship::Contacts->value, CustomerRelationship::Services->value])
             ->orderBy(Name::getDatabaseTableColumnName())
             ->paginate($perPage)
             ->withQueryString()
@@ -59,7 +78,8 @@ final class FindCustomer
     }
 
     /**
-     * Every customer in the team as id/name pairs, for pickers.
+     * Every customer in the team as id/name pairs, for pickers. A customer
+     * with a prefix is named "PREFIX · Name" so it can be found by either.
      *
      * @return Collection<int, array{id: string, name: string}>
      */
@@ -67,8 +87,11 @@ final class FindCustomer
     {
         return self::query($teamId)
             ->orderBy(Name::getDatabaseTableColumnName())
-            ->get([Id::getDatabaseTableColumnName(), Name::getDatabaseTableColumnName()])
-            ->map(fn (CustomerEloquentModel $customer): array => ['id' => $customer->id, 'name' => $customer->name]);
+            ->get([Id::getDatabaseTableColumnName(), Name::getDatabaseTableColumnName(), Prefix::getDatabaseTableColumnName()])
+            ->map(fn (CustomerEloquentModel $customer): array => [
+                'id' => $customer->id,
+                'name' => $customer->prefix === null ? $customer->name : "{$customer->prefix} · {$customer->name}",
+            ]);
     }
 
     /**

@@ -6,13 +6,7 @@ namespace App\Customer\FormRequests;
 
 use App\Customer\Actions\CreateCustomer;
 use App\Customer\Customer;
-use App\Customer\Properties\Abn;
-use App\Customer\Properties\Email;
-use App\Customer\Properties\Name;
-use App\Customer\Properties\Notes;
-use App\Customer\Properties\Phone;
-use App\Customer\Properties\Status;
-use App\Customer\Properties\Website;
+use App\Customer\CustomerValidationRules;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
@@ -31,15 +25,20 @@ final class StoreCustomerFormRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            Name::getNameForValidation() => Name::getValidationRulesForCreate($this),
-            Abn::getNameForValidation() => Abn::getValidationRulesForCreate($this),
-            Email::getNameForValidation() => Email::getValidationRulesForCreate($this),
-            Phone::getNameForValidation() => Phone::getValidationRulesForCreate($this),
-            Website::getNameForValidation() => Website::getValidationRulesForCreate($this),
-            Status::getNameForValidation() => Status::getValidationRulesForCreate($this),
-            Notes::getNameForValidation() => Notes::getValidationRulesForCreate($this),
-        ];
+        return CustomerValidationRules::for($this, (string) $this->user()?->current_team_id);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return CustomerValidationRules::messages();
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->merge(CustomerValidationRules::prepare($this));
     }
 
     public function process(): RedirectResponse

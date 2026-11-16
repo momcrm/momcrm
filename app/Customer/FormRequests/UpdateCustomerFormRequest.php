@@ -7,14 +7,8 @@ namespace App\Customer\FormRequests;
 use App\Customer\Actions\FindCustomer;
 use App\Customer\Actions\UpdateCustomer;
 use App\Customer\Customer;
+use App\Customer\CustomerValidationRules;
 use App\Customer\Exceptions\CouldNotFindCustomer;
-use App\Customer\Properties\Abn;
-use App\Customer\Properties\Email;
-use App\Customer\Properties\Name;
-use App\Customer\Properties\Notes;
-use App\Customer\Properties\Phone;
-use App\Customer\Properties\Status;
-use App\Customer\Properties\Website;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
@@ -51,15 +45,20 @@ final class UpdateCustomerFormRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            Name::getNameForValidation() => Name::getValidationRulesForUpdate($this),
-            Abn::getNameForValidation() => Abn::getValidationRulesForUpdate($this),
-            Email::getNameForValidation() => Email::getValidationRulesForUpdate($this),
-            Phone::getNameForValidation() => Phone::getValidationRulesForUpdate($this),
-            Website::getNameForValidation() => Website::getValidationRulesForUpdate($this),
-            Status::getNameForValidation() => Status::getValidationRulesForUpdate($this),
-            Notes::getNameForValidation() => Notes::getValidationRulesForUpdate($this),
-        ];
+        return CustomerValidationRules::for($this, (string) $this->user()?->current_team_id, $this->customer);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return CustomerValidationRules::messages();
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->merge(CustomerValidationRules::prepare($this));
     }
 
     public function process(): RedirectResponse

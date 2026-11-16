@@ -1,4 +1,5 @@
 import { Form, Link } from '@inertiajs/react';
+import { useCustomerTypes } from '@/components/customers/customer-meta';
 import FormField from '@/components/form-field';
 import NativeSelect from '@/components/native-select';
 import { Button } from '@/components/ui/button';
@@ -13,30 +14,90 @@ export default function CustomerForm({
     action,
     customer,
     statuses,
+    billingTypes,
     submitLabel,
     cancelHref,
 }: {
     action: Action;
     customer?: Customer;
     statuses: Option[];
+    billingTypes: Option[];
     submitLabel: string;
     cancelHref: string;
 }) {
+    const types = useCustomerTypes(customer?.type_id);
+
     return (
         <Form {...action} className="max-w-2xl space-y-6">
             {({ processing, errors }) => (
                 <>
-                    <FormField id="name" label="Name" error={errors.name}>
-                        <Input
-                            id="name"
-                            name="name"
-                            defaultValue={customer?.name}
-                            required
-                            autoFocus
-                        />
-                    </FormField>
+                    <div className="grid gap-6 sm:grid-cols-[1fr_8rem]">
+                        <FormField id="name" label="Name" error={errors.name}>
+                            <Input
+                                id="name"
+                                name="name"
+                                defaultValue={customer?.name}
+                                required
+                                autoFocus
+                            />
+                        </FormField>
+                        <FormField
+                            id="prefix"
+                            label="Prefix"
+                            error={errors.prefix}
+                        >
+                            <Input
+                                id="prefix"
+                                name="prefix"
+                                maxLength={8}
+                                placeholder="ACME"
+                                className="font-mono uppercase"
+                                defaultValue={customer?.prefix ?? ''}
+                            />
+                        </FormField>
+                    </div>
 
                     <div className="grid gap-6 sm:grid-cols-2">
+                        <FormField
+                            id="type_id"
+                            label="Type"
+                            error={errors.type_id}
+                        >
+                            <NativeSelect
+                                id="type_id"
+                                name="type_id"
+                                defaultValue={customer?.type_id ?? ''}
+                            >
+                                <option value="">No type</option>
+                                {types.map((type) => (
+                                    <option key={type.id} value={type.id}>
+                                        {type.name}
+                                    </option>
+                                ))}
+                            </NativeSelect>
+                        </FormField>
+                        <FormField
+                            id="billing_type"
+                            label="Billing"
+                            error={errors.billing_type}
+                        >
+                            <NativeSelect
+                                id="billing_type"
+                                name="billing_type"
+                                defaultValue={
+                                    customer?.billing_type ?? 'manual'
+                                }
+                            >
+                                {billingTypes.map((billingType) => (
+                                    <option
+                                        key={billingType.value}
+                                        value={billingType.value}
+                                    >
+                                        {billingType.label}
+                                    </option>
+                                ))}
+                            </NativeSelect>
+                        </FormField>
                         <FormField
                             id="email"
                             label="Email"
