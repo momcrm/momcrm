@@ -19,6 +19,7 @@ enum AccessResourceEnum: string
     case Attachment = 'attachment';
     case Comment = 'comment';
     case Contact = 'contact';
+    case Contract = 'contract';
     case Customer = 'customer';
     case Group = 'group';
     case Invoice = 'invoice';
@@ -36,6 +37,7 @@ enum AccessResourceEnum: string
             self::Attachment => 'Files',
             self::Comment => 'Comments',
             self::Contact => 'Contacts',
+            self::Contract => 'Contracts',
             self::Customer => 'Customers',
             self::Group => 'Groups',
             self::Invoice => 'Invoices',
@@ -56,7 +58,7 @@ enum AccessResourceEnum: string
     public function actions(): array
     {
         return match ($this) {
-            self::Asset, self::Contact, self::Location, self::Service, self::Milestone => [
+            self::Asset, self::Contact, self::Contract, self::Location, self::Service, self::Milestone => [
                 AccessActionEnum::Create,
                 AccessActionEnum::Update,
                 AccessActionEnum::Delete,

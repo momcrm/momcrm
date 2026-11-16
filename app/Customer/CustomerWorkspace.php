@@ -9,6 +9,7 @@ use App\AccessRule\Engine\AccessAbilities;
 use App\Asset\Actions\FindAsset;
 use App\Attachment\Actions\FindAttachment;
 use App\Contact\Actions\FindContact;
+use App\Contract\Actions\FindContract;
 use App\Customer\Actions\FindCustomer;
 use App\Customer\Exceptions\CouldNotFindCustomer;
 use App\Invoice\Actions\FindInvoice;
@@ -86,6 +87,7 @@ final readonly class CustomerWorkspace
             'assets' => FindAsset::forCustomer($customerId, $this->teamId)->count(),
             'services' => FindService::forCustomer($customerId, $this->teamId)->count(),
             'files' => FindAttachment::countForCustomer($customerId),
+            'contracts' => FindContract::countForCustomer($customerId, $this->teamId),
             'secrets' => FindSecret::countForCustomer($customerId, $this->teamId),
             'invoices' => FindInvoice::paginateForTeam($this->teamId, customerId: $customerId, perPage: 1)->total(),
         ];

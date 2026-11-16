@@ -42,7 +42,31 @@ export type CustomerWorkspace = {
         invoices: number;
         files: number;
         secrets: number;
+        contracts: number;
     };
+};
+
+export type ContractType = 'msa' | 'nda' | 'sla' | 'sa';
+
+export type ContractStatus =
+    | 'draft'
+    | 'pending'
+    | 'active'
+    | 'expired'
+    | 'cancelled';
+
+export type ContractItem = {
+    id: string;
+    customer_id: string;
+    title: string;
+    type: ContractType;
+    status: ContractStatus;
+    signed_on: string | null;
+    starts_on: string | null;
+    ends_on: string | null;
+    purchase_order: string | null;
+    description: string | null;
+    notes: string | null;
 };
 
 /** A customer's secret, without its values. */

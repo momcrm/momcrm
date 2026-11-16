@@ -2,6 +2,7 @@ import { Link, setLayoutProps, usePage } from '@inertiajs/react';
 import type { InertiaLinkProps } from '@inertiajs/react';
 import {
     Boxes,
+    FileSignature,
     FileStack,
     KeyRound,
     FolderKanban,
@@ -26,6 +27,7 @@ import { cn, toUrl } from '@/lib/utils';
 import {
     assets,
     contacts,
+    contracts,
     edit,
     files,
     index,
@@ -100,6 +102,12 @@ function links(workspace: CustomerWorkspace): WorkspaceLink[][] {
             },
         ],
         [
+            {
+                title: 'Contracts',
+                href: contracts(id),
+                icon: FileSignature,
+                count: counts.contracts,
+            },
             {
                 title: 'Files',
                 href: files(id),

@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import {
     assets,
     contacts,
+    contracts,
     files,
     invoices,
     locations,
@@ -27,6 +28,7 @@ import { show as showInvoice } from '@/routes/invoices';
 import { edit as editService } from '@/routes/services';
 import { show as showTicket } from '@/routes/tickets';
 import type {
+    ContractItem,
     CustomerMoney,
     CustomerWorkspace,
     InvoiceListItem,
@@ -199,18 +201,47 @@ function ServiceRow({ service }: { service: Service }) {
     );
 }
 
+function ContractRow({
+    contract,
+    href,
+}: {
+    contract: ContractItem;
+    href: string;
+}) {
+    return (
+        <li>
+            <Link
+                href={href}
+                className="-mx-2 flex h-9 items-center gap-2.5 rounded-md px-2 text-sm hover:bg-accent/50"
+            >
+                <span className="min-w-0 flex-1 truncate">
+                    {contract.title}
+                    <span className="ml-2 text-xs text-muted-foreground uppercase">
+                        {contract.type}
+                    </span>
+                </span>
+                <span className="text-xs text-warning tabular-nums">
+                    Ends {formatDate(contract.ends_on)}
+                </span>
+            </Link>
+        </li>
+    );
+}
+
 export default function CustomerDashboard({
     workspace,
     money,
     openTickets,
     draftInvoices,
     expiringServices,
+    expiringContracts,
 }: {
     workspace: CustomerWorkspace;
     money: CustomerMoney;
     openTickets: TicketListItem[];
     draftInvoices: InvoiceListItem[];
     expiringServices: Service[];
+    expiringContracts: ContractItem[];
 }) {
     const { customer, counts } = workspace;
     const id = customer.id;
@@ -230,6 +261,7 @@ export default function CustomerDashboard({
         { label: 'Locations', count: counts.locations, href: locations(id) },
         { label: 'Assets', count: counts.assets, href: assets(id) },
         { label: 'Services', count: counts.services, href: services(id) },
+        { label: 'Contracts', count: counts.contracts, href: contracts(id) },
         { label: 'Files', count: counts.files, href: files(id) },
         { label: 'Secrets', count: counts.secrets, href: secrets(id) },
         { label: 'Invoices', count: counts.invoices, href: invoices(id) },
@@ -275,12 +307,21 @@ export default function CustomerDashboard({
                     </Card>
 
                     <Card
-                        title="Services ending soon"
-                        viewAll={services(id).url}
-                        isEmpty={expiringServices.length === 0}
-                        empty="No active services end in the next 30 days."
+                        title="Ending soon"
+                        isEmpty={
+                            expiringServices.length === 0 &&
+                            expiringContracts.length === 0
+                        }
+                        empty="No active services or contracts end in the next 30 days."
                     >
                         <ul>
+                            {expiringContracts.map((contract) => (
+                                <ContractRow
+                                    key={contract.id}
+                                    contract={contract}
+                                    href={contracts(id).url}
+                                />
+                            ))}
                             {expiringServices.map((service) => (
                                 <ServiceRow
                                     key={service.id}
@@ -320,7 +361,7 @@ export default function CustomerDashboard({
 
                 <section
                     aria-label="In this account"
-                    className="grid grid-cols-2 overflow-hidden rounded-xl border bg-card shadow-xs @lg:grid-cols-4 @3xl:grid-cols-9"
+                    className="grid grid-cols-2 overflow-hidden rounded-xl border bg-card shadow-xs @lg:grid-cols-4 @3xl:grid-cols-5"
                 >
                     {tiles.map((tile) => (
                         <Link
