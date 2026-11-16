@@ -63,6 +63,7 @@ type Defaults = {
     customerId?: string | null;
     projectId?: string | null;
     statusId?: string;
+    assigneeId?: string;
 };
 
 const CreateTicketContext = createContext<{
@@ -71,7 +72,7 @@ const CreateTicketContext = createContext<{
 
 /**
  * Opens the new-ticket dialog from anywhere inside the app layout, optionally
- * starting it for a customer, a project or a status.
+ * starting it for a customer, a project, a status or an assignee.
  */
 export function useCreateTicket(): {
     openCreateTicket: (defaults?: Defaults) => void;
@@ -204,11 +205,13 @@ function CreateTicketForm({
         defaults.statusId ?? defaultStatusId(statuses, 'open') ?? '',
     );
     const status = statuses.find((option) => option.id === statusId);
-    const [assigneeId, setAssigneeId] = useState(
-        options.members.some((member) => member.id === currentUserId)
-            ? (currentUserId ?? '')
-            : '',
-    );
+    const [assigneeId, setAssigneeId] = useState(() => {
+        const preferred = defaults.assigneeId ?? currentUserId;
+
+        return options.members.some((member) => member.id === preferred)
+            ? (preferred ?? '')
+            : '';
+    });
     const priorities = useTicketPriorities();
     const labels = useLabels();
     const [priorityId, setPriorityId] = useState(

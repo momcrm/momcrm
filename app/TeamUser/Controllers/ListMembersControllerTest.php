@@ -36,6 +36,11 @@ it('lists members with their groups, open work and last activity', function (): 
             ->where('members.1.open_tickets', 2)
             ->whereNot('members.1.last_active_at', null)
             ->where('members.0.role', 'owner')
+            ->where('members.0.is_you', true)
+            ->where('members.0.can_remove', false)
+            ->where('members.1.is_you', false)
+            ->where('members.1.can_remove', true)
+            ->where('teamName', $owner->currentTeam->name)
             ->where('groups.0.members_count', 1)
             ->where('canChangeRoles', true)
             ->where('canInvite', true),
@@ -49,5 +54,11 @@ it('does not let plain members change roles or see invitations', function (): vo
 
     actingAs($member)
         ->get(route('members'))
-        ->assertInertia(fn (Assert $page) => $page->where('canChangeRoles', false)->where('canInvite', false)->where('invitations', []));
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('canChangeRoles', false)
+            ->where('canInvite', false)
+            ->where('invitations', [])
+            ->where('members.0.can_remove', false)
+            ->where('members.1.can_remove', false),
+        );
 });

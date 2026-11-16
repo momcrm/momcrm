@@ -8,13 +8,14 @@ use App\User\UserEloquentModel;
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\assertModelMissing;
 
-it('revokes a pending invitation', function (): void {
+it('revokes a pending invitation and goes back to where it was revoked from', function (): void {
     $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
     $invitation = TeamInvitationEloquentModel::factory()->create(['team_id' => $owner->current_team_id, 'email' => 'sam@acme.test']);
 
     actingAs($owner)
+        ->from(route('members'))
         ->delete(route('team.invitations.destroy', $invitation->id))
-        ->assertRedirectToRoute('team.edit');
+        ->assertRedirectToRoute('members');
 
     assertModelMissing($invitation);
 });
