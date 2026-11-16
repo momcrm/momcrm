@@ -11,7 +11,7 @@ use function Pest\Laravel\actingAs;
 it('adds a folder to a customer, inside another when asked', function (): void {
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
     $customer = CustomerEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
-    $parent = FolderEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'customer_id' => $customer->id]);
+    $parent = FolderEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'customer_id' => $customer->id, 'name' => 'Clients']);
 
     actingAs($user)
         ->post(route('folders.store', $customer->id), ['name' => 'Contracts', 'parent_id' => $parent->id])
