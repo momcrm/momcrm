@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Record\Actions;
 
+use App\CustomField\Actions\FindCustomField;
+use App\CustomField\CustomFieldQuery;
+use App\CustomField\CustomFieldTargetEnum;
 use App\Record\Properties\Name;
 use App\Record\Properties\Number;
 use App\Record\Properties\ObjectId;
@@ -29,9 +32,11 @@ final class FindRecord
 
     /**
      * A page of one object's records, optionally only those whose name
-     * contains the search.
+     * contains the search and that match filters on the object's fields. The
+     * sort is one of SORTS, or a custom field (`cf:<field id>`).
      *
      * @param  'asc'|'desc'  $direction
+     * @param  array<string, string>  $customFields  Filters on custom fields, by field id.
      * @return LengthAwarePaginator<int, Record>
      */
     public static function paginateForObject(
@@ -41,11 +46,27 @@ final class FindRecord
         string $sort = 'name',
         string $direction = 'asc',
         int $perPage = 25,
+        array $customFields = [],
     ): LengthAwarePaginator {
+        $fields = FindCustomField::listForTeam($teamId, CustomFieldTargetEnum::Record, objectId: $objectId);
+        $sortField = CustomFieldQuery::sortField($sort, $fields);
+
         return self::query($teamId)
             ->where(ObjectId::getDatabaseTableColumnName(), $objectId)
             ->when($search, fn (Builder $query, string $search) => $query->where(Name::getDatabaseTableColumnName(), 'like', "%{$search}%"))
-            ->orderBy(self::SORTS[$sort] ?? Name::getDatabaseTableColumnName(), $direction === 'desc' ? 'desc' : 'asc')
+            ->tap(function (Builder $query) use ($fields, $customFields, $sortField, $sort, $direction): void {
+                foreach ($fields as $field) {
+                    $value = $customFields[$field->getId()->toString()] ?? null;
+
+                    if ($value !== null) {
+                        CustomFieldQuery::filter($query, $field, $value);
+                    }
+                }
+
+                $sortField->isNotNull()
+                    ? CustomFieldQuery::sort($query, $sortField, $direction)
+                    : $query->orderBy(self::SORTS[$sort] ?? Name::getDatabaseTableColumnName(), $direction === 'desc' ? 'desc' : 'asc');
+            })
             ->orderBy(Number::getDatabaseTableColumnName())
             ->paginate($perPage)
             ->withQueryString()

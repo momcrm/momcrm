@@ -140,7 +140,7 @@ class HandleInertiaRequests extends Middleware
             return null;
         }
 
-        return collect(CustomFieldTargetEnum::cases())
+        return collect(CustomFieldTargetEnum::builtIn())
             ->mapWithKeys(fn (CustomFieldTargetEnum $target): array => [$target->value => FindCustomField::listForTeam($teamId, $target)->toSummaries()])
             ->all();
     }

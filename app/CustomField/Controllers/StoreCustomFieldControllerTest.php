@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\CustomField\Actions\FindCustomField;
 use App\CustomField\CustomFieldEloquentModel;
 use App\CustomField\CustomFieldTargetEnum;
+use App\CustomObject\CustomObjectEloquentModel;
 use App\User\UserEloquentModel;
 
 use function Pest\Laravel\actingAs;
@@ -98,3 +99,36 @@ it('forbids members', function (): void {
         ->post(route('custom-fields.store'), ['target' => 'ticket', 'type' => 'text', 'name' => 'Region'])
         ->assertForbidden();
 });
+
+it('adds a field to a custom object, where another object may have one of the same name', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $teamId = $owner->current_team_id;
+    $vehicles = CustomObjectEloquentModel::factory()->create(['team_id' => $teamId]);
+    $licences = CustomObjectEloquentModel::factory()->create(['team_id' => $teamId]);
+    CustomFieldEloquentModel::factory()->forObject($licences)->create(['name' => 'Expires', 'position' => 4]);
+
+    actingAs($owner)
+        ->post(route('custom-fields.store'), ['target' => 'record', 'object_id' => $vehicles->id, 'type' => 'date', 'name' => 'Expires'])
+        ->assertSessionHasNoErrors();
+
+    expect(FindCustomField::listForTeam($teamId, CustomFieldTargetEnum::Record, objectId: $vehicles->id)->first()?->toSummary())
+        ->toMatchArray(['target' => 'record', 'object_id' => $vehicles->id, 'type' => 'date', 'name' => 'Expires', 'position' => 0]);
+
+    actingAs($owner)
+        ->post(route('custom-fields.store'), ['target' => 'record', 'object_id' => $vehicles->id, 'type' => 'text', 'name' => 'Expires'])
+        ->assertSessionHasErrors('name');
+});
+
+it('needs one of the team\'s objects for a field on a custom object, and none otherwise', function (array $input, string $message): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $foreign = CustomObjectEloquentModel::factory()->create();
+    $input = array_map(fn (mixed $value): mixed => $value === '{foreign}' ? $foreign->id : $value, $input);
+
+    actingAs($owner)
+        ->post(route('custom-fields.store'), ['type' => 'text', 'name' => 'Plate', ...$input])
+        ->assertSessionHasErrors(['object_id' => $message]);
+})->with([
+    'no object' => [['target' => 'record'], 'Choose the object the field is for.'],
+    "another team's object" => [['target' => 'record', 'object_id' => '{foreign}'], 'Choose one of your objects.'],
+    'an object on a ticket field' => [['target' => 'ticket', 'object_id' => '{foreign}'], 'Only fields on custom objects name an object.'],
+]);

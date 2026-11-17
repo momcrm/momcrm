@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\CustomField\CustomFieldEloquentModel;
 use App\CustomField\CustomFieldTargetEnum;
+use App\CustomObject\CustomObjectEloquentModel;
 use App\User\UserEloquentModel;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -53,4 +54,26 @@ it('forbids members', function (): void {
     $member = UserEloquentModel::factory()->inTeam($owner->current_team_id)->create();
 
     actingAs($member)->get(route('custom-fields.edit'))->assertForbidden();
+});
+
+it("opens a custom object's fields, and lists the team's live objects as tabs", function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $teamId = $owner->current_team_id;
+    $vehicles = CustomObjectEloquentModel::factory()->create(['team_id' => $teamId, 'name_plural' => 'Vehicles']);
+    CustomObjectEloquentModel::factory()->archived()->create(['team_id' => $teamId]);
+    CustomFieldEloquentModel::factory()->forObject($vehicles)->create(['name' => 'Plate']);
+    CustomFieldEloquentModel::factory()->forObject(CustomObjectEloquentModel::factory()->create(['team_id' => $teamId, 'position' => 1]))->create();
+    CustomFieldEloquentModel::factory()->create(['team_id' => $teamId]);
+
+    actingAs($owner)
+        ->get(route('custom-fields.edit', ['object' => $vehicles->id]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('current', 'record')
+            ->where('currentObject', $vehicles->id)
+            ->has('targets', 4)
+            ->has('objects', 2)
+            ->where('objects.0', ['value' => $vehicles->id, 'label' => 'Vehicles'])
+            ->has('fields', 1)
+            ->where('fields.0.name', 'Plate'),
+        );
 });

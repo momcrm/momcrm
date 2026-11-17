@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Customer\CustomerEloquentModel;
+use App\CustomField\CustomFieldEloquentModel;
+use App\CustomField\CustomFieldRelationEnum;
 use App\CustomObject\CustomObjectEloquentModel;
 use App\Record\RecordEloquentModel;
 use App\User\UserEloquentModel;
@@ -36,4 +39,23 @@ it('finds no record under another object, or in another team', function (): void
     actingAs($owner)->get(route('records.show', [$vehicles, $licence]))->assertNotFound();
     actingAs($owner)->get(route('records.show', [$vehicles, $foreign]))->assertNotFound();
     actingAs($owner)->get(route('records.show', [$foreign->object_id, $foreign]))->assertNotFound();
+});
+
+it("shows a record's fields and values, with the names of the records it links to", function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create(['onboarded_at' => now()]);
+    $teamId = $owner->current_team_id;
+    $vehicles = CustomObjectEloquentModel::factory()->create(['team_id' => $teamId]);
+    $lessor = CustomFieldEloquentModel::factory()->forObject($vehicles)->linkingTo(CustomFieldRelationEnum::Customer)->create(['name' => 'Lessor']);
+    CustomFieldEloquentModel::factory()->forObject($vehicles)->archived()->create();
+    $bank = CustomerEloquentModel::factory()->create(['team_id' => $teamId, 'name' => 'Fleet Bank']);
+    $record = RecordEloquentModel::factory()->of($vehicles)->create(['custom_fields' => [$lessor->id => $bank->id]]);
+
+    actingAs($owner)
+        ->get(route('records.show', [$vehicles, $record]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('fields', 1)
+            ->where('fields.0.name', 'Lessor')
+            ->where("record.custom_fields.{$lessor->id}", $bank->id)
+            ->where('customFieldLabels', [$bank->id => 'Fleet Bank']),
+        );
 });

@@ -6,6 +6,9 @@ namespace App\Record\Controllers;
 
 use App\AccessRule\AccessResourceEnum;
 use App\AccessRule\Engine\AccessAbilities;
+use App\CustomField\Actions\FindCustomField;
+use App\CustomField\CustomFieldRelationLabels;
+use App\CustomField\CustomFieldTargetEnum;
 use App\CustomObject\Exceptions\CouldNotFindCustomObject;
 use App\Record\Exceptions\CouldNotFindRecord;
 use App\Record\RecordAccess;
@@ -29,7 +32,9 @@ final class ShowRecordController
 
         return Inertia::render('objects/record', [
             'object' => $object->toSummary(),
+            'fields' => FindCustomField::listForTeam($object->getTeamId()->toString(), CustomFieldTargetEnum::Record, objectId: $object->getId()->toString())->toSummaries(),
             'record' => $record->toSummary(),
+            'customFieldLabels' => CustomFieldRelationLabels::forObject($object->getTeamId()->toString(), $object->getId()->toString(), $record->getCustomFields()->toValues()),
             'can' => AccessAbilities::for($request->user(), AccessResourceEnum::Record, $record),
         ]);
     }

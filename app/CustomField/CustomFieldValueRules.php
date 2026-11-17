@@ -10,6 +10,7 @@ use App\CustomField\Properties\CustomFieldValues;
 /**
  * Checks and stores the custom field values sent with a record, for any kind
  * of record that takes them. Values arrive as `custom_fields[<field id>]`.
+ * For a custom object's records, pass the object's id with the `record` target.
  */
 final class CustomFieldValueRules
 {
@@ -19,10 +20,10 @@ final class CustomFieldValueRules
      *
      * @return array<string, array<int, mixed>>
      */
-    public static function for(string $teamId, CustomFieldTargetEnum $target, ?CustomFieldValues $current = null): array
+    public static function for(string $teamId, CustomFieldTargetEnum $target, ?CustomFieldValues $current = null, ?string $objectId = null): array
     {
         $key = CustomFieldValues::getNameForValidation();
-        $fields = FindCustomField::listForTeam($teamId, $target);
+        $fields = FindCustomField::listForTeam($teamId, $target, objectId: $objectId);
         $held = $current?->toValues() ?? [];
         $ids = $fields->ids();
         $rules = [$key => $ids === [] ? ['sometimes', 'array', 'max:0'] : ['sometimes', 'array:'.implode(',', $ids)]];
@@ -45,12 +46,12 @@ final class CustomFieldValueRules
      *
      * @return array<string, string>
      */
-    public static function attributes(string $teamId, CustomFieldTargetEnum $target): array
+    public static function attributes(string $teamId, CustomFieldTargetEnum $target, ?string $objectId = null): array
     {
         $key = CustomFieldValues::getNameForValidation();
         $attributes = [];
 
-        foreach (FindCustomField::listForTeam($teamId, $target) as $field) {
+        foreach (FindCustomField::listForTeam($teamId, $target, objectId: $objectId) as $field) {
             $id = $field->getId()->toString();
             $attributes["{$key}.{$id}"] = $field->getName()->toString();
             $attributes["{$key}.{$id}.*"] = $field->getName()->toString();
@@ -67,13 +68,13 @@ final class CustomFieldValueRules
      *
      * @return array<string, mixed>
      */
-    public static function merge(string $teamId, CustomFieldTargetEnum $target, CustomFieldValues $current, mixed $changes): array
+    public static function merge(string $teamId, CustomFieldTargetEnum $target, CustomFieldValues $current, mixed $changes, ?string $objectId = null): array
     {
         $changes = is_array($changes) ? $changes : [];
         $held = $current->toValues();
         $values = [];
 
-        foreach (FindCustomField::listForTeam($teamId, $target, withArchived: true) as $field) {
+        foreach (FindCustomField::listForTeam($teamId, $target, withArchived: true, objectId: $objectId) as $field) {
             $id = $field->getId()->toString();
             $value = array_key_exists($id, $changes) && ! $field->isArchived()
                 ? $field->getType()->toEnum()->normalize($changes[$id])

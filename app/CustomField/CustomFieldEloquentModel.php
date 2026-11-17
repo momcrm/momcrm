@@ -24,6 +24,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $description
  * @property string $id
  * @property string $name
+ * @property string|null $object_id
  * @property array<int, mixed> $options
  * @property int $position
  * @property string|null $relation

@@ -61,6 +61,14 @@ type TypeOption = {
 /** An option being edited; one not saved yet has no id. */
 type DraftOption = { id: string | null; name: string; hue: number | null };
 
+const tabClass = (isCurrent: boolean) =>
+    cn(
+        '-mb-px border-b-2 px-3 py-2 text-sm',
+        isCurrent
+            ? 'border-primary font-medium text-foreground'
+            : 'border-transparent text-muted-foreground hover:text-foreground',
+    );
+
 const relationNouns: Record<CustomFieldRelation, string> = {
     member: 'a team member',
     customer: 'a customer',
@@ -80,16 +88,23 @@ const saveOptions = {
 
 /**
  * The fields the team has added to its records, one kind of record at a
- * time. `?target=` keeps the open kind in the URL.
+ * time: a built-in kind (`?target=`) or one of the team's custom objects
+ * (`?object=`).
  */
 export default function CustomFields({
     current,
+    currentObject,
     targets,
+    objects,
     types,
     fields,
 }: {
     current: CustomFieldTarget;
+    /** The custom object whose fields are open, when `current` is `record`. */
+    currentObject: string | null;
     targets: Option[];
+    /** The team's custom objects, each a tab after the built-in kinds. */
+    objects: Option[];
     types: TypeOption[];
     fields: CustomField[];
 }) {
@@ -110,7 +125,11 @@ export default function CustomFields({
 
         [ids[from], ids[to]] = [ids[to], ids[from]];
 
-        router.put(reorder.url(), { target: current, ids }, saveOptions);
+        router.put(
+            reorder.url(),
+            { target: current, object_id: currentObject, ids },
+            saveOptions,
+        );
     };
 
     return (
@@ -138,14 +157,24 @@ export default function CustomFields({
                             aria-current={
                                 target.value === current ? 'page' : undefined
                             }
-                            className={cn(
-                                '-mb-px border-b-2 px-3 py-2 text-sm',
-                                target.value === current
-                                    ? 'border-primary font-medium text-foreground'
-                                    : 'border-transparent text-muted-foreground hover:text-foreground',
-                            )}
+                            className={tabClass(target.value === current)}
                         >
                             {target.label}
+                        </Link>
+                    ))}
+                    {objects.map((object) => (
+                        <Link
+                            key={object.value}
+                            href={edit({ query: { object: object.value } })}
+                            preserveScroll
+                            aria-current={
+                                object.value === currentObject
+                                    ? 'page'
+                                    : undefined
+                            }
+                            className={tabClass(object.value === currentObject)}
+                        >
+                            {object.label}
                         </Link>
                     ))}
                 </nav>
@@ -204,6 +233,7 @@ export default function CustomFields({
             {creating && (
                 <FieldDialog
                     target={current}
+                    objectId={currentObject}
                     types={types}
                     onClose={() => setCreating(false)}
                 />
@@ -399,11 +429,14 @@ function ArchivedFieldRow({
  */
 function FieldDialog({
     target,
+    objectId,
     types,
     field,
     onClose,
 }: {
     target: CustomFieldTarget;
+    /** The custom object a new field is for, when the target is `record`. */
+    objectId?: string | null;
     types: TypeOption[];
     field?: CustomField;
     onClose: () => void;
@@ -432,6 +465,9 @@ function FieldDialog({
                     {...(field ? update.form(field.id) : store.form())}
                     transform={() => ({
                         ...(field ? {} : { target, type }),
+                        ...(!field && target === 'record'
+                            ? { object_id: objectId }
+                            : {}),
                         ...(!field && type === 'relation' ? { relation } : {}),
                         name,
                         description: description.trim() || null,

@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\AccessRule\AccessRuleEloquentModel;
+use App\CustomField\CustomFieldEloquentModel;
+use App\CustomField\CustomFieldTypeEnum;
 use App\CustomObject\CustomObjectEloquentModel;
 use App\Record\RecordEloquentModel;
 use App\User\UserEloquentModel;
@@ -69,4 +71,27 @@ it("finds no object to add to when it is archived or another team's", function (
 
     actingAs($owner)->post(route('records.store', $archived), ['name' => 'Van'])->assertNotFound();
     actingAs($owner)->post(route('records.store', $foreign), ['name' => 'Van'])->assertNotFound();
+});
+
+it("adds a record with values for its object's fields, and not another object's", function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create(['onboarded_at' => now()]);
+    $vehicles = CustomObjectEloquentModel::factory()->create(['team_id' => $owner->current_team_id]);
+    $licences = CustomObjectEloquentModel::factory()->create(['team_id' => $owner->current_team_id]);
+    $plate = CustomFieldEloquentModel::factory()->forObject($vehicles)->create();
+    $seats = CustomFieldEloquentModel::factory()->forObject($vehicles)->ofType(CustomFieldTypeEnum::Number)->create(['name' => 'Seats']);
+    $expires = CustomFieldEloquentModel::factory()->forObject($licences)->create();
+
+    actingAs($owner)
+        ->post(route('records.store', $vehicles), ['name' => 'Van', 'custom_fields' => [$plate->id => 'ABC 123', $seats->id => 'three']])
+        ->assertSessionHasErrors(["custom_fields.{$seats->id}" => 'The Seats field must be a number.']);
+
+    actingAs($owner)
+        ->post(route('records.store', $vehicles), ['name' => 'Van', 'custom_fields' => [$expires->id => 'soon']])
+        ->assertSessionHasErrors('custom_fields');
+
+    actingAs($owner)
+        ->post(route('records.store', $vehicles), ['name' => 'Van', 'custom_fields' => [$plate->id => 'ABC 123', $seats->id => '3']])
+        ->assertSessionHasNoErrors();
+
+    expect(RecordEloquentModel::query()->withoutGlobalScopes()->where('name', 'Van')->sole()->custom_fields)->toEqual([$plate->id => 'ABC 123', $seats->id => 3]);
 });

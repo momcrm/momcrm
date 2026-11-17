@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Record\FormRequests;
 
+use App\CustomField\CustomFieldTargetEnum;
+use App\CustomField\CustomFieldValueRules;
+use App\CustomField\Properties\CustomFieldValues;
 use App\CustomObject\Exceptions\CouldNotFindCustomObject;
 use App\Record\Actions\UpdateRecord;
 use App\Record\Exceptions\CouldNotFindRecord;
@@ -48,13 +51,34 @@ final class UpdateRecordFormRequest extends FormRequest
     {
         return [
             Name::getNameForValidation() => ['sometimes', ...Name::getValidationRulesForCreate($this)],
+            ...CustomFieldValueRules::for($this->record->getTeamId()->toString(), CustomFieldTargetEnum::Record, $this->record->getCustomFields(), $this->record->getObjectId()->toString()),
         ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function attributes(): array
+    {
+        return CustomFieldValueRules::attributes($this->record->getTeamId()->toString(), CustomFieldTargetEnum::Record, $this->record->getObjectId()->toString());
     }
 
     public function process(): RedirectResponse
     {
-        if (array_key_exists(Name::getNameForValidation(), $this->validated())) {
+        $validated = $this->validated();
+
+        if (array_key_exists(Name::getNameForValidation(), $validated)) {
             $this->record->setName($this->string(Name::getNameForValidation())->trim()->toString());
+        }
+
+        if (array_key_exists(CustomFieldValues::getNameForValidation(), $validated)) {
+            $this->record->setCustomFields(CustomFieldValueRules::merge(
+                $this->record->getTeamId()->toString(),
+                CustomFieldTargetEnum::Record,
+                $this->record->getCustomFields(),
+                $validated[CustomFieldValues::getNameForValidation()],
+                $this->record->getObjectId()->toString(),
+            ));
         }
 
         UpdateRecord::fromRecord($this->record);

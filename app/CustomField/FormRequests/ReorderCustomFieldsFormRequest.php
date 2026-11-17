@@ -7,6 +7,7 @@ namespace App\CustomField\FormRequests;
 use App\CustomField\Actions\ReorderCustomFields;
 use App\CustomField\CustomFieldAccess;
 use App\CustomField\CustomFieldTargetEnum;
+use App\CustomField\Properties\ObjectId;
 use App\CustomField\Properties\Target;
 use App\Shared\Table;
 use App\Shared\Types;
@@ -17,7 +18,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Validation\Rule;
 
 /**
- * Puts one kind of record's custom fields in a new order.
+ * Puts one kind of record's custom fields in a new order. For a custom
+ * object's fields, `object_id` says which object.
  */
 final class ReorderCustomFieldsFormRequest extends FormRequest
 {
@@ -44,7 +46,8 @@ final class ReorderCustomFieldsFormRequest extends FormRequest
                 'distinct',
                 Rule::exists(Table::CustomFields->value, 'id')
                     ->where('team_id', $this->user()?->current_team_id)
-                    ->where(Target::getDatabaseTableColumnName(), $this->string(Target::getNameForValidation())->toString()),
+                    ->where(Target::getDatabaseTableColumnName(), $this->string(Target::getNameForValidation())->toString())
+                    ->where(ObjectId::getDatabaseTableColumnName(), $this->string(ObjectId::getNameForValidation())->toString() ?: null),
             ],
         ];
     }
