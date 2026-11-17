@@ -31,6 +31,11 @@ import {
     useTicketStatuses,
     useTicketTypes,
 } from '@/components/tickets/ticket-meta';
+import {
+    CustomFieldInput,
+    useCustomFields,
+} from '@/components/custom-fields/custom-field-input';
+import FormField from '@/components/form-field';
 import { useLabels } from '@/components/labels';
 import { Button } from '@/components/ui/button';
 import {
@@ -57,7 +62,7 @@ import { formatBytes } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { create as createCustomer } from '@/routes/customers';
 import { formOptions, store } from '@/routes/tickets';
-import type { TicketFormOptions, LabelTag } from '@/types';
+import type { CustomFieldValues, TicketFormOptions, LabelTag } from '@/types';
 
 type Defaults = {
     customerId?: string | null;
@@ -227,6 +232,9 @@ function CreateTicketForm({
     const [startsOn, setStartsOn] = useState<string | null>(null);
     const [dueOn, setDueOn] = useState<string | null>(defaults.dueOn ?? null);
     const [labelIds, setLabelIds] = useState<string[]>([]);
+    const customFields = useCustomFields('ticket');
+    const [customFieldValues, setCustomFieldValues] =
+        useState<CustomFieldValues>({});
     const [subtasks, setSubtasks] = useState<string[]>([]);
     const [subtaskDraft, setSubtaskDraft] = useState('');
     const [files, setFiles] = useState<File[]>([]);
@@ -295,6 +303,7 @@ function CreateTicketForm({
                 starts_on: startsOn,
                 due_on: dueOn,
                 label_ids: labelIds,
+                custom_fields: customFieldValues,
                 subtasks: pendingSubtask
                     ? [...subtasks, pendingSubtask]
                     : subtasks,
@@ -758,6 +767,31 @@ function CreateTicketForm({
                         }}
                     />
                 </section>
+
+                {customFields.length > 0 && (
+                    <section className="grid gap-3 sm:grid-cols-2">
+                        {customFields.map((field) => (
+                            <FormField
+                                key={field.id}
+                                id={`custom-field-${field.id}`}
+                                label={field.name}
+                                hint={field.description ?? undefined}
+                            >
+                                <CustomFieldInput
+                                    id={`custom-field-${field.id}`}
+                                    field={field}
+                                    value={customFieldValues[field.id]}
+                                    onChange={(value) =>
+                                        setCustomFieldValues({
+                                            ...customFieldValues,
+                                            [field.id]: value,
+                                        })
+                                    }
+                                />
+                            </FormField>
+                        ))}
+                    </section>
+                )}
 
                 {otherErrors.length > 0 && (
                     <ul className="space-y-0.5 text-xs text-destructive">

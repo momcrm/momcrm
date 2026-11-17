@@ -38,6 +38,8 @@ final readonly class ReorderCustomFields
                     ?->update([Position::getDatabaseTableColumnName() => $position]);
             }
         });
+
+        FindCustomField::forget($this->teamId);
     }
 
     /**

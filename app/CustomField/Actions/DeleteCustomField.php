@@ -19,6 +19,8 @@ final readonly class DeleteCustomField
     public function __invoke(): void
     {
         CustomFieldEloquentModel::query()->withoutGlobalScopes()->findOrFail($this->field->getId()->toString())->delete();
+
+        FindCustomField::forget($this->field->getTeamId()->toString());
     }
 
     public static function fromCustomField(CustomField $field): void

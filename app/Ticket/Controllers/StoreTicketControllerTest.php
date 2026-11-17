@@ -10,6 +10,8 @@ use App\Choice\ChoiceEloquentModel;
 use App\Choice\ChoiceListEnum;
 use App\Contact\ContactEloquentModel;
 use App\Customer\CustomerEloquentModel;
+use App\CustomField\CustomFieldEloquentModel;
+use App\CustomField\CustomFieldTypeEnum;
 use App\Group\GroupEloquentModel;
 use App\Project\ProjectEloquentModel;
 use App\TeamUser\TeamUserEloquentModel;
@@ -238,4 +240,33 @@ it('rejects an archived priority', function (): void {
     actingAs($user)
         ->post(route('tickets.store'), ['project_id' => $project->id, 'title' => 'X', 'priority_id' => $retired->id])
         ->assertSessionHasErrors(['priority_id' => "Choose one of your team's priorities."]);
+});
+
+it('opens a ticket with its custom field values, leaving out the empty ones', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $teamId = $user->current_team_id;
+    $customer = CustomerEloquentModel::factory()->create(['team_id' => $teamId]);
+    $serial = CustomFieldEloquentModel::factory()->create(['team_id' => $teamId]);
+    $onsite = CustomFieldEloquentModel::factory()->ofType(CustomFieldTypeEnum::Checkbox)->create(['team_id' => $teamId]);
+    $notes = CustomFieldEloquentModel::factory()->create(['team_id' => $teamId]);
+
+    actingAs($user)
+        ->post(route('tickets.store'), [
+            'customer_id' => $customer->id,
+            'title' => 'Printer offline',
+            'custom_fields' => [$serial->id => 'SN-1', $onsite->id => false, $notes->id => ''],
+        ])
+        ->assertSessionHasNoErrors();
+
+    expect(TicketEloquentModel::query()->where('title', 'Printer offline')->sole()->custom_fields)->toBe([$serial->id => 'SN-1']);
+});
+
+it('rejects a custom field value of the wrong type when opening a ticket', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $customer = CustomerEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
+    $seats = CustomFieldEloquentModel::factory()->ofType(CustomFieldTypeEnum::Number)->create(['team_id' => $user->current_team_id, 'name' => 'Seats']);
+
+    actingAs($user)
+        ->post(route('tickets.store'), ['customer_id' => $customer->id, 'title' => 'Printer offline', 'custom_fields' => [$seats->id => 'many']])
+        ->assertSessionHasErrors(["custom_fields.{$seats->id}" => 'The Seats field must be a number.']);
 });

@@ -11,13 +11,12 @@ import {
     RotateCcw,
     Star,
 } from 'lucide-react';
-import { Fragment, useState } from 'react';
+import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { toast } from 'sonner';
 import {
     AssigneeAvatar,
     assigneeChoices,
-    ChoiceTag,
     daysUntil,
     defaultStatusId,
     isClosedStatus,
@@ -30,19 +29,20 @@ import {
     useTicketTypes,
     useTicketStatuses,
 } from '@/components/tickets/ticket-meta';
+import {
+    InlineCustomFieldInput,
+    useCustomFields,
+} from '@/components/custom-fields/custom-field-input';
 import { LabelChips, useLabels } from '@/components/labels';
 import Attachments from '@/components/attachments';
+import {
+    DateField,
+    LabelPicker,
+    OptionalChoicePicker,
+    Picker,
+} from '@/components/tickets/property-editors';
 import TicketConversation from '@/components/tickets/ticket-conversation';
 import { Button } from '@/components/ui/button';
-import {
-    DropdownMenu,
-    DropdownMenuCheckboxItem,
-    DropdownMenuContent,
-    DropdownMenuLabel,
-    DropdownMenuRadioGroup,
-    DropdownMenuRadioItem,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import {
     Sheet,
@@ -63,12 +63,7 @@ import { show as showCustomer } from '@/routes/customers';
 import { show as showProject } from '@/routes/projects';
 import { index, show } from '@/routes/tickets';
 import { store as storeAttachment } from '@/routes/tickets/attachments';
-import type {
-    Choice,
-    TicketDrawerData,
-    LabelTag,
-    TicketPickerOptions,
-} from '@/types';
+import type { TicketDrawerData, TicketPickerOptions } from '@/types';
 
 const NONE = '__none__';
 
@@ -175,6 +170,7 @@ export function TicketDetails({
     const priorities = useTicketPriorities(ticket.priority_id);
     const priority = usePriority(ticket.priority_id);
     const labels = useLabels(...ticket.labels.map((label) => label.id));
+    const customFields = useCustomFields('ticket');
     const types = useTicketTypes(ticket.type_id);
     const overdueDays =
         ticket.due_on && !isClosed ? -daysUntil(ticket.due_on) : 0;
@@ -532,6 +528,19 @@ export function TicketDetails({
                             }
                         />
                     </Property>
+                    {customFields.map((field) => (
+                        <Property key={field.id} label={field.name}>
+                            <InlineCustomFieldInput
+                                field={field}
+                                value={ticket.custom_fields[field.id]}
+                                onChange={(value) =>
+                                    save({
+                                        custom_fields: { [field.id]: value },
+                                    })
+                                }
+                            />
+                        </Property>
+                    ))}
                 </dl>
 
                 <section className="space-y-2">
@@ -649,175 +658,6 @@ function Property({ label, children }: { label: string; children: ReactNode }) {
             <dt className="text-muted-foreground">{label}</dt>
             <dd className="min-w-0">{children}</dd>
         </>
-    );
-}
-
-const triggerClass =
-    'flex h-8 w-full min-w-0 items-center gap-2 rounded-md px-2 text-left hover:bg-accent/60 data-[state=open]:bg-accent/60';
-
-function Picker({
-    value,
-    choices,
-    onChange,
-    children,
-}: {
-    value: string;
-    /** A choice's section, when given, heads it and the choices after it. */
-    choices: {
-        value: string;
-        label: string;
-        hue?: number | null;
-        section?: string;
-    }[];
-    onChange: (value: string) => void;
-    children: ReactNode;
-}) {
-    return (
-        <DropdownMenu>
-            <DropdownMenuTrigger className={triggerClass}>
-                {children}
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-                align="start"
-                className="max-h-72 w-56 overflow-y-auto"
-            >
-                <DropdownMenuRadioGroup
-                    value={value}
-                    onValueChange={(next) => next !== value && onChange(next)}
-                >
-                    {choices.map((choice, index) => (
-                        <Fragment key={choice.value}>
-                            {choice.section &&
-                                choice.section !==
-                                    choices[index - 1]?.section && (
-                                    <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-                                        {choice.section}
-                                    </DropdownMenuLabel>
-                                )}
-                            <DropdownMenuRadioItem value={choice.value}>
-                                {choice.hue !== undefined && (
-                                    <span
-                                        aria-hidden
-                                        className="size-2 rounded-[3px] hue-dot"
-                                        style={hueStyle(choice.hue)}
-                                    />
-                                )}
-                                {choice.label}
-                            </DropdownMenuRadioItem>
-                        </Fragment>
-                    ))}
-                </DropdownMenuRadioGroup>
-            </DropdownMenuContent>
-        </DropdownMenu>
-    );
-}
-
-/**
- * A pick from one of the team's optional lists, such as the ticket's type or
- * group, which can also be cleared.
- */
-function OptionalChoicePicker({
-    value,
-    choices,
-    none,
-    onChange,
-}: {
-    value: string | null;
-    choices: Pick<Choice, 'id' | 'name' | 'hue'>[];
-    none: string;
-    onChange: (value: string | null) => void;
-}) {
-    const current = choices.find((choice) => choice.id === value);
-
-    return (
-        <Picker
-            value={value ?? NONE}
-            choices={[
-                { value: NONE, label: none },
-                ...choices.map((choice) => ({
-                    value: choice.id,
-                    label: choice.name,
-                    hue: choice.hue,
-                })),
-            ]}
-            onChange={(id) => onChange(id === NONE ? null : id)}
-        >
-            {current ? (
-                <ChoiceTag choice={current} />
-            ) : (
-                <span className="text-muted-foreground">{none}</span>
-            )}
-        </Picker>
-    );
-}
-
-function LabelPicker({
-    selected,
-    options,
-    onChange,
-    children,
-}: {
-    selected: string[];
-    options: LabelTag[];
-    onChange: (ids: string[]) => void;
-    children: ReactNode;
-}) {
-    return (
-        <DropdownMenu>
-            <DropdownMenuTrigger
-                className={cn(triggerClass, 'h-auto min-h-8 py-1')}
-            >
-                {children}
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-56">
-                {options.length === 0 && (
-                    <p className="px-2 py-1.5 text-sm text-muted-foreground">
-                        No labels yet.
-                    </p>
-                )}
-                {options.map((label) => (
-                    <DropdownMenuCheckboxItem
-                        key={label.id}
-                        checked={selected.includes(label.id)}
-                        onSelect={(event) => event.preventDefault()}
-                        onCheckedChange={(checked) =>
-                            onChange(
-                                checked
-                                    ? [...selected, label.id]
-                                    : selected.filter((id) => id !== label.id),
-                            )
-                        }
-                    >
-                        <span
-                            aria-hidden
-                            className={cn('hue-dot', 'size-2 rounded-full')}
-                            style={hueStyle(label.hue)}
-                        />
-                        {label.name}
-                    </DropdownMenuCheckboxItem>
-                ))}
-            </DropdownMenuContent>
-        </DropdownMenu>
-    );
-}
-
-function DateField({
-    value,
-    label,
-    onChange,
-}: {
-    value: string | null;
-    label: string;
-    onChange: (value: string | null) => void;
-}) {
-    return (
-        <input
-            type="date"
-            aria-label={label}
-            defaultValue={value ?? ''}
-            className={cn(triggerClass, !value && 'text-muted-foreground')}
-            onChange={(event) => onChange(event.target.value || null)}
-        />
     );
 }
 

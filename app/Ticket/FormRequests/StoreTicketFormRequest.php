@@ -9,6 +9,9 @@ use App\Attachment\Attachment;
 use App\Attachment\AttachmentValidationRules;
 use App\Choice\LabelTargetEnum;
 use App\Customer\Actions\FindCustomer;
+use App\CustomField\CustomFieldTargetEnum;
+use App\CustomField\CustomFieldValueRules;
+use App\CustomField\Properties\CustomFieldValues;
 use App\Project\Actions\FindProject;
 use App\Shared\Types;
 use App\Ticket\Actions\CreateTicket;
@@ -36,7 +39,9 @@ final class StoreTicketFormRequest extends FormRequest
 
     public const string SUBTASKS = 'subtasks';
 
-    private const array EXTRAS = [self::QUICK, self::LABEL_IDS, self::SUBTASKS, AttachmentValidationRules::FILES];
+    private const string CUSTOM_FIELDS = 'custom_fields';
+
+    private const array EXTRAS = [self::QUICK, self::CUSTOM_FIELDS, self::LABEL_IDS, self::SUBTASKS, AttachmentValidationRules::FILES];
 
     public function authorize(): Response
     {
@@ -58,6 +63,7 @@ final class StoreTicketFormRequest extends FormRequest
         return [
             ...TicketValidationRules::for($this, $teamId),
             ...TicketValidationRules::status($this, $teamId),
+            ...CustomFieldValueRules::for($teamId, CustomFieldTargetEnum::Ticket),
             self::QUICK => ['sometimes', 'boolean'],
             self::LABEL_IDS => ['sometimes', 'array'],
             self::LABEL_IDS.'.*' => ['uuid', LabelTargetEnum::Ticket->rule($teamId)],
@@ -79,6 +85,14 @@ final class StoreTicketFormRequest extends FormRequest
         ];
     }
 
+    /**
+     * @return array<string, string>
+     */
+    public function attributes(): array
+    {
+        return CustomFieldValueRules::attributes((string) $this->user()?->current_team_id, CustomFieldTargetEnum::Ticket);
+    }
+
     public function process(): RedirectResponse
     {
         $teamId = (string) $this->user()?->current_team_id;
@@ -86,7 +100,10 @@ final class StoreTicketFormRequest extends FormRequest
         $validated = $this->validated();
 
         $ticket = CreateTicket::fromTicket(
-            Ticket::new()->setPropertyIfExists(Types::stringKeyed(Arr::except($validated, self::EXTRAS)))->setTeamId($teamId),
+            Ticket::new()
+                ->setPropertyIfExists(Types::stringKeyed(Arr::except($validated, self::EXTRAS)))
+                ->setCustomFields(CustomFieldValueRules::merge($teamId, CustomFieldTargetEnum::Ticket, new CustomFieldValues(null), $validated[self::CUSTOM_FIELDS] ?? []))
+                ->setTeamId($teamId),
             openedById: $userId,
         );
 
