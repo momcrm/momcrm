@@ -1,5 +1,6 @@
 import { Form, Link } from '@inertiajs/react';
 import { Check } from 'lucide-react';
+import { useCreateCustomer } from '@/components/customers/create-customer-dialog';
 import { useCreateTicket } from '@/components/tickets/create-ticket-dialog';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -35,6 +36,7 @@ export default function GettingStartedChecklist({
     preferredName: string;
 }) {
     const { openCreateTicket } = useCreateTicket();
+    const { openCreateCustomer } = useCreateCustomer();
     const { steps, completed, total } = gettingStarted;
     const allDone = completed === total;
 
@@ -115,11 +117,16 @@ export default function GettingStartedChecklist({
                             </div>
                         </div>
                         {!step.done &&
-                            (step.key === 'ticket' ? (
+                            (step.key === 'ticket' ||
+                            step.key === 'customer' ? (
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => openCreateTicket()}
+                                    onClick={() =>
+                                        step.key === 'ticket'
+                                            ? openCreateTicket()
+                                            : openCreateCustomer()
+                                    }
                                 >
                                     {step.action}
                                 </Button>

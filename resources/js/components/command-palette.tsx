@@ -28,6 +28,7 @@ import {
     DialogDescription,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { useCreateCustomer } from '@/components/customers/create-customer-dialog';
 import { useCreateTicket } from '@/components/tickets/create-ticket-dialog';
 import { useAppearance } from '@/hooks/use-appearance';
 import { useShortcuts } from '@/hooks/use-shortcuts';
@@ -37,7 +38,6 @@ import {
     workspaceNavigation,
 } from '@/lib/workspace-navigation';
 import { search } from '@/routes';
-import { create as createCustomer } from '@/routes/customers';
 import { index as projectsIndex } from '@/routes/projects';
 
 type SearchHit = {
@@ -143,6 +143,7 @@ function Palette({ onDone }: { onDone: () => void }) {
     const listRef = useRef<HTMLDivElement>(null);
     const http = useHttp<Record<string, never>, SearchResponse>();
     const { openCreateTicket } = useCreateTicket();
+    const { openCreateCustomer } = useCreateCustomer();
     const { resolvedAppearance, updateAppearance } = useAppearance();
 
     const query = term.trim();
@@ -197,7 +198,10 @@ function Palette({ onDone }: { onDone: () => void }) {
                 group: 'Suggestions',
                 label: 'Create customer',
                 icon: Plus,
-                onSelect: () => go(toUrl(createCustomer())),
+                onSelect: () => {
+                    onDone();
+                    openCreateCustomer();
+                },
             },
             {
                 id: 'toggle-theme',

@@ -48,7 +48,7 @@ final class GetGettingStartedProgress
                 'title' => __('Add your first customer'),
                 'description' => __("Start with a client you're working with this week."),
                 'action' => __('Add customer'),
-                'href' => route('customers.create'),
+                'href' => route('customers.index'),
                 'done' => self::realCustomers($teamId)->exists(),
             ],
             [
