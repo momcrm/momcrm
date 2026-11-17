@@ -16,6 +16,9 @@ use App\Choice\LabelTargetEnum;
 use App\Customer\Actions\FindCustomer;
 use App\Customer\Customer;
 use App\Customer\Exceptions\CouldNotFindCustomer;
+use App\CustomField\CustomFieldTargetEnum;
+use App\CustomField\CustomFieldValueRules;
+use App\CustomField\Properties\CustomFieldValues;
 use App\Shared\Table;
 use App\Shared\Types;
 use Illuminate\Auth\Access\Response;
@@ -66,7 +69,16 @@ final class StoreAssetFormRequest extends FormRequest
             Status::getNameForValidation() => Status::getValidationRulesForCreate($this),
             Description::getNameForValidation() => Description::getValidationRulesForCreate($this),
             ...LabelTargetEnum::Asset->rules($this->customer->getTeamId()->toString()),
+            ...CustomFieldValueRules::for($this->customer->getTeamId()->toString(), CustomFieldTargetEnum::Asset),
         ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function attributes(): array
+    {
+        return CustomFieldValueRules::attributes($this->customer->getTeamId()->toString(), CustomFieldTargetEnum::Asset);
     }
 
     public function process(): RedirectResponse
@@ -75,7 +87,8 @@ final class StoreAssetFormRequest extends FormRequest
 
         $asset = CreateAsset::fromAsset(
             Asset::new()
-                ->setPropertyIfExists(Types::stringKeyed(Arr::except($validated, LabelTargetEnum::FIELD)))
+                ->setPropertyIfExists(Types::stringKeyed(Arr::except($validated, [LabelTargetEnum::FIELD, CustomFieldValues::getNameForValidation()])))
+                ->setCustomFields(CustomFieldValueRules::merge($this->customer->getTeamId()->toString(), CustomFieldTargetEnum::Asset, new CustomFieldValues(null), $validated[CustomFieldValues::getNameForValidation()] ?? []))
                 ->setCustomerId($this->customer->getId())
                 ->setTeamId($this->customer->getTeamId()),
         );

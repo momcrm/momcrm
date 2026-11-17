@@ -70,7 +70,7 @@ it("opens a custom object's fields, and lists the team's live objects as tabs", 
         ->assertInertia(fn (Assert $page) => $page
             ->where('current', 'record')
             ->where('currentObject', $vehicles->id)
-            ->has('targets', 4)
+            ->has('targets', count(CustomFieldTargetEnum::builtIn()))
             ->has('objects', 2)
             ->where('objects.0', ['value' => $vehicles->id, 'label' => 'Vehicles'])
             ->has('fields', 1)

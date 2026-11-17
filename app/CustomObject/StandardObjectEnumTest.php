@@ -2,10 +2,13 @@
 
 declare(strict_types=1);
 
+use App\Asset\AssetEloquentModel;
 use App\Contact\ContactEloquentModel;
 use App\Customer\CustomerEloquentModel;
 use App\CustomObject\StandardObjectEnum;
+use App\Location\LocationEloquentModel;
 use App\Project\ProjectEloquentModel;
+use App\Service\ServiceEloquentModel;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
 use Illuminate\Database\Eloquent\Model;
@@ -26,6 +29,9 @@ function standardRecord(StandardObjectEnum $object, string $teamId): array
         StandardObjectEnum::Customer => [$record = $customer(), 'Acme', route('customers.show', $record->id)],
         StandardObjectEnum::Contact => [$record = ContactEloquentModel::factory()->create([...$team, 'customer_id' => $customer()->id, 'first_name' => 'Sam', 'last_name' => 'Lee']), 'Sam Lee', route('contacts.edit', $record->id)],
         StandardObjectEnum::Project => [$record = ProjectEloquentModel::factory()->create([...$team, 'name' => 'Refit']), 'Refit', route('projects.show', $record->id)],
+        StandardObjectEnum::Asset => [$record = AssetEloquentModel::factory()->create([...$team, 'customer_id' => $customer()->id, 'name' => 'Reception PC']), 'Reception PC', route('assets.edit', $record->id)],
+        StandardObjectEnum::Location => [$record = LocationEloquentModel::factory()->create([...$team, 'customer_id' => $customer()->id, 'name' => 'Head office']), 'Head office', route('locations.edit', $record->id)],
+        StandardObjectEnum::Service => [$record = ServiceEloquentModel::factory()->create([...$team, 'customer_id' => $customer()->id, 'name' => 'Managed IT']), 'Managed IT', route('services.edit', $record->id)],
     };
 }
 

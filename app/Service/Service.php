@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\CustomField\Properties\CustomFieldValues;
 use App\Service\Factories\ServiceFactory;
 use App\Service\Properties\BillingPeriodInMonths;
 use App\Service\Properties\CreatedAt;
@@ -29,6 +30,7 @@ use Mom\Data\AbstractValue;
 final class Service extends AbstractData
 {
     public function __construct(
+        public CustomFieldValues $customFields,
         public BillingPeriodInMonths $billingPeriodInMonths,
         public CreatedAt $createdAt,
         public CustomerId $customerId,
@@ -70,7 +72,7 @@ final class Service extends AbstractData
     /**
      * The fields the service pages show.
      *
-     * @return array{id: string, customer_id: string, name: ?string, status: string, quantity: ?int, unit_price_in_cents: ?int, billing_period_in_months: ?int, starts_on: ?string, ends_on: ?string, location_id: ?string, note: ?string}
+     * @return array{id: string, customer_id: string, name: ?string, status: string, quantity: ?int, unit_price_in_cents: ?int, billing_period_in_months: ?int, starts_on: ?string, ends_on: ?string, location_id: ?string, note: ?string, custom_fields: array<string, mixed>}
      */
     public function toSummary(): array
     {
@@ -86,7 +88,20 @@ final class Service extends AbstractData
             'ends_on' => $this->getEndsOn()->toNullableCarbon()?->toDateString(),
             'location_id' => $this->getLocationId()->toNullableString(),
             'note' => $this->getNote()->toNullableString(),
+            'custom_fields' => $this->getCustomFields()->toValues(),
         ];
+    }
+
+    public function getCustomFields(): CustomFieldValues
+    {
+        return $this->customFields;
+    }
+
+    public function setCustomFields(mixed $customFields): self
+    {
+        $this->customFields = new CustomFieldValues($customFields instanceof AbstractValue ? $customFields->toValue() : $customFields);
+
+        return $this;
     }
 
     public function getBillingPeriodInMonths(): BillingPeriodInMonths

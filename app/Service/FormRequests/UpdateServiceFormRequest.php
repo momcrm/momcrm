@@ -6,6 +6,9 @@ namespace App\Service\FormRequests;
 
 use App\Customer\Actions\FindCustomer;
 use App\Customer\Customer;
+use App\CustomField\CustomFieldTargetEnum;
+use App\CustomField\CustomFieldValueRules;
+use App\CustomField\Properties\CustomFieldValues;
 use App\Service\Actions\FindService;
 use App\Service\Actions\UpdateService;
 use App\Service\Exceptions\CouldNotFindService;
@@ -20,9 +23,11 @@ use App\Service\Properties\Status;
 use App\Service\Properties\UnitPriceInCents;
 use App\Service\Service;
 use App\Shared\Table;
+use App\Shared\Types;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -76,14 +81,25 @@ final class UpdateServiceFormRequest extends FormRequest
                 Rule::exists(Table::Locations->value, 'id')->where('customer_id', $this->customer->getId()->toString()),
             ],
             Note::getNameForValidation() => Note::getValidationRulesForUpdate($this),
+            ...CustomFieldValueRules::for($this->service->getTeamId()->toString(), CustomFieldTargetEnum::Service, $this->service->getCustomFields()),
         ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function attributes(): array
+    {
+        return CustomFieldValueRules::attributes($this->service->getTeamId()->toString(), CustomFieldTargetEnum::Service);
     }
 
     public function process(): RedirectResponse
     {
+        $validated = $this->validated();
         $service = UpdateService::fromService(
             $this->service
-                ->setPropertyIfExists($this->validated()),
+                ->setCustomFields(CustomFieldValueRules::merge($this->service->getTeamId()->toString(), CustomFieldTargetEnum::Service, $this->service->getCustomFields(), $validated[CustomFieldValues::getNameForValidation()] ?? []))
+                ->setPropertyIfExists(Types::stringKeyed(Arr::except($validated, CustomFieldValues::getNameForValidation()))),
         );
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __(':name saved.', ['name' => $service->getName()->toString()])]);

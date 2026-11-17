@@ -2,13 +2,16 @@
 
 declare(strict_types=1);
 
+use App\Asset\AssetEloquentModel;
 use App\Contact\ContactEloquentModel;
 use App\Customer\CustomerEloquentModel;
 use App\CustomField\CustomFieldEloquentModel;
 use App\CustomField\CustomFieldRelationEnum;
 use App\CustomObject\CustomObjectEloquentModel;
+use App\Location\LocationEloquentModel;
 use App\Project\ProjectEloquentModel;
 use App\Record\RecordEloquentModel;
+use App\Service\ServiceEloquentModel;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
 
@@ -119,3 +122,19 @@ it('offers tickets and projects in a members-only project only to its members', 
     actingAs($insider)->getJson(route('custom-fields.records', $tickets->id))->assertExactJson(['records' => [['value' => $ticket->id, 'label' => '#3 Due diligence']]]);
     actingAs($insider)->getJson(route('custom-fields.records', $projects->id))->assertExactJson(['records' => [['value' => $secret->id, 'label' => 'Merger']]]);
 });
+
+it("lists the team's assets, locations and services by name", function (CustomFieldRelationEnum $kind, string $model): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $team = ['team_id' => $owner->current_team_id];
+    $field = CustomFieldEloquentModel::factory()->linkingTo($kind)->create($team);
+    $mine = $model::factory()->create([...$team, 'customer_id' => CustomerEloquentModel::factory()->create($team)->id, 'name' => 'Harbour one']);
+    $model::factory()->create(['name' => 'Harbour elsewhere']);
+
+    actingAs($owner)
+        ->getJson(route('custom-fields.records', ['customField' => $field->id, 'search' => 'harbour']))
+        ->assertExactJson(['records' => [['value' => $mine->id, 'label' => 'Harbour one']]]);
+})->with([
+    'assets' => [CustomFieldRelationEnum::Asset, AssetEloquentModel::class],
+    'locations' => [CustomFieldRelationEnum::Location, LocationEloquentModel::class],
+    'services' => [CustomFieldRelationEnum::Service, ServiceEloquentModel::class],
+]);

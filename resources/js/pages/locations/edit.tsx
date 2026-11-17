@@ -1,4 +1,5 @@
 import { Head, setLayoutProps } from '@inertiajs/react';
+import LinkedRecords from '@/components/custom-fields/linked-records';
 import ConfirmDelete from '@/components/confirm-delete';
 import PageHeader from '@/components/page-header';
 import LocationForm from '@/components/locations/location-form';
@@ -8,14 +9,17 @@ import {
     index as customersIndex,
     show as showCustomer,
 } from '@/routes/customers';
-import type { Abilities, Customer, Location } from '@/types';
+import type { Abilities, Customer, LinkedRecordGroup, Location } from '@/types';
 
 export default function EditLocation({
     can,
+    linkedRecords,
     location,
     customer,
 }: {
     can: Abilities;
+    /** What points at this record through record-link custom fields. */
+    linkedRecords: LinkedRecordGroup[];
     location: Location;
     customer: Customer;
 }) {
@@ -53,6 +57,9 @@ export default function EditLocation({
                     submitLabel="Save"
                     cancelHref={showCustomer(customer.id).url}
                 />
+                <div className="max-w-2xl">
+                    <LinkedRecords groups={linkedRecords} />
+                </div>
             </div>
         </>
     );

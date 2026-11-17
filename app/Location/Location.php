@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Location;
 
+use App\CustomField\Properties\CustomFieldValues;
 use App\Location\Factories\LocationFactory;
 use App\Location\Properties\Country;
 use App\Location\Properties\CreatedAt;
@@ -28,6 +29,7 @@ use Mom\Data\AbstractValue;
 final class Location extends AbstractData
 {
     public function __construct(
+        public CustomFieldValues $customFields,
         public Country $country,
         public CreatedAt $createdAt,
         public CustomerId $customerId,
@@ -68,7 +70,7 @@ final class Location extends AbstractData
     /**
      * The fields the location pages show.
      *
-     * @return array{id: string, customer_id: string, name: ?string, street_one: ?string, street_two: ?string, suburb: ?string, state: ?string, postcode: ?string, country: ?string, is_primary: bool}
+     * @return array{id: string, customer_id: string, name: ?string, street_one: ?string, street_two: ?string, suburb: ?string, state: ?string, postcode: ?string, country: ?string, is_primary: bool, custom_fields: array<string, mixed>}
      */
     public function toSummary(): array
     {
@@ -83,7 +85,20 @@ final class Location extends AbstractData
             'postcode' => $this->getPostcode()->toNullableString(),
             'country' => $this->getCountry()->toNullableString(),
             'is_primary' => $this->getIsPrimary()->toBoolean(),
+            'custom_fields' => $this->getCustomFields()->toValues(),
         ];
+    }
+
+    public function getCustomFields(): CustomFieldValues
+    {
+        return $this->customFields;
+    }
+
+    public function setCustomFields(mixed $customFields): self
+    {
+        $this->customFields = new CustomFieldValues($customFields instanceof AbstractValue ? $customFields->toValue() : $customFields);
+
+        return $this;
     }
 
     public function getCountry(): Country

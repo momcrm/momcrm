@@ -1,4 +1,5 @@
 import FormField from '@/components/form-field';
+import CustomFieldsFormFields from '@/components/custom-fields/custom-fields-form';
 import type { Location } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -96,6 +97,13 @@ export default function LocationForm({
                             defaultValue={location?.country ?? ''}
                         />
                     </FormField>
+                    <div className="grid gap-6 empty:hidden sm:grid-cols-2">
+                        <CustomFieldsFormFields
+                            target="location"
+                            values={location?.custom_fields}
+                            errors={errors}
+                        />
+                    </div>
                     <div className="flex items-center gap-2">
                         <Checkbox
                             id="is_primary"

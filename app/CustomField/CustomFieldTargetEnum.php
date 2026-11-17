@@ -20,6 +20,9 @@ enum CustomFieldTargetEnum: string
     case Customer = 'customer';
     case Contact = 'contact';
     case Project = 'project';
+    case Asset = 'asset';
+    case Location = 'location';
+    case Service = 'service';
     case Record = 'record';
 
     /**
@@ -30,7 +33,7 @@ enum CustomFieldTargetEnum: string
      */
     public static function builtIn(): array
     {
-        return [self::Ticket, self::Customer, self::Contact, self::Project];
+        return [self::Ticket, self::Customer, self::Contact, self::Project, self::Asset, self::Location, self::Service];
     }
 
     public function label(): string

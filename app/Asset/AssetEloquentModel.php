@@ -13,6 +13,7 @@ use App\AuditLog\Contracts\Auditable;
 use App\Choice\HasLabels;
 use App\Choice\LabelTargetEnum;
 use App\Customer\CustomerEloquentModel;
+use App\CustomField\Properties\CustomFieldValues;
 use App\Location\LocationEloquentModel;
 use App\Shared\Table;
 use App\Team\Scopes\CurrentTeamScope;
@@ -90,6 +91,16 @@ final class AssetEloquentModel extends Model implements Auditable
             foreignKey: LocationId::getDatabaseTableColumnName(),
             relation: AssetRelationship::Location->value,
         );
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            CustomFieldValues::getDatabaseTableColumnName() => 'array',
+        ];
     }
 
     protected static function newFactory(): AssetFactory

@@ -131,6 +131,7 @@ export type Location = {
     postcode: string | null;
     country: string | null;
     is_primary: boolean;
+    custom_fields: CustomFieldValues;
 };
 
 export type Asset = {
@@ -143,6 +144,7 @@ export type Asset = {
     description: string | null;
     /** Sent with the customer's assets and the edit form. */
     labels?: LabelTag[];
+    custom_fields: CustomFieldValues;
 };
 
 export type Service = {
@@ -157,6 +159,7 @@ export type Service = {
     ends_on: string | null;
     location_id: string | null;
     note: string | null;
+    custom_fields: CustomFieldValues;
 };
 
 /**
@@ -224,6 +227,9 @@ export type CustomFieldTarget =
     | 'customer'
     | 'contact'
     | 'project'
+    | 'asset'
+    | 'location'
+    | 'service'
     /** Records of a custom object; the field's `object_id` says which. */
     | 'record';
 
@@ -245,6 +251,9 @@ export type CustomFieldRelation =
     | 'contact'
     | 'ticket'
     | 'project'
+    | 'asset'
+    | 'location'
+    | 'service'
     | 'record';
 
 /**

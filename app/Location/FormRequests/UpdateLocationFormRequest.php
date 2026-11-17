@@ -6,6 +6,9 @@ namespace App\Location\FormRequests;
 
 use App\Customer\Actions\FindCustomer;
 use App\Customer\Customer;
+use App\CustomField\CustomFieldTargetEnum;
+use App\CustomField\CustomFieldValueRules;
+use App\CustomField\Properties\CustomFieldValues;
 use App\Location\Actions\FindLocation;
 use App\Location\Actions\UpdateLocation;
 use App\Location\Exceptions\CouldNotFindLocation;
@@ -18,9 +21,11 @@ use App\Location\Properties\State;
 use App\Location\Properties\StreetOne;
 use App\Location\Properties\StreetTwo;
 use App\Location\Properties\Suburb;
+use App\Shared\Types;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 
@@ -69,14 +74,25 @@ final class UpdateLocationFormRequest extends FormRequest
             Postcode::getNameForValidation() => Postcode::getValidationRulesForUpdate($this),
             Country::getNameForValidation() => Country::getValidationRulesForUpdate($this),
             IsPrimary::getNameForValidation() => IsPrimary::getValidationRulesForUpdate($this),
+            ...CustomFieldValueRules::for($this->location->getTeamId()->toString(), CustomFieldTargetEnum::Location, $this->location->getCustomFields()),
         ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function attributes(): array
+    {
+        return CustomFieldValueRules::attributes($this->location->getTeamId()->toString(), CustomFieldTargetEnum::Location);
     }
 
     public function process(): RedirectResponse
     {
+        $validated = $this->validated();
         $location = UpdateLocation::fromLocation(
             $this->location
-                ->setPropertyIfExists($this->validated())
+                ->setCustomFields(CustomFieldValueRules::merge($this->location->getTeamId()->toString(), CustomFieldTargetEnum::Location, $this->location->getCustomFields(), $validated[CustomFieldValues::getNameForValidation()] ?? []))
+                ->setPropertyIfExists(Types::stringKeyed(Arr::except($validated, CustomFieldValues::getNameForValidation())))
                 ->setIsPrimary($this->boolean(IsPrimary::getNameForValidation())),
         );
 
