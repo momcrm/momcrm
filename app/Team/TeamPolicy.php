@@ -86,6 +86,16 @@ final class TeamPolicy
     }
 
     /**
+     * Owners and admins define the team's own kinds of record.
+     */
+    public function manageCustomObjects(UserEloquentModel $user, Team $team): Response
+    {
+        return $this->isOwnerOrAdmin($user, $team)
+            ? Response::allow()
+            : Response::deny('Only team owners and admins can change custom objects.');
+    }
+
+    /**
      * Owners remove admins and members, admins remove members. Nobody removes
      * the owner or themselves.
      */

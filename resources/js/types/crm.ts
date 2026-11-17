@@ -185,6 +185,22 @@ export type Choice = {
 };
 
 /**
+ * A kind of record a team has defined for itself, such as "Vehicles".
+ */
+export type CustomObject = {
+    id: string;
+    /** What one record is called, such as "Vehicle". */
+    name: string;
+    name_plural: string;
+    description: string | null;
+    icon: string | null;
+    hue: number | null;
+    position: number;
+    /** Out of the sidebar, but its records are kept. */
+    is_archived: boolean;
+};
+
+/**
  * The kinds of record a team can add its own fields to.
  */
 export type CustomFieldTarget = 'ticket' | 'customer' | 'contact' | 'project';

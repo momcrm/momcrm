@@ -17,6 +17,7 @@ declare module '@inertiajs/core' {
             canRemoveSampleData?: boolean;
             canManageAccessRules?: boolean;
             canManageCustomFields?: boolean;
+            canManageCustomObjects?: boolean;
             canManageWorkflow?: boolean;
             sidebarCounts?: {
                 openTickets: number;
