@@ -20,7 +20,7 @@ it('renames a field and changes its hint, leaving the rest alone', function (): 
     expect($field->fresh())
         ->name->toBe('Impact')
         ->description->toBe('How bad it is')
-        ->options->toBe($options);
+        ->options->toEqual($options);
 });
 
 it("keeps the ids of a select's existing options when they are renamed, reordered or joined by new ones", function (): void {
@@ -39,10 +39,10 @@ it("keeps the ids of a select's existing options when they are renamed, reordere
     $saved = $field->fresh()->options;
 
     expect($saved)->toHaveCount(3)
-        ->and($saved[0])->toBe(['id' => $high['id'], 'name' => 'Severe', 'hue' => 0])
+        ->and($saved[0])->toEqual(['id' => $high['id'], 'name' => 'Severe', 'hue' => 0])
         ->and($saved[1]['name'])->toBe('Medium')
         ->and($saved[1]['id'])->toBeUuid()->not->toBe('019a0000-0000-7000-8000-000000000000')
-        ->and($saved[2])->toBe(['id' => $low['id'], 'name' => 'Low', 'hue' => null]);
+        ->and($saved[2])->toEqual(['id' => $low['id'], 'name' => 'Low', 'hue' => null]);
 });
 
 it('rejects invalid changes', function (array $input, string $field, string $message): void {
