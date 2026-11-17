@@ -82,6 +82,86 @@ enum StandardObjectEnum: string
     }
 
     /**
+     * The name of its icon in the frontend's object icon list.
+     */
+    public function icon(): string
+    {
+        return match ($this) {
+            self::Ticket => 'ticket',
+            self::Customer => 'building',
+            self::Contact => 'people',
+            self::Project => 'briefcase',
+            self::Asset => 'monitor',
+            self::Location => 'pin',
+            self::Service => 'wrench',
+            self::Contract => 'file',
+            self::Invoice => 'receipt',
+            self::Milestone => 'flag',
+        };
+    }
+
+    /**
+     * The fields the app gives every record of this kind, as settings lists
+     * them beside the team's own: what each is called and what it holds.
+     * They cannot be renamed or removed.
+     *
+     * @return list<array{name: string, type: string}>
+     */
+    public function fields(): array
+    {
+        $fields = match ($this) {
+            self::Ticket => [
+                'Title' => 'Text', 'Description' => 'Long text', 'Status' => 'Choice', 'Priority' => 'Choice', 'Type' => 'Choice',
+                'Assignee' => 'Team member', 'Customer' => 'Customer', 'Contact' => 'Contact', 'Location' => 'Location',
+                'Project' => 'Project', 'Group' => 'Group', 'Labels' => 'Labels', 'Start date' => 'Date', 'Due date' => 'Date', 'Estimate' => 'Number',
+            ],
+            self::Customer => [
+                'Name' => 'Text', 'Prefix' => 'Text', 'Type' => 'Choice', 'Status' => 'Choice', 'Billing' => 'Choice',
+                'Email' => 'Text', 'Phone' => 'Text', 'Website' => 'Text', 'ABN' => 'Text', 'Notes' => 'Long text',
+            ],
+            self::Contact => [
+                'First name' => 'Text', 'Last name' => 'Text', 'Customer' => 'Customer', 'Email' => 'Text', 'Position' => 'Text',
+                'Work phone' => 'Text', 'Mobile phone' => 'Text', 'Main contact' => 'Checkbox',
+            ],
+            self::Project => [
+                'Name' => 'Text', 'Description' => 'Long text', 'Status' => 'Choice', 'Visibility' => 'Choice', 'Customer' => 'Customer',
+                'Lead' => 'Team member', 'Members' => 'Team members', 'Group' => 'Group', 'Labels' => 'Labels',
+                'Start date' => 'Date', 'Due date' => 'Date', 'Colour' => 'Colour', 'Icon' => 'Icon',
+            ],
+            self::Asset => [
+                'Name' => 'Text', 'Serial number' => 'Text', 'Status' => 'Choice', 'Location' => 'Location', 'Description' => 'Long text', 'Labels' => 'Labels',
+            ],
+            self::Location => [
+                'Name' => 'Text', 'Street' => 'Text', 'Street line 2' => 'Text', 'Suburb' => 'Text', 'State' => 'Text',
+                'Postcode' => 'Text', 'Country' => 'Text', 'Main location' => 'Checkbox',
+            ],
+            self::Service => [
+                'Name' => 'Text', 'Status' => 'Choice', 'Quantity' => 'Number', 'Unit price' => 'Money', 'Billing period' => 'Number',
+                'Start date' => 'Date', 'End date' => 'Date', 'Location' => 'Location', 'Note' => 'Long text',
+            ],
+            self::Contract => [
+                'Title' => 'Text', 'Type' => 'Choice', 'Status' => 'Choice', 'Signed' => 'Date', 'Start date' => 'Date', 'End date' => 'Date',
+                'Purchase order' => 'Text', 'Description' => 'Text', 'Notes' => 'Long text',
+            ],
+            self::Invoice => [
+                'Number' => 'Number', 'Customer' => 'Customer', 'Status' => 'Choice', 'Issued' => 'Date', 'Due' => 'Date',
+                'Tax rate' => 'Number', 'Purchase order' => 'Text', 'Line items' => 'Line items', 'Notes' => 'Long text',
+            ],
+            self::Milestone => [
+                'Name' => 'Text', 'Project' => 'Project', 'Due date' => 'Date', 'Done' => 'Checkbox',
+            ],
+        };
+
+        $list = [];
+
+        foreach ($fields as $name => $type) {
+            $list[] = ['name' => $name, 'type' => $type];
+        }
+
+        return $list;
+    }
+
+    /**
      * The team's records of this kind that the person may see. Tickets,
      * projects and milestones obey project visibility, so nothing built on this reveals a
      * members-only project.

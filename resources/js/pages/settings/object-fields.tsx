@@ -1,9 +1,12 @@
 import { Form, Head, Link, router, usePage } from '@inertiajs/react';
+import { ObjectIcon } from '@/components/custom-objects/object-icon';
+import { edit as editObjects } from '@/routes/custom-objects';
 import {
     Archive,
     ArchiveRestore,
     ArrowDown,
     ArrowUp,
+    ChevronLeft,
     MoreHorizontal,
     Pencil,
     Plus,
@@ -38,7 +41,6 @@ import { cn } from '@/lib/utils';
 import {
     archive,
     destroy,
-    edit,
     reorder,
     restore,
     store,
@@ -60,14 +62,6 @@ type TypeOption = {
 
 /** An option being edited; one not saved yet has no id. */
 type DraftOption = { id: string | null; name: string; hue: number | null };
-
-const tabClass = (isCurrent: boolean) =>
-    cn(
-        '-mb-px border-b-2 px-3 py-2 text-sm',
-        isCurrent
-            ? 'border-primary font-medium text-foreground'
-            : 'border-transparent text-muted-foreground hover:text-foreground',
-    );
 
 const relationNouns: Record<CustomFieldRelation, string> = {
     member: 'a team member',
@@ -95,25 +89,33 @@ const saveOptions = {
     },
 };
 
+type ObjectHeader = {
+    /** A built-in kind ("ticket") or a custom object's id. */
+    key: string;
+    label: string;
+    icon: string | null;
+    hue: number | null;
+    /** Built into the app, so its own fields cannot be changed. */
+    is_standard: boolean;
+};
+
 /**
- * The fields the team has added to its records, one kind of record at a
- * time: a built-in kind (`?target=`) or one of the team's custom objects
- * (`?object=`).
+ * One object's fields: those the app gives it, which are fixed, and the
+ * custom fields the team has added, which are managed here.
  */
-export default function CustomFields({
+export default function ObjectFields({
+    object,
     current,
     currentObject,
-    targets,
-    objects,
+    builtInFields,
     types,
     fields,
 }: {
+    object: ObjectHeader;
     current: CustomFieldTarget;
     /** The custom object whose fields are open, when `current` is `record`. */
     currentObject: string | null;
-    targets: Option[];
-    /** The team's custom objects, each a tab after the built-in kinds. */
-    objects: Option[];
+    builtInFields: { name: string; type: string }[];
     types: TypeOption[];
     fields: CustomField[];
 }) {
@@ -143,52 +145,60 @@ export default function CustomFields({
 
     return (
         <>
-            <Head title="Custom fields" />
+            <Head title={`${object.label} · Objects`} />
 
-            <h1 className="sr-only">Custom fields</h1>
+            <h1 className="sr-only">{object.label} fields</h1>
 
             <div className="space-y-6">
-                <Heading
-                    variant="small"
-                    title="Custom fields"
-                    description="Extra fields your team keeps on its records."
-                />
-
-                <nav
-                    aria-label="Record type"
-                    className="flex flex-wrap gap-1 border-b"
-                >
-                    {targets.map((target) => (
-                        <Link
-                            key={target.value}
-                            href={edit({ query: { target: target.value } })}
-                            preserveScroll
-                            aria-current={
-                                target.value === current ? 'page' : undefined
+                <div className="space-y-2">
+                    <Link
+                        href={editObjects()}
+                        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+                    >
+                        <ChevronLeft className="size-4" />
+                        Objects
+                    </Link>
+                    <div className="flex items-center gap-3">
+                        <ObjectIcon icon={object.icon} hue={object.hue} />
+                        <Heading
+                            variant="small"
+                            title={object.label}
+                            description={
+                                object.is_standard
+                                    ? 'Built into MomCRM. You can add your own fields to it.'
+                                    : 'One of your own objects. Its fields are yours to define.'
                             }
-                            className={tabClass(target.value === current)}
-                        >
-                            {target.label}
-                        </Link>
-                    ))}
-                    {objects.map((object) => (
-                        <Link
-                            key={object.value}
-                            href={edit({ query: { object: object.value } })}
-                            preserveScroll
-                            aria-current={
-                                object.value === currentObject
-                                    ? 'page'
-                                    : undefined
-                            }
-                            className={tabClass(object.value === currentObject)}
-                        >
-                            {object.label}
-                        </Link>
-                    ))}
-                </nav>
+                        />
+                    </div>
+                </div>
 
                 <section className="space-y-2">
+                    <div>
+                        <h2 className="text-sm font-medium">Built-in fields</h2>
+                        <p className="text-xs text-muted-foreground">
+                            Part of every {object.label.toLowerCase()} record.
+                            They can&apos;t be renamed or removed.
+                        </p>
+                    </div>
+                    <ul className="divide-y rounded-lg border bg-card shadow-xs">
+                        {builtInFields.map((field) => (
+                            <li
+                                key={field.name}
+                                className="flex h-9 items-center gap-2 px-3 text-sm"
+                            >
+                                <span className="min-w-0 flex-1 truncate text-muted-foreground">
+                                    {field.name}
+                                </span>
+                                <SoftBadge tone="neutral">
+                                    {field.type}
+                                </SoftBadge>
+                            </li>
+                        ))}
+                    </ul>
+                </section>
+
+                <section className="space-y-2">
+                    <h2 className="text-sm font-medium">Custom fields</h2>
                     {live.length > 0 ? (
                         <ul className="divide-y rounded-lg border bg-card shadow-xs">
                             {live.map((field, index) => (

@@ -8,6 +8,7 @@ use App\CustomField\CustomField;
 use App\CustomField\CustomFieldCollection;
 use App\CustomField\CustomFieldEloquentModel;
 use App\CustomField\CustomFieldTargetEnum;
+use App\CustomField\Properties\ArchivedAt;
 use App\CustomField\Properties\Name;
 use App\CustomField\Properties\ObjectId;
 use App\CustomField\Properties\Position;
@@ -38,6 +39,30 @@ final class FindCustomField
         ));
 
         return $withArchived ? $fields : $fields->filter(fn (CustomField $field): bool => ! $field->isArchived())->values();
+    }
+
+    /**
+     * How many live custom fields each of a team's objects has, keyed by the
+     * built-in kind ("ticket") or the custom object's id.
+     *
+     * @return array<string, int>
+     */
+    public static function countsForTeam(string $teamId): array
+    {
+        $counts = [];
+
+        $rows = CustomFieldEloquentModel::query()
+            ->withoutGlobalScopes()
+            ->where(TeamId::getDatabaseTableColumnName(), $teamId)
+            ->whereNull(ArchivedAt::getDatabaseTableColumnName())
+            ->get([Target::getDatabaseTableColumnName(), ObjectId::getDatabaseTableColumnName()]);
+
+        foreach ($rows as $row) {
+            $key = $row->object_id ?? $row->target;
+            $counts[$key] = ($counts[$key] ?? 0) + 1;
+        }
+
+        return $counts;
     }
 
     /**

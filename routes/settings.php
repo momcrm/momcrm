@@ -25,6 +25,7 @@ use App\CustomObject\Controllers\DeleteCustomObjectController;
 use App\CustomObject\Controllers\ReorderCustomObjectsController;
 use App\CustomObject\Controllers\RestoreCustomObjectController;
 use App\CustomObject\Controllers\ShowCustomObjectsController;
+use App\CustomObject\Controllers\ShowObjectFieldsController;
 use App\CustomObject\Controllers\StoreCustomObjectController;
 use App\CustomObject\Controllers\UpdateCustomObjectController;
 use App\Team\Controllers\EditTeamController;
@@ -89,6 +90,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('settings/custom-fields/{customField}', DeleteCustomFieldController::class)->whereUuid('customField')->name('custom-fields.destroy');
 
     Route::get('settings/objects', ShowCustomObjectsController::class)->name('custom-objects.edit');
+    Route::get('settings/objects/{object}', ShowObjectFieldsController::class)->where('object', '[a-z]+|[0-9a-f-]{36}')->name('custom-objects.fields');
     Route::post('settings/objects', StoreCustomObjectController::class)->name('custom-objects.store');
     Route::put('settings/objects/order', ReorderCustomObjectsController::class)->name('custom-objects.reorder');
     Route::patch('settings/objects/{customObject}', UpdateCustomObjectController::class)->whereUuid('customObject')->name('custom-objects.update');

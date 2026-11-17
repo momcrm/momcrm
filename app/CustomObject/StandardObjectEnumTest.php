@@ -72,3 +72,9 @@ it('hides projects, and tickets and milestones in them, from someone who is not 
         ->and(StandardObjectEnum::Project->visibleQuery($teamId, $insider->id)->count())->toBe(1)
         ->and(StandardObjectEnum::Ticket->visibleQuery($teamId, $insider->id)->count())->toBe(1);
 });
+
+it('gives every built-in kind an icon and a list of its own fields', function (StandardObjectEnum $object): void {
+    expect($object->icon())->not->toBe('')
+        ->and($object->fields())->not->toBeEmpty()
+        ->and($object->fields()[0])->toHaveKeys(['name', 'type']);
+})->with(StandardObjectEnum::cases());

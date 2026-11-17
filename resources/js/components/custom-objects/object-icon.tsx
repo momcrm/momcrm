@@ -5,10 +5,14 @@ import {
     Building2,
     CalendarDays,
     FileText,
+    Flag,
     KeyRound,
+    MapPin,
     Monitor,
     Package,
+    Receipt,
     Shield,
+    Ticket,
     Truck,
     UsersRound,
     Wrench,
@@ -34,6 +38,10 @@ export const objectIcons: Record<string, LucideIcon> = {
     shield: Shield,
     book: BookOpen,
     briefcase: Briefcase,
+    ticket: Ticket,
+    pin: MapPin,
+    receipt: Receipt,
+    flag: Flag,
 };
 
 /**

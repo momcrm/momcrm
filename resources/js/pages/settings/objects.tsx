@@ -1,9 +1,11 @@
-import { Form, Head, router } from '@inertiajs/react';
+import { Form, Head, Link, router } from '@inertiajs/react';
 import {
     Archive,
     ArchiveRestore,
     ArrowDown,
     ArrowUp,
+    ChevronRight,
+    ListPlus,
     MoreHorizontal,
     Pencil,
     Plus,
@@ -37,12 +39,29 @@ import { cn } from '@/lib/utils';
 import {
     archive,
     destroy,
+    fields,
     reorder,
     restore,
     store,
     update,
 } from '@/routes/custom-objects';
 import type { CustomObject } from '@/types';
+
+/** A kind of record built into the app. */
+type StandardObject = {
+    key: string;
+    label: string;
+    icon: string;
+    /** How many fields the app gives it. */
+    fields_count: number;
+    custom_fields_count: number;
+};
+
+type CustomObjectRow = CustomObject & { custom_fields_count: number };
+
+function fieldCount(count: number, noun = 'custom field'): string {
+    return `${count} ${noun}${count === 1 ? '' : 's'}`;
+}
 
 const saveOptions = {
     preserveScroll: true,
@@ -56,19 +75,22 @@ const saveOptions = {
 };
 
 /**
- * The kinds of record the team has defined for itself, such as "Vehicles",
- * in the order the sidebar lists them.
+ * Every kind of record the team works with: the ones built into the app,
+ * then the ones the team has defined for itself, such as "Vehicles", in the
+ * order the sidebar lists them. Each opens its fields.
  */
 export default function CustomObjects({
+    standardObjects,
     objects,
 }: {
-    objects: CustomObject[];
+    standardObjects: StandardObject[];
+    objects: CustomObjectRow[];
 }) {
     const [creating, setCreating] = useState(false);
     const live = objects.filter((object) => !object.is_archived);
     const archived = objects.filter((object) => object.is_archived);
 
-    const move = (object: CustomObject, direction: -1 | 1) => {
+    const move = (object: CustomObjectRow, direction: -1 | 1) => {
         const ids = live.map((item) => item.id);
         const from = ids.indexOf(object.id);
         const to = from + direction;
@@ -92,8 +114,50 @@ export default function CustomObjects({
                 <Heading
                     variant="small"
                     title="Objects"
-                    description="Your team's own kinds of record, beyond tickets, customers and projects."
+                    description="Every kind of record your team works with. Open one to see its fields and add your own."
                 />
+
+                <section className="space-y-2">
+                    <div>
+                        <h2 className="text-sm font-medium">Built in</h2>
+                        <p className="text-xs text-muted-foreground">
+                            Part of MomCRM. They can&apos;t be renamed or
+                            removed, but each takes your own fields.
+                        </p>
+                    </div>
+                    <ul className="divide-y rounded-lg border bg-card shadow-xs">
+                        {standardObjects.map((object) => (
+                            <li key={object.key}>
+                                <Link
+                                    href={fields(object.key)}
+                                    className="flex min-h-12 items-center gap-3 px-3 py-1.5 hover:bg-muted/50"
+                                >
+                                    <ObjectIcon icon={object.icon} hue={null} />
+                                    <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                                        {object.label}
+                                    </span>
+                                    <span className="text-xs text-muted-foreground tabular-nums">
+                                        {fieldCount(
+                                            object.fields_count,
+                                            'built-in field',
+                                        )}
+                                        {object.custom_fields_count > 0 &&
+                                            ` · ${fieldCount(object.custom_fields_count)}`}
+                                    </span>
+                                    <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                                </Link>
+                            </li>
+                        ))}
+                    </ul>
+                </section>
+
+                <div>
+                    <h2 className="text-sm font-medium">Your objects</h2>
+                    <p className="text-xs text-muted-foreground">
+                        Kinds of record you define, each with its own list in
+                        the sidebar.
+                    </p>
+                </div>
 
                 <section className="space-y-2">
                     {live.length > 0 ? (
@@ -155,7 +219,7 @@ function ObjectRow({
     isLast,
     onMove,
 }: {
-    object: CustomObject;
+    object: CustomObjectRow;
     isFirst: boolean;
     isLast: boolean;
     onMove: (direction: -1 | 1) => void;
@@ -166,18 +230,16 @@ function ObjectRow({
         <li className="flex min-h-12 items-center gap-3 px-3 py-1.5">
             <ObjectIcon icon={object.icon} hue={object.hue} />
             <div className="min-w-0 flex-1">
-                <button
-                    type="button"
-                    onClick={() => setEditing(true)}
-                    className="block max-w-full truncate text-left text-sm font-medium hover:underline"
+                <Link
+                    href={fields(object.id)}
+                    className="block max-w-full truncate text-sm font-medium hover:underline"
                 >
                     {object.name_plural}
-                </button>
-                {object.description && (
-                    <p className="truncate text-xs text-muted-foreground">
-                        {object.description}
-                    </p>
-                )}
+                </Link>
+                <p className="truncate text-xs text-muted-foreground">
+                    {fieldCount(object.custom_fields_count)}
+                    {object.description && ` · ${object.description}`}
+                </p>
             </div>
 
             <span className="flex">
@@ -215,6 +277,12 @@ function ObjectRow({
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-40">
+                    <DropdownMenuItem asChild>
+                        <Link href={fields(object.id)}>
+                            <ListPlus />
+                            Fields
+                        </Link>
+                    </DropdownMenuItem>
                     <DropdownMenuItem onSelect={() => setEditing(true)}>
                         <Pencil />
                         Edit
