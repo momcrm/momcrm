@@ -1,4 +1,8 @@
 import { router } from '@inertiajs/react';
+import {
+    CustomFieldValueView,
+    hasCustomFieldValue,
+} from '@/components/custom-fields/custom-fields-form';
 import { useMemo } from 'react';
 import {
     BillingTypeBadge,
@@ -13,7 +17,7 @@ import { ChoiceTag, useChoice } from '@/components/tickets/ticket-meta';
 import { timeAgo } from '@/lib/format';
 import { formatCents } from '@/lib/money';
 import { show } from '@/routes/customers';
-import type { CustomerListItem } from '@/types';
+import type { CustomField, CustomerListItem } from '@/types';
 
 const column = dataTableColumns<CustomerListItem>();
 
@@ -27,7 +31,11 @@ function CustomerType({ typeId }: { typeId: string | null }) {
     );
 }
 
-function buildColumns(selection?: TicketSelection, rowIds: string[] = []) {
+function buildColumns(
+    selection?: TicketSelection,
+    rowIds: string[] = [],
+    customFields: CustomField[] = [],
+) {
     const pickedCount = rowIds.filter((id) => selection?.isSelected(id)).length;
 
     return column.columns([
@@ -137,22 +145,42 @@ function buildColumns(selection?: TicketSelection, rowIds: string[] = []) {
                 </span>
             ),
         }),
+        ...customFields.map((field) =>
+            column.accessor((customer) => customer.custom_fields[field.id], {
+                id: `cf:${field.id}`,
+                header: field.name,
+                meta: { className: 'w-36' },
+                cell: (info) =>
+                    hasCustomFieldValue(field, info.getValue()) ? (
+                        <CustomFieldValueView
+                            field={field}
+                            value={info.getValue()}
+                            labels={info.row.original.custom_field_labels}
+                        />
+                    ) : (
+                        <span className="text-subtle-foreground">—</span>
+                    ),
+            }),
+        ),
     ]);
 }
 
 export default function CustomerTable({
     customers,
     selection,
+    customFields = [],
 }: {
     customers: CustomerListItem[];
+    /** Custom fields to add as columns, after the built-in ones. */
+    customFields?: CustomField[];
     /** Adds a checkbox column for picking customers for a bulk change. */
     selection?: TicketSelection;
 }) {
     const rowIds = customers.map((customer) => customer.id);
     const rowKey = rowIds.join(',');
     const columns = useMemo(
-        () => buildColumns(selection, rowIds),
-        [selection, rowKey], // eslint-disable-line react-hooks/exhaustive-deps
+        () => buildColumns(selection, rowIds, customFields),
+        [selection, rowKey, customFields], // eslint-disable-line react-hooks/exhaustive-deps
     );
 
     return (

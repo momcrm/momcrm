@@ -416,6 +416,7 @@ function TicketTabs({
                         hideProject
                         groupBy={prefs.groupBy}
                         hiddenColumns={prefs.hiddenColumns}
+                        customFieldColumns={prefs.shownCustomFields}
                         selection={selection}
                         tickets={page.data}
                         sort={{

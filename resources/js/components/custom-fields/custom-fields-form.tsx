@@ -165,11 +165,15 @@ export function hasCustomFieldValue(
 export function CustomFieldValueView({
     field,
     value,
+    labels: given,
 }: {
     field: CustomField;
     value: CustomFieldValue | undefined;
+    /** Linked records' names, when a list row carries its own. */
+    labels?: Record<string, string>;
 }) {
-    const labels = useCustomFieldLabels();
+    const shared = useCustomFieldLabels();
+    const labels = given ?? shared;
 
     if (!hasCustomFieldValue(field, value)) {
         return <span className="text-muted-foreground">—</span>;

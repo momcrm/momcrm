@@ -5,6 +5,9 @@ declare(strict_types=1);
 use App\Choice\ChoiceEloquentModel;
 use App\Contact\ContactEloquentModel;
 use App\Customer\CustomerEloquentModel;
+use App\CustomField\CustomFieldEloquentModel;
+use App\CustomField\CustomFieldTargetEnum;
+use App\CustomField\CustomFieldTypeEnum;
 use App\Invoice\InvoiceEloquentModel;
 use App\InvoiceItem\InvoiceItemEloquentModel;
 use App\Service\ServiceEloquentModel;
@@ -86,5 +89,23 @@ it('shows what each customer owes on sent invoices and how many services they ha
         ->assertInertia(fn (Assert $page) => $page
             ->where('customers.data.0.balance_in_cents', 22000)
             ->where('customers.data.0.services_count', 3),
+        );
+});
+
+it('filters customers by a custom field, ignoring a filter on a ticket field', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create(['onboarded_at' => now()]);
+    $teamId = $user->current_team_id;
+    $vip = CustomFieldEloquentModel::factory()->on(CustomFieldTargetEnum::Customer)->ofType(CustomFieldTypeEnum::Checkbox)->create(['team_id' => $teamId]);
+    $ticketField = CustomFieldEloquentModel::factory()->ofType(CustomFieldTypeEnum::Checkbox)->create(['team_id' => $teamId]);
+    CustomerEloquentModel::factory()->create(['team_id' => $teamId, 'name' => 'Important', 'custom_fields' => [$vip->id => true]]);
+    CustomerEloquentModel::factory()->create(['team_id' => $teamId, 'name' => 'Ordinary']);
+
+    actingAs($user)
+        ->get(route('customers.index', ['cf' => [$vip->id => '1', $ticketField->id => '1']]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('filters.custom_fields', [$vip->id => '1'])
+            ->where('customers.total', 1)
+            ->where('customers.data.0.name', 'Important')
+            ->where('customers.data.0.custom_field_labels', []),
         );
 });

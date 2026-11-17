@@ -11,6 +11,7 @@ import {
     ListFilter,
     Plus,
     Rows2,
+    SlidersHorizontal,
     Table2,
     Tag,
     Trash2,
@@ -47,6 +48,12 @@ import type {
     TicketGroupBy,
     TicketViewPrefs,
 } from '@/hooks/use-ticket-view-prefs';
+import {
+    customFieldFilterLabel,
+    isFilterableCustomField,
+    isSortableCustomField,
+    useCustomFields,
+} from '@/components/custom-fields/custom-field-input';
 import { hueStyle } from '@/lib/colors';
 import { visitWithQuery } from '@/lib/query';
 import { cn } from '@/lib/utils';
@@ -87,7 +94,8 @@ type FieldKey =
     | 'project'
     | 'type'
     | 'group'
-    | 'label';
+    | 'label'
+    | `cf:${string}`;
 
 type Field = {
     key: FieldKey;
@@ -137,6 +145,7 @@ export default function TicketToolbar({
 
     const priorities = useTicketPriorities(...filters.priority);
     const labels = useLabels(filters.label);
+    const customFields = useCustomFields('ticket');
     const types = useTicketTypes(filters.type);
     const defaultStatus =
         forCalendar || filters.view === 'board' ? 'all' : 'open';
@@ -356,6 +365,38 @@ export default function TicketToolbar({
                   },
               ]
             : []),
+        ...customFields.filter(isFilterableCustomField).map((field) => {
+            const param = `cf[${field.id}]`;
+            const value = filters.custom_fields[field.id];
+
+            return {
+                key: `cf:${field.id}` as const,
+                label: field.name,
+                icon: <SlidersHorizontal className="size-3.5" />,
+                value: customFieldFilterLabel(field, value),
+                canClear: value !== undefined,
+                clear: () => set({ [param]: null }),
+                choices: (
+                    <RadioChoices
+                        value={value ?? null}
+                        onChange={(next) => set({ [param]: next })}
+                        choices={
+                            field.type === 'checkbox'
+                                ? [
+                                      { value: '1', label: 'Yes' },
+                                      { value: '0', label: 'No' },
+                                  ]
+                                : [{ value: 'none', label: 'None' }]
+                        }
+                        more={field.options.map((option) => ({
+                            value: option.id,
+                            label: option.name,
+                            hue: option.hue,
+                        }))}
+                    />
+                ),
+            };
+        }),
     ];
 
     /** Status always shows; the rest once set or added from a menu. */
@@ -393,14 +434,18 @@ export default function TicketToolbar({
     };
 
     const view = forCalendar ? 'list' : filters.view;
+    const customSorts = customFields
+        .filter(isSortableCustomField)
+        .map((field) => ({ value: `cf:${field.id}`, label: field.name }));
     const sortChoices = forCalendar
         ? sorts.filter((sort) => sort.value !== 'due_on')
-        : sorts;
+        : [...sorts, ...customSorts];
     const sortLabel =
         view === 'board'
             ? 'Manual'
-            : (sorts.find((sort) => sort.value === filters.sort)?.label ??
-              'Number');
+            : ([...sorts, ...customSorts].find(
+                  (sort) => sort.value === filters.sort,
+              )?.label ?? 'Number');
 
     return (
         <div>
@@ -669,6 +714,23 @@ export default function TicketToolbar({
                                         {column.label}
                                     </DropdownMenuCheckboxItem>
                                 ))}
+                            {customFields.length > 0 && (
+                                <DropdownMenuSeparator />
+                            )}
+                            {customFields.map((field) => (
+                                <DropdownMenuCheckboxItem
+                                    key={field.id}
+                                    checked={prefs.shownCustomFields.includes(
+                                        field.id,
+                                    )}
+                                    onSelect={(event) => event.preventDefault()}
+                                    onCheckedChange={() =>
+                                        prefs.toggleCustomField(field.id)
+                                    }
+                                >
+                                    {field.name}
+                                </DropdownMenuCheckboxItem>
+                            ))}
                         </DropdownMenuContent>
                     </DropdownMenu>
                 )}

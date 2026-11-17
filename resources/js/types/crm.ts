@@ -96,6 +96,8 @@ export type CustomerMoney = {
 };
 
 export type CustomerListItem = Customer & {
+    /** Names of the records the customer's record links point at, by id. */
+    custom_field_labels?: Record<string, string>;
     contacts_count: number;
     services_count: number;
     balance_in_cents: number;
@@ -264,6 +266,8 @@ export type Ticket = {
 };
 
 export type TicketListItem = Ticket & {
+    /** Names of the records the ticket's record links point at, by id. */
+    custom_field_labels?: Record<string, string>;
     customer_name: string | null;
     assignee_name: string | null;
     project_name: string | null;
@@ -376,6 +380,8 @@ export type TicketFilters = {
     group: string | null;
     sort: string;
     direction: 'asc' | 'desc';
+    /** Filters on custom fields, by field id. */
+    custom_fields: Record<string, string>;
 };
 
 export type ProjectStatus =

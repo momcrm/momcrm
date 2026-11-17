@@ -1,5 +1,17 @@
 import { Head, Link } from '@inertiajs/react';
+import { Columns3 } from 'lucide-react';
+import { useState } from 'react';
 import type { ReactNode } from 'react';
+import {
+    isFilterableCustomField,
+    useCustomFields,
+} from '@/components/custom-fields/custom-field-input';
+import {
+    DropdownMenu,
+    DropdownMenuCheckboxItem,
+    DropdownMenuContent,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { CustomerBulkBar } from '@/components/customers/customer-bulk';
 import {
     billingTypeLabels,
@@ -27,7 +39,47 @@ type Filters = {
     type: string | null;
     billing: CustomerBillingType | null;
     status: string | null;
+    /** Filters on custom fields, by field id. */
+    custom_fields: Record<string, string>;
 };
+
+const COLUMNS_KEY = 'customers.custom-field-columns';
+
+/**
+ * Which custom fields this browser shows as columns in the customer table.
+ * A per-viewer convenience, so it lives in local storage.
+ */
+function useCustomFieldColumns(): [string[], (fieldId: string) => void] {
+    const [shown, setShown] = useState<string[]>(() => {
+        try {
+            const stored: unknown = JSON.parse(
+                window.localStorage.getItem(COLUMNS_KEY) ?? '[]',
+            );
+
+            return Array.isArray(stored)
+                ? stored.filter((id) => typeof id === 'string')
+                : [];
+        } catch {
+            return [];
+        }
+    });
+
+    const toggle = (fieldId: string) => {
+        const next = shown.includes(fieldId)
+            ? shown.filter((id) => id !== fieldId)
+            : [...shown, fieldId];
+
+        setShown(next);
+
+        try {
+            window.localStorage.setItem(COLUMNS_KEY, JSON.stringify(next));
+        } catch {
+            // Private windows can refuse storage; the choice just won't stick.
+        }
+    };
+
+    return [shown, toggle];
+}
 
 const RELOAD = ['customers', 'filters'];
 
@@ -69,10 +121,16 @@ export default function CustomersIndex({
     const selection = useTicketSelection(
         customers.data.map((customer) => customer.id),
     );
+    const customFields = useCustomFields('customer');
+    const [shownColumns, toggleColumn] = useCustomFieldColumns();
     const isFiltered = Boolean(
-        filters.search || filters.type || filters.billing || filters.status,
+        filters.search ||
+        filters.type ||
+        filters.billing ||
+        filters.status ||
+        Object.keys(filters.custom_fields).length > 0,
     );
-    const filter = (key: keyof Filters) => (value: string) =>
+    const filter = (key: string) => (value: string) =>
         visitWithQuery({ [key]: value }, { only: RELOAD });
 
     return (
@@ -145,6 +203,75 @@ export default function CustomersIndex({
                                 </option>
                             ))}
                         </FilterSelect>
+                        {customFields
+                            .filter(isFilterableCustomField)
+                            .map((field) => (
+                                <FilterSelect
+                                    key={field.id}
+                                    label={field.name}
+                                    value={
+                                        filters.custom_fields[field.id] ?? null
+                                    }
+                                    onChange={filter(`cf[${field.id}]`)}
+                                >
+                                    <option value="">Any {field.name}</option>
+                                    {field.type === 'checkbox' ? (
+                                        <>
+                                            <option value="1">
+                                                {field.name}: yes
+                                            </option>
+                                            <option value="0">
+                                                {field.name}: no
+                                            </option>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <option value="none">
+                                                No {field.name}
+                                            </option>
+                                            {field.options.map((option) => (
+                                                <option
+                                                    key={option.id}
+                                                    value={option.id}
+                                                >
+                                                    {option.name}
+                                                </option>
+                                            ))}
+                                        </>
+                                    )}
+                                </FilterSelect>
+                            ))}
+                        {customFields.length > 0 && (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" size="sm">
+                                        <Columns3 />
+                                        Columns
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent
+                                    align="start"
+                                    className="w-48"
+                                >
+                                    {customFields.map((field) => (
+                                        <DropdownMenuCheckboxItem
+                                            key={field.id}
+                                            checked={shownColumns.includes(
+                                                field.id,
+                                            )}
+                                            onSelect={(event) =>
+                                                event.preventDefault()
+                                            }
+                                            onCheckedChange={() =>
+                                                toggleColumn(field.id)
+                                            }
+                                        >
+                                            {field.name}
+                                        </DropdownMenuCheckboxItem>
+                                    ))}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
                     </div>
                 )}
 
@@ -170,6 +297,9 @@ export default function CustomersIndex({
                         <CustomerTable
                             customers={customers.data}
                             selection={selection}
+                            customFields={customFields.filter((field) =>
+                                shownColumns.includes(field.id),
+                            )}
                         />
                         <Pager page={customers} only="customers" />
                         <CustomerBulkBar

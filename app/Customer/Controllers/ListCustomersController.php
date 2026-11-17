@@ -8,6 +8,10 @@ use App\Customer\Actions\FindCustomer;
 use App\Customer\Customer;
 use App\Customer\CustomerBillingTypeEnum;
 use App\Customer\CustomerStatusEnum;
+use App\CustomField\Actions\FindCustomField;
+use App\CustomField\CustomFieldQuery;
+use App\CustomField\CustomFieldRelationLabels;
+use App\CustomField\CustomFieldTargetEnum;
 use App\Invoice\Actions\FindInvoice;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -24,7 +28,14 @@ final class ListCustomersController
         $billingType = CustomerBillingTypeEnum::tryFrom($request->string('billing')->toString());
         $status = CustomerStatusEnum::tryFrom($request->string('status')->toString());
 
-        $customers = FindCustomer::paginateForTeam($teamId, $search, $typeId, $billingType, $status);
+        $customFields = CustomFieldQuery::filtersFromRequest($request, FindCustomField::listForTeam($teamId, CustomFieldTargetEnum::Customer));
+
+        $customers = FindCustomer::paginateForTeam($teamId, $search, $typeId, $billingType, $status, customFields: $customFields);
+        $labels = CustomFieldRelationLabels::for(
+            $teamId,
+            CustomFieldTargetEnum::Customer,
+            ...array_map(fn (Customer $customer): array => $customer->getCustomFields()->toValues(), $customers->items()),
+        );
         $balances = FindInvoice::balancesForCustomers($teamId, $customers->getCollection()
             ->map(fn (Customer $customer): string => $customer->getId()->toString())
             ->all());
@@ -32,6 +43,7 @@ final class ListCustomersController
         return Inertia::render('customers/index', [
             'customers' => $customers->through(fn (Customer $customer): array => [
                 ...$customer->toSummary(),
+                'custom_field_labels' => CustomFieldRelationLabels::only($labels, $customer->getCustomFields()->toValues()),
                 'contacts_count' => $customer->getContactsCount()->toInteger(),
                 'services_count' => $customer->getServicesCount()->toInteger(),
                 'balance_in_cents' => $balances[$customer->getId()->toString()]['balance_in_cents'] ?? 0,
@@ -42,6 +54,7 @@ final class ListCustomersController
                 'type' => $typeId,
                 'billing' => $billingType?->value,
                 'status' => $status?->value,
+                'custom_fields' => $customFields,
             ],
             'billingTypes' => CustomerBillingTypeEnum::options(),
             'statuses' => CustomerStatusEnum::options(),
