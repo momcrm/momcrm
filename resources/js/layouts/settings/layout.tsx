@@ -4,6 +4,7 @@ import {
     KeyRound,
     Palette,
     Shield,
+    SlidersHorizontal,
     UserRound,
     UsersRound,
     Workflow,
@@ -14,6 +15,7 @@ import { cn, toUrl } from '@/lib/utils';
 import { index as accessRulesIndex } from '@/routes/access-rules';
 import { index as activityIndex } from '@/routes/activity';
 import { edit as editAppearance } from '@/routes/appearance';
+import { edit as editCustomFields } from '@/routes/custom-fields';
 import { edit } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
 import { edit as editTeam } from '@/routes/team';
@@ -30,6 +32,12 @@ const workflowItem: NavItem = {
     title: 'Workflow',
     href: editWorkflow(),
     icon: Workflow,
+};
+
+const customFieldsItem: NavItem = {
+    title: 'Custom fields',
+    href: editCustomFields(),
+    icon: SlidersHorizontal,
 };
 
 const sections: { title: string; items: NavItem[] }[] = [
@@ -56,7 +64,8 @@ const sections: { title: string; items: NavItem[] }[] = [
  */
 export default function SettingsLayout({ children }: PropsWithChildren) {
     const { isCurrentOrParentUrl } = useCurrentUrl();
-    const { canManageAccessRules, canManageWorkflow } = usePage().props;
+    const { canManageAccessRules, canManageCustomFields, canManageWorkflow } =
+        usePage().props;
     const visibleSections = sections.map((section) =>
         section.title === 'Workspace'
             ? {
@@ -64,6 +73,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                   items: [
                       ...section.items,
                       ...(canManageWorkflow ? [workflowItem] : []),
+                      ...(canManageCustomFields ? [customFieldsItem] : []),
                       ...(canManageAccessRules ? [accessRulesItem] : []),
                   ],
               }

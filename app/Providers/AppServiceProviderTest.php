@@ -41,7 +41,7 @@ it('gives every eloquent model a morph alias', function (string $model): void {
 
 it('keeps the stored morph aliases unchanged', function (): void {
     // These values are stored in polymorphic columns. Add new aliases, never rename existing ones.
-    expect(MorphMapKeyEnum::values())->toBe(['access_rule', 'activity', 'asset', 'attachment', 'audit_log', 'choice', 'comment', 'contact', 'contract', 'customer', 'email_code', 'favorite', 'folder', 'group', 'invoice', 'invoice_item', 'location', 'milestone', 'passkey', 'project', 'secret', 'service', 'social_account', 'team', 'team_invitation', 'team_user', 'ticket', 'user']);
+    expect(MorphMapKeyEnum::values())->toBe(['access_rule', 'activity', 'asset', 'attachment', 'audit_log', 'choice', 'comment', 'contact', 'contract', 'customer', 'custom_field', 'email_code', 'favorite', 'folder', 'group', 'invoice', 'invoice_item', 'location', 'milestone', 'passkey', 'project', 'secret', 'service', 'social_account', 'team', 'team_invitation', 'team_user', 'ticket', 'user']);
 });
 
 it('maps every alias to its model and back', function (MorphMapKeyEnum $key): void {

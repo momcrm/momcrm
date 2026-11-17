@@ -13,6 +13,13 @@ use App\Choice\Controllers\RestoreChoiceController;
 use App\Choice\Controllers\ShowWorkflowController;
 use App\Choice\Controllers\StoreChoiceController;
 use App\Choice\Controllers\UpdateChoiceController;
+use App\CustomField\Controllers\ArchiveCustomFieldController;
+use App\CustomField\Controllers\DeleteCustomFieldController;
+use App\CustomField\Controllers\ReorderCustomFieldsController;
+use App\CustomField\Controllers\RestoreCustomFieldController;
+use App\CustomField\Controllers\ShowCustomFieldsController;
+use App\CustomField\Controllers\StoreCustomFieldController;
+use App\CustomField\Controllers\UpdateCustomFieldController;
 use App\Team\Controllers\EditTeamController;
 use App\Team\Controllers\UpdateTeamController;
 use App\TeamInvitation\Controllers\DeleteTeamInvitationController;
@@ -65,6 +72,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('settings/choices/{choice}/archive', ArchiveChoiceController::class)->whereUuid('choice')->name('choices.archive');
     Route::post('settings/choices/{choice}/restore', RestoreChoiceController::class)->whereUuid('choice')->name('choices.restore');
     Route::delete('settings/choices/{choice}', DeleteChoiceController::class)->whereUuid('choice')->name('choices.destroy');
+
+    Route::get('settings/custom-fields', ShowCustomFieldsController::class)->name('custom-fields.edit');
+    Route::post('settings/custom-fields', StoreCustomFieldController::class)->name('custom-fields.store');
+    Route::put('settings/custom-fields/order', ReorderCustomFieldsController::class)->name('custom-fields.reorder');
+    Route::patch('settings/custom-fields/{customField}', UpdateCustomFieldController::class)->whereUuid('customField')->name('custom-fields.update');
+    Route::post('settings/custom-fields/{customField}/archive', ArchiveCustomFieldController::class)->whereUuid('customField')->name('custom-fields.archive');
+    Route::post('settings/custom-fields/{customField}/restore', RestoreCustomFieldController::class)->whereUuid('customField')->name('custom-fields.restore');
+    Route::delete('settings/custom-fields/{customField}', DeleteCustomFieldController::class)->whereUuid('customField')->name('custom-fields.destroy');
 
     Route::get('settings/activity', ListAccountActivityController::class)->name('activity.index');
 
