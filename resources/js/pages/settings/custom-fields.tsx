@@ -80,6 +80,7 @@ const relationNouns: Record<CustomFieldRelation, string> = {
     service: 'a service',
     contract: 'a contract',
     invoice: 'an invoice',
+    milestone: 'a milestone',
     record: 'a record',
 };
 

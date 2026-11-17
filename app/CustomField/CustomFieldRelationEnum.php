@@ -43,6 +43,7 @@ enum CustomFieldRelationEnum: string
     case Service = 'service';
     case Contract = 'contract';
     case Invoice = 'invoice';
+    case Milestone = 'milestone';
     case Record = 'record';
 
     public function label(): string

@@ -233,6 +233,7 @@ export type CustomFieldTarget =
     | 'service'
     | 'contract'
     | 'invoice'
+    | 'milestone'
     /** Records of a custom object; the field's `object_id` says which. */
     | 'record';
 
@@ -259,6 +260,7 @@ export type CustomFieldRelation =
     | 'service'
     | 'contract'
     | 'invoice'
+    | 'milestone'
     | 'record';
 
 /**
@@ -513,6 +515,9 @@ export type Milestone = {
     name: string;
     due_on: string;
     completed_at: string | null;
+    custom_fields: CustomFieldValues;
+    /** What points at the milestone through record-link custom fields. */
+    linked_records: LinkedRecordGroup[];
 };
 
 export type SidebarProject = {

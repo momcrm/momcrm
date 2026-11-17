@@ -9,6 +9,7 @@ use App\Customer\CustomerEloquentModel;
 use App\CustomObject\StandardObjectEnum;
 use App\Invoice\InvoiceEloquentModel;
 use App\Location\LocationEloquentModel;
+use App\Milestone\MilestoneEloquentModel;
 use App\Project\ProjectEloquentModel;
 use App\Service\ServiceEloquentModel;
 use App\Ticket\TicketEloquentModel;
@@ -35,6 +36,7 @@ function standardRecord(StandardObjectEnum $object, string $teamId): array
         StandardObjectEnum::Location => [$record = LocationEloquentModel::factory()->create([...$team, 'customer_id' => $customer()->id, 'name' => 'Head office']), 'Head office', route('locations.edit', $record->id)],
         StandardObjectEnum::Contract => [$record = ContractEloquentModel::factory()->create([...$team, 'customer_id' => $customerId = $customer()->id, 'title' => 'Managed services']), 'Managed services', route('customers.contracts', ['customer' => $customerId, 'contract' => $record->id])],
         StandardObjectEnum::Invoice => [$record = InvoiceEloquentModel::factory()->create([...$team, 'customer_id' => $customer()->id, 'number' => 42]), 'INV-0042', route('invoices.show', $record->id)],
+        StandardObjectEnum::Milestone => [$record = MilestoneEloquentModel::factory()->create([...$team, 'project_id' => $projectId = ProjectEloquentModel::factory()->create($team)->id, 'name' => 'Go live']), 'Go live', route('projects.show', $projectId)],
         StandardObjectEnum::Service => [$record = ServiceEloquentModel::factory()->create([...$team, 'customer_id' => $customer()->id, 'name' => 'Managed IT']), 'Managed IT', route('services.edit', $record->id)],
     };
 }
@@ -53,7 +55,7 @@ it("finds, titles and links the team's records of every built-in kind, and names
         ->and($object->labelSingular())->not->toBe('');
 })->with(StandardObjectEnum::cases());
 
-it('hides tickets and projects in a members-only project from someone who is not in it', function (): void {
+it('hides projects, and tickets and milestones in them, from someone who is not in a members-only project', function (): void {
     $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
     $teamId = $owner->current_team_id;
     $outsider = UserEloquentModel::factory()->inTeam($teamId)->create();
@@ -61,8 +63,11 @@ it('hides tickets and projects in a members-only project from someone who is not
     $secret = ProjectEloquentModel::factory()->create(['team_id' => $teamId, 'visibility' => 'restricted']);
     $secret->members()->attach($insider->id);
     TicketEloquentModel::factory()->create(['team_id' => $teamId, 'project_id' => $secret->id]);
+    MilestoneEloquentModel::factory()->create(['team_id' => $teamId, 'project_id' => $secret->id]);
 
     expect(StandardObjectEnum::Project->visibleQuery($teamId, $outsider->id)->count())->toBe(0)
+        ->and(StandardObjectEnum::Milestone->visibleQuery($teamId, $outsider->id)->count())->toBe(0)
+        ->and(StandardObjectEnum::Milestone->visibleQuery($teamId, $insider->id)->count())->toBe(1)
         ->and(StandardObjectEnum::Ticket->visibleQuery($teamId, $outsider->id)->count())->toBe(0)
         ->and(StandardObjectEnum::Project->visibleQuery($teamId, $insider->id)->count())->toBe(1)
         ->and(StandardObjectEnum::Ticket->visibleQuery($teamId, $insider->id)->count())->toBe(1);

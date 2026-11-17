@@ -80,6 +80,7 @@ use App\Location\Controllers\UpdateLocationController;
 use App\Milestone\Controllers\DeleteMilestoneController;
 use App\Milestone\Controllers\StoreMilestoneController;
 use App\Milestone\Controllers\ToggleMilestoneController;
+use App\Milestone\Controllers\UpdateMilestoneController;
 use App\Onboarding\Controllers\RemoveSampleDataController;
 use App\Onboarding\Middleware\EnsureOnboarded;
 use App\Project\Controllers\ArchiveProjectController;
@@ -247,6 +248,7 @@ Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function 
     Route::delete('projects/{project}', DeleteProjectController::class)->whereUuid('project')->name('projects.destroy');
     Route::post('projects/{project}/milestones', StoreMilestoneController::class)->whereUuid('project')->name('milestones.store');
     Route::post('milestones/{milestone}/toggle', ToggleMilestoneController::class)->whereUuid('milestone')->name('milestones.toggle');
+    Route::patch('milestones/{milestone}', UpdateMilestoneController::class)->whereUuid('milestone')->name('milestones.update');
     Route::delete('milestones/{milestone}', DeleteMilestoneController::class)->whereUuid('milestone')->name('milestones.destroy');
 
     Route::get('invoices', ListInvoicesController::class)->name('invoices.index');
