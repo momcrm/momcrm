@@ -13,6 +13,7 @@ use App\Customer\Properties\Id;
 use App\Customer\Properties\IsSample;
 use App\Customer\Properties\Number;
 use App\Customer\Properties\TeamId;
+use App\CustomField\Properties\CustomFieldValues;
 use App\Service\Properties\CustomerId as ServiceCustomerId;
 use App\Service\ServiceEloquentModel;
 use App\Shared\Table;
@@ -111,6 +112,7 @@ final class CustomerEloquentModel extends Model implements Auditable
     protected function casts(): array
     {
         return [
+            CustomFieldValues::getDatabaseTableColumnName() => 'array',
             Number::getDatabaseTableColumnName() => 'integer',
             IsSample::getDatabaseTableColumnName() => 'boolean',
         ];

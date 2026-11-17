@@ -1,4 +1,9 @@
 import { Head, Link } from '@inertiajs/react';
+import { useCustomFields } from '@/components/custom-fields/custom-field-input';
+import {
+    CustomFieldValueView,
+    hasCustomFieldValue,
+} from '@/components/custom-fields/custom-fields-form';
 import { AlertTriangle } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { serviceDetail } from '@/components/services/service-detail';
@@ -247,11 +252,25 @@ export default function CustomerDashboard({
     const id = customer.id;
     useWorkspaceBreadcrumbs(customer);
 
-    const details = [
+    const customFields = useCustomFields('customer');
+    const details: { label: string; value: ReactNode }[] = [
         { label: 'Email', value: customer.email },
         { label: 'Phone', value: customer.phone },
         { label: 'Website', value: customer.website },
         { label: 'ABN', value: customer.abn },
+        ...customFields
+            .filter((field) =>
+                hasCustomFieldValue(field, customer.custom_fields[field.id]),
+            )
+            .map((field) => ({
+                label: field.name,
+                value: (
+                    <CustomFieldValueView
+                        field={field}
+                        value={customer.custom_fields[field.id]}
+                    />
+                ),
+            })),
     ].filter((detail) => detail.value);
 
     const tiles = [

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use App\Contact\ContactEloquentModel;
 use App\Customer\CustomerEloquentModel;
+use App\CustomField\CustomFieldEloquentModel;
+use App\CustomField\CustomFieldTargetEnum;
 use App\User\UserEloquentModel;
 
 use function Pest\Laravel\actingAs;
@@ -55,4 +57,18 @@ it('requires a first name', function (): void {
     actingAs($user)
         ->post(route('contacts.store'), ['customer_id' => $customer->id])
         ->assertSessionHasErrors(['first_name' => 'The first name field is required.']);
+});
+
+it('adds a contact with its custom field values', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $teamId = $user->current_team_id;
+    $field = CustomFieldEloquentModel::factory()->on(CustomFieldTargetEnum::Contact)->create(['team_id' => $teamId]);
+    $blank = CustomFieldEloquentModel::factory()->on(CustomFieldTargetEnum::Contact)->create(['team_id' => $teamId]);
+    $customer = CustomerEloquentModel::factory()->create(['team_id' => $teamId]);
+
+    actingAs($user)
+        ->post(route('contacts.store'), ['customer_id' => $customer->id, 'first_name' => 'Sam', 'custom_fields' => [$field->id => 'North', $blank->id => '']])
+        ->assertSessionHasNoErrors();
+
+    expect(ContactEloquentModel::query()->where('first_name', 'Sam')->sole()->custom_fields)->toBe([$field->id => 'North']);
 });

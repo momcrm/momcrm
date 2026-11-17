@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Project\FormRequests;
 
 use App\Choice\LabelTargetEnum;
+use App\CustomField\CustomFieldTargetEnum;
+use App\CustomField\CustomFieldValueRules;
+use App\CustomField\Properties\CustomFieldValues;
 use App\Project\Actions\CreateProject;
 use App\Project\Project;
 use App\Project\ProjectEloquentModel;
@@ -31,7 +34,12 @@ final class StoreProjectFormRequest extends FormRequest
      */
     public function rules(): array
     {
-        return ProjectValidationRules::for($this, (string) $this->user()?->current_team_id);
+        $teamId = (string) $this->user()?->current_team_id;
+
+        return [
+            ...ProjectValidationRules::for($this, $teamId),
+            ...CustomFieldValueRules::for($teamId, CustomFieldTargetEnum::Project),
+        ];
     }
 
     /**
@@ -42,12 +50,21 @@ final class StoreProjectFormRequest extends FormRequest
         return ProjectValidationRules::messages();
     }
 
+    /**
+     * @return array<string, string>
+     */
+    public function attributes(): array
+    {
+        return CustomFieldValueRules::attributes((string) $this->user()?->current_team_id, CustomFieldTargetEnum::Project);
+    }
+
     public function process(): RedirectResponse
     {
         $validated = $this->validated();
         $userId = (string) $this->user()?->id;
         $project = Project::new()
-            ->setPropertyIfExists(Types::stringKeyed(Arr::except($validated, [ProjectValidationRules::MEMBER_IDS, LabelTargetEnum::FIELD])))
+            ->setPropertyIfExists(Types::stringKeyed(Arr::except($validated, [ProjectValidationRules::MEMBER_IDS, LabelTargetEnum::FIELD, CustomFieldValues::getNameForValidation()])))
+            ->setCustomFields(CustomFieldValueRules::merge((string) $this->user()?->current_team_id, CustomFieldTargetEnum::Project, new CustomFieldValues(null), $validated[CustomFieldValues::getNameForValidation()] ?? []))
             ->setTeamId((string) $this->user()?->current_team_id);
 
         if ($project->getLeadId()->isNull()) {

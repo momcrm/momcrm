@@ -22,6 +22,7 @@ export type Customer = {
     type_id: string | null;
     notes: string | null;
     is_sample: boolean;
+    custom_fields: CustomFieldValues;
 };
 
 export type CustomerBillingType = 'automatic' | 'manual' | 'excluded';
@@ -110,6 +111,7 @@ export type Contact = {
     work_phone: string | null;
     mobile_phone: string | null;
     is_primary: boolean;
+    custom_fields: CustomFieldValues;
 };
 
 export type ContactListItem = Contact & { customer_name: string | null };
@@ -385,6 +387,7 @@ export type Project = {
     starts_on: string | null;
     due_on: string | null;
     archived_at: string | null;
+    custom_fields: CustomFieldValues;
 };
 
 export type ProjectListItem = Project & {

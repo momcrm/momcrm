@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use App\Choice\ChoiceEloquentModel;
 use App\Customer\CustomerEloquentModel;
+use App\CustomField\CustomFieldEloquentModel;
+use App\CustomField\CustomFieldTargetEnum;
 use App\User\UserEloquentModel;
 
 use function Pest\Laravel\actingAs;
@@ -118,4 +120,17 @@ it("rejects another team's customer type and a ticket type", function (): void {
     }
 
     expect(CustomerEloquentModel::query()->exists())->toBeFalse();
+});
+
+it('adds a customer with its custom field values', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $teamId = $user->current_team_id;
+    $field = CustomFieldEloquentModel::factory()->on(CustomFieldTargetEnum::Customer)->create(['team_id' => $teamId]);
+    $blank = CustomFieldEloquentModel::factory()->on(CustomFieldTargetEnum::Customer)->create(['team_id' => $teamId]);
+
+    actingAs($user)
+        ->post(route('customers.store'), ['name' => 'Acme IT', 'status' => 'active', 'custom_fields' => [$field->id => 'North', $blank->id => '']])
+        ->assertSessionHasNoErrors();
+
+    expect(CustomerEloquentModel::query()->where('name', 'Acme IT')->sole()->custom_fields)->toBe([$field->id => 'North']);
 });

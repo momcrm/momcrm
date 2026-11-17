@@ -1,4 +1,5 @@
 import { Form, Link } from '@inertiajs/react';
+import CustomFieldsFormFields from '@/components/custom-fields/custom-fields-form';
 import FormField from '@/components/form-field';
 import NativeSelect from '@/components/native-select';
 import { Button } from '@/components/ui/button';
@@ -125,6 +126,14 @@ export default function ContactForm({
                                 defaultValue={contact?.mobile_phone ?? ''}
                             />
                         </FormField>
+                    </div>
+
+                    <div className="grid gap-6 empty:hidden sm:grid-cols-2">
+                        <CustomFieldsFormFields
+                            target="contact"
+                            values={contact?.custom_fields}
+                            errors={errors}
+                        />
                     </div>
 
                     <div className="flex items-center gap-2">

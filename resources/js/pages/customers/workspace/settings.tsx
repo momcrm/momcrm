@@ -1,4 +1,9 @@
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import {
+    pickCustomFieldValues,
+    useCustomFields,
+} from '@/components/custom-fields/custom-field-input';
+import CustomFieldsFormFields from '@/components/custom-fields/custom-fields-form';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import ConfirmDelete from '@/components/confirm-delete';
@@ -94,6 +99,7 @@ export default function CustomerSettings({
         href: edit(customer.id),
     });
 
+    const customFields = useCustomFields('customer');
     const form = useForm({
         name: customer.name,
         prefix: customer.prefix ?? '',
@@ -107,6 +113,10 @@ export default function CustomerSettings({
         notes: customer.notes ?? '',
         main_contact_id: mainContactId ?? '',
         main_location_id: mainLocationId ?? '',
+        custom_fields: pickCustomFieldValues(
+            customFields,
+            customer.custom_fields,
+        ),
     });
     const [saved, setSaved] = useState(form.data);
     const types = useCustomerTypes(form.data.type_id);
@@ -124,7 +134,7 @@ export default function CustomerSettings({
         });
     };
 
-    const text = (field: keyof typeof form.data) => ({
+    const text = (field: Exclude<keyof typeof form.data, 'custom_fields'>) => ({
         id: field,
         value: form.data[field],
         onChange: (event: { target: { value: string } }) =>
@@ -352,6 +362,25 @@ export default function CustomerSettings({
                         )}
                     </SettingsRow>
                 </SettingsSection>
+
+                {customFields.length > 0 && (
+                    <SettingsSection
+                        title="Custom fields"
+                        description="Fields your team has added to customers."
+                    >
+                        <div className="grid gap-5 p-4 sm:grid-cols-2">
+                            <CustomFieldsFormFields
+                                target="customer"
+                                values={form.data.custom_fields}
+                                onChange={(values) =>
+                                    form.setData('custom_fields', values)
+                                }
+                                errors={form.errors}
+                                disabled={!canEdit}
+                            />
+                        </div>
+                    </SettingsSection>
+                )}
 
                 <SettingsSection
                     title="Notes"

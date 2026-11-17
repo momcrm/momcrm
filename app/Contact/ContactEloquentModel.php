@@ -11,6 +11,7 @@ use App\Contact\Properties\CustomerId;
 use App\Contact\Properties\Id;
 use App\Contact\Properties\IsPrimary;
 use App\Customer\CustomerEloquentModel;
+use App\CustomField\Properties\CustomFieldValues;
 use App\Shared\Table;
 use App\Team\Scopes\CurrentTeamScope;
 use Carbon\CarbonImmutable;
@@ -79,6 +80,7 @@ final class ContactEloquentModel extends Model implements Auditable
     protected function casts(): array
     {
         return [
+            CustomFieldValues::getDatabaseTableColumnName() => 'array',
             IsPrimary::getDatabaseTableColumnName() => 'boolean',
         ];
     }
