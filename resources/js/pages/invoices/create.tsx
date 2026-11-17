@@ -1,10 +1,10 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
+import { useCreateCustomer } from '@/components/customers/create-customer-dialog';
 import EmptyState from '@/components/empty-state';
 import InvoiceForm from '@/components/invoices/invoice-form';
 import PageHeader from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import StoreInvoiceController from '@/actions/App/Invoice/Controllers/StoreInvoiceController';
-import { create as createCustomer } from '@/routes/customers';
 import { create, index } from '@/routes/invoices';
 import type { CustomerOption, Service } from '@/types';
 
@@ -36,13 +36,7 @@ export default function CreateInvoice({
                     <EmptyState
                         title="Add a customer first"
                         description="Every invoice is for a customer."
-                        action={
-                            <Button asChild>
-                                <Link href={createCustomer()}>
-                                    Add customer
-                                </Link>
-                            </Button>
-                        }
+                        action={<AddCustomerButton />}
                     />
                 ) : (
                     <InvoiceForm
@@ -66,3 +60,9 @@ CreateInvoice.layout = {
         { title: 'Create invoice', href: create() },
     ],
 };
+
+function AddCustomerButton() {
+    const { openCreateCustomer } = useCreateCustomer();
+
+    return <Button onClick={() => openCreateCustomer()}>Add customer</Button>;
+}

@@ -1,4 +1,4 @@
-import { Link, router, useHttp, usePage } from '@inertiajs/react';
+import { router, useHttp, usePage } from '@inertiajs/react';
 import {
     Building2,
     CalendarDays,
@@ -35,6 +35,7 @@ import {
     CustomFieldInput,
     useCustomFields,
 } from '@/components/custom-fields/custom-field-input';
+import { useCreateCustomer } from '@/components/customers/create-customer-dialog';
 import FormField from '@/components/form-field';
 import { useLabels } from '@/components/labels';
 import { Button } from '@/components/ui/button';
@@ -60,7 +61,6 @@ import { hueStyle } from '@/lib/colors';
 import { addDays, addMonths, parseDay, toDay } from '@/lib/dates';
 import { formatBytes } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import { create as createCustomer } from '@/routes/customers';
 import { formOptions, store } from '@/routes/tickets';
 import type { CustomFieldValues, TicketFormOptions, LabelTag } from '@/types';
 
@@ -171,11 +171,19 @@ function LoadingBody() {
 }
 
 function NothingToFileUnder({ onDone }: { onDone: () => void }) {
+    const { openCreateCustomer } = useCreateCustomer();
+
     return (
         <div className="space-y-3 px-4 pb-4 text-sm text-muted-foreground">
             <p>Every ticket is for a customer or a project. Add one first.</p>
-            <Button size="sm" asChild onClick={onDone}>
-                <Link href={createCustomer()}>Add customer</Link>
+            <Button
+                size="sm"
+                onClick={() => {
+                    onDone();
+                    openCreateCustomer();
+                }}
+            >
+                Add customer
             </Button>
         </div>
     );

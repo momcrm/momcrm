@@ -1,16 +1,13 @@
 import { Head } from '@inertiajs/react';
 import ContactForm from '@/components/contacts/contact-form';
+import { useCreateCustomer } from '@/components/customers/create-customer-dialog';
 import EmptyState from '@/components/empty-state';
 import PageHeader from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import StoreContactController from '@/actions/App/Contact/Controllers/StoreContactController';
 import { create, index } from '@/routes/contacts';
-import {
-    create as createCustomer,
-    show as showCustomer,
-} from '@/routes/customers';
+import { show as showCustomer } from '@/routes/customers';
 import type { CustomerOption } from '@/types';
-import { Link } from '@inertiajs/react';
 
 export default function CreateContact({
     customers,
@@ -32,13 +29,7 @@ export default function CreateContact({
                     <EmptyState
                         title="Add a customer first"
                         description="Every contact works for a customer."
-                        action={
-                            <Button asChild>
-                                <Link href={createCustomer()}>
-                                    Add customer
-                                </Link>
-                            </Button>
-                        }
+                        action={<AddCustomerButton />}
                     />
                 ) : (
                     <ContactForm
@@ -64,3 +55,9 @@ CreateContact.layout = {
         { title: 'Add contact', href: create() },
     ],
 };
+
+function AddCustomerButton() {
+    const { openCreateCustomer } = useCreateCustomer();
+
+    return <Button onClick={() => openCreateCustomer()}>Add customer</Button>;
+}

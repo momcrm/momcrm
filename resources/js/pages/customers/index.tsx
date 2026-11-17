@@ -24,9 +24,10 @@ import Pager from '@/components/pager';
 import NativeSelect from '@/components/native-select';
 import SearchInput from '@/components/search-input';
 import { useTicketSelection } from '@/components/tickets/ticket-bulk';
+import { useCreateCustomer } from '@/components/customers/create-customer-dialog';
 import { Button } from '@/components/ui/button';
 import { visitWithQuery } from '@/lib/query';
-import { create, importMethod as importRoute, index } from '@/routes/customers';
+import { importMethod as importRoute, index } from '@/routes/customers';
 import type {
     CustomerBillingType,
     CustomerListItem,
@@ -122,6 +123,7 @@ export default function CustomersIndex({
         customers.data.map((customer) => customer.id),
     );
     const customFields = useCustomFields('customer');
+    const { openCreateCustomer } = useCreateCustomer();
     const [shownColumns, toggleColumn] = useCustomFieldColumns();
     const isFiltered = Boolean(
         filters.search ||
@@ -146,8 +148,8 @@ export default function CustomersIndex({
                             <Button variant="outline" asChild>
                                 <Link href={importRoute()}>Import</Link>
                             </Button>
-                            <Button asChild>
-                                <Link href={create()}>Add customer</Link>
+                            <Button onClick={() => openCreateCustomer()}>
+                                Add customer
                             </Button>
                         </>
                     }
@@ -286,8 +288,8 @@ export default function CustomersIndex({
                             title="No customers yet"
                             description="Add the businesses and people you work for. Contacts, sites and tickets all hang off a customer."
                             action={
-                                <Button asChild>
-                                    <Link href={create()}>Add customer</Link>
+                                <Button onClick={() => openCreateCustomer()}>
+                                    Add customer
                                 </Button>
                             }
                         />

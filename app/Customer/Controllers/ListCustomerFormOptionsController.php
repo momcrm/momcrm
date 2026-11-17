@@ -6,14 +6,16 @@ namespace App\Customer\Controllers;
 
 use App\Customer\CustomerBillingTypeEnum;
 use App\Customer\CustomerStatusEnum;
-use Inertia\Inertia;
-use Inertia\Response;
+use Illuminate\Http\JsonResponse;
 
-final class CreateCustomerController
+/**
+ * The choices for the new-customer dialog, fetched when it opens.
+ */
+final class ListCustomerFormOptionsController
 {
-    public function __invoke(): Response
+    public function __invoke(): JsonResponse
     {
-        return Inertia::render('customers/create', [
+        return response()->json([
             'statuses' => CustomerStatusEnum::options(),
             'billingTypes' => CustomerBillingTypeEnum::options(),
         ]);

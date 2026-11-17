@@ -28,7 +28,6 @@ use App\Contract\Controllers\DeleteContractController;
 use App\Contract\Controllers\StoreContractController;
 use App\Contract\Controllers\UpdateContractController;
 use App\Customer\Controllers\BulkUpdateCustomersController;
-use App\Customer\Controllers\CreateCustomerController;
 use App\Customer\Controllers\DeleteCustomerController;
 use App\Customer\Controllers\EditCustomerController;
 use App\Customer\Controllers\ImportCustomersController;
@@ -36,6 +35,7 @@ use App\Customer\Controllers\ListCustomerAssetsController;
 use App\Customer\Controllers\ListCustomerContactsController;
 use App\Customer\Controllers\ListCustomerContractsController;
 use App\Customer\Controllers\ListCustomerFilesController;
+use App\Customer\Controllers\ListCustomerFormOptionsController;
 use App\Customer\Controllers\ListCustomerInvoicesController;
 use App\Customer\Controllers\ListCustomerLocationsController;
 use App\Customer\Controllers\ListCustomerProjectsController;
@@ -127,7 +127,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function () {
     Route::get('customers', ListCustomersController::class)->name('customers.index');
-    Route::get('customers/create', CreateCustomerController::class)->name('customers.create');
+    Route::get('customers/form-options', ListCustomerFormOptionsController::class)->name('customers.form-options');
     Route::post('customers', StoreCustomerController::class)->name('customers.store');
     Route::patch('customers/bulk', BulkUpdateCustomersController::class)->name('customers.bulk.update');
     Route::get('customers/import', ShowImportCustomersController::class)->name('customers.import');
