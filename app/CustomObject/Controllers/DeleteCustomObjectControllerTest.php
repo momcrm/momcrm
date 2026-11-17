@@ -57,5 +57,5 @@ it('takes its records with it, and comes out of the access rules that named it',
     actingAs($owner)->delete(route('custom-objects.destroy', $object))->assertSessionHasNoErrors();
 
     expect(RecordEloquentModel::query()->withoutGlobalScopes()->find($record->id))->toBeNull()
-        ->and($rule->fresh()->conditions)->toBe([['attribute' => 'record.object', 'operator' => 'in', 'value' => [$kept->id]]]);
+        ->and($rule->fresh()->conditions)->toEqual([['attribute' => 'record.object', 'operator' => 'in', 'value' => [$kept->id]]]);
 });
