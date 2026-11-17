@@ -87,6 +87,11 @@ use App\Project\Controllers\RestoreProjectController;
 use App\Project\Controllers\ShowProjectController;
 use App\Project\Controllers\StoreProjectController;
 use App\Project\Controllers\UpdateProjectController;
+use App\Record\Controllers\DeleteRecordController;
+use App\Record\Controllers\ListRecordsController;
+use App\Record\Controllers\ShowRecordController;
+use App\Record\Controllers\StoreRecordController;
+use App\Record\Controllers\UpdateRecordController;
 use App\Secret\Controllers\DeleteSecretController;
 use App\Secret\Controllers\RevealSecretController;
 use App\Secret\Controllers\StoreSecretController;
@@ -179,6 +184,12 @@ Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function 
 
     Route::get('tickets', ListTicketsController::class)->name('tickets.index');
     Route::get('my-tickets', ListMyTicketsController::class)->name('tickets.mine');
+    Route::get('objects/{object}', ListRecordsController::class)->whereUuid('object')->name('records.index');
+    Route::post('objects/{object}/records', StoreRecordController::class)->whereUuid('object')->name('records.store');
+    Route::get('objects/{object}/records/{record}', ShowRecordController::class)->whereUuid(['object', 'record'])->name('records.show');
+    Route::patch('objects/{object}/records/{record}', UpdateRecordController::class)->whereUuid(['object', 'record'])->name('records.update');
+    Route::delete('objects/{object}/records/{record}', DeleteRecordController::class)->whereUuid(['object', 'record'])->name('records.destroy');
+
     Route::get('custom-fields/{customField}/records', ListCustomFieldRecordsController::class)->whereUuid('customField')->name('custom-fields.records');
     Route::get('tickets/form-options', ListTicketFormOptionsController::class)->name('tickets.form-options');
     Route::post('tickets', StoreTicketController::class)->name('tickets.store');

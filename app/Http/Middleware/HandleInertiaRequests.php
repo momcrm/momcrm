@@ -6,6 +6,7 @@ use App\Choice\Actions\FindChoice;
 use App\Choice\ChoiceListEnum;
 use App\CustomField\Actions\FindCustomField;
 use App\CustomField\CustomFieldTargetEnum;
+use App\CustomObject\Actions\FindCustomObject;
 use App\Favorite\Actions\FindFavorite;
 use App\Favorite\FavoritableTypeEnum;
 use App\Group\Actions\FindGroup;
@@ -162,6 +163,7 @@ class HandleInertiaRequests extends Middleware
             'myOpenTickets' => FindTicket::countOpenForTeam($user->current_team_id, $user->id),
             'unreadNotifications' => FindNotifications::countUnread($user),
             'groups' => FindGroup::optionsForTeam($user->current_team_id),
+            'objects' => FindCustomObject::listForTeam($user->current_team_id)->toSummaries(),
             'projects' => FindProject::forSidebar(
                 $user->current_team_id,
                 $user->id,

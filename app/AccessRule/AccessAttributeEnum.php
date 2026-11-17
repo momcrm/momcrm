@@ -28,6 +28,7 @@ enum AccessAttributeEnum: string
     case ProjectSubjectIsLead = 'project.subject_is_lead';
     case ProjectSubjectIsMember = 'project.subject_is_member';
     case ProjectVisibility = 'project.visibility';
+    case RecordObject = 'record.object';
     case SubjectGroup = 'subject.group';
     case SubjectLeadsGroup = 'subject.leads_group';
     case SubjectTeamRole = 'subject.team_role';
@@ -60,6 +61,7 @@ enum AccessAttributeEnum: string
             self::ProjectSubjectIsLead => 'They lead the project',
             self::ProjectSubjectIsMember => 'They are a project member',
             self::ProjectVisibility => 'Project visibility',
+            self::RecordObject => 'Custom object',
             self::SubjectGroup => 'They are in group',
             self::SubjectLeadsGroup => 'They lead group',
             self::SubjectTeamRole => 'Their team role',
@@ -90,6 +92,7 @@ enum AccessAttributeEnum: string
             self::CustomerStatus => AccessResourceEnum::Customer,
             self::GroupSubjectIsLead, self::GroupSubjectIsMember => AccessResourceEnum::Group,
             self::InvoiceStatus => AccessResourceEnum::Invoice,
+            self::RecordObject => AccessResourceEnum::Record,
             self::ProjectGroup, self::ProjectIsArchived, self::ProjectLabel, self::ProjectStatus, self::ProjectSubjectIsLead, self::ProjectSubjectIsMember, self::ProjectVisibility => AccessResourceEnum::Project,
             self::TicketGroup, self::TicketIsArchived, self::TicketLabel, self::TicketPriority, self::TicketProject, self::TicketStatus, self::TicketSubjectIsAssignee, self::TicketSubjectIsGroupLead, self::TicketSubjectIsGroupMember, self::TicketSubjectIsProjectLead, self::TicketSubjectIsProjectMember, self::TicketType => AccessResourceEnum::Ticket,
             self::SubjectGroup, self::SubjectLeadsGroup, self::SubjectTeamRole, self::SubjectUser => null,
@@ -124,6 +127,7 @@ enum AccessAttributeEnum: string
             self::ProjectGroup, self::SubjectGroup, self::SubjectLeadsGroup, self::TicketGroup => Table::Groups,
             self::AssetLabel, self::ProjectLabel, self::TicketLabel, self::TicketPriority, self::TicketStatus, self::TicketType => Table::Choices,
             self::TicketProject => Table::Projects,
+            self::RecordObject => Table::CustomObjects,
             default => null,
         };
     }

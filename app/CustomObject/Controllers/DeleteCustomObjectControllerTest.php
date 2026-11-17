@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
+use App\AccessRule\AccessRuleEloquentModel;
 use App\CustomObject\CustomObjectEloquentModel;
+use App\Record\RecordEloquentModel;
 use App\User\UserEloquentModel;
 
 use function Pest\Laravel\actingAs;
@@ -37,4 +39,23 @@ it('forbids members', function (): void {
     $object = CustomObjectEloquentModel::factory()->archived()->create(['team_id' => $owner->current_team_id]);
 
     actingAs($member)->delete(route('custom-objects.destroy', $object))->assertForbidden();
+});
+
+it('takes its records with it, and comes out of the access rules that named it', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $teamId = $owner->current_team_id;
+    $kept = CustomObjectEloquentModel::factory()->create(['team_id' => $teamId]);
+    $object = CustomObjectEloquentModel::factory()->archived()->create(['team_id' => $teamId]);
+    $record = RecordEloquentModel::factory()->of($object)->create();
+    $rule = AccessRuleEloquentModel::factory()->create([
+        'team_id' => $teamId,
+        'effect' => 'deny',
+        'resources' => ['record'],
+        'conditions' => [['attribute' => 'record.object', 'operator' => 'in', 'value' => [$object->id, $kept->id]]],
+    ]);
+
+    actingAs($owner)->delete(route('custom-objects.destroy', $object))->assertSessionHasNoErrors();
+
+    expect(RecordEloquentModel::query()->withoutGlobalScopes()->find($record->id))->toBeNull()
+        ->and($rule->fresh()->conditions)->toEqual([['attribute' => 'record.object', 'operator' => 'in', 'value' => [$kept->id]]]);
 });

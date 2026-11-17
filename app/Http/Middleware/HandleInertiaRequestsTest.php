@@ -6,6 +6,7 @@ use App\Choice\ChoiceEloquentModel;
 use App\Customer\CustomerEloquentModel;
 use App\CustomField\CustomFieldEloquentModel;
 use App\CustomField\CustomFieldTargetEnum;
+use App\CustomObject\CustomObjectEloquentModel;
 use App\Ticket\Notifications\TicketDueSoonNotification;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
@@ -71,5 +72,23 @@ it("shares the current team's live custom fields by record type, in order", func
             ->where('customFields.customer.0.name', 'Region')
             ->where('customFields.contact', [])
             ->where('customFields.project', []),
+        );
+});
+
+it("shares the team's live custom objects, in order, for the sidebar", function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create(['onboarded_at' => now()]);
+    $teamId = $user->current_team_id;
+    CustomObjectEloquentModel::factory()->create(['team_id' => $teamId, 'name_plural' => 'Licences', 'position' => 1]);
+    CustomObjectEloquentModel::factory()->create(['team_id' => $teamId, 'name_plural' => 'Vehicles', 'position' => 0, 'icon' => 'truck']);
+    CustomObjectEloquentModel::factory()->archived()->create(['team_id' => $teamId]);
+    CustomObjectEloquentModel::factory()->create();
+
+    actingAs($user)
+        ->get(route('tickets.index'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('sidebarCounts.objects', 2)
+            ->where('sidebarCounts.objects.0.name_plural', 'Vehicles')
+            ->where('sidebarCounts.objects.0.icon', 'truck')
+            ->where('sidebarCounts.objects.1.name_plural', 'Licences'),
         );
 });

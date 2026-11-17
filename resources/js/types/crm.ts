@@ -201,6 +201,20 @@ export type CustomObject = {
 };
 
 /**
+ * One record of a custom object.
+ */
+export type RecordItem = {
+    id: string;
+    object_id: string;
+    /** Counted from 1 within its object. */
+    number: number;
+    name: string;
+    custom_fields: CustomFieldValues;
+    created_at: string | null;
+    updated_at: string | null;
+};
+
+/**
  * The kinds of record a team can add its own fields to.
  */
 export type CustomFieldTarget = 'ticket' | 'customer' | 'contact' | 'project';

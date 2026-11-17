@@ -8,10 +8,13 @@ use App\Contact\Actions\FindContact;
 use App\Contact\Contact;
 use App\Customer\Actions\FindCustomer;
 use App\Customer\Customer;
+use App\CustomObject\Actions\FindCustomObject;
+use App\CustomObject\CustomObject;
 use App\Invoice\Actions\FindInvoice;
 use App\Invoice\Invoice;
 use App\Project\Actions\FindProject;
 use App\Project\Project;
+use App\Record\Actions\FindRecord;
 use App\Ticket\Actions\FindTicket;
 use App\Ticket\Ticket;
 use App\User\UserEloquentModel;
@@ -69,6 +72,7 @@ final class SearchWorkspaceController
                     'url' => route('contacts.edit', $contact->getId()->toString()),
                 ])
                 ->all(),
+            'records' => $this->records($teamId, $term),
             'invoices' => preg_match('/\d/', $term) === 1
                 ? FindInvoice::paginateForTeam($teamId, search: $term, perPage: self::RESULTS_PER_GROUP)
                     ->getCollection()
@@ -81,6 +85,30 @@ final class SearchWorkspaceController
                     ->all()
                 : [],
         ]);
+    }
+
+    /**
+     * Records of the team's live custom objects, each under its object's name.
+     *
+     * @return list<array{id: string, title: string, subtitle: string, url: string}>
+     */
+    private function records(string $teamId, string $term): array
+    {
+        $objects = FindCustomObject::listForTeam($teamId);
+        $hits = [];
+
+        foreach (FindRecord::searchForTeam($teamId, $term, $objects->ids(), self::RESULTS_PER_GROUP) as $record) {
+            $object = $objects->first(fn (CustomObject $object): bool => $record->getObjectId()->equalsTo($object->getId()->toString()));
+
+            $hits[] = [
+                'id' => $record->getId()->toString(),
+                'title' => $record->getName()->toString(),
+                'subtitle' => $object->getNamePlural()->toString(),
+                'url' => route('records.show', [$object->getId()->toString(), $record->getId()->toString()]),
+            ];
+        }
+
+        return $hits;
     }
 
     /**
