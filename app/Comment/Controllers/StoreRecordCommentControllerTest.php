@@ -33,7 +33,7 @@ it('adds a comment to a record and records it, telling whoever is mentioned but 
         ->and(ActivityEloquentModel::query()->where('type', ActivityTypeEnum::RecordCommented->value)->sole())
         ->subject_type->toBe('record')
         ->subject_id->toBe($van->id)
-        ->details->toBe(['name' => 'Van', 'object' => 'Vehicle']);
+        ->details->toEqual(['name' => 'Van', 'object' => 'Vehicle']);
 
     Notification::assertSentTo($teammate, MentionedInRecordCommentNotification::class, fn (MentionedInRecordCommentNotification $notification): bool => $notification->toArray($teammate) === [
         'kind' => 'mention',

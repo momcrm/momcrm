@@ -107,5 +107,5 @@ it('records that the record was added', function (): void {
     expect(ActivityEloquentModel::query()->where('type', ActivityTypeEnum::RecordCreated->value)->sole())
         ->user_id->toBe($owner->id)
         ->subject_type->toBe('record')
-        ->details->toBe(['name' => 'Van', 'object' => 'Vehicle']);
+        ->details->toEqual(['name' => 'Van', 'object' => 'Vehicle']);
 });

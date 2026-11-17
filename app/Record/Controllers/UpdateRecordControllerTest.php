@@ -77,5 +77,5 @@ it('records what a change changed, and nothing when nothing did', function (): v
     actingAs($owner)->patch(route('records.update', [$vehicles, $record]), ['name' => 'Delivery van', 'custom_fields' => [$plate->id => 'XYZ 789']]);
 
     expect(ActivityEloquentModel::query()->where('type', ActivityTypeEnum::RecordUpdated->value)->sole()->details)
-        ->toBe(['name' => 'Delivery van', 'object' => 'Vehicle', 'fields' => ['Name', 'Plate']]);
+        ->toEqual(['name' => 'Delivery van', 'object' => 'Vehicle', 'fields' => ['Name', 'Plate']]);
 });

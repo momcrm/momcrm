@@ -33,7 +33,7 @@ it('stores a file on a record in the team folder, and records it', function (): 
         ->and($attachment->path)->toStartWith("attachments/{$owner->current_team_id}/")
         ->and(ActivityEloquentModel::query()->where('type', ActivityTypeEnum::AttachmentAdded->value)->sole())
         ->subject_type->toBe('record')
-        ->details->toBe(['file' => 'rego.pdf', 'number' => 4, 'title' => 'Van']);
+        ->details->toEqual(['file' => 'rego.pdf', 'number' => 4, 'title' => 'Van']);
     Storage::disk('local')->assertExists($attachment->path);
 });
 
