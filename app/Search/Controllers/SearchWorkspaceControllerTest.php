@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 use App\Contact\ContactEloquentModel;
 use App\Customer\CustomerEloquentModel;
+use App\CustomObject\CustomObjectEloquentModel;
 use App\Invoice\InvoiceEloquentModel;
 use App\Project\ProjectEloquentModel;
+use App\Record\RecordEloquentModel;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
 
@@ -71,4 +73,23 @@ it('never returns another team\'s records', function (): void {
 
 it('requires a signed-in user', function (): void {
     getJson(route('search'))->assertUnauthorized();
+});
+
+it("finds records of the team's live custom objects, under their object's name", function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $vehicles = CustomObjectEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'name_plural' => 'Vehicles']);
+    $van = RecordEloquentModel::factory()->of($vehicles)->create(['name' => 'Harbour van']);
+    RecordEloquentModel::factory()->of($vehicles)->create(['name' => 'Bike']);
+    RecordEloquentModel::factory()->of(CustomObjectEloquentModel::factory()->archived()->create(['team_id' => $user->current_team_id]))->create(['name' => 'Harbour archive']);
+    RecordEloquentModel::factory()->create(['name' => 'Harbour elsewhere']);
+
+    actingAs($user)
+        ->getJson(route('search', ['q' => 'harbour']))
+        ->assertJsonCount(1, 'records')
+        ->assertJsonPath('records.0', [
+            'id' => $van->id,
+            'title' => 'Harbour van',
+            'subtitle' => 'Vehicles',
+            'url' => route('records.show', [$vehicles->id, $van->id]),
+        ]);
 });

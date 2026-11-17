@@ -30,6 +30,7 @@ declare module '@inertiajs/core' {
                     hue: number | null;
                     icon: string | null;
                 }[];
+                objects: import('./crm').CustomObject[];
             } | null;
             gettingStarted?: GettingStarted | null;
             choices?: Record<

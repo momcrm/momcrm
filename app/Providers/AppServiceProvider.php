@@ -27,6 +27,8 @@ use App\Passkey\FormRequests\PasskeyVerificationFormRequest;
 use App\Passkey\PasskeyEloquentModel;
 use App\Project\Project;
 use App\Project\ProjectPolicy;
+use App\Record\Record;
+use App\Record\RecordPolicy;
 use App\Secret\Secret;
 use App\Secret\SecretPolicy;
 use App\Service\Service;
@@ -161,6 +163,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Location::class, LocationPolicy::class);
         Gate::policy(Milestone::class, MilestonePolicy::class);
         Gate::policy(Project::class, ProjectPolicy::class);
+        Gate::policy(Record::class, RecordPolicy::class);
         Gate::policy(Service::class, ServicePolicy::class);
         Gate::policy(Ticket::class, TicketPolicy::class);
         Gate::policy(Team::class, TeamPolicy::class);

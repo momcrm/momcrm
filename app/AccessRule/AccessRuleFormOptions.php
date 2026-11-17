@@ -7,6 +7,8 @@ namespace App\AccessRule;
 use App\Choice\Actions\FindChoice;
 use App\Choice\ChoiceListEnum;
 use App\Customer\CustomerStatusEnum;
+use App\CustomObject\Actions\FindCustomObject;
+use App\CustomObject\CustomObject;
 use App\Group\Actions\FindGroup;
 use App\Invoice\InvoiceStatusEnum;
 use App\Project\Actions\FindProject;
@@ -76,6 +78,9 @@ final class AccessRuleFormOptions
             AccessAttributeEnum::TicketLabel => FindChoice::listForTeam($teamId, ChoiceListEnum::Label, withArchived: true)->toOptions(),
             AccessAttributeEnum::CustomerStatus => CustomerStatusEnum::options(),
             AccessAttributeEnum::InvoiceStatus => InvoiceStatusEnum::options(),
+            AccessAttributeEnum::RecordObject => array_values(FindCustomObject::listForTeam($teamId, withArchived: true)
+                ->map(fn (CustomObject $object): array => ['value' => $object->getId()->toString(), 'label' => $object->getNamePlural()->toString()])
+                ->all()),
             default => [],
         };
     }

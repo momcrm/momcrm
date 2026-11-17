@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\CustomObject\Actions;
 
+use App\AccessRule\Actions\PruneDeletedRecordsFromAccessRules;
 use App\CustomObject\CustomObject;
 use App\CustomObject\CustomObjectEloquentModel;
 
 /**
- * Deletes an object for good.
+ * Deletes an object for good, with its records, and tidies the access rule
+ * conditions that named it.
  */
 final readonly class DeleteCustomObject
 {
@@ -21,6 +23,7 @@ final readonly class DeleteCustomObject
         CustomObjectEloquentModel::query()->withoutGlobalScopes()->findOrFail($this->object->getId()->toString())->delete();
 
         FindCustomObject::forget($this->object->getTeamId()->toString());
+        PruneDeletedRecordsFromAccessRules::forTeam($this->object->getTeamId()->toString());
     }
 
     public static function fromCustomObject(CustomObject $object): void

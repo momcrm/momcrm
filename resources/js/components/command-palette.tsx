@@ -1,5 +1,6 @@
 import { router, useHttp } from '@inertiajs/react';
 import {
+    Box,
     Building2,
     CircleDashed,
     FolderKanban,
@@ -54,6 +55,7 @@ type SearchResponse = {
     projects?: SearchHit[];
     customers?: SearchHit[];
     contacts?: SearchHit[];
+    records?: SearchHit[];
     invoices?: SearchHit[];
 };
 
@@ -257,6 +259,7 @@ function Palette({ onDone }: { onDone: () => void }) {
             ...hits('Projects', results.projects, FolderKanban),
             ...hits('Customers', results.customers, Building2),
             ...hits('Contacts', results.contacts, UserRound),
+            ...hits('Records', results.records, Box),
             ...hits('Invoices', results.invoices, Receipt),
             ...(query ? suggestions : []),
             ...navigation,

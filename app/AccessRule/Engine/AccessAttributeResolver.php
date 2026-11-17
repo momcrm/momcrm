@@ -12,6 +12,7 @@ use App\Group\Group;
 use App\Group\GroupRoleEnum;
 use App\Invoice\Invoice;
 use App\Project\Project;
+use App\Record\Record;
 use App\Shared\RequestMemo;
 use App\Shared\Table;
 use App\Shared\Types;
@@ -70,6 +71,7 @@ final class AccessAttributeResolver
             AccessAttributeEnum::AssetLabel => $record instanceof Asset ? self::labelIds(LabelTargetEnum::Asset, $record->getId()->toString()) : null,
             AccessAttributeEnum::CustomerStatus => $record instanceof Customer ? $record->getStatus()->toNullableString() : null,
             AccessAttributeEnum::InvoiceStatus => $record instanceof Invoice ? $record->getStatus()->toNullableString() : null,
+            AccessAttributeEnum::RecordObject => $record instanceof Record ? $record->getObjectId()->toNullableString() : null,
 
             AccessAttributeEnum::GroupSubjectIsLead => $record instanceof Group ? self::groupRole($record->getId()->toString(), $subject->userId) === GroupRoleEnum::Lead->value : null,
             AccessAttributeEnum::GroupSubjectIsMember => $record instanceof Group ? self::groupRole($record->getId()->toString(), $subject->userId) !== null : null,
