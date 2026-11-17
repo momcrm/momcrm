@@ -16,6 +16,7 @@ enum Table: string
     case Contacts = 'contacts';
     case Contracts = 'contracts';
     case CustomFields = 'custom_fields';
+    case CustomObjects = 'custom_objects';
     case Customers = 'customers';
     case EmailCodes = 'email_codes';
     case Favorites = 'favorites';

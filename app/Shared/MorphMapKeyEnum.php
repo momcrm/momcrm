@@ -15,6 +15,7 @@ use App\Contact\ContactEloquentModel;
 use App\Contract\ContractEloquentModel;
 use App\Customer\CustomerEloquentModel;
 use App\CustomField\CustomFieldEloquentModel;
+use App\CustomObject\CustomObjectEloquentModel;
 use App\EmailCode\EmailCodeEloquentModel;
 use App\Favorite\FavoriteEloquentModel;
 use App\Folder\FolderEloquentModel;
@@ -58,6 +59,7 @@ enum MorphMapKeyEnum: string
     case Contract = 'contract';
     case Customer = 'customer';
     case CustomField = 'custom_field';
+    case CustomObject = 'custom_object';
     case EmailCode = 'email_code';
     case Favorite = 'favorite';
     case Folder = 'folder';
@@ -114,6 +116,7 @@ enum MorphMapKeyEnum: string
             self::Contract => ContractEloquentModel::class,
             self::Customer => CustomerEloquentModel::class,
             self::CustomField => CustomFieldEloquentModel::class,
+            self::CustomObject => CustomObjectEloquentModel::class,
             self::EmailCode => EmailCodeEloquentModel::class,
             self::Favorite => FavoriteEloquentModel::class,
             self::Folder => FolderEloquentModel::class,

@@ -20,6 +20,13 @@ use App\CustomField\Controllers\RestoreCustomFieldController;
 use App\CustomField\Controllers\ShowCustomFieldsController;
 use App\CustomField\Controllers\StoreCustomFieldController;
 use App\CustomField\Controllers\UpdateCustomFieldController;
+use App\CustomObject\Controllers\ArchiveCustomObjectController;
+use App\CustomObject\Controllers\DeleteCustomObjectController;
+use App\CustomObject\Controllers\ReorderCustomObjectsController;
+use App\CustomObject\Controllers\RestoreCustomObjectController;
+use App\CustomObject\Controllers\ShowCustomObjectsController;
+use App\CustomObject\Controllers\StoreCustomObjectController;
+use App\CustomObject\Controllers\UpdateCustomObjectController;
 use App\Team\Controllers\EditTeamController;
 use App\Team\Controllers\UpdateTeamController;
 use App\TeamInvitation\Controllers\DeleteTeamInvitationController;
@@ -80,6 +87,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('settings/custom-fields/{customField}/archive', ArchiveCustomFieldController::class)->whereUuid('customField')->name('custom-fields.archive');
     Route::post('settings/custom-fields/{customField}/restore', RestoreCustomFieldController::class)->whereUuid('customField')->name('custom-fields.restore');
     Route::delete('settings/custom-fields/{customField}', DeleteCustomFieldController::class)->whereUuid('customField')->name('custom-fields.destroy');
+
+    Route::get('settings/objects', ShowCustomObjectsController::class)->name('custom-objects.edit');
+    Route::post('settings/objects', StoreCustomObjectController::class)->name('custom-objects.store');
+    Route::put('settings/objects/order', ReorderCustomObjectsController::class)->name('custom-objects.reorder');
+    Route::patch('settings/objects/{customObject}', UpdateCustomObjectController::class)->whereUuid('customObject')->name('custom-objects.update');
+    Route::post('settings/objects/{customObject}/archive', ArchiveCustomObjectController::class)->whereUuid('customObject')->name('custom-objects.archive');
+    Route::post('settings/objects/{customObject}/restore', RestoreCustomObjectController::class)->whereUuid('customObject')->name('custom-objects.restore');
+    Route::delete('settings/objects/{customObject}', DeleteCustomObjectController::class)->whereUuid('customObject')->name('custom-objects.destroy');
 
     Route::get('settings/activity', ListAccountActivityController::class)->name('activity.index');
 
