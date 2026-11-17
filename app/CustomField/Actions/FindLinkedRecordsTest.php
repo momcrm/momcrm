@@ -97,3 +97,22 @@ it("leaves out tickets in a members-only project someone isn't in, archived fiel
 
     expect(FindLinkedRecords::to($teamId, $member->id, CustomFieldRelationEnum::Customer, $acme->id))->toBe([]);
 });
+
+it('finds what links to a ticket and to a project', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $teamId = $owner->current_team_id;
+    $team = ['team_id' => $teamId];
+    $vehicles = CustomObjectEloquentModel::factory()->create([...$team, 'name_plural' => 'Vehicles']);
+    $ticket = TicketEloquentModel::factory()->create($team);
+    $project = ProjectEloquentModel::factory()->create($team);
+    $lastService = CustomFieldEloquentModel::factory()->forObject($vehicles)->linkingTo(CustomFieldRelationEnum::Ticket)->create(['name' => 'Last service']);
+    $programme = CustomFieldEloquentModel::factory()->on(CustomFieldTargetEnum::Customer)->linkingTo(CustomFieldRelationEnum::Project)->create([...$team, 'name' => 'Programme']);
+    RecordEloquentModel::factory()->of($vehicles)->create(['name' => 'Van', 'custom_fields' => [$lastService->id => $ticket->id]]);
+    CustomerEloquentModel::factory()->create([...$team, 'name' => 'Acme', 'custom_fields' => [$programme->id => $project->id]]);
+
+    $toTicket = FindLinkedRecords::to($teamId, $owner->id, CustomFieldRelationEnum::Ticket, $ticket->id);
+    $toProject = FindLinkedRecords::to($teamId, $owner->id, CustomFieldRelationEnum::Project, $project->id);
+
+    expect([$toTicket[0]['source'], $toTicket[0]['field'], $toTicket[0]['records'][0]['title']])->toBe(['Vehicles', 'Last service', 'Van'])
+        ->and([$toProject[0]['source'], $toProject[0]['field'], $toProject[0]['records'][0]['title']])->toBe(['Customers', 'Programme', 'Acme']);
+});

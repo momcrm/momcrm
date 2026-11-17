@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\CustomField;
 
+use App\CustomObject\StandardObjectEnum;
 use App\Shared\Traits\Enum;
 use App\Shared\Traits\EnumOptions;
 
@@ -35,11 +36,16 @@ enum CustomFieldTargetEnum: string
     public function label(): string
     {
         return match ($this) {
-            self::Ticket => 'Tickets',
-            self::Customer => 'Customers',
-            self::Contact => 'Contacts',
-            self::Project => 'Projects',
             self::Record => 'Custom objects',
+            default => $this->standardObject()?->label() ?? ucfirst($this->value),
         };
+    }
+
+    /**
+     * The built-in kind of record the fields are on; null for custom objects.
+     */
+    public function standardObject(): ?StandardObjectEnum
+    {
+        return StandardObjectEnum::tryFrom($this->value);
     }
 }

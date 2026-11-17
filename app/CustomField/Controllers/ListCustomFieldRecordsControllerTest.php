@@ -7,7 +7,9 @@ use App\Customer\CustomerEloquentModel;
 use App\CustomField\CustomFieldEloquentModel;
 use App\CustomField\CustomFieldRelationEnum;
 use App\CustomObject\CustomObjectEloquentModel;
+use App\Project\ProjectEloquentModel;
 use App\Record\RecordEloquentModel;
+use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
 
 use function Pest\Laravel\actingAs;
@@ -73,4 +75,47 @@ it("lists the records of the custom object a field links to, and no other object
     actingAs($owner)
         ->getJson(route('custom-fields.records', ['customField' => $field->id, 'search' => 'van']))
         ->assertExactJson(['records' => [['value' => $van->id, 'label' => 'Van']]]);
+});
+
+it('lists tickets by title or number, newest first, and projects by name', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $team = ['team_id' => $owner->current_team_id];
+    $tickets = CustomFieldEloquentModel::factory()->linkingTo(CustomFieldRelationEnum::Ticket)->create($team);
+    $projects = CustomFieldEloquentModel::factory()->linkingTo(CustomFieldRelationEnum::Project)->create($team);
+    $old = TicketEloquentModel::factory()->create([...$team, 'number' => 7, 'title' => 'Printer offline']);
+    $new = TicketEloquentModel::factory()->create([...$team, 'number' => 12, 'title' => 'Printer jam']);
+    TicketEloquentModel::factory()->create([...$team, 'number' => 13, 'title' => 'Slow laptop']);
+    $refit = ProjectEloquentModel::factory()->create([...$team, 'name' => 'Office refit']);
+
+    actingAs($owner)
+        ->getJson(route('custom-fields.records', ['customField' => $tickets->id, 'search' => 'printer']))
+        ->assertExactJson(['records' => [
+            ['value' => $new->id, 'label' => '#12 Printer jam'],
+            ['value' => $old->id, 'label' => '#7 Printer offline'],
+        ]]);
+
+    actingAs($owner)
+        ->getJson(route('custom-fields.records', ['customField' => $tickets->id, 'search' => '#7']))
+        ->assertExactJson(['records' => [['value' => $old->id, 'label' => '#7 Printer offline']]]);
+
+    actingAs($owner)
+        ->getJson(route('custom-fields.records', ['customField' => $projects->id, 'search' => 'refit']))
+        ->assertExactJson(['records' => [['value' => $refit->id, 'label' => 'Office refit']]]);
+});
+
+it('offers tickets and projects in a members-only project only to its members', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $team = ['team_id' => $owner->current_team_id];
+    $outsider = UserEloquentModel::factory()->inTeam($owner->current_team_id)->create();
+    $insider = UserEloquentModel::factory()->inTeam($owner->current_team_id)->create();
+    $tickets = CustomFieldEloquentModel::factory()->linkingTo(CustomFieldRelationEnum::Ticket)->create($team);
+    $projects = CustomFieldEloquentModel::factory()->linkingTo(CustomFieldRelationEnum::Project)->create($team);
+    $secret = ProjectEloquentModel::factory()->create([...$team, 'name' => 'Merger', 'visibility' => 'restricted']);
+    $secret->members()->attach($insider->id);
+    $ticket = TicketEloquentModel::factory()->create([...$team, 'project_id' => $secret->id, 'number' => 3, 'title' => 'Due diligence']);
+
+    actingAs($outsider)->getJson(route('custom-fields.records', $tickets->id))->assertExactJson(['records' => []]);
+    actingAs($outsider)->getJson(route('custom-fields.records', $projects->id))->assertExactJson(['records' => []]);
+    actingAs($insider)->getJson(route('custom-fields.records', $tickets->id))->assertExactJson(['records' => [['value' => $ticket->id, 'label' => '#3 Due diligence']]]);
+    actingAs($insider)->getJson(route('custom-fields.records', $projects->id))->assertExactJson(['records' => [['value' => $secret->id, 'label' => 'Merger']]]);
 });

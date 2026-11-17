@@ -9,6 +9,7 @@ use App\Customer\CustomerEloquentModel;
 use App\CustomField\CustomFieldEloquentModel;
 use App\CustomField\CustomFieldRelationEnum;
 use App\CustomObject\CustomObjectEloquentModel;
+use App\Project\ProjectEloquentModel;
 use App\Record\RecordEloquentModel;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
@@ -107,4 +108,22 @@ it("shows a record's comments and activity, and who can be mentioned", function 
             ->where('commentCan.create', true)
             ->where('attachmentCan.create', true),
         );
+});
+
+it('names a linked ticket for those who can see it, and not for someone outside its members-only project', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create(['onboarded_at' => now()]);
+    $team = ['team_id' => $owner->current_team_id];
+    $outsider = UserEloquentModel::factory()->inTeam($owner->current_team_id)->create(['onboarded_at' => now()]);
+    $vehicles = CustomObjectEloquentModel::factory()->create($team);
+    $field = CustomFieldEloquentModel::factory()->forObject($vehicles)->linkingTo(CustomFieldRelationEnum::Ticket)->create();
+    $secret = ProjectEloquentModel::factory()->create([...$team, 'visibility' => 'restricted']);
+    $secret->members()->attach($owner->id);
+    $ticket = TicketEloquentModel::factory()->create([...$team, 'project_id' => $secret->id, 'number' => 9, 'title' => 'Due diligence']);
+    $van = RecordEloquentModel::factory()->of($vehicles)->create(['custom_fields' => [$field->id => $ticket->id]]);
+
+    actingAs($owner)->get(route('records.show', [$vehicles, $van]))
+        ->assertInertia(fn (Assert $page) => $page->where('customFieldLabels', [$ticket->id => '#9 Due diligence']));
+
+    actingAs($outsider)->get(route('records.show', [$vehicles, $van]))
+        ->assertInertia(fn (Assert $page) => $page->where('customFieldLabels', []));
 });
