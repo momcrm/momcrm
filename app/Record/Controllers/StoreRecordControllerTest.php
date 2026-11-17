@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\AccessRule\AccessRuleEloquentModel;
+use App\Activity\ActivityEloquentModel;
+use App\Activity\ActivityTypeEnum;
 use App\CustomField\CustomFieldEloquentModel;
 use App\CustomField\CustomFieldTypeEnum;
 use App\CustomObject\CustomObjectEloquentModel;
@@ -94,4 +96,16 @@ it("adds a record with values for its object's fields, and not another object's"
         ->assertSessionHasNoErrors();
 
     expect(RecordEloquentModel::query()->withoutGlobalScopes()->where('name', 'Van')->sole()->custom_fields)->toEqual([$plate->id => 'ABC 123', $seats->id => 3]);
+});
+
+it('records that the record was added', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create(['onboarded_at' => now()]);
+    $vehicles = CustomObjectEloquentModel::factory()->create(['team_id' => $owner->current_team_id, 'name' => 'Vehicle']);
+
+    actingAs($owner)->post(route('records.store', $vehicles), ['name' => 'Van'])->assertSessionHasNoErrors();
+
+    expect(ActivityEloquentModel::query()->where('type', ActivityTypeEnum::RecordCreated->value)->sole())
+        ->user_id->toBe($owner->id)
+        ->subject_type->toBe('record')
+        ->details->toBe(['name' => 'Van', 'object' => 'Vehicle']);
 });

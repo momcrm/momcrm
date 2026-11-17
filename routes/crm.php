@@ -12,10 +12,12 @@ use App\Attachment\Controllers\ShowAttachmentController;
 use App\Attachment\Controllers\StoreContractAttachmentController;
 use App\Attachment\Controllers\StoreCustomerAttachmentController;
 use App\Attachment\Controllers\StoreProjectAttachmentController;
+use App\Attachment\Controllers\StoreRecordAttachmentController;
 use App\Attachment\Controllers\StoreTicketAttachmentController;
 use App\Attachment\Controllers\UpdateAttachmentController;
 use App\Comment\Controllers\DeleteCommentController;
 use App\Comment\Controllers\StoreCommentController;
+use App\Comment\Controllers\StoreRecordCommentController;
 use App\Contact\Controllers\CreateContactController;
 use App\Contact\Controllers\DeleteContactController;
 use App\Contact\Controllers\EditContactController;
@@ -189,6 +191,8 @@ Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function 
     Route::get('objects/{object}/records/{record}', ShowRecordController::class)->whereUuid(['object', 'record'])->name('records.show');
     Route::patch('objects/{object}/records/{record}', UpdateRecordController::class)->whereUuid(['object', 'record'])->name('records.update');
     Route::delete('objects/{object}/records/{record}', DeleteRecordController::class)->whereUuid(['object', 'record'])->name('records.destroy');
+    Route::post('objects/{object}/records/{record}/comments', StoreRecordCommentController::class)->whereUuid(['object', 'record'])->name('records.comments.store');
+    Route::post('objects/{object}/records/{record}/attachments', StoreRecordAttachmentController::class)->whereUuid(['object', 'record'])->name('records.attachments.store');
 
     Route::get('custom-fields/{customField}/records', ListCustomFieldRecordsController::class)->whereUuid('customField')->name('custom-fields.records');
     Route::get('tickets/form-options', ListTicketFormOptionsController::class)->name('tickets.form-options');

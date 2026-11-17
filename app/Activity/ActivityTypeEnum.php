@@ -25,6 +25,9 @@ enum ActivityTypeEnum: string
     case ProjectArchived = 'project_archived';
     case ProjectCreated = 'project_created';
     case ProjectRestored = 'project_restored';
+    case RecordCommented = 'record_commented';
+    case RecordCreated = 'record_created';
+    case RecordUpdated = 'record_updated';
     case RecoveryCodesRegenerated = 'recovery_codes_regenerated';
     case Registered = 'registered';
     case SampleDataAdded = 'sample_data_added';
@@ -45,7 +48,8 @@ enum ActivityTypeEnum: string
     case TwoFactorEnabled = 'two_factor_enabled';
 
     /**
-     * The kinds of change that are work on tickets and projects, as shown in
+     * The kinds of change that are work on tickets, projects and custom
+     * objects' records, as shown in
      * the workspace activity feed (sign-ins and account events are not).
      *
      * @return array<int, self>
@@ -56,6 +60,7 @@ enum ActivityTypeEnum: string
             self::TicketOpened, self::TicketClosed, self::TicketReopened, self::TicketStatusChanged,
             self::TicketAssigned, self::TicketCommented, self::TicketArchived, self::TicketRestored,
             self::ProjectCreated, self::ProjectStatusChanged, self::ProjectArchived, self::ProjectRestored,
+            self::RecordCreated, self::RecordUpdated, self::RecordCommented,
             self::AttachmentAdded, self::CustomersImported,
         ];
     }
@@ -81,6 +86,9 @@ enum ActivityTypeEnum: string
             self::ProjectArchived => 'Archived a project',
             self::ProjectCreated => 'Created a project',
             self::ProjectRestored => 'Restored a project',
+            self::RecordCommented => 'Commented on a record',
+            self::RecordCreated => 'Added a record',
+            self::RecordUpdated => 'Changed a record',
             self::RecoveryCodesRegenerated => 'Regenerated recovery codes',
             self::Registered => 'Created account',
             self::SampleDataAdded => 'Added sample data',

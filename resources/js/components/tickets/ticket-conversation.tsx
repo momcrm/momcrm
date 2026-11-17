@@ -7,10 +7,7 @@ import { AssigneeAvatar } from '@/components/tickets/ticket-meta';
 import { Button } from '@/components/ui/button';
 import { timeAgo } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import {
-    destroy as destroyComment,
-    store as storeComment,
-} from '@/routes/comments';
+import { destroy as destroyComment } from '@/routes/comments';
 import type { ActivityItem, CustomerOption, TicketComment } from '@/types';
 
 type Tab = 'comments' | 'activity';
@@ -20,13 +17,14 @@ type Tab = 'comments' | 'activity';
  * history of changes.
  */
 export default function TicketConversation({
-    ticketId,
+    storeUrl,
     comments,
     activity,
     members,
     reload,
 }: {
-    ticketId: string;
+    /** Where a new comment is posted: the ticket's or record's comments. */
+    storeUrl: string;
     comments: TicketComment[];
     activity: ActivityItem[];
     members: CustomerOption[];
@@ -114,7 +112,7 @@ export default function TicketConversation({
                         ))}
                     </ol>
                     <Composer
-                        ticketId={ticketId}
+                        storeUrl={storeUrl}
                         members={members}
                         reload={reload}
                     />
@@ -162,6 +160,14 @@ export function describe(item: ActivityItem): string {
             return `changed the status from ${text(details.from, '?')} to ${text(details.to, '?')}`;
         case 'ticket_assigned':
             return `assigned it to ${text(details.assignee, 'someone')}`;
+        case 'record_updated':
+            return Array.isArray(details.fields) && details.fields.length > 0
+                ? `changed ${details.fields.join(', ')}`
+                : 'changed it';
+        case 'record_created':
+            return 'added it';
+        case 'record_commented':
+            return 'commented';
         case 'attachment_added':
             return `attached ${text(details.file, 'a file')}`;
         default:
@@ -208,11 +214,11 @@ function CommentBody({
 }
 
 function Composer({
-    ticketId,
+    storeUrl,
     members,
     reload,
 }: {
-    ticketId: string;
+    storeUrl: string;
     members: CustomerOption[];
     reload: string[];
 }) {
@@ -270,7 +276,7 @@ function Composer({
         }
 
         router.post(
-            storeComment.url(ticketId),
+            storeUrl,
             {
                 body: text,
                 mentions: mentioned
