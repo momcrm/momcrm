@@ -348,6 +348,8 @@ export type TicketDrawerData = Omit<
 > & {
     /** Names of the records the ticket's record links point at, by id. */
     custom_field_labels: Record<string, string>;
+    /** What points at the ticket through record-link custom fields. */
+    linked_records: LinkedRecordGroup[];
     parent: { id: string; number: number; title: string } | null;
     subtasks: {
         id: string;

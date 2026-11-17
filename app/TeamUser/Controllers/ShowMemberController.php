@@ -10,6 +10,8 @@ use App\Activity\Properties\CreatedAt as ActivityCreatedAt;
 use App\Activity\Properties\TeamId as ActivityTeamId;
 use App\Activity\Properties\Type as ActivityType;
 use App\Activity\Properties\UserId as ActivityUserId;
+use App\CustomField\Actions\FindLinkedRecords;
+use App\CustomField\CustomFieldRelationEnum;
 use App\Dashboard\WorkspaceNumbers;
 use App\Favorite\Actions\FindFavorite;
 use App\Favorite\FavoritableTypeEnum;
@@ -97,6 +99,7 @@ final class ShowMemberController
 
         return Inertia::render('members/show', [
             'teamName' => $team->getName()->toString(),
+            'linkedRecords' => FindLinkedRecords::to($teamId, $viewer->id, CustomFieldRelationEnum::Member, $member),
             'member' => [
                 'id' => $user->getId()->toString(),
                 'name' => $user->getName()->toString(),
