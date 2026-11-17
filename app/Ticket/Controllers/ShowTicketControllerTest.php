@@ -6,11 +6,14 @@ use App\Contact\ContactEloquentModel;
 use App\Customer\CustomerEloquentModel;
 use App\CustomField\CustomFieldEloquentModel;
 use App\CustomField\CustomFieldRelationEnum;
+use App\CustomObject\CustomObjectEloquentModel;
 use App\Location\LocationEloquentModel;
 use App\Project\ProjectEloquentModel;
+use App\Record\RecordEloquentModel;
 use App\TeamUser\TeamUserEloquentModel;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
+use Inertia\Testing\AssertableInertia;
 use Inertia\Testing\AssertableInertia as Assert;
 
 use function Pest\Laravel\actingAs;
@@ -76,5 +79,23 @@ it("shows a ticket's custom field values with the names of the records they link
         ->assertInertia(fn (Assert $page) => $page
             ->where("drawer.custom_fields.{$field->id}", $reseller->id)
             ->where('drawer.custom_field_labels', [$reseller->id => 'Reseller Co']),
+        );
+});
+
+it('lists what links to the ticket', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create(['onboarded_at' => now()]);
+    $team = ['team_id' => $owner->current_team_id];
+    $vehicles = CustomObjectEloquentModel::factory()->create([...$team, 'name_plural' => 'Vehicles']);
+    $field = CustomFieldEloquentModel::factory()->forObject($vehicles)->linkingTo(CustomFieldRelationEnum::Ticket)->create(['name' => 'Linked ticket']);
+    $ticket = TicketEloquentModel::factory()->create([...$team, 'customer_id' => CustomerEloquentModel::factory()->create($team)->id]);
+    $van = RecordEloquentModel::factory()->of($vehicles)->create(['name' => 'Van', 'custom_fields' => [$field->id => $ticket->id]]);
+
+    Pest\Laravel\actingAs($owner)
+        ->get(route('tickets.show', $ticket->id))
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->has('drawer.linked_records', 1)
+            ->where('drawer.linked_records.0.source', 'Vehicles')
+            ->where('drawer.linked_records.0.field', 'Linked ticket')
+            ->where('drawer.linked_records.0.records.0', ['id' => $van->id, 'title' => 'Van', 'url' => route('records.show', [$vehicles->id, $van->id])]),
         );
 });

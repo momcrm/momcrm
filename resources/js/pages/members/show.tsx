@@ -1,4 +1,5 @@
 import { Head, Link, router, setLayoutProps } from '@inertiajs/react';
+import LinkedRecords from '@/components/custom-fields/linked-records';
 import {
     CalendarDays,
     Clock,
@@ -46,6 +47,7 @@ import { show as showProject } from '@/routes/projects';
 import { index as ticketsIndex, patch } from '@/routes/tickets';
 import type {
     ActivityItem,
+    LinkedRecordGroup,
     ProjectStatus,
     TicketDrawerData,
     TicketListItem,
@@ -129,8 +131,11 @@ export default function ShowMember({
     favoriteTicketIds,
     options,
     drawer,
+    linkedRecords,
 }: {
     teamName: string;
+    /** What points at this person through record-link custom fields. */
+    linkedRecords: LinkedRecordGroup[];
     member: Member;
     stats: Stats;
     openTickets: TicketListItem[];
@@ -467,6 +472,7 @@ export default function ShowMember({
                                 </ol>
                             )}
                         </Panel>
+                        <LinkedRecords groups={linkedRecords} />
                     </div>
                 </div>
             </div>

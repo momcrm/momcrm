@@ -8,6 +8,8 @@ use App\AccessRule\AccessResourceEnum;
 use App\AccessRule\Engine\AccessAbilities;
 use App\Attachment\Actions\FindAttachment;
 use App\Attachment\Attachment;
+use App\CustomField\Actions\FindLinkedRecords;
+use App\CustomField\CustomFieldRelationEnum;
 use App\CustomField\CustomFieldRelationLabels;
 use App\CustomField\CustomFieldTargetEnum;
 use App\Favorite\Actions\FindFavorite;
@@ -60,6 +62,7 @@ final class ShowProjectController
                 'group_name' => $found->getGroup()->toNullableData()?->getName()->toString(),
             ],
             'customFieldLabels' => CustomFieldRelationLabels::for($teamId, CustomFieldTargetEnum::Project, $found->getCustomFields()->toValues()),
+            'linkedRecords' => FindLinkedRecords::to($teamId, $user->id, CustomFieldRelationEnum::Project, $projectId),
             'tab' => $tab,
             'can' => AccessAbilities::for($user, AccessResourceEnum::Project, $found),
             'milestoneCan' => AccessAbilities::for($user, AccessResourceEnum::Milestone),

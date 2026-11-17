@@ -23,6 +23,8 @@ use App\Comment\Properties\TicketId as CommentTicketId;
 use App\Contact\Actions\FindContact;
 use App\Customer\Actions\FindCustomer;
 use App\Customer\CustomerEloquentModel;
+use App\CustomField\Actions\FindLinkedRecords;
+use App\CustomField\CustomFieldRelationEnum;
 use App\CustomField\CustomFieldRelationLabels;
 use App\CustomField\CustomFieldTargetEnum;
 use App\Favorite\Actions\FindFavorite;
@@ -103,6 +105,7 @@ final class TicketDrawer
         return [
             ...$ticket->toSummary(),
             'custom_field_labels' => CustomFieldRelationLabels::for($teamId, CustomFieldTargetEnum::Ticket, $ticket->getCustomFields()->toValues()),
+            'linked_records' => FindLinkedRecords::to($teamId, $userId, CustomFieldRelationEnum::Ticket, $model->id),
             'can' => AccessAbilities::for($user, AccessResourceEnum::Ticket, $ticket),
             'attachment_can' => AccessAbilities::for($user, AccessResourceEnum::Attachment),
             'customer_name' => $customer instanceof CustomerEloquentModel ? $customer->name : null,

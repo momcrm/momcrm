@@ -3,11 +3,16 @@
 declare(strict_types=1);
 
 use App\Attachment\AttachmentEloquentModel;
+use App\CustomField\CustomFieldEloquentModel;
+use App\CustomField\CustomFieldRelationEnum;
+use App\CustomObject\CustomObjectEloquentModel;
 use App\Milestone\MilestoneEloquentModel;
 use App\Project\ProjectEloquentModel;
+use App\Record\RecordEloquentModel;
 use App\TeamUser\TeamRoleEnum;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
+use Inertia\Testing\AssertableInertia;
 use Inertia\Testing\AssertableInertia as Assert;
 
 use function Pest\Laravel\actingAs;
@@ -82,3 +87,21 @@ it('tells the page what the person may do to the project', function (TeamRoleEnu
     'member' => [TeamRoleEnum::Member, false],
     'admin' => [TeamRoleEnum::Admin, true],
 ]);
+
+it('lists what links to the project', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create(['onboarded_at' => now()]);
+    $team = ['team_id' => $owner->current_team_id];
+    $vehicles = CustomObjectEloquentModel::factory()->create([...$team, 'name_plural' => 'Vehicles']);
+    $field = CustomFieldEloquentModel::factory()->forObject($vehicles)->linkingTo(CustomFieldRelationEnum::Project)->create(['name' => 'Linked project']);
+    $project = ProjectEloquentModel::factory()->create($team);
+    $van = RecordEloquentModel::factory()->of($vehicles)->create(['name' => 'Van', 'custom_fields' => [$field->id => $project->id]]);
+
+    Pest\Laravel\actingAs($owner)
+        ->get(route('projects.show', $project->id))
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->has('linkedRecords', 1)
+            ->where('linkedRecords.0.source', 'Vehicles')
+            ->where('linkedRecords.0.field', 'Linked project')
+            ->where('linkedRecords.0.records.0', ['id' => $van->id, 'title' => 'Van', 'url' => route('records.show', [$vehicles->id, $van->id])]),
+        );
+});

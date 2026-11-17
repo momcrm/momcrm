@@ -4,11 +4,16 @@ declare(strict_types=1);
 
 use App\Activity\Actions\RecordActivity;
 use App\Activity\ActivityTypeEnum;
+use App\CustomField\CustomFieldEloquentModel;
+use App\CustomField\CustomFieldRelationEnum;
+use App\CustomObject\CustomObjectEloquentModel;
 use App\Group\GroupEloquentModel;
 use App\Project\ProjectEloquentModel;
+use App\Record\RecordEloquentModel;
 use App\TeamUser\TeamUserEloquentModel;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
+use Inertia\Testing\AssertableInertia;
 use Inertia\Testing\AssertableInertia as Assert;
 
 use function Pest\Laravel\actingAs;
@@ -102,4 +107,22 @@ it('counts a sign-in as being active, and has no last activity for someone who n
     actingAs($owner)
         ->get(route('members.show', $neverSignedIn->id))
         ->assertInertia(fn (Assert $page) => $page->where('member.last_active_at', null));
+});
+
+it('lists what links to the member', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create(['onboarded_at' => now()]);
+    $team = ['team_id' => $owner->current_team_id];
+    $vehicles = CustomObjectEloquentModel::factory()->create([...$team, 'name_plural' => 'Vehicles']);
+    $field = CustomFieldEloquentModel::factory()->forObject($vehicles)->linkingTo(CustomFieldRelationEnum::Member)->create(['name' => 'Linked member']);
+    $member = UserEloquentModel::factory()->inTeam($owner->current_team_id)->create();
+    $van = RecordEloquentModel::factory()->of($vehicles)->create(['name' => 'Van', 'custom_fields' => [$field->id => $member->id]]);
+
+    Pest\Laravel\actingAs($owner)
+        ->get(route('members.show', $member->id))
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->has('linkedRecords', 1)
+            ->where('linkedRecords.0.source', 'Vehicles')
+            ->where('linkedRecords.0.field', 'Linked member')
+            ->where('linkedRecords.0.records.0', ['id' => $van->id, 'title' => 'Van', 'url' => route('records.show', [$vehicles->id, $van->id])]),
+        );
 });

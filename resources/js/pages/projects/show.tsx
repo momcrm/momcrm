@@ -1,4 +1,5 @@
 import { Form, Head, Link, router, setLayoutProps } from '@inertiajs/react';
+import LinkedRecords from '@/components/custom-fields/linked-records';
 import { useCustomFields } from '@/components/custom-fields/custom-field-input';
 import {
     CustomFieldValueView,
@@ -80,6 +81,7 @@ import type {
     ActivityItem,
     AttachmentItem,
     CalendarWindow,
+    LinkedRecordGroup,
     Milestone,
     Paginated,
     ProjectFormOptions,
@@ -107,6 +109,8 @@ type Props = {
     project: ProjectListItem & { group_name: string | null };
     can: Abilities;
     milestoneCan: Abilities;
+    /** What points at the project through record-link custom fields. */
+    linkedRecords: LinkedRecordGroup[];
     tab: Tab;
     projectOptions: ProjectFormOptions;
     options: TicketPickerOptions;
@@ -460,6 +464,7 @@ function Overview({
     activity = [],
     favoriteTicketIds,
     milestoneCan,
+    linkedRecords,
 }: Props) {
     const { openTicket } = useTicketActions();
     const customFields = useCustomFields('project');
@@ -637,6 +642,7 @@ function Overview({
                     milestones={milestones}
                     can={milestoneCan}
                 />
+                <LinkedRecords groups={linkedRecords} />
             </div>
         </div>
     );

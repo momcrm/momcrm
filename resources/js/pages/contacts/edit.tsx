@@ -1,4 +1,5 @@
 import { Head, setLayoutProps } from '@inertiajs/react';
+import LinkedRecords from '@/components/custom-fields/linked-records';
 import ConfirmDelete from '@/components/confirm-delete';
 import ContactForm from '@/components/contacts/contact-form';
 import PageHeader from '@/components/page-header';
@@ -6,16 +7,24 @@ import DeleteContactController from '@/actions/App/Contact/Controllers/DeleteCon
 import UpdateContactController from '@/actions/App/Contact/Controllers/UpdateContactController';
 import { edit, index } from '@/routes/contacts';
 import { show as showCustomer } from '@/routes/customers';
-import type { Abilities, Contact, CustomerOption } from '@/types';
+import type {
+    Abilities,
+    Contact,
+    CustomerOption,
+    LinkedRecordGroup,
+} from '@/types';
 
 export default function EditContact({
     can,
     contact,
     customers,
+    linkedRecords,
 }: {
     can: Abilities;
     contact: Contact;
     customers: CustomerOption[];
+    /** What points at the contact through record-link custom fields. */
+    linkedRecords: LinkedRecordGroup[];
 }) {
     setLayoutProps({
         breadcrumbs: [
@@ -50,6 +59,9 @@ export default function EditContact({
                     submitLabel="Save"
                     cancelHref={showCustomer(contact.customer_id).url}
                 />
+                <div className="max-w-2xl">
+                    <LinkedRecords groups={linkedRecords} />
+                </div>
             </div>
         </>
     );

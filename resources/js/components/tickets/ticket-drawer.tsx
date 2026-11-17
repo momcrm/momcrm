@@ -1,4 +1,5 @@
 import { Link, router } from '@inertiajs/react';
+import LinkedRecords from '@/components/custom-fields/linked-records';
 import {
     AlertTriangle,
     Archive,
@@ -578,6 +579,8 @@ export function TicketDetails({
                         can={ticket.attachment_can}
                     />
                 </section>
+
+                <LinkedRecords groups={ticket.linked_records} />
 
                 <TicketConversation
                     storeUrl={storeComment.url(ticket.id)}
