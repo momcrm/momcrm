@@ -10,6 +10,7 @@ use App\Contract\Factories\ContractFactory;
 use App\Contract\Properties\CustomerId;
 use App\Contract\Properties\Id;
 use App\Customer\CustomerEloquentModel;
+use App\CustomField\Properties\CustomFieldValues;
 use App\Shared\Table;
 use App\Team\Scopes\CurrentTeamScope;
 use Carbon\CarbonImmutable;
@@ -72,6 +73,16 @@ final class ContractEloquentModel extends Model implements Auditable
             foreignKey: CustomerId::getDatabaseTableColumnName(),
             relation: ContractRelationship::Customer->value,
         );
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            CustomFieldValues::getDatabaseTableColumnName() => 'array',
+        ];
     }
 
     protected static function newFactory(): ContractFactory

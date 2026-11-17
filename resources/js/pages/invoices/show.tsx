@@ -1,4 +1,10 @@
 import { Form, Head, Link, setLayoutProps } from '@inertiajs/react';
+import { useCustomFields } from '@/components/custom-fields/custom-field-input';
+import {
+    CustomFieldValueView,
+    hasCustomFieldValue,
+} from '@/components/custom-fields/custom-fields-form';
+import LinkedRecords from '@/components/custom-fields/linked-records';
 import InvoiceStatusBadge from '@/components/invoices/invoice-status-badge';
 import PageHeader from '@/components/page-header';
 import { Button } from '@/components/ui/button';
@@ -8,7 +14,13 @@ import VoidInvoiceController from '@/actions/App/Invoice/Controllers/VoidInvoice
 import { formatCents } from '@/lib/money';
 import { show as showCustomer } from '@/routes/customers';
 import { edit, index, show } from '@/routes/invoices';
-import type { Customer, Invoice, InvoiceItem, InvoiceTotals } from '@/types';
+import type {
+    Customer,
+    Invoice,
+    InvoiceItem,
+    InvoiceTotals,
+    LinkedRecordGroup,
+} from '@/types';
 
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
     dateStyle: 'medium',
@@ -43,12 +55,19 @@ export default function ShowInvoice({
     items,
     totals,
     customer,
+    linkedRecords,
 }: {
+    /** What points at the invoice through record-link custom fields. */
+    linkedRecords: LinkedRecordGroup[];
     invoice: Invoice;
     items: InvoiceItem[];
     totals: InvoiceTotals;
     customer: Customer;
 }) {
+    const shownFields = useCustomFields('invoice').filter((field) =>
+        hasCustomFieldValue(field, invoice.custom_fields[field.id]),
+    );
+
     setLayoutProps({
         breadcrumbs: [
             { title: 'Invoices', href: index() },
@@ -223,6 +242,31 @@ export default function ShowInvoice({
                         </p>
                     </section>
                 )}
+
+                {shownFields.length > 0 && (
+                    <section className="space-y-2">
+                        <h2 className="font-medium">More details</h2>
+                        <dl className="grid gap-3 text-sm sm:grid-cols-2">
+                            {shownFields.map((field) => (
+                                <div key={field.id} className="min-w-0">
+                                    <dt className="text-xs text-muted-foreground">
+                                        {field.name}
+                                    </dt>
+                                    <dd className="truncate">
+                                        <CustomFieldValueView
+                                            field={field}
+                                            value={
+                                                invoice.custom_fields[field.id]
+                                            }
+                                        />
+                                    </dd>
+                                </div>
+                            ))}
+                        </dl>
+                    </section>
+                )}
+
+                <LinkedRecords groups={linkedRecords} />
             </div>
         </>
     );

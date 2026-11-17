@@ -70,6 +70,7 @@ export type ContractItem = {
     purchase_order: string | null;
     description: string | null;
     notes: string | null;
+    custom_fields: CustomFieldValues;
 };
 
 /** A customer's secret, without its values. */
@@ -230,6 +231,8 @@ export type CustomFieldTarget =
     | 'asset'
     | 'location'
     | 'service'
+    | 'contract'
+    | 'invoice'
     /** Records of a custom object; the field's `object_id` says which. */
     | 'record';
 
@@ -254,6 +257,8 @@ export type CustomFieldRelation =
     | 'asset'
     | 'location'
     | 'service'
+    | 'contract'
+    | 'invoice'
     | 'record';
 
 /**
@@ -556,6 +561,7 @@ export type Invoice = {
     notes: string | null;
     sent_at: string | null;
     paid_at: string | null;
+    custom_fields: CustomFieldValues;
 };
 
 export type InvoiceTotals = {

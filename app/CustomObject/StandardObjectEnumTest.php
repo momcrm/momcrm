@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 use App\Asset\AssetEloquentModel;
 use App\Contact\ContactEloquentModel;
+use App\Contract\ContractEloquentModel;
 use App\Customer\CustomerEloquentModel;
 use App\CustomObject\StandardObjectEnum;
+use App\Invoice\InvoiceEloquentModel;
 use App\Location\LocationEloquentModel;
 use App\Project\ProjectEloquentModel;
 use App\Service\ServiceEloquentModel;
@@ -31,6 +33,8 @@ function standardRecord(StandardObjectEnum $object, string $teamId): array
         StandardObjectEnum::Project => [$record = ProjectEloquentModel::factory()->create([...$team, 'name' => 'Refit']), 'Refit', route('projects.show', $record->id)],
         StandardObjectEnum::Asset => [$record = AssetEloquentModel::factory()->create([...$team, 'customer_id' => $customer()->id, 'name' => 'Reception PC']), 'Reception PC', route('assets.edit', $record->id)],
         StandardObjectEnum::Location => [$record = LocationEloquentModel::factory()->create([...$team, 'customer_id' => $customer()->id, 'name' => 'Head office']), 'Head office', route('locations.edit', $record->id)],
+        StandardObjectEnum::Contract => [$record = ContractEloquentModel::factory()->create([...$team, 'customer_id' => $customerId = $customer()->id, 'title' => 'Managed services']), 'Managed services', route('customers.contracts', ['customer' => $customerId, 'contract' => $record->id])],
+        StandardObjectEnum::Invoice => [$record = InvoiceEloquentModel::factory()->create([...$team, 'customer_id' => $customer()->id, 'number' => 42]), 'INV-0042', route('invoices.show', $record->id)],
         StandardObjectEnum::Service => [$record = ServiceEloquentModel::factory()->create([...$team, 'customer_id' => $customer()->id, 'name' => 'Managed IT']), 'Managed IT', route('services.edit', $record->id)],
     };
 }

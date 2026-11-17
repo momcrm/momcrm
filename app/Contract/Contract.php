@@ -19,6 +19,7 @@ use App\Contract\Properties\TeamId;
 use App\Contract\Properties\Title;
 use App\Contract\Properties\Type;
 use App\Contract\Properties\UpdatedAt;
+use App\CustomField\Properties\CustomFieldValues;
 use Illuminate\Support\Collection;
 use Mom\Data\AbstractData;
 use Mom\Data\AbstractValue;
@@ -32,6 +33,7 @@ use Mom\Data\AbstractValue;
 final class Contract extends AbstractData
 {
     public function __construct(
+        public CustomFieldValues $customFields,
         public CreatedAt $createdAt,
         public CustomerId $customerId,
         public Description $description,
@@ -71,7 +73,7 @@ final class Contract extends AbstractData
     }
 
     /**
-     * @return array{id: string, customer_id: string, title: string, type: string, status: string, signed_on: ?string, starts_on: ?string, ends_on: ?string, purchase_order: ?string, description: ?string, notes: ?string}
+     * @return array{id: string, customer_id: string, title: string, type: string, status: string, signed_on: ?string, starts_on: ?string, ends_on: ?string, purchase_order: ?string, description: ?string, notes: ?string, custom_fields: array<string, mixed>}
      */
     public function toSummary(): array
     {
@@ -87,7 +89,20 @@ final class Contract extends AbstractData
             'purchase_order' => $this->getPurchaseOrder()->toNullableString(),
             'description' => $this->getDescription()->toNullableString(),
             'notes' => $this->getNotes()->toNullableString(),
+            'custom_fields' => $this->getCustomFields()->toValues(),
         ];
+    }
+
+    public function getCustomFields(): CustomFieldValues
+    {
+        return $this->customFields;
+    }
+
+    public function setCustomFields(mixed $customFields): self
+    {
+        $this->customFields = new CustomFieldValues($customFields instanceof AbstractValue ? $customFields->toValue() : $customFields);
+
+        return $this;
     }
 
     public function getCreatedAt(): CreatedAt

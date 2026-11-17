@@ -3,6 +3,9 @@
 declare(strict_types=1);
 
 use App\Customer\CustomerEloquentModel;
+use App\CustomField\CustomFieldEloquentModel;
+use App\CustomField\CustomFieldTargetEnum;
+use App\CustomField\CustomFieldTypeEnum;
 use App\Invoice\InvoiceEloquentModel;
 use App\InvoiceItem\InvoiceItemEloquentModel;
 use App\User\UserEloquentModel;
@@ -83,4 +86,22 @@ it("rejects another team's customer", function (): void {
     actingAs(UserEloquentModel::factory()->withPersonalTeam()->create())
         ->post(route('invoices.store'), invoicePayload(CustomerEloquentModel::factory()->create()->id))
         ->assertSessionHasErrors(['customer_id' => 'Choose the customer to invoice.']);
+});
+
+it('saves an invoice with its custom field values, rejecting one of the wrong type', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $team = ['team_id' => $user->current_team_id];
+    $customer = CustomerEloquentModel::factory()->create($team);
+    $text = CustomFieldEloquentModel::factory()->on(CustomFieldTargetEnum::Invoice)->create($team);
+    $date = CustomFieldEloquentModel::factory()->on(CustomFieldTargetEnum::Invoice)->ofType(CustomFieldTypeEnum::Date)->create([...$team, 'name' => 'Work done on']);
+
+    actingAs($user)
+        ->post(route('invoices.store'), [...invoicePayload($customer->id), 'custom_fields' => [$date->id => 'last week']])
+        ->assertSessionHasErrors(["custom_fields.{$date->id}" => 'The Work done on field must match the format Y-m-d.']);
+
+    actingAs($user)
+        ->post(route('invoices.store'), [...invoicePayload($customer->id), 'custom_fields' => [$text->id => 'Cost centre 7', $date->id => '2026-11-30']])
+        ->assertSessionHasNoErrors();
+
+    expect(InvoiceEloquentModel::query()->sole()->custom_fields)->toEqual([$text->id => 'Cost centre 7', $date->id => '2026-11-30']);
 });

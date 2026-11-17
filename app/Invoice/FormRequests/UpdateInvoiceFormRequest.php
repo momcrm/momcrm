@@ -4,14 +4,19 @@ declare(strict_types=1);
 
 namespace App\Invoice\FormRequests;
 
+use App\CustomField\CustomFieldTargetEnum;
+use App\CustomField\CustomFieldValueRules;
+use App\CustomField\Properties\CustomFieldValues;
 use App\Invoice\Actions\FindInvoice;
 use App\Invoice\Actions\UpdateInvoice;
 use App\Invoice\Exceptions\CouldNotFindInvoice;
 use App\Invoice\Invoice;
 use App\Invoice\InvoiceValidationRules;
+use App\Shared\Types;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 
@@ -49,7 +54,10 @@ final class UpdateInvoiceFormRequest extends FormRequest
      */
     public function rules(): array
     {
-        return InvoiceValidationRules::for($this, $this->invoice->getCustomerId()->toString());
+        return [
+            ...InvoiceValidationRules::for($this, $this->invoice->getCustomerId()->toString()),
+            ...CustomFieldValueRules::for($this->invoice->getTeamId()->toString(), CustomFieldTargetEnum::Invoice, $this->invoice->getCustomFields()),
+        ];
     }
 
     /**
@@ -60,12 +68,22 @@ final class UpdateInvoiceFormRequest extends FormRequest
         return InvoiceValidationRules::messages();
     }
 
+    /**
+     * @return array<string, string>
+     */
+    public function attributes(): array
+    {
+        return CustomFieldValueRules::attributes($this->invoice->getTeamId()->toString(), CustomFieldTargetEnum::Invoice);
+    }
+
     public function process(): RedirectResponse
     {
         $validated = $this->validated();
 
         $invoice = UpdateInvoice::fromInvoice(
-            $this->invoice->setPropertyIfExists($validated),
+            $this->invoice
+                ->setCustomFields(CustomFieldValueRules::merge($this->invoice->getTeamId()->toString(), CustomFieldTargetEnum::Invoice, $this->invoice->getCustomFields(), $validated[CustomFieldValues::getNameForValidation()] ?? []))
+                ->setPropertyIfExists(Types::stringKeyed(Arr::except($validated, CustomFieldValues::getNameForValidation()))),
             InvoiceValidationRules::items($validated),
         );
 

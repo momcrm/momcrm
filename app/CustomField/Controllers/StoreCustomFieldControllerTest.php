@@ -79,14 +79,14 @@ it('rejects invalid fields', function (array $input, string $field, string $mess
         ->post(route('custom-fields.store'), $input)
         ->assertSessionHasErrors([$field => $message]);
 })->with([
-    'unknown record type' => [['target' => 'invoice', 'type' => 'text', 'name' => 'Region 2'], 'target', 'The selected target is invalid.'],
+    'unknown record type' => [['target' => 'payment', 'type' => 'text', 'name' => 'Region 2'], 'target', 'The selected target is invalid.'],
     'unknown type' => [['target' => 'ticket', 'type' => 'colour', 'name' => 'Region 2'], 'type', 'The selected type is invalid.'],
     'taken name, even archived' => [['target' => 'ticket', 'type' => 'text', 'name' => 'Region'], 'name', 'A field with that name already exists here, or in the archive.'],
     'select without options' => [['target' => 'ticket', 'type' => 'select', 'name' => 'Tier'], 'options', 'Add at least one option.'],
     'options on a text field' => [['target' => 'ticket', 'type' => 'text', 'name' => 'Tier', 'options' => [['name' => 'Gold']]], 'options', 'Only select fields have options.'],
     'two options with one name' => [['target' => 'ticket', 'type' => 'multi_select', 'name' => 'Tier', 'options' => [['name' => 'Gold'], ['name' => 'gold']]], 'options.0.name', 'Two options have the same name.'],
     'record link without a kind' => [['target' => 'ticket', 'type' => 'relation', 'name' => 'Reseller'], 'relation', 'Choose what the field links to.'],
-    'unknown kind of record' => [['target' => 'ticket', 'type' => 'relation', 'name' => 'Reseller', 'relation' => 'invoice'], 'relation', 'The selected relation is invalid.'],
+    'unknown kind of record' => [['target' => 'ticket', 'type' => 'relation', 'name' => 'Reseller', 'relation' => 'payment'], 'relation', 'The selected relation is invalid.'],
     'a kind on a text field' => [['target' => 'ticket', 'type' => 'text', 'name' => 'Reseller', 'relation' => 'customer'], 'relation', 'Only record links say what they link to.'],
     'option without a name' => [['target' => 'ticket', 'type' => 'select', 'name' => 'Tier', 'options' => [['name' => '']]], 'options.0.name', 'Give every option a name.'],
 ]);

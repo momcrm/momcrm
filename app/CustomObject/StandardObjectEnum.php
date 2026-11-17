@@ -6,7 +6,10 @@ namespace App\CustomObject;
 
 use App\Asset\AssetEloquentModel;
 use App\Contact\ContactEloquentModel;
+use App\Contract\ContractEloquentModel;
 use App\Customer\CustomerEloquentModel;
+use App\Invoice\Invoice;
+use App\Invoice\InvoiceEloquentModel;
 use App\Location\LocationEloquentModel;
 use App\Project\ProjectEloquentModel;
 use App\Project\ProjectVisibility;
@@ -35,6 +38,8 @@ enum StandardObjectEnum: string
     case Asset = 'asset';
     case Location = 'location';
     case Service = 'service';
+    case Contract = 'contract';
+    case Invoice = 'invoice';
 
     /**
      * What several of its records are called.
@@ -49,6 +54,8 @@ enum StandardObjectEnum: string
             self::Asset => 'Assets',
             self::Location => 'Locations',
             self::Service => 'Services',
+            self::Contract => 'Contracts',
+            self::Invoice => 'Invoices',
         };
     }
 
@@ -65,6 +72,8 @@ enum StandardObjectEnum: string
             self::Asset => 'asset',
             self::Location => 'location',
             self::Service => 'service',
+            self::Contract => 'contract',
+            self::Invoice => 'invoice',
         };
     }
 
@@ -85,6 +94,8 @@ enum StandardObjectEnum: string
             self::Asset => AssetEloquentModel::query(),
             self::Location => LocationEloquentModel::query(),
             self::Service => ServiceEloquentModel::query(),
+            self::Contract => ContractEloquentModel::query(),
+            self::Invoice => InvoiceEloquentModel::query(),
         };
 
         $query->withoutGlobalScopes()->where('team_id', $teamId);
@@ -110,7 +121,22 @@ enum StandardObjectEnum: string
             self::Ticket => ['title'],
             self::Customer, self::Project, self::Asset, self::Location, self::Service => ['name'],
             self::Contact => ['first_name', 'last_name'],
+            self::Contract => ['title'],
+            self::Invoice => [],
         };
+
+        if ($this === self::Invoice) {
+            // An invoice has no name, only its number: "INV-0042", "42".
+            $number = preg_replace('/\D/', '', $search);
+
+            if ($search !== '') {
+                $number === '' ? $query->whereRaw('1 = 0') : $query->where('number', (int) $number);
+            }
+
+            $query->orderByDesc('number');
+
+            return;
+        }
 
         if ($search !== '') {
             $query->where(function (Builder $query) use ($columns, $search): void {
@@ -148,12 +174,15 @@ enum StandardObjectEnum: string
             $record instanceof AssetEloquentModel,
             $record instanceof LocationEloquentModel,
             $record instanceof ServiceEloquentModel => $record->name,
+            $record instanceof ContractEloquentModel => $record->title,
+            $record instanceof InvoiceEloquentModel => Invoice::fromEloquentModel($record)->getReference(),
             default => $this->label(),
         };
     }
 
     /**
-     * The page that shows a record.
+     * The page that shows a record. A contract has no page of its own: it
+     * opens in a dialog on its customer's Contracts tab.
      */
     public function url(Model $record): string
     {
@@ -167,6 +196,8 @@ enum StandardObjectEnum: string
             self::Asset => route('assets.edit', $id),
             self::Location => route('locations.edit', $id),
             self::Service => route('services.edit', $id),
+            self::Contract => route('customers.contracts', ['customer' => $record->getAttribute('customer_id'), 'contract' => $id]),
+            self::Invoice => route('invoices.show', $id),
         };
     }
 }

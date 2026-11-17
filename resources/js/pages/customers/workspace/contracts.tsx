@@ -1,4 +1,10 @@
 import { Head, router } from '@inertiajs/react';
+import {
+    pickCustomFieldValues,
+    useCustomFields,
+} from '@/components/custom-fields/custom-field-input';
+import CustomFieldsFormFields from '@/components/custom-fields/custom-fields-form';
+import LinkedRecords from '@/components/custom-fields/linked-records';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import Attachments from '@/components/attachments';
@@ -32,11 +38,16 @@ import type {
     ContractItem,
     ContractStatus,
     CustomerWorkspace,
+    LinkedRecordGroup,
     Option,
     Tone,
 } from '@/types';
 
-type ContractRow = ContractItem & { documents: AttachmentItem[] };
+type ContractRow = ContractItem & {
+    documents: AttachmentItem[];
+    /** What points at the contract through record-link custom fields. */
+    linked_records: LinkedRecordGroup[];
+};
 
 type Filters = {
     status: ContractStatus | null;
@@ -45,7 +56,7 @@ type Filters = {
     direction: 'asc' | 'desc';
 };
 
-const RELOAD = ['contracts', 'filters', 'workspace'];
+const RELOAD = ['contracts', 'filters', 'workspace', 'customFieldLabels'];
 
 const ENDS_SOON_DAYS = 30;
 
@@ -178,6 +189,10 @@ function ContractDialog({
         description: contract?.description ?? '',
         notes: contract?.notes ?? '',
     });
+    const customFields = useCustomFields('contract');
+    const [customFieldValues, setCustomFieldValues] = useState(() =>
+        pickCustomFieldValues(customFields, contract?.custom_fields ?? {}),
+    );
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isSaving, setIsSaving] = useState(false);
     const canEdit = contract ? Boolean(contractCan.update) : true;
@@ -191,9 +206,15 @@ function ContractDialog({
 
     const onSubmit = (event: FormEvent) => {
         event.preventDefault();
-        const data = Object.fromEntries(
-            Object.entries(fields).map(([key, value]) => [key, value || null]),
-        );
+        const data = {
+            ...Object.fromEntries(
+                Object.entries(fields).map(([key, value]) => [
+                    key,
+                    value || null,
+                ]),
+            ),
+            custom_fields: customFieldValues,
+        };
         const options = {
             only: RELOAD,
             preserveScroll: true,
@@ -340,6 +361,14 @@ function ContractDialog({
                                 />
                             </FormField>
                         </div>
+                        <div className="grid gap-4 empty:hidden sm:grid-cols-2">
+                            <CustomFieldsFormFields
+                                target="contract"
+                                values={customFieldValues}
+                                onChange={setCustomFieldValues}
+                                errors={errors}
+                            />
+                        </div>
                         <FormField
                             id="notes"
                             label="Notes"
@@ -364,6 +393,10 @@ function ContractDialog({
                                 can={documentCan}
                             />
                         </section>
+                    )}
+
+                    {contract && (
+                        <LinkedRecords groups={contract.linked_records} />
                     )}
 
                     <DialogFooter className="sm:justify-between">
@@ -417,7 +450,10 @@ export default function CustomerContracts({
     statuses,
     contractCan,
     documentCan,
+    open: openOnLoad,
 }: {
+    /** The contract a link asked to open (`?contract=`), if any. */
+    open: string | null;
     workspace: CustomerWorkspace;
     contracts: ContractRow[];
     filters: Filters;
@@ -431,7 +467,7 @@ export default function CustomerContracts({
         title: 'Contracts',
         href: contractsTab(customer.id),
     });
-    const [openId, setOpenId] = useState<string | null>(null);
+    const [openId, setOpenId] = useState<string | null>(openOnLoad);
     const [isCreating, setIsCreating] = useState(false);
     const open = contracts.find((contract) => contract.id === openId) ?? null;
     const isFiltered = Boolean(filters.status || filters.type);
