@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Ticket;
 
+use App\CustomField\CustomFieldRelationLabels;
+use App\CustomField\CustomFieldTargetEnum;
 use App\Favorite\Actions\FindFavorite;
 use App\Favorite\FavoritableTypeEnum;
 use App\Ticket\Actions\FindTicket;
@@ -32,9 +34,18 @@ final class TicketViewProps
         $teamId = (string) $user->current_team_id;
         $perPage = $filters->view === TicketListFilters::VIEW_TABLE ? self::TABLE_PAGE_SIZE : self::BOARD_LIMIT;
 
+        $tickets = FindTicket::paginateFiltered($teamId, $user->id, $filters, $perPage);
+        $labels = CustomFieldRelationLabels::for(
+            $teamId,
+            CustomFieldTargetEnum::Ticket,
+            ...array_map(fn (Ticket $ticket): array => $ticket->getCustomFields()->toValues(), $tickets->items()),
+        );
+
         return [
-            'tickets' => FindTicket::paginateFiltered($teamId, $user->id, $filters, $perPage)
-                ->through(fn (Ticket $ticket): array => ListTicketsController::listItem($ticket)),
+            'tickets' => $tickets->through(fn (Ticket $ticket): array => [
+                ...ListTicketsController::listItem($ticket),
+                'custom_field_labels' => CustomFieldRelationLabels::only($labels, $ticket->getCustomFields()->toValues()),
+            ]),
             'filters' => $filters->toArray(),
             'favoriteTicketIds' => FindFavorite::idsForUser($teamId, $user->id, FavoritableTypeEnum::Ticket),
             ...TicketDrawer::options($teamId, $user->id),

@@ -18,6 +18,9 @@ use App\Customer\Properties\Prefix;
 use App\Customer\Properties\Status;
 use App\Customer\Properties\TeamId;
 use App\Customer\Properties\TypeId;
+use App\CustomField\Actions\FindCustomField;
+use App\CustomField\CustomFieldQuery;
+use App\CustomField\CustomFieldTargetEnum;
 use App\Team\Scopes\CurrentTeamScope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -38,6 +41,7 @@ final class FindCustomer
      * A page of the team's customers, by name, with their contact and service
      * counts.
      *
+     * @param  array<string, string>  $customFields  Filters on custom fields, by field id.
      * @return LengthAwarePaginator<int, Customer>
      */
     public static function paginateForTeam(
@@ -47,7 +51,10 @@ final class FindCustomer
         ?CustomerBillingTypeEnum $billingType = null,
         ?CustomerStatusEnum $status = null,
         int $perPage = 25,
+        array $customFields = [],
     ): LengthAwarePaginator {
+        $fields = $customFields === [] ? [] : FindCustomField::listForTeam($teamId, CustomFieldTargetEnum::Customer);
+
         return self::query($teamId)
             ->when($search, fn ($query, string $search) => $query->where(fn ($query) => $query
                 ->where(Name::getDatabaseTableColumnName(), 'like', "%{$search}%")
@@ -56,6 +63,15 @@ final class FindCustomer
             ->when($typeId, fn ($query, string $typeId) => $query->where(TypeId::getDatabaseTableColumnName(), $typeId))
             ->when($billingType, fn ($query, CustomerBillingTypeEnum $billingType) => $query->where(BillingType::getDatabaseTableColumnName(), $billingType->value))
             ->when($status, fn ($query, CustomerStatusEnum $status) => $query->where(Status::getDatabaseTableColumnName(), $status->value))
+            ->tap(function (Builder $query) use ($fields, $customFields): void {
+                foreach ($fields as $field) {
+                    $value = $customFields[$field->getId()->toString()] ?? null;
+
+                    if ($value !== null) {
+                        CustomFieldQuery::filter($query, $field, $value);
+                    }
+                }
+            })
             ->withCount([CustomerRelationship::Contacts->value, CustomerRelationship::Services->value])
             ->orderBy(Name::getDatabaseTableColumnName())
             ->paginate($perPage)

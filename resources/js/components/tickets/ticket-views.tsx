@@ -102,6 +102,7 @@ export default function TicketViews({
                         tickets={tickets.data}
                         groupBy={groupBy}
                         hiddenColumns={prefs.hiddenColumns}
+                        customFieldColumns={prefs.shownCustomFields}
                         selection={selection}
                         sort={{
                             column: filters.sort,

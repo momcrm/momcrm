@@ -6,6 +6,9 @@ use App\Choice\Actions\FindChoice;
 use App\Choice\ChoiceEloquentModel;
 use App\Choice\ChoiceListEnum;
 use App\Customer\CustomerEloquentModel;
+use App\CustomField\CustomFieldEloquentModel;
+use App\CustomField\CustomFieldRelationEnum;
+use App\CustomField\CustomFieldTypeEnum;
 use App\Group\GroupEloquentModel;
 use App\Project\ProjectEloquentModel;
 use App\Ticket\TicketEloquentModel;
@@ -210,4 +213,62 @@ it("sorts the table by status, in the team's order", function (): void {
         ->all();
 
     expect($sorted)->toBe([$new, $waiting, $closed]);
+});
+
+it('filters and sorts tickets by custom fields', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $teamId = $user->current_team_id;
+    $tier = CustomFieldEloquentModel::factory()->select(['Gold', 'Silver'])->create(['team_id' => $teamId]);
+    $seats = CustomFieldEloquentModel::factory()->ofType(CustomFieldTypeEnum::Number)->create(['team_id' => $teamId]);
+    [$gold, $silver] = array_column($tier->options, 'id');
+    ticketFor($user, ['title' => 'Gold, 9 seats', 'custom_fields' => [$tier->id => $gold, $seats->id => 9]]);
+    ticketFor($user, ['title' => 'Gold, 10 seats', 'custom_fields' => [$tier->id => $gold, $seats->id => 10]]);
+    ticketFor($user, ['title' => 'Silver', 'custom_fields' => [$tier->id => $silver, $seats->id => 50]]);
+
+    actingAs($user)
+        ->get(route('tickets.index', ['cf' => [$tier->id => $gold], 'sort' => "cf:{$seats->id}", 'direction' => 'desc']))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('filters.custom_fields', [$tier->id => $gold])
+            ->where('filters.sort', "cf:{$seats->id}")
+            ->where('tickets.total', 2)
+            ->where('tickets.data.0.title', 'Gold, 10 seats')
+            ->where('tickets.data.1.title', 'Gold, 9 seats'),
+        );
+});
+
+it('ignores custom field filters and sorts it cannot apply', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $teamId = $user->current_team_id;
+    $text = CustomFieldEloquentModel::factory()->create(['team_id' => $teamId]);
+    $tier = CustomFieldEloquentModel::factory()->select(['Gold'])->create(['team_id' => $teamId]);
+    $tags = CustomFieldEloquentModel::factory()->select(['Red'], isMultiple: true)->create(['team_id' => $teamId]);
+    $foreign = CustomFieldEloquentModel::factory()->select(['Gold'])->create();
+    ticketFor($user);
+
+    actingAs($user)
+        ->get(route('tickets.index', [
+            'cf' => [$text->id => 'anything', $tier->id => 'not-an-option', $foreign->id => $foreign->options[0]['id']],
+            'sort' => "cf:{$tags->id}",
+        ]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('filters.custom_fields', [])
+            ->where('filters.sort', 'number')
+            ->where('tickets.total', 1),
+        );
+});
+
+it('sends each listed ticket the names of the records its custom fields link to', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $teamId = $user->current_team_id;
+    $field = CustomFieldEloquentModel::factory()->linkingTo(CustomFieldRelationEnum::Customer)->create(['team_id' => $teamId]);
+    $reseller = CustomerEloquentModel::factory()->create(['team_id' => $teamId, 'name' => 'Reseller Co']);
+    ticketFor($user, ['number' => 2, 'custom_fields' => [$field->id => $reseller->id]]);
+    ticketFor($user, ['number' => 1]);
+
+    actingAs($user)
+        ->get(route('tickets.index'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('tickets.data.0.custom_field_labels', [$reseller->id => 'Reseller Co'])
+            ->where('tickets.data.1.custom_field_labels', []),
+        );
 });

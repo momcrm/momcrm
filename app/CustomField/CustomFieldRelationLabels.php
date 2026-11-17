@@ -48,4 +48,16 @@ final class CustomFieldRelationLabels
 
         return $names;
     }
+
+    /**
+     * The names one record's values need, out of those read for a whole list.
+     *
+     * @param  array<string, string>  $labels
+     * @param  array<string, mixed>  $values
+     * @return array<string, string>
+     */
+    public static function only(array $labels, array $values): array
+    {
+        return array_intersect_key($labels, array_flip(array_filter($values, is_string(...))));
+    }
 }

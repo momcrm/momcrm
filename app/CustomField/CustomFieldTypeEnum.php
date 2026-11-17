@@ -47,6 +47,24 @@ enum CustomFieldTypeEnum: string
     }
 
     /**
+     * Whether a list can be narrowed to one value of the field: types with a
+     * short, fixed set of values to pick from.
+     */
+    public function isFilterable(): bool
+    {
+        return in_array($this, [self::Checkbox, self::Select, self::MultiSelect, self::Relation], true);
+    }
+
+    /**
+     * Whether a list can be ordered by the field: types whose values have an
+     * order of their own.
+     */
+    public function isSortable(): bool
+    {
+        return in_array($this, [self::Text, self::Number, self::Date, self::Checkbox, self::Select], true);
+    }
+
+    /**
      * The rules for one value of a field, keyed by what follows the field's
      * own key ('' for the value itself, '.*' for each item of a multi-select).
      * A select takes one of the field's options and a record link one of the

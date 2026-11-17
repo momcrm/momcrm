@@ -7,6 +7,10 @@ namespace App\Ticket;
 use App\Choice\ChoiceEloquentModel;
 use App\Choice\Properties\Id as ChoiceId;
 use App\Choice\Properties\Position as ChoicePosition;
+use App\CustomField\Actions\FindCustomField;
+use App\CustomField\CustomFieldCollection;
+use App\CustomField\CustomFieldQuery;
+use App\CustomField\CustomFieldTargetEnum;
 use App\Shared\Table;
 use App\Ticket\Actions\FindTicket;
 use App\Ticket\Properties\AssigneeId;
@@ -55,6 +59,8 @@ final readonly class TicketListFilters
     /**
      * @param  array<int, string>  $priorities
      * @param  'asc'|'desc'  $direction
+     * @param  array<string, string>  $customFields  Filters on custom fields, by field id.
+     * @param  ?CustomFieldCollection  $fields  The team's live ticket fields, which the custom field filters and sort are read against.
      */
     public function __construct(
         public string $view = self::VIEW_LIST,
@@ -68,6 +74,8 @@ final readonly class TicketListFilters
         public ?string $group = null,
         public string $sort = 'number',
         public string $direction = 'desc',
+        public array $customFields = [],
+        public ?CustomFieldCollection $fields = null,
     ) {}
 
     /**
@@ -78,6 +86,8 @@ final readonly class TicketListFilters
         $view = in_array($request->query('view'), [self::VIEW_BOARD, self::VIEW_TABLE], true) ? (string) $request->query('view') : self::VIEW_LIST;
         $status = (string) $request->query('status', '');
         $sort = (string) $request->query('sort', 'number');
+        $teamId = $request->user()?->current_team_id;
+        $fields = is_string($teamId) ? FindCustomField::listForTeam($teamId, CustomFieldTargetEnum::Ticket) : CustomFieldCollection::make();
 
         return new self(
             view: $view,
@@ -94,8 +104,10 @@ final readonly class TicketListFilters
             label: self::idOrKeyword($request->query('label'), []),
             type: self::idOrKeyword($request->query('type'), [self::NONE]),
             group: self::idOrKeyword($request->query('group'), [self::NONE]),
-            sort: array_key_exists($sort, self::SORTS) ? $sort : 'number',
+            sort: array_key_exists($sort, self::SORTS) || CustomFieldQuery::sortField($sort, $fields)->isNotNull() ? $sort : 'number',
             direction: $request->query('direction') === 'asc' ? 'asc' : 'desc',
+            customFields: CustomFieldQuery::filtersFromRequest($request, $fields),
+            fields: $fields,
         );
     }
 
@@ -116,6 +128,8 @@ final readonly class TicketListFilters
             group: $this->group,
             sort: $this->sort,
             direction: $this->direction,
+            customFields: $this->customFields,
+            fields: $this->fields,
         );
     }
 
@@ -136,11 +150,13 @@ final readonly class TicketListFilters
             group: $this->group,
             sort: $this->sort,
             direction: $this->direction,
+            customFields: $this->customFields,
+            fields: $this->fields,
         );
     }
 
     /**
-     * @return array{view: string, status: string, search: ?string, priority: array<int, string>, assignee: ?string, project: ?string, label: ?string, type: ?string, group: ?string, sort: string, direction: string}
+     * @return array{view: string, status: string, search: ?string, priority: array<int, string>, assignee: ?string, project: ?string, label: ?string, type: ?string, group: ?string, sort: string, direction: string, custom_fields: array<string, string>}
      */
     public function toArray(): array
     {
@@ -156,6 +172,7 @@ final readonly class TicketListFilters
             'group' => $this->group,
             'sort' => $this->sort,
             'direction' => $this->direction,
+            'custom_fields' => $this->customFields,
         ];
     }
 
@@ -192,6 +209,14 @@ final readonly class TicketListFilters
             ->when($this->search, fn (Builder $query, string $search) => $query->where(fn (Builder $query) => $query
                 ->where(Title::getDatabaseTableColumnName(), 'like', "%{$search}%")
                 ->orWhere(Number::getDatabaseTableColumnName(), ltrim($search, '#'))));
+
+        foreach ($this->fields ?? [] as $field) {
+            $value = $this->customFields[$field->getId()->toString()] ?? null;
+
+            if ($value !== null) {
+                CustomFieldQuery::filter($query, $field, $value);
+            }
+        }
     }
 
     /**
@@ -202,6 +227,14 @@ final readonly class TicketListFilters
     public function sort(Builder $query): void
     {
         $isAscending = $this->direction === 'asc';
+        $customField = CustomFieldQuery::sortField($this->sort, $this->fields ?? CustomFieldCollection::make());
+
+        if ($customField->isNotNull()) {
+            CustomFieldQuery::sort($query, $customField, $this->direction);
+            $query->orderByDesc(Number::getDatabaseTableColumnName());
+
+            return;
+        }
 
         match ($this->sort) {
             // The first priority in the team's list is the most urgent, so "descending" runs up the list.

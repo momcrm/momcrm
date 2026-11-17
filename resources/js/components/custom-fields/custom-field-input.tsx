@@ -25,6 +25,43 @@ export function useCustomFields(target: CustomFieldTarget): CustomField[] {
 }
 
 /**
+ * Whether a list's toolbar offers a filter on the field: types with a short,
+ * fixed set of values to pick from.
+ */
+export function isFilterableCustomField(field: CustomField): boolean {
+    return ['checkbox', 'select', 'multi_select'].includes(field.type);
+}
+
+/**
+ * Whether a list can be ordered by the field, as the server allows.
+ */
+export function isSortableCustomField(field: CustomField): boolean {
+    return ['text', 'number', 'date', 'checkbox', 'select'].includes(
+        field.type,
+    );
+}
+
+/**
+ * What a filter on the field is set to, in words; null when it is not set.
+ */
+export function customFieldFilterLabel(
+    field: CustomField,
+    value: string | undefined,
+): string | null {
+    if (value === undefined) {
+        return null;
+    }
+
+    if (field.type === 'checkbox') {
+        return value === '1' ? 'Yes' : 'No';
+    }
+
+    return value === 'none'
+        ? 'None'
+        : (field.options.find((option) => option.id === value)?.name ?? null);
+}
+
+/**
  * A record's values for the given fields only. A record can still hold
  * values for archived fields, which a form must not send back.
  */

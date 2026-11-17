@@ -1,3 +1,11 @@
+import {
+    isSortableCustomField,
+    useCustomFields,
+} from '@/components/custom-fields/custom-field-input';
+import {
+    CustomFieldValueView,
+    hasCustomFieldValue,
+} from '@/components/custom-fields/custom-fields-form';
 import DataTable, { dataTableColumns } from '@/components/data-table';
 import type { DataTableSort } from '@/components/data-table';
 import { LabelChips } from '@/components/labels';
@@ -163,6 +171,7 @@ export default function TicketTable({
     flush = false,
     groupBy = 'none',
     hiddenColumns = ['type'],
+    customFieldColumns = [],
     selection,
 }: {
     tickets: TicketListItem[];
@@ -173,10 +182,13 @@ export default function TicketTable({
     flush?: boolean;
     groupBy?: TicketGroupBy;
     hiddenColumns?: TicketColumnKey[];
+    /** Ids of the custom fields to add as columns, after the built-in ones. */
+    customFieldColumns?: string[];
     /** Adds a checkbox column for picking tickets to change together. */
     selection?: TicketSelection;
 }) {
     const { openTicket } = useTicketActions();
+    const customFields = useCustomFields('ticket');
     const sections = useTicketSections(tickets, groupBy);
     const hidden: string[] = [
         ...hiddenColumns,
@@ -218,6 +230,24 @@ export default function TicketTable({
               ]
             : []),
         ...columns.filter((item) => !hidden.includes(item.id ?? '')),
+        ...customFields
+            .filter((field) => customFieldColumns.includes(field.id))
+            .map((field) =>
+                column.accessor((ticket) => ticket.custom_fields[field.id], {
+                    id: `cf:${field.id}`,
+                    header: field.name,
+                    enableSorting: isSortableCustomField(field),
+                    meta: { className: 'w-[150px]' },
+                    cell: (info) =>
+                        hasCustomFieldValue(field, info.getValue()) ? (
+                            <CustomFieldValueView
+                                field={field}
+                                value={info.getValue()}
+                                labels={info.row.original.custom_field_labels}
+                            />
+                        ) : null,
+                }),
+            ),
     ];
     const sectionOf = new Map(
         sections.flatMap((section) =>
