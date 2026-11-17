@@ -62,6 +62,7 @@ import { cn } from '@/lib/utils';
 import { show as showCustomer } from '@/routes/customers';
 import { show as showProject } from '@/routes/projects';
 import { index, show } from '@/routes/tickets';
+import { store as storeComment } from '@/routes/comments';
 import { store as storeAttachment } from '@/routes/tickets/attachments';
 import type { TicketDrawerData, TicketPickerOptions } from '@/types';
 
@@ -579,7 +580,7 @@ export function TicketDetails({
                 </section>
 
                 <TicketConversation
-                    ticketId={ticket.id}
+                    storeUrl={storeComment.url(ticket.id)}
                     comments={ticket.comments}
                     activity={ticket.activity}
                     members={options.members}

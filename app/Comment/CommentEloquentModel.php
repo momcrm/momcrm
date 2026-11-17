@@ -29,7 +29,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $id
  * @property array<int, string>|null $mentions
  * @property string $team_id
- * @property string $ticket_id
+ * @property string|null $record_id
+ * @property string|null $ticket_id
  * @property CarbonImmutable|null $updated_at
  * @property string|null $user_id
  */

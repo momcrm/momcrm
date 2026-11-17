@@ -77,9 +77,11 @@ final class FindNotifications
             'id' => $notification->id,
             'read_at' => $notification->read_at?->toIso8601String(),
             'created_at' => $notification->created_at?->toIso8601String(),
-            'url' => ($data['subject_type'] ?? null) === 'project'
-                ? route('projects.show', Types::string($data['subject_id']))
-                : route('tickets.index', ['ticket' => Types::string($data['subject_id'] ?? '')]),
+            'url' => match ($data['subject_type'] ?? null) {
+                'project' => route('projects.show', Types::string($data['subject_id'])),
+                'record' => route('records.show', [Types::string($data['object_id'] ?? ''), Types::string($data['subject_id'])]),
+                default => route('tickets.index', ['ticket' => Types::string($data['subject_id'] ?? '')]),
+            },
         ];
     }
 }

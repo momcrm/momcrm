@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Activity\ActivityEloquentModel;
+use App\Activity\ActivityTypeEnum;
 use App\CustomField\CustomFieldEloquentModel;
 use App\CustomField\CustomFieldTypeEnum;
 use App\CustomObject\CustomObjectEloquentModel;
@@ -60,4 +62,20 @@ it("changes one field's value, leaving the others and the name as they are", fun
         ->assertSessionHasNoErrors();
 
     expect($record->fresh())->name->toBe('Van')->custom_fields->toEqual([$plate->id => 'ABC 123', $leased->id => true]);
+});
+
+it('records what a change changed, and nothing when nothing did', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create(['onboarded_at' => now()]);
+    $vehicles = CustomObjectEloquentModel::factory()->create(['team_id' => $owner->current_team_id, 'name' => 'Vehicle']);
+    $plate = CustomFieldEloquentModel::factory()->forObject($vehicles)->create(['name' => 'Plate']);
+    $record = RecordEloquentModel::factory()->of($vehicles)->create(['name' => 'Van', 'custom_fields' => [$plate->id => 'ABC 123']]);
+
+    actingAs($owner)->patch(route('records.update', [$vehicles, $record]), ['name' => 'Van', 'custom_fields' => [$plate->id => 'ABC 123']]);
+
+    expect(ActivityEloquentModel::query()->where('type', ActivityTypeEnum::RecordUpdated->value)->count())->toBe(0);
+
+    actingAs($owner)->patch(route('records.update', [$vehicles, $record]), ['name' => 'Delivery van', 'custom_fields' => [$plate->id => 'XYZ 789']]);
+
+    expect(ActivityEloquentModel::query()->where('type', ActivityTypeEnum::RecordUpdated->value)->sole()->details)
+        ->toEqual(['name' => 'Delivery van', 'object' => 'Vehicle', 'fields' => ['Name', 'Plate']]);
 });

@@ -1,36 +1,56 @@
 import { Head, router, setLayoutProps } from '@inertiajs/react';
 import { Fragment } from 'react';
 import { toast } from 'sonner';
+import Attachments from '@/components/attachments';
 import ConfirmDelete from '@/components/confirm-delete';
 import { InlineCustomFieldInput } from '@/components/custom-fields/custom-field-input';
 import { CustomFieldValueView } from '@/components/custom-fields/custom-fields-form';
 import LinkedRecords from '@/components/custom-fields/linked-records';
 import { ObjectIcon } from '@/components/custom-objects/object-icon';
+import TicketConversation from '@/components/tickets/ticket-conversation';
 import { timeAgo } from '@/lib/format';
 import { destroy, index, show, update } from '@/routes/records';
+import { store as storeAttachment } from '@/routes/records/attachments';
+import { store as storeComment } from '@/routes/records/comments';
 import type {
     Abilities,
+    ActivityItem,
+    AttachmentItem,
     CustomField,
     CustomObject,
+    CustomerOption,
     LinkedRecordGroup,
     RecordItem,
+    TicketComment,
 } from '@/types';
 
 /**
  * One record of a custom object. Its name and its object's fields are edited
- * in place and save as soon as they change.
+ * in place and save as soon as they change; below them are what links to
+ * it, its files, and its comments and activity.
  */
 export default function ObjectRecord({
     object,
     fields,
     record,
     linkedRecords,
+    comments,
+    attachments,
+    activity,
+    members,
+    attachmentCan,
     can,
 }: {
     object: CustomObject;
     fields: CustomField[];
     record: RecordItem;
     linkedRecords: LinkedRecordGroup[];
+    comments: TicketComment[];
+    attachments: AttachmentItem[];
+    activity: ActivityItem[];
+    /** The team's members, who can be @mentioned in a comment. */
+    members: CustomerOption[];
+    attachmentCan: Abilities;
     can: Abilities;
 }) {
     setLayoutProps({
@@ -154,6 +174,26 @@ export default function ObjectRecord({
                 </section>
 
                 <LinkedRecords groups={linkedRecords} />
+
+                <section className="space-y-2">
+                    <h2 className="text-xs font-medium tracking-wide text-subtle-foreground uppercase">
+                        Files
+                    </h2>
+                    <Attachments
+                        attachments={attachments}
+                        uploadUrl={storeAttachment.url([object.id, record.id])}
+                        reload={['attachments', 'activity']}
+                        can={attachmentCan}
+                    />
+                </section>
+
+                <TicketConversation
+                    storeUrl={storeComment.url([object.id, record.id])}
+                    comments={comments}
+                    activity={activity}
+                    members={members}
+                    reload={['comments', 'activity']}
+                />
             </div>
         </>
     );

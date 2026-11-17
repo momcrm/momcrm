@@ -9,6 +9,7 @@ use App\Comment\Properties\Body;
 use App\Comment\Properties\CreatedAt;
 use App\Comment\Properties\Id;
 use App\Comment\Properties\Mentions;
+use App\Comment\Properties\RecordId;
 use App\Comment\Properties\TeamId;
 use App\Comment\Properties\TicketId;
 use App\Comment\Properties\UpdatedAt;
@@ -27,6 +28,7 @@ final class Comment extends AbstractData
         public CreatedAt $createdAt,
         public Id $id,
         public Mentions $mentions,
+        public RecordId $recordId,
         public TeamId $teamId,
         public TicketId $ticketId,
         public UpdatedAt $updatedAt,
@@ -104,6 +106,18 @@ final class Comment extends AbstractData
     public function setTeamId(mixed $teamId): self
     {
         $this->teamId = new TeamId($teamId instanceof AbstractValue ? $teamId->toValue() : $teamId);
+
+        return $this;
+    }
+
+    public function getRecordId(): RecordId
+    {
+        return $this->recordId;
+    }
+
+    public function setRecordId(mixed $recordId): self
+    {
+        $this->recordId = new RecordId($recordId instanceof AbstractValue ? $recordId->toValue() : $recordId);
 
         return $this;
     }

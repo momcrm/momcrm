@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { visitWithQuery } from '@/lib/query';
 import { cn } from '@/lib/utils';
+import { store as storeComment } from '@/routes/comments';
 import { inbox } from '@/routes';
 import { read, readAll } from '@/routes/notifications';
 import { index as ticketsIndex } from '@/routes/tickets';
@@ -49,12 +50,12 @@ export default function Inbox({
     const isClosed = useIsClosedStatus();
     const open = (notification: NotificationItem) => {
         const go = () =>
-            notification.subject_type === 'project'
-                ? router.visit(notification.url)
-                : visitWithQuery(
+            notification.subject_type === 'ticket'
+                ? visitWithQuery(
                       { ticket: notification.subject_id },
                       { only: RELOAD },
-                  );
+                  )
+                : router.visit(notification.url);
 
         if (notification.read_at === null) {
             router.post(
@@ -249,7 +250,7 @@ export default function Inbox({
                                 )}
                             </header>
                             <TicketConversation
-                                ticketId={selected.id}
+                                storeUrl={storeComment.url(selected.id)}
                                 comments={selected.comments}
                                 activity={selected.activity}
                                 members={options.members}

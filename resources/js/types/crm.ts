@@ -393,7 +393,7 @@ export type NotificationItem = {
     team_id: string;
     actor_id: string | null;
     actor_name: string | null;
-    subject_type: 'ticket' | 'project';
+    subject_type: 'ticket' | 'project' | 'record';
     subject_id: string;
     number: number;
     title: string;

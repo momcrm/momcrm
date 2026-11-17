@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Inbox;
 
 use App\Project\ProjectEloquentModel;
+use App\Record\RecordEloquentModel;
 use App\Ticket\TicketEloquentModel;
 use App\Ticket\TicketRelationship;
 use App\User\UserEloquentModel;
@@ -32,6 +33,30 @@ final class InboxPayload
             'number' => $ticket->number,
             'title' => $ticket->title,
             'project_name' => $project instanceof ProjectEloquentModel ? $project->name : null,
+            'message' => $message,
+            'excerpt' => $excerpt,
+        ];
+    }
+
+    /**
+     * A notification about a custom object's record. The object's name
+     * stands where a ticket's project would, and its id is kept for the link.
+     *
+     * @return array{kind: string, team_id: string, actor_id: ?string, actor_name: ?string, subject_type: string, subject_id: string, object_id: string, number: int, title: string, project_name: ?string, message: string, excerpt: ?string}
+     */
+    public static function forRecord(InboxKindEnum $kind, RecordEloquentModel $record, string $objectName, ?UserEloquentModel $actor, string $message, ?string $excerpt = null): array
+    {
+        return [
+            'kind' => $kind->value,
+            'team_id' => $record->team_id,
+            'actor_id' => $actor?->id,
+            'actor_name' => $actor?->name,
+            'subject_type' => 'record',
+            'subject_id' => $record->id,
+            'object_id' => $record->object_id,
+            'number' => $record->number,
+            'title' => $record->name,
+            'project_name' => $objectName,
             'message' => $message,
             'excerpt' => $excerpt,
         ];

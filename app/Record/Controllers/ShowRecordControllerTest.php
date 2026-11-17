@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Activity\Actions\RecordActivity;
+use App\Activity\ActivityTypeEnum;
+use App\Comment\CommentEloquentModel;
 use App\Customer\CustomerEloquentModel;
 use App\CustomField\CustomFieldEloquentModel;
 use App\CustomField\CustomFieldRelationEnum;
@@ -77,5 +80,31 @@ it('lists what links to the record', function (): void {
             ->where('linkedRecords.0.field', 'Vehicle')
             ->where('linkedRecords.0.count', 1)
             ->where('linkedRecords.0.records.0', ['id' => $ticket->id, 'title' => '#7 Flat tyre', 'url' => route('tickets.show', $ticket->id)]),
+        );
+});
+
+it("shows a record's comments and activity, and who can be mentioned", function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create(['onboarded_at' => now(), 'name' => 'Olive Owner']);
+    $member = UserEloquentModel::factory()->inTeam($owner->current_team_id)->create(['onboarded_at' => now()]);
+    $vehicles = CustomObjectEloquentModel::factory()->create(['team_id' => $owner->current_team_id]);
+    $van = RecordEloquentModel::factory()->of($vehicles)->create();
+    $comment = CommentEloquentModel::factory()->create(['ticket_id' => null, 'record_id' => $van->id, 'team_id' => $owner->current_team_id, 'user_id' => $owner->id, 'body' => 'Service is due']);
+    CommentEloquentModel::factory()->create();
+    RecordActivity::for(ActivityTypeEnum::RecordCreated, $owner->id, $owner->current_team_id, $van, ['name' => 'Van']);
+
+    actingAs($member)
+        ->get(route('records.show', [$vehicles, $van]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('comments', 1)
+            ->where('comments.0.id', $comment->id)
+            ->where('comments.0.body', 'Service is due')
+            ->where('comments.0.author_name', 'Olive Owner')
+            ->where('comments.0.can_delete', false)
+            ->has('activity', 1)
+            ->where('activity.0.type', 'record_created')
+            ->has('members', 2)
+            ->where('attachments', [])
+            ->where('commentCan.create', true)
+            ->where('attachmentCan.create', true),
         );
 });
