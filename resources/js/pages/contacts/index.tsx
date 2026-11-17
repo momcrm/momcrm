@@ -1,11 +1,12 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import ContactTable from '@/components/contacts/contact-table';
+import { useCreateContact } from '@/components/contacts/create-contact-dialog';
 import EmptyState from '@/components/empty-state';
 import PageHeader from '@/components/page-header';
 import Pager from '@/components/pager';
 import SearchInput from '@/components/search-input';
 import { Button } from '@/components/ui/button';
-import { create, index } from '@/routes/contacts';
+import { index } from '@/routes/contacts';
 import type { ContactListItem, Paginated } from '@/types';
 
 export default function ContactsIndex({
@@ -16,6 +17,7 @@ export default function ContactsIndex({
     filters: { search: string | null };
 }) {
     const isFiltered = Boolean(filters.search);
+    const { openCreateContact } = useCreateContact();
 
     return (
         <>
@@ -26,8 +28,8 @@ export default function ContactsIndex({
                     title="Contacts"
                     description="The people you deal with at each customer."
                     actions={
-                        <Button asChild>
-                            <Link href={create()}>Add contact</Link>
+                        <Button onClick={() => openCreateContact()}>
+                            Add contact
                         </Button>
                     }
                 />
@@ -51,8 +53,8 @@ export default function ContactsIndex({
                             title="No contacts yet"
                             description="Add the people you deal with at each customer, so you know who to call."
                             action={
-                                <Button asChild>
-                                    <Link href={create()}>Add contact</Link>
+                                <Button onClick={() => openCreateContact()}>
+                                    Add contact
                                 </Button>
                             }
                         />

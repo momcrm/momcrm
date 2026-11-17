@@ -56,7 +56,7 @@ final class GetGettingStartedProgress
                 'title' => __('Add a contact'),
                 'description' => __('Add the person you deal with at that customer.'),
                 'action' => __('Add contact'),
-                'href' => route('contacts.create'),
+                'href' => route('contacts.index'),
                 'done' => self::forRealCustomers(ContactEloquentModel::query(), $teamId)->exists(),
             ],
             [

@@ -1,5 +1,6 @@
 import { Form, Link } from '@inertiajs/react';
 import { Check } from 'lucide-react';
+import { useCreateContact } from '@/components/contacts/create-contact-dialog';
 import { useCreateCustomer } from '@/components/customers/create-customer-dialog';
 import { useCreateTicket } from '@/components/tickets/create-ticket-dialog';
 import { Button } from '@/components/ui/button';
@@ -37,6 +38,12 @@ export default function GettingStartedChecklist({
 }) {
     const { openCreateTicket } = useCreateTicket();
     const { openCreateCustomer } = useCreateCustomer();
+    const { openCreateContact } = useCreateContact();
+    const openers: Record<string, () => void> = {
+        customer: () => openCreateCustomer(),
+        contact: () => openCreateContact(),
+        ticket: () => openCreateTicket(),
+    };
     const { steps, completed, total } = gettingStarted;
     const allDone = completed === total;
 
@@ -117,16 +124,11 @@ export default function GettingStartedChecklist({
                             </div>
                         </div>
                         {!step.done &&
-                            (step.key === 'ticket' ||
-                            step.key === 'customer' ? (
+                            (step.key in openers ? (
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() =>
-                                        step.key === 'ticket'
-                                            ? openCreateTicket()
-                                            : openCreateCustomer()
-                                    }
+                                    onClick={openers[step.key]}
                                 >
                                     {step.action}
                                 </Button>

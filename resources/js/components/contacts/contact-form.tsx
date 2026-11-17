@@ -4,6 +4,7 @@ import FormField from '@/components/form-field';
 import NativeSelect from '@/components/native-select';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
@@ -18,25 +19,35 @@ export default function ContactForm({
     customerId,
     submitLabel,
     cancelHref,
+    onCancel,
+    onSuccess,
 }: {
     action: Action;
     contact?: Contact;
     customers: CustomerOption[];
     customerId?: string | null;
     submitLabel: string;
-    cancelHref: string;
+    /** A page's way back; a dialog passes `onCancel` and `onSuccess` instead. */
+    cancelHref?: string;
+    onCancel?: () => void;
+    onSuccess?: () => void;
 }) {
     return (
-        <Form {...action} className="max-w-2xl space-y-6">
+        <Form
+            {...action}
+            options={onSuccess ? { preserveScroll: true } : undefined}
+            onSuccess={onSuccess}
+            className={onCancel ? 'space-y-5' : 'max-w-2xl space-y-6'}
+        >
             {({ processing, errors }) => (
                 <>
                     <FormField
-                        id="customer_id"
+                        id="contact-customer_id"
                         label="Customer"
                         error={errors.customer_id}
                     >
                         <NativeSelect
-                            id="customer_id"
+                            id="contact-customer_id"
                             name="customer_id"
                             defaultValue={
                                 contact?.customer_id ?? customerId ?? ''
@@ -56,12 +67,12 @@ export default function ContactForm({
 
                     <div className="grid gap-6 sm:grid-cols-2">
                         <FormField
-                            id="first_name"
+                            id="contact-first_name"
                             label="First name"
                             error={errors.first_name}
                         >
                             <Input
-                                id="first_name"
+                                id="contact-first_name"
                                 name="first_name"
                                 defaultValue={contact?.first_name}
                                 required
@@ -69,58 +80,58 @@ export default function ContactForm({
                             />
                         </FormField>
                         <FormField
-                            id="last_name"
+                            id="contact-last_name"
                             label="Last name"
                             error={errors.last_name}
                         >
                             <Input
-                                id="last_name"
+                                id="contact-last_name"
                                 name="last_name"
                                 defaultValue={contact?.last_name ?? ''}
                             />
                         </FormField>
                         <FormField
-                            id="email"
+                            id="contact-email"
                             label="Email"
                             error={errors.email}
                         >
                             <Input
-                                id="email"
+                                id="contact-email"
                                 name="email"
                                 type="email"
                                 defaultValue={contact?.email ?? ''}
                             />
                         </FormField>
                         <FormField
-                            id="position"
+                            id="contact-position"
                             label="Position"
                             error={errors.position}
                         >
                             <Input
-                                id="position"
+                                id="contact-position"
                                 name="position"
                                 defaultValue={contact?.position ?? ''}
                             />
                         </FormField>
                         <FormField
-                            id="work_phone"
+                            id="contact-work_phone"
                             label="Work phone"
                             error={errors.work_phone}
                         >
                             <Input
-                                id="work_phone"
+                                id="contact-work_phone"
                                 name="work_phone"
                                 type="tel"
                                 defaultValue={contact?.work_phone ?? ''}
                             />
                         </FormField>
                         <FormField
-                            id="mobile_phone"
+                            id="contact-mobile_phone"
                             label="Mobile"
                             error={errors.mobile_phone}
                         >
                             <Input
-                                id="mobile_phone"
+                                id="contact-mobile_phone"
                                 name="mobile_phone"
                                 type="tel"
                                 defaultValue={contact?.mobile_phone ?? ''}
@@ -138,28 +149,47 @@ export default function ContactForm({
 
                     <div className="flex items-center gap-2">
                         <Checkbox
-                            id="is_primary"
+                            id="contact-is_primary"
                             name="is_primary"
                             value="1"
                             defaultChecked={contact?.is_primary}
                         />
-                        <Label htmlFor="is_primary">
+                        <Label htmlFor="contact-is_primary">
                             Primary contact for this customer
                         </Label>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                        <Button
-                            disabled={processing}
-                            data-test="save-contact-button"
-                        >
-                            {processing && <Spinner />}
-                            {submitLabel}
-                        </Button>
-                        <Button variant="ghost" asChild>
-                            <Link href={cancelHref}>Cancel</Link>
-                        </Button>
-                    </div>
+                    {onCancel ? (
+                        <DialogFooter>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                onClick={onCancel}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                disabled={processing}
+                                data-test="save-contact-button"
+                            >
+                                {processing && <Spinner />}
+                                {submitLabel}
+                            </Button>
+                        </DialogFooter>
+                    ) : (
+                        <div className="flex items-center gap-2">
+                            <Button
+                                disabled={processing}
+                                data-test="save-contact-button"
+                            >
+                                {processing && <Spinner />}
+                                {submitLabel}
+                            </Button>
+                            <Button variant="ghost" asChild>
+                                <Link href={cancelHref ?? ''}>Cancel</Link>
+                            </Button>
+                        </div>
+                    )}
                 </>
             )}
         </Form>

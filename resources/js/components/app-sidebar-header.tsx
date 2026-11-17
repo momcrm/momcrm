@@ -25,10 +25,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import { UserMenuContent } from '@/components/user-menu-content';
+import { useCreateContact } from '@/components/contacts/create-contact-dialog';
 import { useCreateCustomer } from '@/components/customers/create-customer-dialog';
 import { useCreateTicket } from '@/components/tickets/create-ticket-dialog';
 import { useInitials } from '@/hooks/use-initials';
-import { create as createContact } from '@/routes/contacts';
 import { create as createInvoice } from '@/routes/invoices';
 import { index as notificationsIndex } from '@/routes/notifications';
 import { index as projectsIndex } from '@/routes/projects';
@@ -42,13 +42,13 @@ const isMac =
 function NewMenu() {
     const { openCreateTicket } = useCreateTicket();
     const { openCreateCustomer } = useCreateCustomer();
+    const { openCreateContact } = useCreateContact();
     const items = [
         {
             label: 'Project',
             icon: FolderKanban,
             href: projectsIndex({ query: { new: 1 } }),
         },
-        { label: 'Contact', icon: UserRound, href: createContact() },
         { label: 'Invoice', icon: Receipt, href: createInvoice() },
     ];
 
@@ -72,6 +72,10 @@ function NewMenu() {
                 <DropdownMenuItem onSelect={() => openCreateCustomer()}>
                     <Building2 />
                     Customer
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => openCreateContact()}>
+                    <UserRound />
+                    Contact
                 </DropdownMenuItem>
                 {items.map((item) => (
                     <DropdownMenuItem key={item.label} asChild>
