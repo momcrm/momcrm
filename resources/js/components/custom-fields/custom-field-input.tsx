@@ -8,13 +8,33 @@ import {
 } from '@/components/tickets/property-editors';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
-import type { CustomField, CustomFieldTarget, CustomFieldValue } from '@/types';
+import type {
+    CustomField,
+    CustomFieldTarget,
+    CustomFieldValue,
+    CustomFieldValues,
+} from '@/types';
 
 /**
  * The fields the team has added to one kind of record, in order.
  */
 export function useCustomFields(target: CustomFieldTarget): CustomField[] {
     return usePage().props.customFields?.[target] ?? [];
+}
+
+/**
+ * A record's values for the given fields only. A record can still hold
+ * values for archived fields, which a form must not send back.
+ */
+export function pickCustomFieldValues(
+    fields: CustomField[],
+    values: CustomFieldValues,
+): CustomFieldValues {
+    return Object.fromEntries(
+        fields
+            .filter((field) => values[field.id] !== undefined)
+            .map((field) => [field.id, values[field.id]]),
+    );
 }
 
 type InputProps = {

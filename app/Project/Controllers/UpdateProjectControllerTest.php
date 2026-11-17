@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Choice\ChoiceEloquentModel;
+use App\CustomField\CustomFieldEloquentModel;
+use App\CustomField\CustomFieldTargetEnum;
 use App\Project\ProjectEloquentModel;
 use App\TeamUser\TeamUserEloquentModel;
 use App\User\UserEloquentModel;
@@ -102,4 +104,48 @@ it('clears the labels when the form sends none, and keeps them when it leaves th
 
     actingAs($user)->put(route('projects.update', $project->id), ['labels_sent' => '1'])->assertSessionHasNoErrors();
     expect($project->labels()->count())->toBe(0);
+});
+
+it('sets project custom field values, leaving the ones not sent as they are', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $teamId = $user->current_team_id;
+    $kept = CustomFieldEloquentModel::factory()->on(CustomFieldTargetEnum::Project)->create(['team_id' => $teamId]);
+    $set = CustomFieldEloquentModel::factory()->on(CustomFieldTargetEnum::Project)->select(['Gold', 'Silver'])->create(['team_id' => $teamId]);
+    $project = ProjectEloquentModel::factory()->create(['team_id' => $teamId, 'custom_fields' => [$kept->id => 'kept']]);
+
+    actingAs($user)
+        ->put(route('projects.update', $project->id), ['custom_fields' => [$set->id => $set->options[0]['id']]])
+        ->assertSessionHasNoErrors();
+
+    expect($project->fresh()->custom_fields)->toEqual([$kept->id => 'kept', $set->id => $set->options[0]['id']]);
+});
+
+it('rejects a project custom field value that is not valid, naming the field', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $teamId = $user->current_team_id;
+    $field = CustomFieldEloquentModel::factory()->on(CustomFieldTargetEnum::Project)->select(['Gold'])->create(['team_id' => $teamId, 'name' => 'Tier']);
+    $ticketField = CustomFieldEloquentModel::factory()->create(['team_id' => $teamId]);
+    $project = ProjectEloquentModel::factory()->create(['team_id' => $teamId, 'custom_fields' => null]);
+
+    actingAs($user)
+        ->put(route('projects.update', $project->id), ['custom_fields' => [$field->id => 'nope']])
+        ->assertSessionHasErrors(["custom_fields.{$field->id}" => 'The selected Tier is invalid.']);
+
+    actingAs($user)
+        ->put(route('projects.update', $project->id), ['custom_fields' => [$ticketField->id => 'SN-1']])
+        ->assertSessionHasErrors('custom_fields');
+
+    expect($project->fresh()->custom_fields)->toBeNull();
+});
+
+it('keeps the value of an archived custom field when another setting changes', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $archived = CustomFieldEloquentModel::factory()->on(CustomFieldTargetEnum::Project)->archived()->create(['team_id' => $user->current_team_id]);
+    $project = ProjectEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'status' => 'planning', 'custom_fields' => [$archived->id => 'kept']]);
+
+    actingAs($user)
+        ->put(route('projects.update', $project->id), ['status' => 'at_risk'])
+        ->assertSessionHasNoErrors();
+
+    expect($project->fresh())->status->toBe('at_risk')->custom_fields->toBe([$archived->id => 'kept']);
 });

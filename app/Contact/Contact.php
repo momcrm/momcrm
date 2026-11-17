@@ -18,6 +18,7 @@ use App\Contact\Properties\Position;
 use App\Contact\Properties\TeamId;
 use App\Contact\Properties\UpdatedAt;
 use App\Contact\Properties\WorkPhone;
+use App\CustomField\Properties\CustomFieldValues;
 use Illuminate\Support\Collection;
 use Mom\Data\AbstractData;
 use Mom\Data\AbstractValue;
@@ -29,6 +30,7 @@ final class Contact extends AbstractData
 {
     public function __construct(
         public CreatedAt $createdAt,
+        public CustomFieldValues $customFields,
         public Customer $customer,
         public CustomerId $customerId,
         public Email $email,
@@ -73,7 +75,7 @@ final class Contact extends AbstractData
     /**
      * The fields the contact pages show.
      *
-     * @return array{id: string, customer_id: string, first_name: string, last_name: ?string, full_name: string, email: ?string, position: ?string, work_phone: ?string, mobile_phone: ?string, is_primary: bool}
+     * @return array{id: string, customer_id: string, first_name: string, last_name: ?string, full_name: string, email: ?string, position: ?string, work_phone: ?string, mobile_phone: ?string, is_primary: bool, custom_fields: array<string, mixed>}
      */
     public function toSummary(): array
     {
@@ -88,7 +90,20 @@ final class Contact extends AbstractData
             'work_phone' => $this->getWorkPhone()->toNullableString(),
             'mobile_phone' => $this->getMobilePhone()->toNullableString(),
             'is_primary' => $this->getIsPrimary()->toBoolean(),
+            'custom_fields' => $this->getCustomFields()->toValues(),
         ];
+    }
+
+    public function getCustomFields(): CustomFieldValues
+    {
+        return $this->customFields;
+    }
+
+    public function setCustomFields(mixed $customFields): self
+    {
+        $this->customFields = new CustomFieldValues($customFields instanceof AbstractValue ? $customFields->toValue() : $customFields);
+
+        return $this;
     }
 
     public function getCreatedAt(): CreatedAt

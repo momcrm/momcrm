@@ -1,5 +1,6 @@
 import { Form, Link } from '@inertiajs/react';
 import { useCustomerTypes } from '@/components/customers/customer-meta';
+import CustomFieldsFormFields from '@/components/custom-fields/custom-fields-form';
 import FormField from '@/components/form-field';
 import NativeSelect from '@/components/native-select';
 import { Button } from '@/components/ui/button';
@@ -162,6 +163,14 @@ export default function CustomerForm({
                                 ))}
                             </NativeSelect>
                         </FormField>
+                    </div>
+
+                    <div className="grid gap-6 empty:hidden sm:grid-cols-2">
+                        <CustomFieldsFormFields
+                            target="customer"
+                            values={customer?.custom_fields}
+                            errors={errors}
+                        />
                     </div>
 
                     <FormField

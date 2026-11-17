@@ -16,10 +16,15 @@ use App\Contact\Properties\LastName;
 use App\Contact\Properties\MobilePhone;
 use App\Contact\Properties\Position;
 use App\Contact\Properties\WorkPhone;
+use App\CustomField\CustomFieldTargetEnum;
+use App\CustomField\CustomFieldValueRules;
+use App\CustomField\Properties\CustomFieldValues;
 use App\Shared\Table;
+use App\Shared\Types;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -66,6 +71,7 @@ final class UpdateContactFormRequest extends FormRequest
             WorkPhone::getNameForValidation() => WorkPhone::getValidationRulesForUpdate($this),
             MobilePhone::getNameForValidation() => MobilePhone::getValidationRulesForUpdate($this),
             IsPrimary::getNameForValidation() => IsPrimary::getValidationRulesForUpdate($this),
+            ...CustomFieldValueRules::for((string) $this->user()?->current_team_id, CustomFieldTargetEnum::Contact, $this->contact->getCustomFields()),
         ];
     }
 
@@ -80,11 +86,22 @@ final class UpdateContactFormRequest extends FormRequest
         ];
     }
 
+    /**
+     * @return array<string, string>
+     */
+    public function attributes(): array
+    {
+        return CustomFieldValueRules::attributes((string) $this->user()?->current_team_id, CustomFieldTargetEnum::Contact);
+    }
+
     public function process(): RedirectResponse
     {
+        $validated = $this->validated();
+        $customFields = CustomFieldValueRules::merge($this->contact->getTeamId()->toString(), CustomFieldTargetEnum::Contact, $this->contact->getCustomFields(), $validated[CustomFieldValues::getNameForValidation()] ?? []);
         $contact = UpdateContact::fromContact(
             $this->contact
-                ->setPropertyIfExists($this->validated())
+                ->setPropertyIfExists(Types::stringKeyed(Arr::except($validated, CustomFieldValues::getNameForValidation())))
+                ->setCustomFields($customFields)
                 ->setIsPrimary($this->boolean(IsPrimary::getNameForValidation())),
         );
 

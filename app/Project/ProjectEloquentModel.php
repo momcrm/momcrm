@@ -9,6 +9,7 @@ use App\AuditLog\Contracts\Auditable;
 use App\Choice\HasLabels;
 use App\Choice\LabelTargetEnum;
 use App\Customer\CustomerEloquentModel;
+use App\CustomField\Properties\CustomFieldValues;
 use App\Group\GroupEloquentModel;
 use App\Milestone\MilestoneEloquentModel;
 use App\Milestone\Properties\ProjectId as MilestoneProjectId;
@@ -161,6 +162,7 @@ final class ProjectEloquentModel extends Model implements Auditable
     protected function casts(): array
     {
         return [
+            CustomFieldValues::getDatabaseTableColumnName() => 'array',
             Number::getDatabaseTableColumnName() => 'integer',
             IsSample::getDatabaseTableColumnName() => 'boolean',
             ArchivedAt::getDatabaseTableColumnName() => 'immutable_datetime',

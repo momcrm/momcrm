@@ -23,6 +23,7 @@ use App\Customer\Properties\TeamId;
 use App\Customer\Properties\TypeId;
 use App\Customer\Properties\UpdatedAt;
 use App\Customer\Properties\Website;
+use App\CustomField\Properties\CustomFieldValues;
 use Illuminate\Support\Collection;
 use Mom\Data\AbstractData;
 use Mom\Data\AbstractValue;
@@ -37,6 +38,7 @@ final class Customer extends AbstractData
         public BillingType $billingType,
         public ContactsCount $contactsCount,
         public CreatedAt $createdAt,
+        public CustomFieldValues $customFields,
         public Email $email,
         public Id $id,
         public IsSample $isSample,
@@ -78,7 +80,7 @@ final class Customer extends AbstractData
     /**
      * The fields the customer pages show.
      *
-     * @return array{id: string, number: int, name: string, prefix: ?string, type_id: ?string, abn: ?string, email: ?string, phone: ?string, website: ?string, status: string, billing_type: string, notes: ?string, is_sample: bool}
+     * @return array{id: string, number: int, name: string, prefix: ?string, type_id: ?string, abn: ?string, email: ?string, phone: ?string, website: ?string, status: string, billing_type: string, notes: ?string, is_sample: bool, custom_fields: array<string, mixed>}
      */
     public function toSummary(): array
     {
@@ -96,6 +98,7 @@ final class Customer extends AbstractData
             'billing_type' => $this->getBillingType()->toEnum()->value,
             'notes' => $this->getNotes()->toNullableString(),
             'is_sample' => $this->getIsSample()->toBoolean(),
+            'custom_fields' => $this->getCustomFields()->toValues(),
         ];
     }
 
@@ -107,6 +110,18 @@ final class Customer extends AbstractData
     public function setAbn(mixed $abn): self
     {
         $this->abn = new Abn($abn instanceof AbstractValue ? $abn->toValue() : $abn);
+
+        return $this;
+    }
+
+    public function getCustomFields(): CustomFieldValues
+    {
+        return $this->customFields;
+    }
+
+    public function setCustomFields(mixed $customFields): self
+    {
+        $this->customFields = new CustomFieldValues($customFields instanceof AbstractValue ? $customFields->toValue() : $customFields);
 
         return $this;
     }

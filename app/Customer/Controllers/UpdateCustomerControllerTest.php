@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use App\Contact\ContactEloquentModel;
 use App\Customer\CustomerEloquentModel;
+use App\CustomField\CustomFieldEloquentModel;
+use App\CustomField\CustomFieldTargetEnum;
 use App\Location\LocationEloquentModel;
 use App\User\UserEloquentModel;
 
@@ -90,4 +92,36 @@ it("rejects another customer's contact as the main contact", function (): void {
         ->assertSessionHasErrors(['main_contact_id' => "Choose one of this customer's contacts."]);
 
     expect($elsewhere->refresh()->is_primary)->toBeFalse();
+});
+
+it('sets customer custom field values, leaving the ones not sent as they are', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $teamId = $user->current_team_id;
+    $kept = CustomFieldEloquentModel::factory()->on(CustomFieldTargetEnum::Customer)->create(['team_id' => $teamId]);
+    $set = CustomFieldEloquentModel::factory()->on(CustomFieldTargetEnum::Customer)->select(['Gold', 'Silver'])->create(['team_id' => $teamId]);
+    $customer = CustomerEloquentModel::factory()->create(['team_id' => $teamId, 'name' => 'Acme', 'custom_fields' => [$kept->id => 'kept']]);
+
+    actingAs($user)
+        ->put(route('customers.update', $customer->id), ['name' => 'Acme', 'status' => 'active', 'custom_fields' => [$set->id => $set->options[0]['id']]])
+        ->assertSessionHasNoErrors();
+
+    expect($customer->fresh()->custom_fields)->toEqual([$kept->id => 'kept', $set->id => $set->options[0]['id']]);
+});
+
+it('rejects a customer custom field value that is not valid, naming the field', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $teamId = $user->current_team_id;
+    $field = CustomFieldEloquentModel::factory()->on(CustomFieldTargetEnum::Customer)->select(['Gold'])->create(['team_id' => $teamId, 'name' => 'Tier']);
+    $ticketField = CustomFieldEloquentModel::factory()->create(['team_id' => $teamId]);
+    $customer = CustomerEloquentModel::factory()->create(['team_id' => $teamId, 'name' => 'Acme', 'custom_fields' => null]);
+
+    actingAs($user)
+        ->put(route('customers.update', $customer->id), ['name' => 'Acme', 'status' => 'active', 'custom_fields' => [$field->id => 'nope']])
+        ->assertSessionHasErrors(["custom_fields.{$field->id}" => 'The selected Tier is invalid.']);
+
+    actingAs($user)
+        ->put(route('customers.update', $customer->id), ['name' => 'Acme', 'status' => 'active', 'custom_fields' => [$ticketField->id => 'SN-1']])
+        ->assertSessionHasErrors('custom_fields');
+
+    expect($customer->fresh()->custom_fields)->toBeNull();
 });

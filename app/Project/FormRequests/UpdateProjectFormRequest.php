@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Project\FormRequests;
 
 use App\Choice\LabelTargetEnum;
+use App\CustomField\CustomFieldTargetEnum;
+use App\CustomField\CustomFieldValueRules;
+use App\CustomField\Properties\CustomFieldValues;
 use App\Project\Actions\FindProject;
 use App\Project\Actions\UpdateProject;
 use App\Project\Exceptions\CouldNotFindProject;
@@ -61,7 +64,12 @@ final class UpdateProjectFormRequest extends FormRequest
      */
     public function rules(): array
     {
-        return ProjectValidationRules::for($this, (string) $this->user()?->current_team_id, $this->project->getId()->toNullableString());
+        $teamId = (string) $this->user()?->current_team_id;
+
+        return [
+            ...ProjectValidationRules::for($this, $teamId, $this->project->getId()->toNullableString()),
+            ...CustomFieldValueRules::for($teamId, CustomFieldTargetEnum::Project, $this->project->getCustomFields()),
+        ];
     }
 
     /**
@@ -72,11 +80,22 @@ final class UpdateProjectFormRequest extends FormRequest
         return ProjectValidationRules::messages();
     }
 
+    /**
+     * @return array<string, string>
+     */
+    public function attributes(): array
+    {
+        return CustomFieldValueRules::attributes((string) $this->user()?->current_team_id, CustomFieldTargetEnum::Project);
+    }
+
     public function process(): RedirectResponse
     {
         $validated = $this->validated();
+        $customFields = CustomFieldValueRules::merge($this->project->getTeamId()->toString(), CustomFieldTargetEnum::Project, $this->project->getCustomFields(), $validated[CustomFieldValues::getNameForValidation()] ?? []);
         $project = UpdateProject::fromProject(
-            $this->project->setPropertyIfExists(Types::stringKeyed(Arr::except($validated, [ProjectValidationRules::MEMBER_IDS, LabelTargetEnum::FIELD]))),
+            $this->project
+                ->setPropertyIfExists(Types::stringKeyed(Arr::except($validated, [ProjectValidationRules::MEMBER_IDS, LabelTargetEnum::FIELD, CustomFieldValues::getNameForValidation()])))
+                ->setCustomFields($customFields),
             updatedById: (string) $this->user()?->id,
         );
 
@@ -108,7 +127,7 @@ final class UpdateProjectFormRequest extends FormRequest
         $this->loadProject();
 
         $this->merge(array_merge(
-            Arr::except($this->project->toSummary(), ['id', 'number', 'archived_at']),
+            Arr::except($this->project->toSummary(), ['id', 'number', 'archived_at', CustomFieldValues::getNameForValidation()]),
             $this->boolean(ProjectValidationRules::MEMBERS_SENT) ? [ProjectValidationRules::MEMBER_IDS => []] : [],
             LabelTargetEnum::sentEmpty($this),
             $this->all(),

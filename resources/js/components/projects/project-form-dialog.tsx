@@ -1,4 +1,5 @@
 import { Form } from '@inertiajs/react';
+import CustomFieldsFormFields from '@/components/custom-fields/custom-fields-form';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 import FormField from '@/components/form-field';
@@ -247,6 +248,14 @@ export default function ProjectFormDialog({
                                     errors.label_ids ?? errors['label_ids.0']
                                 }
                             />
+
+                            <div className="grid gap-5 empty:hidden sm:grid-cols-2">
+                                <CustomFieldsFormFields
+                                    target="project"
+                                    values={project?.custom_fields}
+                                    errors={errors}
+                                />
+                            </div>
 
                             {canManageMembers && options.members.length > 1 && (
                                 <Field label="Members">

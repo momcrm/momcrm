@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Project;
 
+use App\CustomField\Properties\CustomFieldValues;
 use App\Project\Factories\ProjectFactory;
 use App\Project\Properties\ArchivedAt;
 use App\Project\Properties\ClosedTicketsCount;
@@ -45,6 +46,7 @@ final class Project extends AbstractData
         public ClosedTicketsCount $closedTicketsCount,
         public Hue $hue,
         public CreatedAt $createdAt,
+        public CustomFieldValues $customFields,
         public Customer $customer,
         public CustomerId $customerId,
         public Description $description,
@@ -99,7 +101,7 @@ final class Project extends AbstractData
     /**
      * The fields project pages and pickers show.
      *
-     * @return array{id: string, number: int, name: string, description: ?string, icon: ?string, hue: ?int, status: string, visibility: string, customer_id: ?string, lead_id: ?string, group_id: ?string, starts_on: ?string, due_on: ?string, archived_at: ?string}
+     * @return array{id: string, number: int, name: string, description: ?string, icon: ?string, hue: ?int, status: string, visibility: string, customer_id: ?string, lead_id: ?string, group_id: ?string, starts_on: ?string, due_on: ?string, archived_at: ?string, custom_fields: array<string, mixed>}
      */
     public function toSummary(): array
     {
@@ -118,6 +120,7 @@ final class Project extends AbstractData
             'starts_on' => $this->getStartsOn()->toNullableCarbon()?->toDateString(),
             'due_on' => $this->getDueOn()->toNullableCarbon()?->toDateString(),
             'archived_at' => $this->getArchivedAt()->toNullableISOString(),
+            'custom_fields' => $this->getCustomFields()->toValues(),
         ];
     }
 
@@ -141,6 +144,18 @@ final class Project extends AbstractData
     public function setHue(mixed $hue): self
     {
         $this->hue = new Hue($hue instanceof AbstractValue ? $hue->toValue() : $hue);
+
+        return $this;
+    }
+
+    public function getCustomFields(): CustomFieldValues
+    {
+        return $this->customFields;
+    }
+
+    public function setCustomFields(mixed $customFields): self
+    {
+        $this->customFields = new CustomFieldValues($customFields instanceof AbstractValue ? $customFields->toValue() : $customFields);
 
         return $this;
     }

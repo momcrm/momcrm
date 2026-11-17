@@ -1,4 +1,9 @@
 import { Form, Head, Link, router, setLayoutProps } from '@inertiajs/react';
+import { useCustomFields } from '@/components/custom-fields/custom-field-input';
+import {
+    CustomFieldValueView,
+    hasCustomFieldValue,
+} from '@/components/custom-fields/custom-fields-form';
 import { LabelChips } from '@/components/labels';
 import type { LucideIcon } from 'lucide-react';
 import {
@@ -456,6 +461,7 @@ function Overview({
     milestoneCan,
 }: Props) {
     const { openTicket } = useTicketActions();
+    const customFields = useCustomFields('project');
     const statuses = useTicketStatuses(...Object.keys(statusCounts));
     const total = project.tickets_count;
     const percent =
@@ -608,6 +614,21 @@ function Overview({
                                 : 'Everyone in the team'}
                         </Detail>
                         <Detail label="Project">#{project.number}</Detail>
+                        {customFields
+                            .filter((field) =>
+                                hasCustomFieldValue(
+                                    field,
+                                    project.custom_fields[field.id],
+                                ),
+                            )
+                            .map((field) => (
+                                <Detail key={field.id} label={field.name}>
+                                    <CustomFieldValueView
+                                        field={field}
+                                        value={project.custom_fields[field.id]}
+                                    />
+                                </Detail>
+                            ))}
                     </dl>
                 </Panel>
                 <Milestones

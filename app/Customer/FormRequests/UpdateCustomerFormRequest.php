@@ -10,10 +10,15 @@ use App\Customer\Actions\UpdateCustomer;
 use App\Customer\Customer;
 use App\Customer\CustomerValidationRules;
 use App\Customer\Exceptions\CouldNotFindCustomer;
+use App\CustomField\CustomFieldTargetEnum;
+use App\CustomField\CustomFieldValueRules;
+use App\CustomField\Properties\CustomFieldValues;
 use App\Shared\Table;
+use App\Shared\Types;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
@@ -57,6 +62,7 @@ final class UpdateCustomerFormRequest extends FormRequest
 
         return [
             ...CustomerValidationRules::for($this, (string) $this->user()?->current_team_id, $this->customer),
+            ...CustomFieldValueRules::for((string) $this->user()?->current_team_id, CustomFieldTargetEnum::Customer, $this->customer->getCustomFields()),
             self::MAIN_CONTACT_ID => ['sometimes', 'nullable', 'uuid', Rule::exists(Table::Contacts->value, 'id')->where('customer_id', $customerId)],
             self::MAIN_LOCATION_ID => ['sometimes', 'nullable', 'uuid', Rule::exists(Table::Locations->value, 'id')->where('customer_id', $customerId)],
         ];
@@ -79,10 +85,24 @@ final class UpdateCustomerFormRequest extends FormRequest
         $this->merge(CustomerValidationRules::prepare($this));
     }
 
+    /**
+     * @return array<string, string>
+     */
+    public function attributes(): array
+    {
+        return CustomFieldValueRules::attributes((string) $this->user()?->current_team_id, CustomFieldTargetEnum::Customer);
+    }
+
     public function process(): RedirectResponse
     {
         $customer = DB::transaction(function (): Customer {
-            $customer = UpdateCustomer::fromCustomer($this->customer->setPropertyIfExists($this->validated()));
+            $validated = $this->validated();
+            $customFields = CustomFieldValueRules::merge($this->customer->getTeamId()->toString(), CustomFieldTargetEnum::Customer, $this->customer->getCustomFields(), $validated[CustomFieldValues::getNameForValidation()] ?? []);
+            $customer = UpdateCustomer::fromCustomer(
+                $this->customer
+                    ->setPropertyIfExists(Types::stringKeyed(Arr::except($validated, CustomFieldValues::getNameForValidation())))
+                    ->setCustomFields($customFields),
+            );
 
             if ($this->has([self::MAIN_CONTACT_ID, self::MAIN_LOCATION_ID])) {
                 SetMainContactAndLocation::forCustomer($customer, $this->string(self::MAIN_CONTACT_ID)->toString() ?: null, $this->string(self::MAIN_LOCATION_ID)->toString() ?: null);

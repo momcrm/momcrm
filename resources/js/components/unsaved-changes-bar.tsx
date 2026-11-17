@@ -12,11 +12,14 @@ import {
 import { Spinner } from '@/components/ui/spinner';
 
 /**
- * How many fields differ from what was last saved.
+ * How many fields differ from what was last saved. A field holding a map or
+ * a list is compared by its contents.
  */
 export function countChanges<T extends object>(data: T, saved: T): number {
     return (Object.keys(data) as (keyof T)[]).filter(
-        (field) => data[field] !== saved[field],
+        (field) =>
+            data[field] !== saved[field] &&
+            JSON.stringify(data[field]) !== JSON.stringify(saved[field]),
     ).length;
 }
 
