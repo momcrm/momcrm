@@ -14,8 +14,10 @@ use App\CustomField\CustomFieldEloquentModel;
 use App\CustomField\CustomFieldRelationEnum;
 use App\CustomField\CustomFieldTargetEnum;
 use App\CustomField\CustomFieldTypeEnum;
+use App\CustomObject\CustomObjectEloquentModel;
 use App\Group\GroupEloquentModel;
 use App\Project\ProjectEloquentModel;
+use App\Record\RecordEloquentModel;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
 
@@ -348,4 +350,24 @@ it('keeps a link to a record that no longer exists when the ticket already has i
     actingAs($user)
         ->patch(route('tickets.patch', $ticket->id), ['custom_fields' => [$field->id => $gone]])
         ->assertSessionHasNoErrors();
+});
+
+it("links a ticket to a record of the field's custom object, and not of another", function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $teamId = $user->current_team_id;
+    $vehicles = CustomObjectEloquentModel::factory()->create(['team_id' => $teamId]);
+    $field = CustomFieldEloquentModel::factory()->linkingToObject($vehicles)->create(['team_id' => $teamId, 'name' => 'Vehicle']);
+    $van = RecordEloquentModel::factory()->of($vehicles)->create();
+    $licence = RecordEloquentModel::factory()->of(CustomObjectEloquentModel::factory()->create(['team_id' => $teamId]))->create();
+    $ticket = patchableTicket($user);
+
+    actingAs($user)
+        ->patch(route('tickets.patch', $ticket->id), ['custom_fields' => [$field->id => $licence->id]])
+        ->assertSessionHasErrors(["custom_fields.{$field->id}" => 'The selected Vehicle is invalid.']);
+
+    actingAs($user)
+        ->patch(route('tickets.patch', $ticket->id), ['custom_fields' => [$field->id => $van->id]])
+        ->assertSessionHasNoErrors();
+
+    expect($ticket->fresh()->custom_fields)->toBe([$field->id => $van->id]);
 });

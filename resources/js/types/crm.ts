@@ -239,7 +239,22 @@ export type CustomFieldType =
 /**
  * The kinds of record a record-link field can point at.
  */
-export type CustomFieldRelation = 'member' | 'customer' | 'contact';
+export type CustomFieldRelation = 'member' | 'customer' | 'contact' | 'record';
+
+/**
+ * The records that link to one record through one record-link field.
+ */
+export type LinkedRecordGroup = {
+    /** The linking field's id. */
+    key: string;
+    /** The kind of record the field is on, such as "Tickets". */
+    source: string;
+    /** The linking field's name. */
+    field: string;
+    /** How many records link; `records` holds only the newest few. */
+    count: number;
+    records: { id: string; title: string; url: string }[];
+};
 
 /**
  * One thing a select field offers. Records store its id.
@@ -261,6 +276,8 @@ export type CustomField = {
     type: CustomFieldType;
     /** What a record link points at; null for every other type. */
     relation: CustomFieldRelation | null;
+    /** The custom object a link to a custom object's records points at. */
+    relation_object_id: string | null;
     name: string;
     description: string | null;
     /** Empty unless the field is a select. */

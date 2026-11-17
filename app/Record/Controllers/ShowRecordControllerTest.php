@@ -7,6 +7,7 @@ use App\CustomField\CustomFieldEloquentModel;
 use App\CustomField\CustomFieldRelationEnum;
 use App\CustomObject\CustomObjectEloquentModel;
 use App\Record\RecordEloquentModel;
+use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -57,5 +58,24 @@ it("shows a record's fields and values, with the names of the records it links t
             ->where('fields.0.name', 'Lessor')
             ->where("record.custom_fields.{$lessor->id}", $bank->id)
             ->where('customFieldLabels', [$bank->id => 'Fleet Bank']),
+        );
+});
+
+it('lists what links to the record', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create(['onboarded_at' => now()]);
+    $teamId = $owner->current_team_id;
+    $vehicles = CustomObjectEloquentModel::factory()->create(['team_id' => $teamId]);
+    $van = RecordEloquentModel::factory()->of($vehicles)->create();
+    $field = CustomFieldEloquentModel::factory()->linkingToObject($vehicles)->create(['team_id' => $teamId, 'name' => 'Vehicle']);
+    $ticket = TicketEloquentModel::factory()->create(['team_id' => $teamId, 'number' => 7, 'title' => 'Flat tyre', 'custom_fields' => [$field->id => $van->id]]);
+
+    actingAs($owner)
+        ->get(route('records.show', [$vehicles, $van]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('linkedRecords', 1)
+            ->where('linkedRecords.0.source', 'Tickets')
+            ->where('linkedRecords.0.field', 'Vehicle')
+            ->where('linkedRecords.0.count', 1)
+            ->where('linkedRecords.0.records.0', ['id' => $ticket->id, 'title' => '#7 Flat tyre', 'url' => route('tickets.show', $ticket->id)]),
         );
 });

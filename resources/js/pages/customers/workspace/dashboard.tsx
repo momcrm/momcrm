@@ -1,4 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
+import LinkedRecords from '@/components/custom-fields/linked-records';
 import { useCustomFields } from '@/components/custom-fields/custom-field-input';
 import {
     CustomFieldValueView,
@@ -37,6 +38,7 @@ import type {
     CustomerMoney,
     CustomerWorkspace,
     InvoiceListItem,
+    LinkedRecordGroup,
     Service,
     TicketListItem,
 } from '@/types';
@@ -240,6 +242,7 @@ export default function CustomerDashboard({
     draftInvoices,
     expiringServices,
     expiringContracts,
+    linkedRecords,
 }: {
     workspace: CustomerWorkspace;
     money: CustomerMoney;
@@ -247,6 +250,8 @@ export default function CustomerDashboard({
     draftInvoices: InvoiceListItem[];
     expiringServices: Service[];
     expiringContracts: ContractItem[];
+    /** What points at this customer through record-link custom fields. */
+    linkedRecords: LinkedRecordGroup[];
 }) {
     const { customer, counts } = workspace;
     const id = customer.id;
@@ -377,6 +382,8 @@ export default function CustomerDashboard({
                         </dl>
                     </Card>
                 </div>
+
+                <LinkedRecords groups={linkedRecords} />
 
                 <section
                     aria-label="In this account"

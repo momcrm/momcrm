@@ -8,6 +8,8 @@ use App\Contract\Actions\FindContract;
 use App\Contract\Contract;
 use App\Customer\CustomerWorkspace;
 use App\Customer\Exceptions\CouldNotFindCustomer;
+use App\CustomField\Actions\FindLinkedRecords;
+use App\CustomField\CustomFieldRelationEnum;
 use App\Invoice\Actions\FindInvoice;
 use App\Invoice\Invoice;
 use App\Invoice\InvoiceStatusEnum;
@@ -43,6 +45,7 @@ final class ShowCustomerController
 
         return Inertia::render('customers/workspace/dashboard', [
             ...$workspace->props($request),
+            'linkedRecords' => FindLinkedRecords::to((string) $request->user()?->current_team_id, (string) $request->user()?->id, CustomFieldRelationEnum::Customer, $customerId),
             'money' => FindInvoice::balancesForCustomers($workspace->teamId, [$customerId])[$customerId]
                 ?? ['balance_in_cents' => 0, 'current_in_cents' => 0, 'overdue_in_cents' => 0],
             'openTickets' => FindTicket::paginateForTeam($workspace->teamId, FindTicket::FILTER_OPEN, customerId: $customerId, perPage: self::CARD_ROWS)

@@ -14,6 +14,7 @@ use App\CustomField\Properties\ObjectId;
 use App\CustomField\Properties\Options;
 use App\CustomField\Properties\Position;
 use App\CustomField\Properties\Relation;
+use App\CustomField\Properties\RelationObjectId;
 use App\CustomField\Properties\Target;
 use App\CustomField\Properties\TeamId;
 use App\CustomField\Properties\Type;
@@ -40,6 +41,7 @@ final class CustomField extends AbstractData
         public Options $options,
         public Position $position,
         public Relation $relation,
+        public RelationObjectId $relationObjectId,
         public Target $target,
         public TeamId $teamId,
         public Type $type,
@@ -71,7 +73,7 @@ final class CustomField extends AbstractData
     /**
      * The fields the frontend needs to show the field and its input.
      *
-     * @return array{id: string, target: string, object_id: ?string, type: string, relation: ?string, name: string, description: ?string, options: list<array{id: string, name: string, hue: ?int}>, position: int, is_archived: bool}
+     * @return array{id: string, target: string, object_id: ?string, type: string, relation: ?string, relation_object_id: ?string, name: string, description: ?string, options: list<array{id: string, name: string, hue: ?int}>, position: int, is_archived: bool}
      */
     public function toSummary(): array
     {
@@ -81,6 +83,7 @@ final class CustomField extends AbstractData
             'object_id' => $this->getObjectId()->toNullableString(),
             'type' => $this->getType()->toEnum()->value,
             'relation' => $this->getRelation()->toNullableEnum()?->value,
+            'relation_object_id' => $this->getRelationObjectId()->toNullableString(),
             'name' => $this->getName()->toString(),
             'description' => $this->getDescription()->toNullableString(),
             'options' => $this->getOptions()->toOptions(),
@@ -191,6 +194,18 @@ final class CustomField extends AbstractData
     public function setRelation(mixed $relation): self
     {
         $this->relation = new Relation($relation instanceof AbstractValue ? $relation->toValue() : $relation);
+
+        return $this;
+    }
+
+    public function getRelationObjectId(): RelationObjectId
+    {
+        return $this->relationObjectId;
+    }
+
+    public function setRelationObjectId(mixed $relationObjectId): self
+    {
+        $this->relationObjectId = new RelationObjectId($relationObjectId instanceof AbstractValue ? $relationObjectId->toValue() : $relationObjectId);
 
         return $this;
     }

@@ -73,6 +73,7 @@ const relationNouns: Record<CustomFieldRelation, string> = {
     member: 'a team member',
     customer: 'a customer',
     contact: 'a contact',
+    record: 'a record',
 };
 
 const saveOptions = {
@@ -257,6 +258,7 @@ function FieldRow({
     isLast: boolean;
     onMove: (direction: -1 | 1) => void;
 }) {
+    const objects = (usePage().props.objects ?? []) as Option[];
     const [editing, setEditing] = useState(false);
 
     return (
@@ -278,7 +280,13 @@ function FieldRow({
                                   .map((option) => option.name)
                                   .join(', ')
                             : field.relation
-                              ? `Links to ${relationNouns[field.relation]}`
+                              ? `Links to ${
+                                    objects.find(
+                                        (object) =>
+                                            object.value ===
+                                            field.relation_object_id,
+                                    )?.label ?? relationNouns[field.relation]
+                                }`
                               : field.description}
                     </p>
                 )}
@@ -446,6 +454,10 @@ function FieldDialog({
     const [description, setDescription] = useState(field?.description ?? '');
     const relations = (usePage().props.relations ?? []) as Option[];
     const [relation, setRelation] = useState(relations[0]?.value ?? '');
+    const objects = (usePage().props.objects ?? []) as Option[];
+    const [relationObjectId, setRelationObjectId] = useState(
+        objects[0]?.value ?? '',
+    );
     const [options, setOptions] = useState<DraftOption[]>(
         field?.options ?? [{ id: null, name: '', hue: null }],
     );
@@ -469,6 +481,11 @@ function FieldDialog({
                             ? { object_id: objectId }
                             : {}),
                         ...(!field && type === 'relation' ? { relation } : {}),
+                        ...(!field &&
+                        type === 'relation' &&
+                        relation === 'record'
+                            ? { relation_object_id: relationObjectId }
+                            : {}),
                         name,
                         description: description.trim() || null,
                         ...(hasOptions
@@ -559,6 +576,40 @@ function FieldDialog({
                                     </NativeSelect>
                                 </FormField>
                             )}
+
+                            {!field &&
+                                type === 'relation' &&
+                                relation === 'record' && (
+                                    <FormField
+                                        id="field-relation-object"
+                                        label="Which object"
+                                        hint={
+                                            objects.length === 0
+                                                ? 'Add an object in Settings → Objects first.'
+                                                : undefined
+                                        }
+                                        error={errors.relation_object_id}
+                                    >
+                                        <NativeSelect
+                                            id="field-relation-object"
+                                            value={relationObjectId}
+                                            onChange={(event) =>
+                                                setRelationObjectId(
+                                                    event.target.value,
+                                                )
+                                            }
+                                        >
+                                            {objects.map((object) => (
+                                                <option
+                                                    key={object.value}
+                                                    value={object.value}
+                                                >
+                                                    {object.label}
+                                                </option>
+                                            ))}
+                                        </NativeSelect>
+                                    </FormField>
+                                )}
 
                             {hasOptions && (
                                 <OptionsEditor

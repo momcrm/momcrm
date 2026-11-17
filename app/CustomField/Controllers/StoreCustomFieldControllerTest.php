@@ -132,3 +132,23 @@ it('needs one of the team\'s objects for a field on a custom object, and none ot
     "another team's object" => [['target' => 'record', 'object_id' => '{foreign}'], 'Choose one of your objects.'],
     'an object on a ticket field' => [['target' => 'ticket', 'object_id' => '{foreign}'], 'Only fields on custom objects name an object.'],
 ]);
+
+it("adds a link to a custom object's records, which needs one of the team's live objects", function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $teamId = $owner->current_team_id;
+    $vehicles = CustomObjectEloquentModel::factory()->create(['team_id' => $teamId]);
+    $archived = CustomObjectEloquentModel::factory()->archived()->create(['team_id' => $teamId]);
+    $link = ['target' => 'ticket', 'type' => 'relation', 'relation' => 'record', 'name' => 'Vehicle'];
+
+    actingAs($owner)->post(route('custom-fields.store'), $link)
+        ->assertSessionHasErrors(['relation_object_id' => 'Choose the object the field links to.']);
+    actingAs($owner)->post(route('custom-fields.store'), [...$link, 'relation_object_id' => $archived->id])
+        ->assertSessionHasErrors(['relation_object_id' => 'Choose one of your objects to link to.']);
+    actingAs($owner)->post(route('custom-fields.store'), ['target' => 'ticket', 'type' => 'relation', 'relation' => 'customer', 'name' => 'Reseller', 'relation_object_id' => $vehicles->id])
+        ->assertSessionHasErrors(['relation_object_id' => 'Only links to a custom object name one.']);
+
+    actingAs($owner)->post(route('custom-fields.store'), [...$link, 'relation_object_id' => $vehicles->id])->assertSessionHasNoErrors();
+
+    expect(FindCustomField::listForTeam($teamId, CustomFieldTargetEnum::Ticket)->first()?->toSummary())
+        ->toMatchArray(['type' => 'relation', 'relation' => 'record', 'relation_object_id' => $vehicles->id]);
+});
