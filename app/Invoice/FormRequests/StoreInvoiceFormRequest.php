@@ -4,14 +4,19 @@ declare(strict_types=1);
 
 namespace App\Invoice\FormRequests;
 
+use App\CustomField\CustomFieldTargetEnum;
+use App\CustomField\CustomFieldValueRules;
+use App\CustomField\Properties\CustomFieldValues;
 use App\Invoice\Actions\CreateInvoice;
 use App\Invoice\Invoice;
 use App\Invoice\InvoiceValidationRules;
 use App\Invoice\Properties\CustomerId;
 use App\Shared\Table;
+use App\Shared\Types;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -34,6 +39,7 @@ final class StoreInvoiceFormRequest extends FormRequest
                 Rule::exists(Table::Customers->value, 'id')->where('team_id', $this->user()?->current_team_id),
             ],
             ...InvoiceValidationRules::for($this, $this->string(CustomerId::getNameForValidation())->toString()),
+            ...CustomFieldValueRules::for((string) $this->user()?->current_team_id, CustomFieldTargetEnum::Invoice),
         ];
     }
 
@@ -49,12 +55,23 @@ final class StoreInvoiceFormRequest extends FormRequest
         ];
     }
 
+    /**
+     * @return array<string, string>
+     */
+    public function attributes(): array
+    {
+        return CustomFieldValueRules::attributes((string) $this->user()?->current_team_id, CustomFieldTargetEnum::Invoice);
+    }
+
     public function process(): RedirectResponse
     {
         $validated = $this->validated();
 
         $invoice = CreateInvoice::fromInvoice(
-            Invoice::new()->setPropertyIfExists($validated)->setTeamId($this->user()?->current_team_id),
+            Invoice::new()
+                ->setPropertyIfExists(Types::stringKeyed(Arr::except($validated, CustomFieldValues::getNameForValidation())))
+                ->setCustomFields(CustomFieldValueRules::merge((string) $this->user()?->current_team_id, CustomFieldTargetEnum::Invoice, new CustomFieldValues(null), $validated[CustomFieldValues::getNameForValidation()] ?? []))
+                ->setTeamId($this->user()?->current_team_id),
             InvoiceValidationRules::items($validated),
         );
 

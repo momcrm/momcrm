@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\CustomField\CustomFieldEloquentModel;
+use App\CustomField\CustomFieldTargetEnum;
 use App\Invoice\InvoiceEloquentModel;
 use App\Invoice\InvoiceStatusEnum;
 use App\InvoiceItem\InvoiceItemEloquentModel;
@@ -47,4 +49,18 @@ it("returns not found for another team's invoice", function (): void {
     actingAs(UserEloquentModel::factory()->withPersonalTeam()->create())
         ->put(route('invoices.update', InvoiceEloquentModel::factory()->create()->id), draftPayload())
         ->assertNotFound();
+});
+
+it("changes a draft's custom field value, keeping the ones not sent", function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $team = ['team_id' => $user->current_team_id];
+    $kept = CustomFieldEloquentModel::factory()->on(CustomFieldTargetEnum::Invoice)->create($team);
+    $set = CustomFieldEloquentModel::factory()->on(CustomFieldTargetEnum::Invoice)->create($team);
+    $invoice = InvoiceEloquentModel::factory()->create([...$team, 'custom_fields' => [$kept->id => 'kept']]);
+
+    actingAs($user)
+        ->put(route('invoices.update', $invoice->id), [...draftPayload(), 'custom_fields' => [$set->id => 'new']])
+        ->assertSessionHasNoErrors();
+
+    expect($invoice->fresh()->custom_fields)->toEqual([$kept->id => 'kept', $set->id => 'new']);
 });

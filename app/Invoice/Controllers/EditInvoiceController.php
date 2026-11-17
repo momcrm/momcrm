@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Invoice\Controllers;
 
 use App\Customer\Actions\FindCustomer;
+use App\CustomField\CustomFieldRelationLabels;
+use App\CustomField\CustomFieldTargetEnum;
 use App\Invoice\Actions\FindInvoice;
 use App\Invoice\Exceptions\CouldNotFindInvoice;
 use App\Invoice\InvoiceFormOptions;
@@ -37,6 +39,7 @@ final class EditInvoiceController
         return Inertia::render('invoices/edit', [
             ...InvoiceFormOptions::forTeam($teamId),
             'invoice' => $found->toSummary(),
+            'customFieldLabels' => CustomFieldRelationLabels::for($teamId, CustomFieldTargetEnum::Invoice, $found->getCustomFields()->toValues()),
             'items' => FindInvoice::itemsFor($found)->map(fn (InvoiceItem $item): array => $item->toSummary())->values()->all(),
             'customer' => FindCustomer::byIdForTeam($found->getCustomerId()->toString(), $teamId)->toSummary(),
         ]);

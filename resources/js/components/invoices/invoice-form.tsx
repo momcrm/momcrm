@@ -1,4 +1,5 @@
 import { Form, Link } from '@inertiajs/react';
+import CustomFieldsFormFields from '@/components/custom-fields/custom-fields-form';
 import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import FormField from '@/components/form-field';
@@ -357,6 +358,14 @@ export default function InvoiceForm({
                                 {formatCents(subtotal + tax)}
                             </span>
                         </div>
+                    </div>
+
+                    <div className="grid gap-6 empty:hidden sm:grid-cols-2">
+                        <CustomFieldsFormFields
+                            target="invoice"
+                            values={invoice?.custom_fields}
+                            errors={errors}
+                        />
                     </div>
 
                     <FormField

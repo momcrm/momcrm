@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 use App\Asset\AssetEloquentModel;
 use App\Contact\ContactEloquentModel;
+use App\Contract\ContractEloquentModel;
 use App\Customer\CustomerEloquentModel;
 use App\CustomField\CustomFieldEloquentModel;
 use App\CustomField\CustomFieldRelationEnum;
 use App\CustomObject\CustomObjectEloquentModel;
+use App\Invoice\InvoiceEloquentModel;
 use App\Location\LocationEloquentModel;
 use App\Project\ProjectEloquentModel;
 use App\Record\RecordEloquentModel;
@@ -138,3 +140,23 @@ it("lists the team's assets, locations and services by name", function (CustomFi
     'locations' => [CustomFieldRelationEnum::Location, LocationEloquentModel::class],
     'services' => [CustomFieldRelationEnum::Service, ServiceEloquentModel::class],
 ]);
+
+it('lists contracts by title and invoices by number', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $team = ['team_id' => $owner->current_team_id];
+    $customer = CustomerEloquentModel::factory()->create($team);
+    $contracts = CustomFieldEloquentModel::factory()->linkingTo(CustomFieldRelationEnum::Contract)->create($team);
+    $invoices = CustomFieldEloquentModel::factory()->linkingTo(CustomFieldRelationEnum::Invoice)->create($team);
+    $contract = ContractEloquentModel::factory()->create([...$team, 'customer_id' => $customer->id, 'title' => 'Managed services']);
+    $old = InvoiceEloquentModel::factory()->create([...$team, 'customer_id' => $customer->id, 'number' => 7]);
+    $new = InvoiceEloquentModel::factory()->create([...$team, 'customer_id' => $customer->id, 'number' => 42]);
+
+    actingAs($owner)->getJson(route('custom-fields.records', ['customField' => $contracts->id, 'search' => 'managed']))
+        ->assertExactJson(['records' => [['value' => $contract->id, 'label' => 'Managed services']]]);
+    actingAs($owner)->getJson(route('custom-fields.records', $invoices->id))
+        ->assertExactJson(['records' => [['value' => $new->id, 'label' => 'INV-0042'], ['value' => $old->id, 'label' => 'INV-0007']]]);
+    actingAs($owner)->getJson(route('custom-fields.records', ['customField' => $invoices->id, 'search' => 'INV-0007']))
+        ->assertExactJson(['records' => [['value' => $old->id, 'label' => 'INV-0007']]]);
+    actingAs($owner)->getJson(route('custom-fields.records', ['customField' => $invoices->id, 'search' => 'acme']))
+        ->assertExactJson(['records' => []]);
+});

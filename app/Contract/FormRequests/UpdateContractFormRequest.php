@@ -9,9 +9,14 @@ use App\Contract\Actions\UpdateContract;
 use App\Contract\Contract;
 use App\Contract\ContractValidationRules;
 use App\Contract\Exceptions\CouldNotFindContract;
+use App\CustomField\CustomFieldTargetEnum;
+use App\CustomField\CustomFieldValueRules;
+use App\CustomField\Properties\CustomFieldValues;
+use App\Shared\Types;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 
@@ -45,7 +50,10 @@ final class UpdateContractFormRequest extends FormRequest
      */
     public function rules(): array
     {
-        return ContractValidationRules::for($this);
+        return [
+            ...ContractValidationRules::for($this),
+            ...CustomFieldValueRules::for($this->contract->getTeamId()->toString(), CustomFieldTargetEnum::Contract, $this->contract->getCustomFields()),
+        ];
     }
 
     /**
@@ -56,9 +64,22 @@ final class UpdateContractFormRequest extends FormRequest
         return ContractValidationRules::messages();
     }
 
+    /**
+     * @return array<string, string>
+     */
+    public function attributes(): array
+    {
+        return CustomFieldValueRules::attributes($this->contract->getTeamId()->toString(), CustomFieldTargetEnum::Contract);
+    }
+
     public function process(): RedirectResponse
     {
-        $contract = UpdateContract::fromContract($this->contract->setPropertyIfExists($this->validated()));
+        $validated = $this->validated();
+        $contract = UpdateContract::fromContract(
+            $this->contract
+                ->setCustomFields(CustomFieldValueRules::merge($this->contract->getTeamId()->toString(), CustomFieldTargetEnum::Contract, $this->contract->getCustomFields(), $validated[CustomFieldValues::getNameForValidation()] ?? []))
+                ->setPropertyIfExists(Types::stringKeyed(Arr::except($validated, CustomFieldValues::getNameForValidation()))),
+        );
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __(':title saved.', ['title' => $contract->getTitle()->toString()])]);
 

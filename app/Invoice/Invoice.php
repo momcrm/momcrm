@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Invoice;
 
+use App\CustomField\Properties\CustomFieldValues;
 use App\Invoice\Factories\InvoiceFactory;
 use App\Invoice\Properties\CreatedAt;
 use App\Invoice\Properties\Customer;
@@ -31,6 +32,7 @@ use Mom\Data\AbstractValue;
 final class Invoice extends AbstractData
 {
     public function __construct(
+        public CustomFieldValues $customFields,
         public CreatedAt $createdAt,
         public Customer $customer,
         public CustomerId $customerId,
@@ -95,7 +97,7 @@ final class Invoice extends AbstractData
     }
 
     /**
-     * @return array{id: string, number: int, reference: string, customer_id: string, issued_on: ?string, due_on: ?string, status: string, is_overdue: bool, tax_rate_basis_points: int, purchase_order: ?string, notes: ?string, sent_at: ?string, paid_at: ?string}
+     * @return array{id: string, number: int, reference: string, customer_id: string, issued_on: ?string, due_on: ?string, status: string, is_overdue: bool, tax_rate_basis_points: int, purchase_order: ?string, notes: ?string, sent_at: ?string, paid_at: ?string, custom_fields: array<string, mixed>}
      */
     public function toSummary(): array
     {
@@ -113,7 +115,20 @@ final class Invoice extends AbstractData
             'notes' => $this->getNotes()->toNullableString(),
             'sent_at' => $this->getSentAt()->toNullableISOString(),
             'paid_at' => $this->getPaidAt()->toNullableISOString(),
+            'custom_fields' => $this->getCustomFields()->toValues(),
         ];
+    }
+
+    public function getCustomFields(): CustomFieldValues
+    {
+        return $this->customFields;
+    }
+
+    public function setCustomFields(mixed $customFields): self
+    {
+        $this->customFields = new CustomFieldValues($customFields instanceof AbstractValue ? $customFields->toValue() : $customFields);
+
+        return $this;
     }
 
     public function getCreatedAt(): CreatedAt

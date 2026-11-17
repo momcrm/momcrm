@@ -7,6 +7,7 @@ namespace App\Invoice;
 use App\AuditLog\AuditObserver;
 use App\AuditLog\Contracts\Auditable;
 use App\Customer\CustomerEloquentModel;
+use App\CustomField\Properties\CustomFieldValues;
 use App\Invoice\Factories\InvoiceFactory;
 use App\Invoice\Properties\CustomerId;
 use App\Invoice\Properties\DueOn;
@@ -100,6 +101,7 @@ final class InvoiceEloquentModel extends Model implements Auditable
     protected function casts(): array
     {
         return [
+            CustomFieldValues::getDatabaseTableColumnName() => 'array',
             Number::getDatabaseTableColumnName() => 'integer',
             IssuedOn::getDatabaseTableColumnName() => 'immutable_date',
             DueOn::getDatabaseTableColumnName() => 'immutable_date',

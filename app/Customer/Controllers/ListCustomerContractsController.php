@@ -14,8 +14,13 @@ use App\Contract\ContractStatusEnum;
 use App\Contract\ContractTypeEnum;
 use App\Customer\CustomerWorkspace;
 use App\Customer\Exceptions\CouldNotFindCustomer;
+use App\CustomField\Actions\FindLinkedRecords;
+use App\CustomField\CustomFieldRelationEnum;
+use App\CustomField\CustomFieldRelationLabels;
+use App\CustomField\CustomFieldTargetEnum;
 use App\Shared\MorphMapKeyEnum;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -41,6 +46,13 @@ final class ListCustomerContractsController
             $contracts->map(fn (Contract $contract): string => $contract->getId()->toString())->values()->all(),
         );
 
+        $linked = FindLinkedRecords::toMany(
+            $workspace->teamId,
+            (string) $request->user()?->id,
+            CustomFieldRelationEnum::Contract,
+            array_values($contracts->map(fn (Contract $contract): string => $contract->getId()->toString())->all()),
+        );
+
         return Inertia::render('customers/workspace/contracts', [
             ...$workspace->props($request),
             'contracts' => $contracts
@@ -50,9 +62,16 @@ final class ListCustomerContractsController
                         ?->map(fn (Attachment $attachment): array => FindAttachment::listItem($attachment))
                         ->values()
                         ->all() ?? [],
+                    'linked_records' => $linked[$contract->getId()->toString()] ?? [],
                 ])
                 ->values()
                 ->all(),
+            'customFieldLabels' => CustomFieldRelationLabels::for(
+                $workspace->teamId,
+                CustomFieldTargetEnum::Contract,
+                ...array_values($contracts->map(fn (Contract $contract): array => $contract->getCustomFields()->toValues())->all()),
+            ),
+            'open' => Str::isUuid($request->string('contract')->toString()) ? $request->string('contract')->toString() : null,
             'filters' => ['status' => $status?->value, 'type' => $type?->value, 'sort' => $sort, 'direction' => $direction],
             'types' => ContractTypeEnum::options(),
             'statuses' => ContractStatusEnum::options(),

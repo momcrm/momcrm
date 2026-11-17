@@ -45,10 +45,38 @@ final class FindLinkedRecords
      */
     public static function to(string $teamId, string $userId, CustomFieldRelationEnum $kind, string $id, ?string $objectId = null): array
     {
+        return self::through(self::fieldsLinkingTo($teamId, $kind, $objectId), $teamId, $userId, $id);
+    }
+
+    /**
+     * The same for several records of one kind, by record id, reading the
+     * linking fields once. With no such fields it costs one query.
+     *
+     * @param  list<string>  $ids
+     * @return array<string, list<array{key: string, source: string, field: string, count: int, records: list<array{id: string, title: string, url: string}>}>>
+     */
+    public static function toMany(string $teamId, string $userId, CustomFieldRelationEnum $kind, array $ids): array
+    {
+        $fields = self::fieldsLinkingTo($teamId, $kind, null);
+        $groups = [];
+
+        foreach ($ids as $id) {
+            $groups[$id] = $fields === [] ? [] : self::through($fields, $teamId, $userId, $id);
+        }
+
+        return $groups;
+    }
+
+    /**
+     * @param  list<CustomField>  $fields
+     * @return list<array{key: string, source: string, field: string, count: int, records: list<array{id: string, title: string, url: string}>}>
+     */
+    private static function through(array $fields, string $teamId, string $userId, string $id): array
+    {
         $objects = FindCustomObject::listForTeam($teamId);
         $groups = [];
 
-        foreach (self::fieldsLinkingTo($teamId, $kind, $objectId) as $field) {
+        foreach ($fields as $field) {
             $target = $field->getTarget()->toEnum();
             $object = $objects->first(fn (CustomObject $object): bool => $field->getObjectId()->equalsTo($object->getId()->toString()));
 
