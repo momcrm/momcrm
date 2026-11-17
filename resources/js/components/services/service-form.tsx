@@ -1,4 +1,5 @@
 import FormField from '@/components/form-field';
+import CustomFieldsFormFields from '@/components/custom-fields/custom-fields-form';
 import NativeSelect from '@/components/native-select';
 import type { CustomerOption, Option, Service } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -145,6 +146,13 @@ export default function ServiceForm({
                             ))}
                         </NativeSelect>
                     </FormField>
+                    <div className="grid gap-6 empty:hidden sm:grid-cols-2">
+                        <CustomFieldsFormFields
+                            target="service"
+                            values={service?.custom_fields}
+                            errors={errors}
+                        />
+                    </div>
                     <FormField id="note" label="Note" error={errors.note}>
                         <Textarea
                             id="note"

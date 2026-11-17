@@ -10,6 +10,10 @@ use App\Asset\Actions\FindAsset;
 use App\Asset\AssetStatusEnum;
 use App\Asset\Exceptions\CouldNotFindAsset;
 use App\Customer\Actions\FindCustomer;
+use App\CustomField\Actions\FindLinkedRecords;
+use App\CustomField\CustomFieldRelationEnum;
+use App\CustomField\CustomFieldRelationLabels;
+use App\CustomField\CustomFieldTargetEnum;
 use App\Location\Actions\FindLocation;
 use App\Secret\Actions\FindSecret;
 use App\Secret\Secret;
@@ -38,6 +42,8 @@ final class EditAssetController
             'customer' => $customer->toSummary(),
             'locations' => FindLocation::optionsForCustomer($customer->getId()->toString(), (string) $customer->getTeamId()->toString()),
             'statuses' => AssetStatusEnum::options(),
+            'customFieldLabels' => CustomFieldRelationLabels::for($found->getTeamId()->toString(), CustomFieldTargetEnum::Asset, $found->getCustomFields()->toValues()),
+            'linkedRecords' => FindLinkedRecords::to($found->getTeamId()->toString(), (string) $request->user()?->id, CustomFieldRelationEnum::Asset, $found->getId()->toString()),
             'can' => AccessAbilities::for($request->user(), AccessResourceEnum::Asset, $found),
             'secrets' => FindSecret::forCustomer($customer->getId()->toString(), $customer->getTeamId()->toString(), $found->getId()->toString())
                 ->map(fn (Secret $secret): array => $secret->toSummary())

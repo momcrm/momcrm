@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\CustomObject;
 
+use App\Asset\AssetEloquentModel;
 use App\Contact\ContactEloquentModel;
 use App\Customer\CustomerEloquentModel;
+use App\Location\LocationEloquentModel;
 use App\Project\ProjectEloquentModel;
 use App\Project\ProjectVisibility;
+use App\Service\ServiceEloquentModel;
 use App\Shared\Traits\Enum;
 use App\Ticket\TicketEloquentModel;
 use Illuminate\Database\Eloquent\Builder;
@@ -29,6 +32,9 @@ enum StandardObjectEnum: string
     case Customer = 'customer';
     case Contact = 'contact';
     case Project = 'project';
+    case Asset = 'asset';
+    case Location = 'location';
+    case Service = 'service';
 
     /**
      * What several of its records are called.
@@ -40,6 +46,9 @@ enum StandardObjectEnum: string
             self::Customer => 'Customers',
             self::Contact => 'Contacts',
             self::Project => 'Projects',
+            self::Asset => 'Assets',
+            self::Location => 'Locations',
+            self::Service => 'Services',
         };
     }
 
@@ -53,6 +62,9 @@ enum StandardObjectEnum: string
             self::Customer => 'customer',
             self::Contact => 'contact',
             self::Project => 'project',
+            self::Asset => 'asset',
+            self::Location => 'location',
+            self::Service => 'service',
         };
     }
 
@@ -70,6 +82,9 @@ enum StandardObjectEnum: string
             self::Customer => CustomerEloquentModel::query(),
             self::Contact => ContactEloquentModel::query(),
             self::Project => ProjectEloquentModel::query(),
+            self::Asset => AssetEloquentModel::query(),
+            self::Location => LocationEloquentModel::query(),
+            self::Service => ServiceEloquentModel::query(),
         };
 
         $query->withoutGlobalScopes()->where('team_id', $teamId);
@@ -93,7 +108,7 @@ enum StandardObjectEnum: string
     {
         $columns = match ($this) {
             self::Ticket => ['title'],
-            self::Customer, self::Project => ['name'],
+            self::Customer, self::Project, self::Asset, self::Location, self::Service => ['name'],
             self::Contact => ['first_name', 'last_name'],
         };
 
@@ -129,7 +144,10 @@ enum StandardObjectEnum: string
             $record instanceof TicketEloquentModel => "#{$record->number} {$record->title}",
             $record instanceof CustomerEloquentModel => $record->name,
             $record instanceof ContactEloquentModel => trim("{$record->first_name} {$record->last_name}"),
-            $record instanceof ProjectEloquentModel => $record->name,
+            $record instanceof ProjectEloquentModel,
+            $record instanceof AssetEloquentModel,
+            $record instanceof LocationEloquentModel,
+            $record instanceof ServiceEloquentModel => $record->name,
             default => $this->label(),
         };
     }
@@ -146,6 +164,9 @@ enum StandardObjectEnum: string
             self::Customer => route('customers.show', $id),
             self::Contact => route('contacts.edit', $id),
             self::Project => route('projects.show', $id),
+            self::Asset => route('assets.edit', $id),
+            self::Location => route('locations.edit', $id),
+            self::Service => route('services.edit', $id),
         };
     }
 }

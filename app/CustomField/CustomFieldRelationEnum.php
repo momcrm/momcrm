@@ -38,6 +38,9 @@ enum CustomFieldRelationEnum: string
     case Contact = 'contact';
     case Ticket = 'ticket';
     case Project = 'project';
+    case Asset = 'asset';
+    case Location = 'location';
+    case Service = 'service';
     case Record = 'record';
 
     public function label(): string
@@ -47,7 +50,7 @@ enum CustomFieldRelationEnum: string
         return match (true) {
             $this === self::Member => 'A team member',
             $this === self::Record => 'A record of a custom object',
-            $object !== null => 'A '.$object->labelSingular(),
+            $object !== null => (in_array($object->labelSingular()[0], ['a', 'e', 'i', 'o', 'u'], true) ? 'An ' : 'A ').$object->labelSingular(),
             default => ucfirst($this->value),
         };
     }

@@ -16,6 +16,7 @@ use App\Asset\Properties\SerialNumber;
 use App\Asset\Properties\Status;
 use App\Asset\Properties\TeamId;
 use App\Asset\Properties\UpdatedAt;
+use App\CustomField\Properties\CustomFieldValues;
 use Illuminate\Support\Collection;
 use Mom\Data\AbstractData;
 use Mom\Data\AbstractValue;
@@ -26,6 +27,7 @@ use Mom\Data\AbstractValue;
 final class Asset extends AbstractData
 {
     public function __construct(
+        public CustomFieldValues $customFields,
         public CreatedAt $createdAt,
         public CustomerId $customerId,
         public Description $description,
@@ -64,7 +66,7 @@ final class Asset extends AbstractData
     /**
      * The fields the asset pages show.
      *
-     * @return array{id: string, customer_id: string, name: ?string, serial_number: ?string, location_id: ?string, status: string, description: ?string}
+     * @return array{id: string, customer_id: string, name: ?string, serial_number: ?string, location_id: ?string, status: string, description: ?string, custom_fields: array<string, mixed>}
      */
     public function toSummary(): array
     {
@@ -76,7 +78,20 @@ final class Asset extends AbstractData
             'location_id' => $this->getLocationId()->toNullableString(),
             'status' => $this->getStatus()->toString(),
             'description' => $this->getDescription()->toNullableString(),
+            'custom_fields' => $this->getCustomFields()->toValues(),
         ];
+    }
+
+    public function getCustomFields(): CustomFieldValues
+    {
+        return $this->customFields;
+    }
+
+    public function setCustomFields(mixed $customFields): self
+    {
+        $this->customFields = new CustomFieldValues($customFields instanceof AbstractValue ? $customFields->toValue() : $customFields);
+
+        return $this;
     }
 
     public function getCreatedAt(): CreatedAt

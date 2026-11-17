@@ -17,6 +17,9 @@ use App\Asset\Properties\Status;
 use App\Choice\LabelTargetEnum;
 use App\Customer\Actions\FindCustomer;
 use App\Customer\Customer;
+use App\CustomField\CustomFieldTargetEnum;
+use App\CustomField\CustomFieldValueRules;
+use App\CustomField\Properties\CustomFieldValues;
 use App\Shared\Table;
 use App\Shared\Types;
 use Illuminate\Auth\Access\Response;
@@ -78,7 +81,16 @@ final class UpdateAssetFormRequest extends FormRequest
             Status::getNameForValidation() => Status::getValidationRulesForUpdate($this),
             Description::getNameForValidation() => Description::getValidationRulesForUpdate($this),
             ...LabelTargetEnum::Asset->rules($this->asset->getTeamId()->toString(), $this->asset->getId()->toString()),
+            ...CustomFieldValueRules::for($this->asset->getTeamId()->toString(), CustomFieldTargetEnum::Asset, $this->asset->getCustomFields()),
         ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function attributes(): array
+    {
+        return CustomFieldValueRules::attributes($this->asset->getTeamId()->toString(), CustomFieldTargetEnum::Asset);
     }
 
     public function process(): RedirectResponse
@@ -87,7 +99,8 @@ final class UpdateAssetFormRequest extends FormRequest
 
         $asset = UpdateAsset::fromAsset(
             $this->asset
-                ->setPropertyIfExists(Types::stringKeyed(Arr::except($validated, LabelTargetEnum::FIELD))),
+                ->setCustomFields(CustomFieldValueRules::merge($this->asset->getTeamId()->toString(), CustomFieldTargetEnum::Asset, $this->asset->getCustomFields(), $validated[CustomFieldValues::getNameForValidation()] ?? []))
+                ->setPropertyIfExists(Types::stringKeyed(Arr::except($validated, [LabelTargetEnum::FIELD, CustomFieldValues::getNameForValidation()]))),
         );
 
         LabelTargetEnum::syncFrom($validated, AssetEloquentModel::query()->findOrFail($asset->getId()->toString())->labels());

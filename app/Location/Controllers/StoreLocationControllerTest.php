@@ -3,6 +3,9 @@
 declare(strict_types=1);
 
 use App\Customer\CustomerEloquentModel;
+use App\CustomField\CustomFieldEloquentModel;
+use App\CustomField\CustomFieldTargetEnum;
+use App\CustomField\CustomFieldTypeEnum;
 use App\Location\LocationEloquentModel;
 use App\User\UserEloquentModel;
 
@@ -41,4 +44,22 @@ it("returns not found for another team's customer", function (): void {
         ->assertNotFound();
 
     expect(LocationEloquentModel::query()->withoutGlobalScopes()->exists())->toBeFalse();
+});
+
+it('adds a location with its custom field values, rejecting one of the wrong type', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $team = ['team_id' => $user->current_team_id];
+    $customer = CustomerEloquentModel::factory()->create($team);
+    $text = CustomFieldEloquentModel::factory()->on(CustomFieldTargetEnum::Location)->create($team);
+    $number = CustomFieldEloquentModel::factory()->on(CustomFieldTargetEnum::Location)->ofType(CustomFieldTypeEnum::Number)->create([...$team, 'name' => 'Count']);
+
+    Pest\Laravel\actingAs($user)
+        ->post(route('locations.store', $customer->id), ['name' => 'Head office', 'custom_fields' => [$number->id => 'many']])
+        ->assertSessionHasErrors(["custom_fields.{$number->id}" => 'The Count field must be a number.']);
+
+    Pest\Laravel\actingAs($user)
+        ->post(route('locations.store', $customer->id), ['name' => 'Head office', 'custom_fields' => [$text->id => 'North', $number->id => '2']])
+        ->assertSessionHasNoErrors();
+
+    expect(LocationEloquentModel::query()->withoutGlobalScopes()->sole()->custom_fields)->toEqual([$text->id => 'North', $number->id => 2]);
 });

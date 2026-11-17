@@ -5,6 +5,8 @@ declare(strict_types=1);
 use App\Asset\AssetEloquentModel;
 use App\Choice\ChoiceEloquentModel;
 use App\Customer\CustomerEloquentModel;
+use App\CustomField\CustomFieldEloquentModel;
+use App\CustomField\CustomFieldTargetEnum;
 use App\User\UserEloquentModel;
 
 use function Pest\Laravel\actingAs;
@@ -54,4 +56,18 @@ it("rejects another team's label", function (): void {
     actingAs($user)
         ->put(route('assets.update', $asset->id), ['name' => 'Reception PC', 'status' => 'active', 'label_ids' => [ChoiceEloquentModel::factory()->label()->create()->id]])
         ->assertSessionHasErrors('label_ids.0');
+});
+
+it('changes a asset custom field value, keeping the ones not sent', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $team = ['team_id' => $user->current_team_id];
+    $kept = CustomFieldEloquentModel::factory()->on(CustomFieldTargetEnum::Asset)->create($team);
+    $set = CustomFieldEloquentModel::factory()->on(CustomFieldTargetEnum::Asset)->create($team);
+    $asset = AssetEloquentModel::factory()->create([...$team, 'customer_id' => CustomerEloquentModel::factory()->create($team)->id, 'custom_fields' => [$kept->id => 'kept']]);
+
+    Pest\Laravel\actingAs($user)
+        ->put(route('assets.update', $asset->id), ['name' => 'Reception PC', 'status' => 'active', 'custom_fields' => [$set->id => 'new']])
+        ->assertSessionHasNoErrors();
+
+    expect($asset->fresh()->custom_fields)->toEqual([$kept->id => 'kept', $set->id => 'new']);
 });

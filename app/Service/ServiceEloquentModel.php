@@ -7,6 +7,7 @@ namespace App\Service;
 use App\AuditLog\AuditObserver;
 use App\AuditLog\Contracts\Auditable;
 use App\Customer\CustomerEloquentModel;
+use App\CustomField\Properties\CustomFieldValues;
 use App\Location\LocationEloquentModel;
 use App\Service\Factories\ServiceFactory;
 use App\Service\Properties\BillingPeriodInMonths;
@@ -99,6 +100,7 @@ final class ServiceEloquentModel extends Model implements Auditable
     protected function casts(): array
     {
         return [
+            CustomFieldValues::getDatabaseTableColumnName() => 'array',
             Quantity::getDatabaseTableColumnName() => 'integer',
             UnitPriceInCents::getDatabaseTableColumnName() => 'integer',
             BillingPeriodInMonths::getDatabaseTableColumnName() => 'integer',

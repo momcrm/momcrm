@@ -75,6 +75,9 @@ const relationNouns: Record<CustomFieldRelation, string> = {
     contact: 'a contact',
     ticket: 'a ticket',
     project: 'a project',
+    asset: 'an asset',
+    location: 'a location',
+    service: 'a service',
     record: 'a record',
 };
 

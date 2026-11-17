@@ -7,6 +7,7 @@ namespace App\Location;
 use App\AuditLog\AuditObserver;
 use App\AuditLog\Contracts\Auditable;
 use App\Customer\CustomerEloquentModel;
+use App\CustomField\Properties\CustomFieldValues;
 use App\Location\Factories\LocationFactory;
 use App\Location\Properties\CustomerId;
 use App\Location\Properties\Id;
@@ -80,6 +81,7 @@ final class LocationEloquentModel extends Model implements Auditable
     protected function casts(): array
     {
         return [
+            CustomFieldValues::getDatabaseTableColumnName() => 'array',
             IsPrimary::getDatabaseTableColumnName() => 'boolean',
         ];
     }

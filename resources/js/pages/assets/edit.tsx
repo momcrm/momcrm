@@ -1,4 +1,5 @@
 import { Head, Link, setLayoutProps } from '@inertiajs/react';
+import LinkedRecords from '@/components/custom-fields/linked-records';
 import { KeyRound } from 'lucide-react';
 import ConfirmDelete from '@/components/confirm-delete';
 import PageHeader from '@/components/page-header';
@@ -15,12 +16,14 @@ import type {
     Asset,
     Customer,
     CustomerOption,
+    LinkedRecordGroup,
     Option,
     SecretItem,
 } from '@/types';
 
 export default function EditAsset({
     can,
+    linkedRecords,
     asset,
     customer,
     statuses,
@@ -29,6 +32,8 @@ export default function EditAsset({
 }: {
     secrets: SecretItem[];
     can: Abilities;
+    /** What points at this record through record-link custom fields. */
+    linkedRecords: LinkedRecordGroup[];
     asset: Asset;
     customer: Customer;
     statuses: Option[];
@@ -103,6 +108,9 @@ export default function EditAsset({
                         </p>
                     )}
                 </section>
+                <div className="max-w-2xl">
+                    <LinkedRecords groups={linkedRecords} />
+                </div>
             </div>
         </>
     );

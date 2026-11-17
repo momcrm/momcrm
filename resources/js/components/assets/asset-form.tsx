@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import CustomFieldsFormFields from '@/components/custom-fields/custom-fields-form';
 import FormField from '@/components/form-field';
 import { LabelField } from '@/components/labels';
 import NativeSelect from '@/components/native-select';
@@ -107,6 +108,14 @@ export default function AssetForm({
                         onChange={setLabelIds}
                         error={errors.label_ids ?? errors['label_ids.0']}
                     />
+
+                    <div className="grid gap-6 empty:hidden sm:grid-cols-2">
+                        <CustomFieldsFormFields
+                            target="asset"
+                            values={asset?.custom_fields}
+                            errors={errors}
+                        />
+                    </div>
 
                     <div className="flex items-center gap-2">
                         <Button
