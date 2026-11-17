@@ -210,6 +210,8 @@ export type RecordItem = {
     number: number;
     name: string;
     custom_fields: CustomFieldValues;
+    /** Names of the records the record's links point at, by id (in lists). */
+    custom_field_labels?: Record<string, string>;
     created_at: string | null;
     updated_at: string | null;
 };
@@ -217,7 +219,13 @@ export type RecordItem = {
 /**
  * The kinds of record a team can add its own fields to.
  */
-export type CustomFieldTarget = 'ticket' | 'customer' | 'contact' | 'project';
+export type CustomFieldTarget =
+    | 'ticket'
+    | 'customer'
+    | 'contact'
+    | 'project'
+    /** Records of a custom object; the field's `object_id` says which. */
+    | 'record';
 
 export type CustomFieldType =
     | 'text'
@@ -248,6 +256,8 @@ export type CustomFieldOption = {
 export type CustomField = {
     id: string;
     target: CustomFieldTarget;
+    /** The custom object the field is on; null for a built-in kind of record. */
+    object_id: string | null;
     type: CustomFieldType;
     /** What a record link points at; null for every other type. */
     relation: CustomFieldRelation | null;

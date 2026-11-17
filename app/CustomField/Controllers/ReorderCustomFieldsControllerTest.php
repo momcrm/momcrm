@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\CustomField\Actions\FindCustomField;
 use App\CustomField\CustomFieldEloquentModel;
 use App\CustomField\CustomFieldTargetEnum;
+use App\CustomObject\CustomObjectEloquentModel;
 use App\User\UserEloquentModel;
 
 use function Pest\Laravel\actingAs;
@@ -39,4 +40,23 @@ it('forbids members', function (): void {
     actingAs($member)
         ->put(route('custom-fields.reorder'), ['target' => 'ticket', 'ids' => [$field->id]])
         ->assertForbidden();
+});
+
+it("reorders one custom object's fields, and not another's", function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $vehicles = CustomObjectEloquentModel::factory()->create(['team_id' => $owner->current_team_id]);
+    $licences = CustomObjectEloquentModel::factory()->create(['team_id' => $owner->current_team_id]);
+    $first = CustomFieldEloquentModel::factory()->forObject($vehicles)->create(['position' => 0]);
+    $second = CustomFieldEloquentModel::factory()->forObject($vehicles)->create(['position' => 1]);
+    $other = CustomFieldEloquentModel::factory()->forObject($licences)->create();
+
+    actingAs($owner)
+        ->put(route('custom-fields.reorder'), ['target' => 'record', 'object_id' => $vehicles->id, 'ids' => [$second->id, $first->id]])
+        ->assertSessionHasNoErrors();
+
+    expect(FindCustomField::listForTeam($owner->current_team_id, CustomFieldTargetEnum::Record, objectId: $vehicles->id)->ids())->toBe([$second->id, $first->id]);
+
+    actingAs($owner)
+        ->put(route('custom-fields.reorder'), ['target' => 'record', 'object_id' => $vehicles->id, 'ids' => [$other->id]])
+        ->assertSessionHasErrors('ids.0');
 });

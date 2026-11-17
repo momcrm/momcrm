@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Record\FormRequests;
 
+use App\CustomField\CustomFieldTargetEnum;
+use App\CustomField\CustomFieldValueRules;
+use App\CustomField\Properties\CustomFieldValues;
 use App\CustomObject\CustomObject;
 use App\CustomObject\Exceptions\CouldNotFindCustomObject;
 use App\Record\Actions\CreateRecord;
@@ -47,7 +50,16 @@ final class StoreRecordFormRequest extends FormRequest
     {
         return [
             Name::getNameForValidation() => Name::getValidationRulesForCreate($this),
+            ...CustomFieldValueRules::for($this->object->getTeamId()->toString(), CustomFieldTargetEnum::Record, objectId: $this->object->getId()->toString()),
         ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function attributes(): array
+    {
+        return CustomFieldValueRules::attributes($this->object->getTeamId()->toString(), CustomFieldTargetEnum::Record, $this->object->getId()->toString());
     }
 
     public function process(): RedirectResponse
@@ -55,6 +67,13 @@ final class StoreRecordFormRequest extends FormRequest
         $record = CreateRecord::fromRecord(
             RecordAccess::blank($this->object)
                 ->setName($this->string(Name::getNameForValidation())->trim()->toString())
+                ->setCustomFields(CustomFieldValueRules::merge(
+                    $this->object->getTeamId()->toString(),
+                    CustomFieldTargetEnum::Record,
+                    new CustomFieldValues(null),
+                    $this->validated(CustomFieldValues::getNameForValidation(), []),
+                    $this->object->getId()->toString(),
+                ))
                 ->setCreatedById((string) $this->user()?->id),
         );
 

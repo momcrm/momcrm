@@ -11,6 +11,7 @@ use App\CustomField\CustomFieldValidationRules;
 use App\CustomField\Exceptions\CouldNotFindCustomField;
 use App\CustomField\Properties\Description;
 use App\CustomField\Properties\Name;
+use App\CustomField\Properties\ObjectId;
 use App\CustomField\Properties\Options;
 use App\CustomField\Properties\Target;
 use App\Shared\Table;
@@ -58,6 +59,7 @@ final class UpdateCustomFieldFormRequest extends FormRequest
                 Rule::unique(Table::CustomFields->value, Name::getDatabaseTableColumnName())
                     ->where('team_id', $this->field->getTeamId()->toString())
                     ->where(Target::getDatabaseTableColumnName(), $this->field->getTarget()->toEnum()->value)
+                    ->where(ObjectId::getDatabaseTableColumnName(), $this->field->getObjectId()->toNullableString())
                     ->ignore($this->field->getId()->toString()),
             ],
             Description::getNameForValidation() => ['sometimes', ...Description::getValidationRulesForCreate($this)],

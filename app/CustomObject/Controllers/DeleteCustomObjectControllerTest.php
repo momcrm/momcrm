@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\AccessRule\AccessRuleEloquentModel;
+use App\CustomField\CustomFieldEloquentModel;
 use App\CustomObject\CustomObjectEloquentModel;
 use App\Record\RecordEloquentModel;
 use App\User\UserEloquentModel;
@@ -58,4 +59,14 @@ it('takes its records with it, and comes out of the access rules that named it',
 
     expect(RecordEloquentModel::query()->withoutGlobalScopes()->find($record->id))->toBeNull()
         ->and($rule->fresh()->conditions)->toEqual([['attribute' => 'record.object', 'operator' => 'in', 'value' => [$kept->id]]]);
+});
+
+it('takes its fields with it', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $object = CustomObjectEloquentModel::factory()->archived()->create(['team_id' => $owner->current_team_id]);
+    $field = CustomFieldEloquentModel::factory()->forObject($object)->create();
+
+    actingAs($owner)->delete(route('custom-objects.destroy', $object))->assertSessionHasNoErrors();
+
+    expect(CustomFieldEloquentModel::query()->withoutGlobalScopes()->find($field->id))->toBeNull();
 });

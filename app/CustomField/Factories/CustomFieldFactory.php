@@ -10,12 +10,14 @@ use App\CustomField\CustomFieldTargetEnum;
 use App\CustomField\CustomFieldTypeEnum;
 use App\CustomField\Properties\ArchivedAt;
 use App\CustomField\Properties\Name;
+use App\CustomField\Properties\ObjectId;
 use App\CustomField\Properties\Options;
 use App\CustomField\Properties\Position;
 use App\CustomField\Properties\Relation;
 use App\CustomField\Properties\Target;
 use App\CustomField\Properties\TeamId;
 use App\CustomField\Properties\Type;
+use App\CustomObject\CustomObjectEloquentModel;
 use App\Team\TeamEloquentModel;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
@@ -67,6 +69,18 @@ final class CustomFieldFactory extends Factory
                 fn (string $name): array => ['id' => (string) Str::uuid7(), 'name' => $name, 'hue' => null],
                 $names,
             ),
+        ]);
+    }
+
+    /**
+     * A field on the records of a custom object, in the object's team.
+     */
+    public function forObject(CustomObjectEloquentModel $object): self
+    {
+        return $this->state([
+            Target::getDatabaseTableColumnName() => CustomFieldTargetEnum::Record->value,
+            ObjectId::getDatabaseTableColumnName() => $object->id,
+            TeamId::getDatabaseTableColumnName() => $object->team_id,
         ]);
     }
 

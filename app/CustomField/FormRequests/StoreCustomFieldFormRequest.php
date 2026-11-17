@@ -14,6 +14,7 @@ use App\CustomField\CustomFieldTypeEnum;
 use App\CustomField\CustomFieldValidationRules;
 use App\CustomField\Properties\Description;
 use App\CustomField\Properties\Name;
+use App\CustomField\Properties\ObjectId;
 use App\CustomField\Properties\Options;
 use App\CustomField\Properties\Relation;
 use App\CustomField\Properties\Target;
@@ -51,8 +52,12 @@ final class StoreCustomFieldFormRequest extends FormRequest
                 ...Name::getValidationRulesForCreate($this),
                 Rule::unique(Table::CustomFields->value, Name::getDatabaseTableColumnName())
                     ->where('team_id', $this->user()?->current_team_id)
-                    ->where(Target::getDatabaseTableColumnName(), $this->string(Target::getNameForValidation())->toString()),
+                    ->where(Target::getDatabaseTableColumnName(), $this->string(Target::getNameForValidation())->toString())
+                    ->where(ObjectId::getDatabaseTableColumnName(), $this->objectId()),
             ],
+            ObjectId::getNameForValidation() => $this->string(Target::getNameForValidation())->toString() === CustomFieldTargetEnum::Record->value
+                ? ['required', 'uuid', Rule::exists(Table::CustomObjects->value, 'id')->where('team_id', $this->user()?->current_team_id)]
+                : ['prohibited'],
             Relation::getNameForValidation() => $this->string(Type::getNameForValidation())->toString() === CustomFieldTypeEnum::Relation->value
                 ? ['required', Rule::enum(CustomFieldRelationEnum::class)]
                 : ['prohibited'],
@@ -69,6 +74,9 @@ final class StoreCustomFieldFormRequest extends FormRequest
         return [
             Name::getNameForValidation().'.unique' => __('A field with that name already exists here, or in the archive.'),
             Relation::getNameForValidation().'.required' => __('Choose what the field links to.'),
+            ObjectId::getNameForValidation().'.required' => __('Choose the object the field is for.'),
+            ObjectId::getNameForValidation().'.exists' => __('Choose one of your objects.'),
+            ObjectId::getNameForValidation().'.prohibited' => __('Only fields on custom objects name an object.'),
             Relation::getNameForValidation().'.prohibited' => __('Only record links say what they link to.'),
             ...CustomFieldValidationRules::messages(),
         ];
@@ -79,7 +87,7 @@ final class StoreCustomFieldFormRequest extends FormRequest
         $teamId = (string) $this->user()?->current_team_id;
         $target = CustomFieldTargetEnum::from($this->string(Target::getNameForValidation())->toString());
         $type = CustomFieldTypeEnum::from($this->string(Type::getNameForValidation())->toString());
-        $lastPosition = FindCustomField::listForTeam($teamId, $target, withArchived: true)
+        $lastPosition = FindCustomField::listForTeam($teamId, $target, withArchived: true, objectId: $this->objectId())
             ->map(fn (CustomField $field): int => $field->getPosition()->toInteger())
             ->max();
 
@@ -87,6 +95,7 @@ final class StoreCustomFieldFormRequest extends FormRequest
             CustomField::new()
                 ->setTeamId($teamId)
                 ->setTarget($target)
+                ->setObjectId($this->objectId())
                 ->setType($type)
                 ->setRelation($type === CustomFieldTypeEnum::Relation ? $this->input(Relation::getNameForValidation()) : null)
                 ->setName($this->string(Name::getNameForValidation())->trim()->toString())
@@ -98,5 +107,15 @@ final class StoreCustomFieldFormRequest extends FormRequest
         Inertia::flash('toast', ['type' => 'success', 'message' => __(':name added.', ['name' => $field->getName()->toString()])]);
 
         return back();
+    }
+
+    /**
+     * The custom object the field is for, when it is for one.
+     */
+    private function objectId(): ?string
+    {
+        return $this->string(Target::getNameForValidation())->toString() === CustomFieldTargetEnum::Record->value
+            ? $this->string(ObjectId::getNameForValidation())->toString()
+            : null;
     }
 }

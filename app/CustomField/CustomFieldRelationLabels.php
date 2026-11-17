@@ -22,9 +22,29 @@ final class CustomFieldRelationLabels
      */
     public static function for(string $teamId, CustomFieldTargetEnum $target, array ...$valueMaps): array
     {
+        return self::forFields($teamId, FindCustomField::listForTeam($teamId, $target), $valueMaps);
+    }
+
+    /**
+     * The same, for records of one custom object.
+     *
+     * @param  array<string, mixed>  ...$valueMaps
+     * @return array<string, string>
+     */
+    public static function forObject(string $teamId, string $objectId, array ...$valueMaps): array
+    {
+        return self::forFields($teamId, FindCustomField::listForTeam($teamId, CustomFieldTargetEnum::Record, objectId: $objectId), $valueMaps);
+    }
+
+    /**
+     * @param  array<array-key, array<string, mixed>>  $valueMaps
+     * @return array<string, string>
+     */
+    private static function forFields(string $teamId, CustomFieldCollection $fields, array $valueMaps): array
+    {
         $idsByRelation = [];
 
-        foreach (FindCustomField::listForTeam($teamId, $target) as $field) {
+        foreach ($fields as $field) {
             $relation = $field->getRelation()->toNullableEnum();
 
             if ($relation === null) {

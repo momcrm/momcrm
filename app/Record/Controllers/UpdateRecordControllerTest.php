@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\CustomField\CustomFieldEloquentModel;
+use App\CustomField\CustomFieldTypeEnum;
 use App\CustomObject\CustomObjectEloquentModel;
 use App\Record\RecordEloquentModel;
 use App\User\UserEloquentModel;
@@ -44,4 +46,18 @@ it('finds no record to change under another object, or in another team', functio
 
     expect($licence->fresh()->name)->toBe('Licence')
         ->and(RecordEloquentModel::query()->withoutGlobalScopes()->find($foreign->id)->name)->toBe('Theirs');
+});
+
+it("changes one field's value, leaving the others and the name as they are", function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create(['onboarded_at' => now()]);
+    $vehicles = CustomObjectEloquentModel::factory()->create(['team_id' => $owner->current_team_id]);
+    $plate = CustomFieldEloquentModel::factory()->forObject($vehicles)->create();
+    $leased = CustomFieldEloquentModel::factory()->forObject($vehicles)->ofType(CustomFieldTypeEnum::Checkbox)->create();
+    $record = RecordEloquentModel::factory()->of($vehicles)->create(['name' => 'Van', 'custom_fields' => [$plate->id => 'ABC 123']]);
+
+    actingAs($owner)
+        ->patch(route('records.update', [$vehicles, $record]), ['custom_fields' => [$leased->id => true]])
+        ->assertSessionHasNoErrors();
+
+    expect($record->fresh())->name->toBe('Van')->custom_fields->toEqual([$plate->id => 'ABC 123', $leased->id => true]);
 });

@@ -10,6 +10,7 @@ use App\CustomField\Properties\CreatedAt;
 use App\CustomField\Properties\Description;
 use App\CustomField\Properties\Id;
 use App\CustomField\Properties\Name;
+use App\CustomField\Properties\ObjectId;
 use App\CustomField\Properties\Options;
 use App\CustomField\Properties\Position;
 use App\CustomField\Properties\Relation;
@@ -35,6 +36,7 @@ final class CustomField extends AbstractData
         public Description $description,
         public Id $id,
         public Name $name,
+        public ObjectId $objectId,
         public Options $options,
         public Position $position,
         public Relation $relation,
@@ -69,13 +71,14 @@ final class CustomField extends AbstractData
     /**
      * The fields the frontend needs to show the field and its input.
      *
-     * @return array{id: string, target: string, type: string, relation: ?string, name: string, description: ?string, options: list<array{id: string, name: string, hue: ?int}>, position: int, is_archived: bool}
+     * @return array{id: string, target: string, object_id: ?string, type: string, relation: ?string, name: string, description: ?string, options: list<array{id: string, name: string, hue: ?int}>, position: int, is_archived: bool}
      */
     public function toSummary(): array
     {
         return [
             'id' => $this->getId()->toString(),
             'target' => $this->getTarget()->toEnum()->value,
+            'object_id' => $this->getObjectId()->toNullableString(),
             'type' => $this->getType()->toEnum()->value,
             'relation' => $this->getRelation()->toNullableEnum()?->value,
             'name' => $this->getName()->toString(),
@@ -140,6 +143,18 @@ final class CustomField extends AbstractData
     public function setName(mixed $name): self
     {
         $this->name = new Name($name instanceof AbstractValue ? $name->toValue() : $name);
+
+        return $this;
+    }
+
+    public function getObjectId(): ObjectId
+    {
+        return $this->objectId;
+    }
+
+    public function setObjectId(mixed $objectId): self
+    {
+        $this->objectId = new ObjectId($objectId instanceof AbstractValue ? $objectId->toValue() : $objectId);
 
         return $this;
     }

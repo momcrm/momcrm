@@ -1,21 +1,26 @@
 import { Head, router, setLayoutProps } from '@inertiajs/react';
+import { Fragment } from 'react';
 import { toast } from 'sonner';
 import ConfirmDelete from '@/components/confirm-delete';
+import { InlineCustomFieldInput } from '@/components/custom-fields/custom-field-input';
+import { CustomFieldValueView } from '@/components/custom-fields/custom-fields-form';
 import { ObjectIcon } from '@/components/custom-objects/object-icon';
 import { timeAgo } from '@/lib/format';
 import { destroy, index, show, update } from '@/routes/records';
-import type { Abilities, CustomObject, RecordItem } from '@/types';
+import type { Abilities, CustomField, CustomObject, RecordItem } from '@/types';
 
 /**
- * One record of a custom object. Its name is edited in place and saves as
- * soon as it changes.
+ * One record of a custom object. Its name and its object's fields are edited
+ * in place and save as soon as they change.
  */
 export default function ObjectRecord({
     object,
+    fields,
     record,
     can,
 }: {
     object: CustomObject;
+    fields: CustomField[];
     record: RecordItem;
     can: Abilities;
 }) {
@@ -89,11 +94,53 @@ export default function ObjectRecord({
                 </header>
 
                 <section className="rounded-lg border bg-card p-4 shadow-xs">
-                    <dl className="grid grid-cols-[7.5rem_minmax(0,1fr)] items-center gap-x-3 gap-y-2 text-sm">
+                    <dl className="grid grid-cols-[9rem_minmax(0,1fr)] items-center gap-x-3 gap-y-1 text-sm">
+                        {fields.map((field) => (
+                            <Fragment key={field.id}>
+                                <dt
+                                    className="truncate text-muted-foreground"
+                                    title={field.description ?? undefined}
+                                >
+                                    {field.name}
+                                </dt>
+                                <dd className="min-w-0">
+                                    {can.update ? (
+                                        <InlineCustomFieldInput
+                                            field={field}
+                                            value={
+                                                record.custom_fields[field.id]
+                                            }
+                                            onChange={(value) =>
+                                                save({
+                                                    custom_fields: {
+                                                        [field.id]: value,
+                                                    },
+                                                })
+                                            }
+                                        />
+                                    ) : (
+                                        <span className="flex h-8 items-center px-2">
+                                            <CustomFieldValueView
+                                                field={field}
+                                                value={
+                                                    record.custom_fields[
+                                                        field.id
+                                                    ]
+                                                }
+                                            />
+                                        </span>
+                                    )}
+                                </dd>
+                            </Fragment>
+                        ))}
                         <dt className="text-muted-foreground">Added</dt>
-                        <dd>{timeAgo(record.created_at)}</dd>
+                        <dd className="flex h-8 items-center px-2">
+                            {timeAgo(record.created_at)}
+                        </dd>
                         <dt className="text-muted-foreground">Updated</dt>
-                        <dd>{timeAgo(record.updated_at)}</dd>
+                        <dd className="flex h-8 items-center px-2">
+                            {timeAgo(record.updated_at)}
+                        </dd>
                     </dl>
                 </section>
             </div>
