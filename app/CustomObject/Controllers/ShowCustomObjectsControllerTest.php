@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
+use App\CustomField\CustomFieldEloquentModel;
 use App\CustomObject\CustomObjectEloquentModel;
+use App\CustomObject\StandardObjectEnum;
 use App\User\UserEloquentModel;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -34,4 +36,24 @@ it('forbids members', function (): void {
     $member = UserEloquentModel::factory()->inTeam($owner->current_team_id)->create();
 
     actingAs($member)->get(route('custom-objects.edit'))->assertForbidden();
+});
+
+it('lists the built-in objects before the team\'s own, each with how many custom fields it has', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $teamId = $owner->current_team_id;
+    $vehicles = CustomObjectEloquentModel::factory()->create(['team_id' => $teamId]);
+    CustomFieldEloquentModel::factory()->count(2)->create(['team_id' => $teamId]);
+    CustomFieldEloquentModel::factory()->archived()->create(['team_id' => $teamId]);
+    CustomFieldEloquentModel::factory()->forObject($vehicles)->create();
+    CustomFieldEloquentModel::factory()->create();
+
+    actingAs($owner)
+        ->get(route('custom-objects.edit'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('standardObjects', count(StandardObjectEnum::cases()))
+            ->where('standardObjects.0', ['key' => 'ticket', 'label' => 'Tickets', 'icon' => 'ticket', 'fields_count' => 15, 'custom_fields_count' => 2])
+            ->where('standardObjects.1.key', 'customer')
+            ->where('standardObjects.1.custom_fields_count', 0)
+            ->where('objects.0.custom_fields_count', 1),
+        );
 });
