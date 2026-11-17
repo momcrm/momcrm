@@ -4,10 +4,17 @@ import { toast } from 'sonner';
 import ConfirmDelete from '@/components/confirm-delete';
 import { InlineCustomFieldInput } from '@/components/custom-fields/custom-field-input';
 import { CustomFieldValueView } from '@/components/custom-fields/custom-fields-form';
+import LinkedRecords from '@/components/custom-fields/linked-records';
 import { ObjectIcon } from '@/components/custom-objects/object-icon';
 import { timeAgo } from '@/lib/format';
 import { destroy, index, show, update } from '@/routes/records';
-import type { Abilities, CustomField, CustomObject, RecordItem } from '@/types';
+import type {
+    Abilities,
+    CustomField,
+    CustomObject,
+    LinkedRecordGroup,
+    RecordItem,
+} from '@/types';
 
 /**
  * One record of a custom object. Its name and its object's fields are edited
@@ -17,11 +24,13 @@ export default function ObjectRecord({
     object,
     fields,
     record,
+    linkedRecords,
     can,
 }: {
     object: CustomObject;
     fields: CustomField[];
     record: RecordItem;
+    linkedRecords: LinkedRecordGroup[];
     can: Abilities;
 }) {
     setLayoutProps({
@@ -143,6 +152,8 @@ export default function ObjectRecord({
                         </dd>
                     </dl>
                 </section>
+
+                <LinkedRecords groups={linkedRecords} />
             </div>
         </>
     );

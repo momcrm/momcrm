@@ -7,6 +7,8 @@ namespace App\Record\Controllers;
 use App\AccessRule\AccessResourceEnum;
 use App\AccessRule\Engine\AccessAbilities;
 use App\CustomField\Actions\FindCustomField;
+use App\CustomField\Actions\FindLinkedRecords;
+use App\CustomField\CustomFieldRelationEnum;
 use App\CustomField\CustomFieldRelationLabels;
 use App\CustomField\CustomFieldTargetEnum;
 use App\CustomObject\Exceptions\CouldNotFindCustomObject;
@@ -35,6 +37,7 @@ final class ShowRecordController
             'fields' => FindCustomField::listForTeam($object->getTeamId()->toString(), CustomFieldTargetEnum::Record, objectId: $object->getId()->toString())->toSummaries(),
             'record' => $record->toSummary(),
             'customFieldLabels' => CustomFieldRelationLabels::forObject($object->getTeamId()->toString(), $object->getId()->toString(), $record->getCustomFields()->toValues()),
+            'linkedRecords' => FindLinkedRecords::to($object->getTeamId()->toString(), (string) $request->user()?->id, CustomFieldRelationEnum::Record, $record->getId()->toString(), $object->getId()->toString()),
             'can' => AccessAbilities::for($request->user(), AccessResourceEnum::Record, $record),
         ]);
     }

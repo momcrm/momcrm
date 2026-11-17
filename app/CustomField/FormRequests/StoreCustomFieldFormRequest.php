@@ -17,6 +17,7 @@ use App\CustomField\Properties\Name;
 use App\CustomField\Properties\ObjectId;
 use App\CustomField\Properties\Options;
 use App\CustomField\Properties\Relation;
+use App\CustomField\Properties\RelationObjectId;
 use App\CustomField\Properties\Target;
 use App\CustomField\Properties\Type;
 use App\Shared\Table;
@@ -61,6 +62,9 @@ final class StoreCustomFieldFormRequest extends FormRequest
             Relation::getNameForValidation() => $this->string(Type::getNameForValidation())->toString() === CustomFieldTypeEnum::Relation->value
                 ? ['required', Rule::enum(CustomFieldRelationEnum::class)]
                 : ['prohibited'],
+            RelationObjectId::getNameForValidation() => $this->string(Relation::getNameForValidation())->toString() === CustomFieldRelationEnum::Record->value
+                ? ['required', 'uuid', Rule::exists(Table::CustomObjects->value, 'id')->where('team_id', $this->user()?->current_team_id)->whereNull('archived_at')]
+                : ['prohibited'],
             Description::getNameForValidation() => Description::getValidationRulesForCreate($this),
             ...CustomFieldValidationRules::options(CustomFieldTypeEnum::tryFrom($this->string(Type::getNameForValidation())->toString())),
         ];
@@ -74,6 +78,9 @@ final class StoreCustomFieldFormRequest extends FormRequest
         return [
             Name::getNameForValidation().'.unique' => __('A field with that name already exists here, or in the archive.'),
             Relation::getNameForValidation().'.required' => __('Choose what the field links to.'),
+            RelationObjectId::getNameForValidation().'.required' => __('Choose the object the field links to.'),
+            RelationObjectId::getNameForValidation().'.exists' => __('Choose one of your objects to link to.'),
+            RelationObjectId::getNameForValidation().'.prohibited' => __('Only links to a custom object name one.'),
             ObjectId::getNameForValidation().'.required' => __('Choose the object the field is for.'),
             ObjectId::getNameForValidation().'.exists' => __('Choose one of your objects.'),
             ObjectId::getNameForValidation().'.prohibited' => __('Only fields on custom objects name an object.'),
@@ -98,6 +105,7 @@ final class StoreCustomFieldFormRequest extends FormRequest
                 ->setObjectId($this->objectId())
                 ->setType($type)
                 ->setRelation($type === CustomFieldTypeEnum::Relation ? $this->input(Relation::getNameForValidation()) : null)
+                ->setRelationObjectId($type === CustomFieldTypeEnum::Relation ? $this->input(RelationObjectId::getNameForValidation()) : null)
                 ->setName($this->string(Name::getNameForValidation())->trim()->toString())
                 ->setDescription($this->input(Description::getNameForValidation()))
                 ->setOptions($type->hasOptions() ? CustomFieldValidationRules::normalizeOptions($this->validated(Options::getNameForValidation())) : [])

@@ -6,6 +6,8 @@ use App\Contact\ContactEloquentModel;
 use App\Customer\CustomerEloquentModel;
 use App\CustomField\CustomFieldEloquentModel;
 use App\CustomField\CustomFieldRelationEnum;
+use App\CustomObject\CustomObjectEloquentModel;
+use App\Record\RecordEloquentModel;
 use App\User\UserEloquentModel;
 
 use function Pest\Laravel\actingAs;
@@ -58,4 +60,17 @@ it("finds no records for a field that is not a record link, or is another team's
 
     actingAs($owner)->getJson(route('custom-fields.records', $text->id))->assertNotFound();
     actingAs($owner)->getJson(route('custom-fields.records', $foreign->id))->assertNotFound();
+});
+
+it("lists the records of the custom object a field links to, and no other object's", function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $teamId = $owner->current_team_id;
+    $vehicles = CustomObjectEloquentModel::factory()->create(['team_id' => $teamId]);
+    $field = CustomFieldEloquentModel::factory()->linkingToObject($vehicles)->create(['team_id' => $teamId]);
+    $van = RecordEloquentModel::factory()->of($vehicles)->create(['name' => 'Van']);
+    RecordEloquentModel::factory()->of(CustomObjectEloquentModel::factory()->create(['team_id' => $teamId]))->create(['name' => 'Van licence']);
+
+    actingAs($owner)
+        ->getJson(route('custom-fields.records', ['customField' => $field->id, 'search' => 'van']))
+        ->assertExactJson(['records' => [['value' => $van->id, 'label' => 'Van']]]);
 });

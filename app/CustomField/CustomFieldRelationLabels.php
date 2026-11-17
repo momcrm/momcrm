@@ -42,7 +42,7 @@ final class CustomFieldRelationLabels
      */
     private static function forFields(string $teamId, CustomFieldCollection $fields, array $valueMaps): array
     {
-        $idsByRelation = [];
+        $idsByKind = [];
 
         foreach ($fields as $field) {
             $relation = $field->getRelation()->toNullableEnum();
@@ -51,19 +51,24 @@ final class CustomFieldRelationLabels
                 continue;
             }
 
+            // Links to different custom objects are looked up separately.
+            $kind = $relation->value.':'.$field->getRelationObjectId()->toNullableString();
+
             foreach ($valueMaps as $values) {
                 $id = $values[$field->getId()->toString()] ?? null;
 
                 if (is_string($id)) {
-                    $idsByRelation[$relation->value][$id] = $id;
+                    $idsByKind[$kind][$id] = $id;
                 }
             }
         }
 
         $names = [];
 
-        foreach ($idsByRelation as $relation => $ids) {
-            $names += CustomFieldRelationEnum::from($relation)->names($teamId, array_values($ids));
+        foreach ($idsByKind as $kind => $ids) {
+            [$relation, $objectId] = explode(':', $kind, 2);
+
+            $names += CustomFieldRelationEnum::from($relation)->names($teamId, array_values($ids), $objectId === '' ? null : $objectId);
         }
 
         return $names;

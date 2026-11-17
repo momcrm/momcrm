@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 use App\Contract\ContractEloquentModel;
 use App\Customer\CustomerEloquentModel;
+use App\CustomField\CustomFieldEloquentModel;
+use App\CustomField\CustomFieldRelationEnum;
+use App\CustomField\CustomFieldTargetEnum;
 use App\Invoice\InvoiceEloquentModel;
 use App\InvoiceItem\InvoiceItemEloquentModel;
 use App\Service\ServiceEloquentModel;
@@ -81,5 +84,22 @@ it('lists active contracts that end within 30 days', function (): void {
         ->assertInertia(fn (Assert $page) => $page
             ->has('expiringContracts', 1)
             ->where('expiringContracts.0.title', 'Ending soon'),
+        );
+});
+
+it('lists what links to the customer through record-link fields', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create(['onboarded_at' => now()]);
+    $team = ['team_id' => $user->current_team_id];
+    $acme = CustomerEloquentModel::factory()->create($team);
+    $parent = CustomFieldEloquentModel::factory()->on(CustomFieldTargetEnum::Customer)->linkingTo(CustomFieldRelationEnum::Customer)->create([...$team, 'name' => 'Parent company']);
+    $child = CustomerEloquentModel::factory()->create([...$team, 'name' => 'Acme Retail', 'custom_fields' => [$parent->id => $acme->id]]);
+
+    actingAs($user)
+        ->get(route('customers.show', $acme->id))
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('linkedRecords', 1)
+            ->where('linkedRecords.0.source', 'Customers')
+            ->where('linkedRecords.0.field', 'Parent company')
+            ->where('linkedRecords.0.records.0.title', 'Acme Retail'),
         );
 });

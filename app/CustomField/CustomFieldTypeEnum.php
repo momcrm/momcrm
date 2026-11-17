@@ -92,7 +92,7 @@ enum CustomFieldTypeEnum: string
                 '.*' => ['string', 'distinct', Rule::in($allowed)],
             ],
             self::Relation => ['' => ['nullable', 'uuid', function (string $attribute, mixed $value, Closure $fail) use ($field, $teamId, $current): void {
-                if ($value !== $current && (! is_string($value) || $field->getRelation()->toEnum()->names($teamId, [$value]) === [])) {
+                if ($value !== $current && (! is_string($value) || $field->getRelation()->toEnum()->names($teamId, [$value], $field->getRelationObjectId()->toNullableString()) === [])) {
                     $fail(__('validation.exists'));
                 }
             }]],

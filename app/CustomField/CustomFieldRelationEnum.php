@@ -7,6 +7,7 @@ namespace App\CustomField;
 use App\Contact\Properties\FirstName;
 use App\Contact\Properties\LastName;
 use App\Customer\Properties\Name as CustomerName;
+use App\Record\Properties\Name as RecordName;
 use App\Shared\Table;
 use App\Shared\Traits\Enum;
 use App\Shared\Traits\EnumOptions;
@@ -29,6 +30,7 @@ enum CustomFieldRelationEnum: string
     case Member = 'member';
     case Customer = 'customer';
     case Contact = 'contact';
+    case Record = 'record';
 
     public function label(): string
     {
@@ -36,6 +38,7 @@ enum CustomFieldRelationEnum: string
             self::Member => 'A team member',
             self::Customer => 'A customer',
             self::Contact => 'A contact',
+            self::Record => 'A record of a custom object',
         };
     }
 
@@ -43,16 +46,18 @@ enum CustomFieldRelationEnum: string
      * The names of the team's records with these ids, by id. Ids that are
      * not the team's, or no longer exist, are left out.
      *
+     * For records of a custom object, `$objectId` says which object.
+     *
      * @param  list<string>  $ids
      * @return array<string, string>
      */
-    public function names(string $teamId, array $ids): array
+    public function names(string $teamId, array $ids, ?string $objectId = null): array
     {
         if ($ids === []) {
             return [];
         }
 
-        return $this->named($this->records($teamId)->whereIn($this->idColumn(), $ids));
+        return $this->named($this->records($teamId, $objectId)->whereIn($this->idColumn(), $ids));
     }
 
     /**
@@ -61,9 +66,9 @@ enum CustomFieldRelationEnum: string
      *
      * @return list<array{value: string, label: string}>
      */
-    public function search(string $teamId, string $search, int $limit = 20): array
+    public function search(string $teamId, string $search, int $limit = 20, ?string $objectId = null): array
     {
-        $query = $this->records($teamId)->limit($limit);
+        $query = $this->records($teamId, $objectId)->limit($limit);
 
         if ($search !== '') {
             $query->where(function (Builder $query) use ($search): void {
@@ -86,7 +91,7 @@ enum CustomFieldRelationEnum: string
         return $options;
     }
 
-    private function records(string $teamId): Builder
+    private function records(string $teamId, ?string $objectId): Builder
     {
         return match ($this) {
             self::Member => DB::table(Table::Users->value)
@@ -94,6 +99,7 @@ enum CustomFieldRelationEnum: string
                 ->where(MembershipTeamId::getDatabaseTableColumnNameWithTable(Table::TeamUser->value), $teamId),
             self::Customer => DB::table(Table::Customers->value)->where('team_id', $teamId),
             self::Contact => DB::table(Table::Contacts->value)->where('team_id', $teamId),
+            self::Record => DB::table(Table::Records->value)->where('team_id', $teamId)->where('object_id', $objectId),
         };
     }
 
@@ -103,6 +109,7 @@ enum CustomFieldRelationEnum: string
             self::Member => Table::Users->value.'.id',
             self::Customer => Table::Customers->value.'.id',
             self::Contact => Table::Contacts->value.'.id',
+            self::Record => Table::Records->value.'.id',
         };
     }
 
@@ -120,6 +127,7 @@ enum CustomFieldRelationEnum: string
                 FirstName::getDatabaseTableColumnNameWithTable(Table::Contacts->value),
                 LastName::getDatabaseTableColumnNameWithTable(Table::Contacts->value),
             ],
+            self::Record => [RecordName::getDatabaseTableColumnNameWithTable(Table::Records->value)],
         };
     }
 

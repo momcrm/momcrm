@@ -21,14 +21,15 @@ final class ListCustomFieldRecordsController
     public function __invoke(Request $request, string $customField): JsonResponse
     {
         $teamId = (string) $request->user()?->current_team_id;
-        $relation = FindCustomField::byIdForTeam($customField, $teamId)->getRelation()->toNullableEnum();
+        $field = FindCustomField::byIdForTeam($customField, $teamId);
+        $relation = $field->getRelation()->toNullableEnum();
 
         if ($relation === null) {
             throw CouldNotFindCustomField::notFound();
         }
 
         return response()->json([
-            'records' => $relation->search($teamId, $request->string('search')->trim()->toString()),
+            'records' => $relation->search($teamId, $request->string('search')->trim()->toString(), objectId: $field->getRelationObjectId()->toNullableString()),
         ]);
     }
 }

@@ -14,6 +14,7 @@ use App\CustomField\Properties\ObjectId;
 use App\CustomField\Properties\Options;
 use App\CustomField\Properties\Position;
 use App\CustomField\Properties\Relation;
+use App\CustomField\Properties\RelationObjectId;
 use App\CustomField\Properties\Target;
 use App\CustomField\Properties\TeamId;
 use App\CustomField\Properties\Type;
@@ -92,6 +93,16 @@ final class CustomFieldFactory extends Factory
         return $this->state([
             Type::getDatabaseTableColumnName() => CustomFieldTypeEnum::Relation->value,
             Relation::getDatabaseTableColumnName() => $relation->value,
+        ]);
+    }
+
+    /**
+     * A link to one of a custom object's records.
+     */
+    public function linkingToObject(CustomObjectEloquentModel $object): self
+    {
+        return $this->linkingTo(CustomFieldRelationEnum::Record)->state([
+            RelationObjectId::getDatabaseTableColumnName() => $object->id,
         ]);
     }
 
