@@ -5,9 +5,12 @@ declare(strict_types=1);
 use App\Activity\ActivityEloquentModel;
 use App\Activity\ActivityTypeEnum;
 use App\CustomField\CustomFieldEloquentModel;
+use App\CustomField\CustomFieldRelationEnum;
 use App\CustomField\CustomFieldTypeEnum;
 use App\CustomObject\CustomObjectEloquentModel;
+use App\Project\ProjectEloquentModel;
 use App\Record\RecordEloquentModel;
+use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
 
 use function Pest\Laravel\actingAs;
@@ -78,4 +81,25 @@ it('records what a change changed, and nothing when nothing did', function (): v
 
     expect(ActivityEloquentModel::query()->where('type', ActivityTypeEnum::RecordUpdated->value)->sole()->details)
         ->toEqual(['name' => 'Delivery van', 'object' => 'Vehicle', 'fields' => ['Name', 'Plate']]);
+});
+
+it('links a record to a ticket the person can see, and not to one in a members-only project they are not in', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $team = ['team_id' => $owner->current_team_id];
+    $member = UserEloquentModel::factory()->inTeam($owner->current_team_id)->create(['onboarded_at' => now()]);
+    $vehicles = CustomObjectEloquentModel::factory()->create($team);
+    $field = CustomFieldEloquentModel::factory()->forObject($vehicles)->linkingTo(CustomFieldRelationEnum::Ticket)->create(['name' => 'Last service']);
+    $van = RecordEloquentModel::factory()->of($vehicles)->create();
+    $open = TicketEloquentModel::factory()->create($team);
+    $secret = TicketEloquentModel::factory()->create([...$team, 'project_id' => ProjectEloquentModel::factory()->create([...$team, 'visibility' => 'restricted'])->id]);
+
+    actingAs($member)
+        ->patch(route('records.update', [$vehicles, $van]), ['custom_fields' => [$field->id => $secret->id]])
+        ->assertSessionHasErrors(["custom_fields.{$field->id}" => 'The selected Last service is invalid.']);
+
+    actingAs($member)
+        ->patch(route('records.update', [$vehicles, $van]), ['custom_fields' => [$field->id => $open->id]])
+        ->assertSessionHasNoErrors();
+
+    expect($van->fresh()->custom_fields)->toBe([$field->id => $open->id]);
 });

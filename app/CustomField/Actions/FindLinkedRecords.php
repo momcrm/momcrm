@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\CustomField\Actions;
 
-use App\Contact\ContactEloquentModel;
-use App\Customer\CustomerEloquentModel;
 use App\CustomField\CustomField;
 use App\CustomField\CustomFieldEloquentModel;
 use App\CustomField\CustomFieldQuery;
@@ -21,11 +19,8 @@ use App\CustomField\Properties\TeamId;
 use App\CustomField\Properties\Type;
 use App\CustomObject\Actions\FindCustomObject;
 use App\CustomObject\CustomObject;
-use App\Project\ProjectEloquentModel;
-use App\Project\ProjectVisibility;
 use App\Record\RecordEloquentModel;
 use App\Shared\Types;
-use App\Ticket\TicketEloquentModel;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
@@ -110,24 +105,10 @@ final class FindLinkedRecords
      */
     private static function records(CustomFieldTargetEnum $target, string $teamId, string $userId, CustomObject $object): Builder
     {
-        $query = match ($target) {
-            CustomFieldTargetEnum::Ticket => TicketEloquentModel::query(),
-            CustomFieldTargetEnum::Customer => CustomerEloquentModel::query(),
-            CustomFieldTargetEnum::Contact => ContactEloquentModel::query(),
-            CustomFieldTargetEnum::Project => ProjectEloquentModel::query(),
-            CustomFieldTargetEnum::Record => RecordEloquentModel::query(),
-        };
+        $query = $target->standardObject()?->visibleQuery($teamId, $userId)
+            ?? RecordEloquentModel::query()->withoutGlobalScopes()->where('team_id', $teamId)->where('object_id', $object->getId()->toString());
 
-        $query->withoutGlobalScopes()->where('team_id', $teamId)->latest();
-
-        match ($target) {
-            CustomFieldTargetEnum::Ticket => ProjectVisibility::constrainTickets($query->getQuery(), $userId),
-            CustomFieldTargetEnum::Project => ProjectVisibility::constrainProjects($query->getQuery(), $userId),
-            CustomFieldTargetEnum::Record => $query->where('object_id', $object->getId()->toString()),
-            default => null,
-        };
-
-        return $query;
+        return $query->latest();
     }
 
     /**
@@ -135,13 +116,12 @@ final class FindLinkedRecords
      */
     private static function item(CustomFieldTargetEnum $target, Model $model): array
     {
-        return match (true) {
-            $model instanceof TicketEloquentModel => ['id' => $model->id, 'title' => "#{$model->number} {$model->title}", 'url' => route('tickets.show', $model->id)],
-            $model instanceof CustomerEloquentModel => ['id' => $model->id, 'title' => $model->name, 'url' => route('customers.show', $model->id)],
-            $model instanceof ContactEloquentModel => ['id' => $model->id, 'title' => trim("{$model->first_name} {$model->last_name}"), 'url' => route('contacts.edit', $model->id)],
-            $model instanceof ProjectEloquentModel => ['id' => $model->id, 'title' => $model->name, 'url' => route('projects.show', $model->id)],
-            $model instanceof RecordEloquentModel => ['id' => $model->id, 'title' => $model->name, 'url' => route('records.show', [$model->object_id, $model->id])],
-            default => ['id' => Types::string($model->getKey()), 'title' => $target->label(), 'url' => ''],
-        };
+        $standard = $target->standardObject();
+
+        return [
+            'id' => Types::string($model->getKey()),
+            'title' => $standard?->title($model) ?? Types::string($model->getAttribute('name')),
+            'url' => $standard?->url($model) ?? route('records.show', [Types::string($model->getAttribute('object_id')), Types::string($model->getKey())]),
+        ];
     }
 }

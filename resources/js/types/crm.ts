@@ -239,7 +239,13 @@ export type CustomFieldType =
 /**
  * The kinds of record a record-link field can point at.
  */
-export type CustomFieldRelation = 'member' | 'customer' | 'contact' | 'record';
+export type CustomFieldRelation =
+    | 'member'
+    | 'customer'
+    | 'contact'
+    | 'ticket'
+    | 'project'
+    | 'record';
 
 /**
  * The records that link to one record through one record-link field.
