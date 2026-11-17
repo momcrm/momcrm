@@ -11,6 +11,7 @@ use App\Choice\ChoiceListEnum;
 use App\Contact\ContactEloquentModel;
 use App\Customer\CustomerEloquentModel;
 use App\CustomField\CustomFieldEloquentModel;
+use App\CustomField\CustomFieldRelationEnum;
 use App\CustomField\CustomFieldTargetEnum;
 use App\CustomField\CustomFieldTypeEnum;
 use App\Group\GroupEloquentModel;
@@ -318,3 +319,33 @@ it('only takes values for the live ticket fields of the team', function (Closure
     'a customer field' => [fn (string $teamId) => CustomFieldEloquentModel::factory()->on(CustomFieldTargetEnum::Customer)->create(['team_id' => $teamId])],
     "another team's field" => [fn (string $teamId) => CustomFieldEloquentModel::factory()->create()],
 ]);
+
+it("links a ticket to one of the team's records, and to no one else's", function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $teamId = $user->current_team_id;
+    $field = CustomFieldEloquentModel::factory()->linkingTo(CustomFieldRelationEnum::Customer)->create(['team_id' => $teamId, 'name' => 'Reseller']);
+    $reseller = CustomerEloquentModel::factory()->create(['team_id' => $teamId]);
+    $foreign = CustomerEloquentModel::factory()->create();
+    $ticket = patchableTicket($user);
+
+    actingAs($user)
+        ->patch(route('tickets.patch', $ticket->id), ['custom_fields' => [$field->id => $foreign->id]])
+        ->assertSessionHasErrors(["custom_fields.{$field->id}" => 'The selected Reseller is invalid.']);
+
+    actingAs($user)
+        ->patch(route('tickets.patch', $ticket->id), ['custom_fields' => [$field->id => $reseller->id]])
+        ->assertSessionHasNoErrors();
+
+    expect($ticket->fresh()->custom_fields)->toBe([$field->id => $reseller->id]);
+});
+
+it('keeps a link to a record that no longer exists when the ticket already has it', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $field = CustomFieldEloquentModel::factory()->linkingTo(CustomFieldRelationEnum::Member)->create(['team_id' => $user->current_team_id]);
+    $gone = '019a0000-0000-7000-8000-000000000000';
+    $ticket = patchableTicket($user, ['custom_fields' => [$field->id => $gone]]);
+
+    actingAs($user)
+        ->patch(route('tickets.patch', $ticket->id), ['custom_fields' => [$field->id => $gone]])
+        ->assertSessionHasNoErrors();
+});

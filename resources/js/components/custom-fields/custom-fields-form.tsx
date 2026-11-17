@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import {
     CustomFieldInput,
+    useCustomFieldLabels,
     useCustomFields,
 } from '@/components/custom-fields/custom-field-input';
 import FormField from '@/components/form-field';
@@ -168,6 +169,8 @@ export function CustomFieldValueView({
     field: CustomField;
     value: CustomFieldValue | undefined;
 }) {
+    const labels = useCustomFieldLabels();
+
     if (!hasCustomFieldValue(field, value)) {
         return <span className="text-muted-foreground">—</span>;
     }
@@ -184,6 +187,9 @@ export function CustomFieldValueView({
 
             return option ? <ChoiceTag choice={option} /> : null;
         }
+
+        case 'relation':
+            return <>{labels[String(value)] ?? '—'}</>;
 
         case 'multi_select':
             return (

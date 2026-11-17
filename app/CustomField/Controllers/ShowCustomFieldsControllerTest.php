@@ -25,6 +25,8 @@ it("shows the owner the team's ticket fields in order, archived ones included", 
             ->where('current', 'ticket')
             ->where('targets.0', ['value' => 'ticket', 'label' => 'Tickets'])
             ->where('types.4', ['value' => 'select', 'label' => 'Select', 'has_options' => true])
+            ->where('types.6', ['value' => 'relation', 'label' => 'Record link', 'has_options' => false])
+            ->where('relations.1', ['value' => 'customer', 'label' => 'A customer'])
             ->has('fields', 2)
             ->where('fields.0.name', 'Tier')
             ->where('fields.0.type', 'select')

@@ -12,6 +12,8 @@ use App\Contact\Actions\FindContact;
 use App\Contract\Actions\FindContract;
 use App\Customer\Actions\FindCustomer;
 use App\Customer\Exceptions\CouldNotFindCustomer;
+use App\CustomField\CustomFieldRelationLabels;
+use App\CustomField\CustomFieldTargetEnum;
 use App\Invoice\Actions\FindInvoice;
 use App\Location\Actions\FindLocation;
 use App\Project\Actions\FindProject;
@@ -56,13 +58,14 @@ final readonly class CustomerWorkspace
     /**
      * The props every workspace tab shares, under `workspace`.
      *
-     * @return array{workspace: array{customer: array<string, mixed>, can: array<string, bool>, counts: array<string, int>}}
+     * @return array{workspace: array{customer: array<string, mixed>, custom_field_labels: array<string, string>, can: array<string, bool>, counts: array<string, int>}}
      */
     public function props(Request $request): array
     {
         return [
             'workspace' => [
                 'customer' => $this->customer->toSummary(),
+                'custom_field_labels' => CustomFieldRelationLabels::for($this->customer->getTeamId()->toString(), CustomFieldTargetEnum::Customer, $this->customer->getCustomFields()->toValues()),
                 'can' => AccessAbilities::for($request->user(), AccessResourceEnum::Customer, $this->customer),
                 'counts' => $this->counts(),
             ],

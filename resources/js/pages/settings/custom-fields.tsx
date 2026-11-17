@@ -1,4 +1,4 @@
-import { Form, Head, Link, router } from '@inertiajs/react';
+import { Form, Head, Link, router, usePage } from '@inertiajs/react';
 import {
     Archive,
     ArchiveRestore,
@@ -46,6 +46,7 @@ import {
 } from '@/routes/custom-fields';
 import type {
     CustomField,
+    CustomFieldRelation,
     CustomFieldTarget,
     CustomFieldType,
     Option,
@@ -59,6 +60,12 @@ type TypeOption = {
 
 /** An option being edited; one not saved yet has no id. */
 type DraftOption = { id: string | null; name: string; hue: number | null };
+
+const relationNouns: Record<CustomFieldRelation, string> = {
+    member: 'a team member',
+    customer: 'a customer',
+    contact: 'a contact',
+};
 
 const saveOptions = {
     preserveScroll: true,
@@ -232,13 +239,17 @@ function FieldRow({
                 >
                     {field.name}
                 </button>
-                {(field.description || field.options.length > 0) && (
+                {(field.description ||
+                    field.relation ||
+                    field.options.length > 0) && (
                     <p className="truncate text-xs text-muted-foreground">
                         {field.options.length > 0
                             ? field.options
                                   .map((option) => option.name)
                                   .join(', ')
-                            : field.description}
+                            : field.relation
+                              ? `Links to ${relationNouns[field.relation]}`
+                              : field.description}
                     </p>
                 )}
             </div>
@@ -400,6 +411,8 @@ function FieldDialog({
     const [name, setName] = useState(field?.name ?? '');
     const [type, setType] = useState<CustomFieldType>(field?.type ?? 'text');
     const [description, setDescription] = useState(field?.description ?? '');
+    const relations = (usePage().props.relations ?? []) as Option[];
+    const [relation, setRelation] = useState(relations[0]?.value ?? '');
     const [options, setOptions] = useState<DraftOption[]>(
         field?.options ?? [{ id: null, name: '', hue: null }],
     );
@@ -419,6 +432,7 @@ function FieldDialog({
                     {...(field ? update.form(field.id) : store.form())}
                     transform={() => ({
                         ...(field ? {} : { target, type }),
+                        ...(!field && type === 'relation' ? { relation } : {}),
                         name,
                         description: description.trim() || null,
                         ...(hasOptions
@@ -473,6 +487,32 @@ function FieldDialog({
                                         }
                                     >
                                         {types.map((option) => (
+                                            <option
+                                                key={option.value}
+                                                value={option.value}
+                                            >
+                                                {option.label}
+                                            </option>
+                                        ))}
+                                    </NativeSelect>
+                                </FormField>
+                            )}
+
+                            {!field && type === 'relation' && (
+                                <FormField
+                                    id="field-relation"
+                                    label="Links to"
+                                    hint="This can't be changed later."
+                                    error={errors.relation}
+                                >
+                                    <NativeSelect
+                                        id="field-relation"
+                                        value={relation}
+                                        onChange={(event) =>
+                                            setRelation(event.target.value)
+                                        }
+                                    >
+                                        {relations.map((option) => (
                                             <option
                                                 key={option.value}
                                                 value={option.value}

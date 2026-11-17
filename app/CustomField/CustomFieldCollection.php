@@ -19,7 +19,7 @@ final class CustomFieldCollection extends AbstractDataCollection
     /**
      * Each field as the frontend shows it, in order.
      *
-     * @return list<array{id: string, target: string, type: string, name: string, description: ?string, options: list<array{id: string, name: string, hue: ?int}>, position: int, is_archived: bool}>
+     * @return list<array{id: string, target: string, type: string, relation: ?string, name: string, description: ?string, options: list<array{id: string, name: string, hue: ?int}>, position: int, is_archived: bool}>
      */
     public function toSummaries(): array
     {

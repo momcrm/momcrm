@@ -6,6 +6,7 @@ namespace App\CustomField\Controllers;
 
 use App\CustomField\Actions\FindCustomField;
 use App\CustomField\CustomFieldAccess;
+use App\CustomField\CustomFieldRelationEnum;
 use App\CustomField\CustomFieldTargetEnum;
 use App\CustomField\CustomFieldTypeEnum;
 use App\Team\Exceptions\CouldNotViewTeam;
@@ -37,6 +38,7 @@ final class ShowCustomFieldsController
                 'label' => $type->label(),
                 'has_options' => $type->hasOptions(),
             ], CustomFieldTypeEnum::cases()),
+            'relations' => CustomFieldRelationEnum::options(),
             'fields' => FindCustomField::listForTeam($teamId, $current, withArchived: true)->toSummaries(),
         ]);
     }

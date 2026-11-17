@@ -9,6 +9,8 @@ use App\AccessRule\Engine\AccessAbilities;
 use App\Contact\Actions\FindContact;
 use App\Contact\Exceptions\CouldNotFindContact;
 use App\Customer\Actions\FindCustomer;
+use App\CustomField\CustomFieldRelationLabels;
+use App\CustomField\CustomFieldTargetEnum;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -29,6 +31,7 @@ final class EditContactController
 
         return Inertia::render('contacts/edit', [
             'contact' => $found->toSummary(),
+            'customFieldLabels' => CustomFieldRelationLabels::for($teamId, CustomFieldTargetEnum::Contact, $found->getCustomFields()->toValues()),
             'customers' => FindCustomer::optionsForTeam($teamId),
             'can' => AccessAbilities::for($request->user(), AccessResourceEnum::Contact, $found),
         ]);

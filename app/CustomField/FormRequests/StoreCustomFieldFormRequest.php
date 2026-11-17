@@ -8,12 +8,14 @@ use App\CustomField\Actions\CreateCustomField;
 use App\CustomField\Actions\FindCustomField;
 use App\CustomField\CustomField;
 use App\CustomField\CustomFieldAccess;
+use App\CustomField\CustomFieldRelationEnum;
 use App\CustomField\CustomFieldTargetEnum;
 use App\CustomField\CustomFieldTypeEnum;
 use App\CustomField\CustomFieldValidationRules;
 use App\CustomField\Properties\Description;
 use App\CustomField\Properties\Name;
 use App\CustomField\Properties\Options;
+use App\CustomField\Properties\Relation;
 use App\CustomField\Properties\Target;
 use App\CustomField\Properties\Type;
 use App\Shared\Table;
@@ -51,6 +53,9 @@ final class StoreCustomFieldFormRequest extends FormRequest
                     ->where('team_id', $this->user()?->current_team_id)
                     ->where(Target::getDatabaseTableColumnName(), $this->string(Target::getNameForValidation())->toString()),
             ],
+            Relation::getNameForValidation() => $this->string(Type::getNameForValidation())->toString() === CustomFieldTypeEnum::Relation->value
+                ? ['required', Rule::enum(CustomFieldRelationEnum::class)]
+                : ['prohibited'],
             Description::getNameForValidation() => Description::getValidationRulesForCreate($this),
             ...CustomFieldValidationRules::options(CustomFieldTypeEnum::tryFrom($this->string(Type::getNameForValidation())->toString())),
         ];
@@ -63,6 +68,8 @@ final class StoreCustomFieldFormRequest extends FormRequest
     {
         return [
             Name::getNameForValidation().'.unique' => __('A field with that name already exists here, or in the archive.'),
+            Relation::getNameForValidation().'.required' => __('Choose what the field links to.'),
+            Relation::getNameForValidation().'.prohibited' => __('Only record links say what they link to.'),
             ...CustomFieldValidationRules::messages(),
         ];
     }
@@ -81,6 +88,7 @@ final class StoreCustomFieldFormRequest extends FormRequest
                 ->setTeamId($teamId)
                 ->setTarget($target)
                 ->setType($type)
+                ->setRelation($type === CustomFieldTypeEnum::Relation ? $this->input(Relation::getNameForValidation()) : null)
                 ->setName($this->string(Name::getNameForValidation())->trim()->toString())
                 ->setDescription($this->input(Description::getNameForValidation()))
                 ->setOptions($type->hasOptions() ? CustomFieldValidationRules::normalizeOptions($this->validated(Options::getNameForValidation())) : [])

@@ -12,6 +12,7 @@ use App\CustomField\Properties\Id;
 use App\CustomField\Properties\Name;
 use App\CustomField\Properties\Options;
 use App\CustomField\Properties\Position;
+use App\CustomField\Properties\Relation;
 use App\CustomField\Properties\Target;
 use App\CustomField\Properties\TeamId;
 use App\CustomField\Properties\Type;
@@ -36,6 +37,7 @@ final class CustomField extends AbstractData
         public Name $name,
         public Options $options,
         public Position $position,
+        public Relation $relation,
         public Target $target,
         public TeamId $teamId,
         public Type $type,
@@ -67,7 +69,7 @@ final class CustomField extends AbstractData
     /**
      * The fields the frontend needs to show the field and its input.
      *
-     * @return array{id: string, target: string, type: string, name: string, description: ?string, options: list<array{id: string, name: string, hue: ?int}>, position: int, is_archived: bool}
+     * @return array{id: string, target: string, type: string, relation: ?string, name: string, description: ?string, options: list<array{id: string, name: string, hue: ?int}>, position: int, is_archived: bool}
      */
     public function toSummary(): array
     {
@@ -75,6 +77,7 @@ final class CustomField extends AbstractData
             'id' => $this->getId()->toString(),
             'target' => $this->getTarget()->toEnum()->value,
             'type' => $this->getType()->toEnum()->value,
+            'relation' => $this->getRelation()->toNullableEnum()?->value,
             'name' => $this->getName()->toString(),
             'description' => $this->getDescription()->toNullableString(),
             'options' => $this->getOptions()->toOptions(),
@@ -161,6 +164,18 @@ final class CustomField extends AbstractData
     public function setPosition(mixed $position): self
     {
         $this->position = new Position($position instanceof AbstractValue ? $position->toValue() : $position);
+
+        return $this;
+    }
+
+    public function getRelation(): Relation
+    {
+        return $this->relation;
+    }
+
+    public function setRelation(mixed $relation): self
+    {
+        $this->relation = new Relation($relation instanceof AbstractValue ? $relation->toValue() : $relation);
 
         return $this;
     }

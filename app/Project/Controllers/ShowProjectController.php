@@ -8,6 +8,8 @@ use App\AccessRule\AccessResourceEnum;
 use App\AccessRule\Engine\AccessAbilities;
 use App\Attachment\Actions\FindAttachment;
 use App\Attachment\Attachment;
+use App\CustomField\CustomFieldRelationLabels;
+use App\CustomField\CustomFieldTargetEnum;
 use App\Favorite\Actions\FindFavorite;
 use App\Favorite\FavoritableTypeEnum;
 use App\Project\Actions\FindProject;
@@ -57,6 +59,7 @@ final class ShowProjectController
                 ...ListProjectsController::listItem($found, FindFavorite::idsForUser($teamId, $user->id, FavoritableTypeEnum::Project)),
                 'group_name' => $found->getGroup()->toNullableData()?->getName()->toString(),
             ],
+            'customFieldLabels' => CustomFieldRelationLabels::for($teamId, CustomFieldTargetEnum::Project, $found->getCustomFields()->toValues()),
             'tab' => $tab,
             'can' => AccessAbilities::for($user, AccessResourceEnum::Project, $found),
             'milestoneCan' => AccessAbilities::for($user, AccessResourceEnum::Milestone),
