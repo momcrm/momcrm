@@ -18,9 +18,9 @@ use App\Attachment\Controllers\UpdateAttachmentController;
 use App\Comment\Controllers\DeleteCommentController;
 use App\Comment\Controllers\StoreCommentController;
 use App\Comment\Controllers\StoreRecordCommentController;
-use App\Contact\Controllers\CreateContactController;
 use App\Contact\Controllers\DeleteContactController;
 use App\Contact\Controllers\EditContactController;
+use App\Contact\Controllers\ListContactFormOptionsController;
 use App\Contact\Controllers\ListContactsController;
 use App\Contact\Controllers\StoreContactController;
 use App\Contact\Controllers\UpdateContactController;
@@ -161,7 +161,7 @@ Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function 
     Route::delete('customers/{customer}', DeleteCustomerController::class)->whereUuid('customer')->name('customers.destroy');
 
     Route::get('contacts', ListContactsController::class)->name('contacts.index');
-    Route::get('contacts/create', CreateContactController::class)->name('contacts.create');
+    Route::get('contacts/form-options', ListContactFormOptionsController::class)->name('contacts.form-options');
     Route::post('contacts', StoreContactController::class)->name('contacts.store');
     Route::get('contacts/{contact}/edit', EditContactController::class)->whereUuid('contact')->name('contacts.edit');
     Route::put('contacts/{contact}', UpdateContactController::class)->whereUuid('contact')->name('contacts.update');

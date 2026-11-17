@@ -5,17 +5,18 @@ declare(strict_types=1);
 namespace App\Contact\Controllers;
 
 use App\Customer\Actions\FindCustomer;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response;
 
-final class CreateContactController
+/**
+ * The customers to choose from in the new-contact dialog, fetched when it opens.
+ */
+final class ListContactFormOptionsController
 {
-    public function __invoke(Request $request): Response
+    public function __invoke(Request $request): JsonResponse
     {
-        return Inertia::render('contacts/create', [
+        return response()->json([
             'customers' => FindCustomer::optionsForTeam((string) $request->user()?->current_team_id),
-            'customerId' => $request->string('customer')->toString() ?: null,
         ]);
     }
 }

@@ -6,6 +6,7 @@ import {
 import CustomFieldsFormFields from '@/components/custom-fields/custom-fields-form';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import { useCreateContact } from '@/components/contacts/create-contact-dialog';
 import ConfirmDelete from '@/components/confirm-delete';
 import { PrefixCode } from '@/components/customers/customer-meta';
 import { TabHeader } from '@/components/customers/workspace-tab';
@@ -22,7 +23,6 @@ import UnsavedChangesBar, {
 } from '@/components/unsaved-changes-bar';
 import DeleteCustomerController from '@/actions/App/Customer/Controllers/DeleteCustomerController';
 import { useWorkspaceBreadcrumbs } from '@/layouts/customer/layout';
-import { create as createContact } from '@/routes/contacts';
 import { edit, update } from '@/routes/customers';
 import { create as createLocation } from '@/routes/locations';
 import { edit as editWorkflow } from '@/routes/workflow';
@@ -94,6 +94,7 @@ export default function CustomerSettings({
 }) {
     const { customer, can } = workspace;
     const { canManageWorkflow } = usePage().props;
+    const { openCreateContact } = useCreateContact();
     useWorkspaceBreadcrumbs(customer, {
         title: 'Settings',
         href: edit(customer.id),
@@ -324,14 +325,16 @@ export default function CustomerSettings({
                                 ))}
                             </NativeSelect>
                         ) : (
-                            <Button variant="outline" size="sm" asChild>
-                                <Link
-                                    href={createContact({
-                                        query: { customer: customer.id },
-                                    })}
-                                >
-                                    Add a contact
-                                </Link>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                    openCreateContact({
+                                        customerId: customer.id,
+                                    })
+                                }
+                            >
+                                Add a contact
                             </Button>
                         )}
                     </SettingsRow>

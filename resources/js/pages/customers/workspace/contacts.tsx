@@ -1,9 +1,10 @@
 import { Head } from '@inertiajs/react';
 import ContactTable from '@/components/contacts/contact-table';
-import { AddLink, TabHeader } from '@/components/customers/workspace-tab';
+import { TabHeader } from '@/components/customers/workspace-tab';
+import { useCreateContact } from '@/components/contacts/create-contact-dialog';
 import EmptyState from '@/components/empty-state';
+import { Button } from '@/components/ui/button';
 import { useWorkspaceBreadcrumbs } from '@/layouts/customer/layout';
-import { create } from '@/routes/contacts';
 import { contacts as contactsTab } from '@/routes/customers';
 import type { Contact, CustomerWorkspace } from '@/types';
 
@@ -19,11 +20,15 @@ export default function CustomerContacts({
         title: 'Contacts',
         href: contactsTab(customer.id),
     });
+    const { openCreateContact } = useCreateContact();
     const add = (
-        <AddLink
-            href={create({ query: { customer: customer.id } }).url}
-            label="Add contact"
-        />
+        <Button
+            variant="outline"
+            size="sm"
+            onClick={() => openCreateContact({ customerId: customer.id })}
+        >
+            Add contact
+        </Button>
     );
 
     return (

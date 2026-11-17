@@ -1,6 +1,7 @@
 import { AppContent } from '@/components/app-content';
 import { AppHeader } from '@/components/app-header';
 import { AppShell } from '@/components/app-shell';
+import { CreateContactProvider } from '@/components/contacts/create-contact-dialog';
 import { CreateCustomerProvider } from '@/components/customers/create-customer-dialog';
 import { CreateTicketProvider } from '@/components/tickets/create-ticket-dialog';
 import type { AppLayoutProps } from '@/types';
@@ -12,10 +13,12 @@ export default function AppHeaderLayout({
     return (
         <AppShell variant="header">
             <CreateCustomerProvider>
-                <CreateTicketProvider>
-                    <AppHeader breadcrumbs={breadcrumbs} />
-                    <AppContent variant="header">{children}</AppContent>
-                </CreateTicketProvider>
+                <CreateContactProvider>
+                    <CreateTicketProvider>
+                        <AppHeader breadcrumbs={breadcrumbs} />
+                        <AppContent variant="header">{children}</AppContent>
+                    </CreateTicketProvider>
+                </CreateContactProvider>
             </CreateCustomerProvider>
         </AppShell>
     );
