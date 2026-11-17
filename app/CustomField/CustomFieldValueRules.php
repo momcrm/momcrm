@@ -29,10 +29,7 @@ final class CustomFieldValueRules
 
         foreach ($fields as $field) {
             $id = $field->getId()->toString();
-            $valueRules = $field->getType()->toEnum()->valueRules(
-                array_column($field->getOptions()->toOptions(), 'id'),
-                $held[$id] ?? null,
-            );
+            $valueRules = CustomFieldTypeEnum::valueRules($field, $teamId, $held[$id] ?? null);
 
             foreach ($valueRules as $suffix => $rule) {
                 $rules["{$key}.{$id}{$suffix}"] = $rule;

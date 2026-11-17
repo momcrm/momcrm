@@ -26,6 +26,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $name
  * @property array<int, mixed> $options
  * @property int $position
+ * @property string|null $relation
  * @property string $target
  * @property string $team_id
  * @property string $type

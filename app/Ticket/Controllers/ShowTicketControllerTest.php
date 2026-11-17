@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use App\Contact\ContactEloquentModel;
 use App\Customer\CustomerEloquentModel;
+use App\CustomField\CustomFieldEloquentModel;
+use App\CustomField\CustomFieldRelationEnum;
 use App\Location\LocationEloquentModel;
 use App\Project\ProjectEloquentModel;
 use App\TeamUser\TeamUserEloquentModel;
@@ -60,4 +62,19 @@ it('shows an assignee their ticket but not the members-only project it sits in',
     actingAs($member)
         ->get(route('tickets.show', $ticket->id))
         ->assertInertia(fn (Assert $page) => $page->where('drawer.project_name', $project->name));
+});
+
+it("shows a ticket's custom field values with the names of the records they link to", function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $team = ['team_id' => $user->current_team_id];
+    $reseller = CustomerEloquentModel::factory()->create([...$team, 'name' => 'Reseller Co']);
+    $field = CustomFieldEloquentModel::factory()->linkingTo(CustomFieldRelationEnum::Customer)->create($team);
+    $ticket = TicketEloquentModel::factory()->create([...$team, 'customer_id' => CustomerEloquentModel::factory()->create($team)->id, 'custom_fields' => [$field->id => $reseller->id]]);
+
+    actingAs($user)
+        ->get(route('tickets.show', $ticket->id))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where("drawer.custom_fields.{$field->id}", $reseller->id)
+            ->where('drawer.custom_field_labels', [$reseller->id => 'Reseller Co']),
+        );
 });

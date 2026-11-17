@@ -45,6 +45,7 @@ use App\Customer\Controllers\ShowCustomerController;
 use App\Customer\Controllers\ShowImportCustomersController;
 use App\Customer\Controllers\StoreCustomerController;
 use App\Customer\Controllers\UpdateCustomerController;
+use App\CustomField\Controllers\ListCustomFieldRecordsController;
 use App\Dashboard\Controllers\ShowOverviewController;
 use App\Favorite\Controllers\ListFavoritesController;
 use App\Favorite\Controllers\ToggleFavoriteController;
@@ -178,6 +179,7 @@ Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function 
 
     Route::get('tickets', ListTicketsController::class)->name('tickets.index');
     Route::get('my-tickets', ListMyTicketsController::class)->name('tickets.mine');
+    Route::get('custom-fields/{customField}/records', ListCustomFieldRecordsController::class)->whereUuid('customField')->name('custom-fields.records');
     Route::get('tickets/form-options', ListTicketFormOptionsController::class)->name('tickets.form-options');
     Route::post('tickets', StoreTicketController::class)->name('tickets.store');
     Route::patch('tickets/bulk', BulkUpdateTicketsController::class)->name('tickets.bulk.update');

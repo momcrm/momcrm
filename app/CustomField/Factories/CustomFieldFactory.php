@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\CustomField\Factories;
 
 use App\CustomField\CustomFieldEloquentModel;
+use App\CustomField\CustomFieldRelationEnum;
 use App\CustomField\CustomFieldTargetEnum;
 use App\CustomField\CustomFieldTypeEnum;
 use App\CustomField\Properties\ArchivedAt;
 use App\CustomField\Properties\Name;
 use App\CustomField\Properties\Options;
 use App\CustomField\Properties\Position;
+use App\CustomField\Properties\Relation;
 use App\CustomField\Properties\Target;
 use App\CustomField\Properties\TeamId;
 use App\CustomField\Properties\Type;
@@ -65,6 +67,17 @@ final class CustomFieldFactory extends Factory
                 fn (string $name): array => ['id' => (string) Str::uuid7(), 'name' => $name, 'hue' => null],
                 $names,
             ),
+        ]);
+    }
+
+    /**
+     * A link to one of the team's records of this kind.
+     */
+    public function linkingTo(CustomFieldRelationEnum $relation): self
+    {
+        return $this->state([
+            Type::getDatabaseTableColumnName() => CustomFieldTypeEnum::Relation->value,
+            Relation::getDatabaseTableColumnName() => $relation->value,
         ]);
     }
 

@@ -1,10 +1,12 @@
 import { usePage } from '@inertiajs/react';
+import RecordPicker from '@/components/custom-fields/record-picker';
 import { LabelChips } from '@/components/labels';
 import NativeSelect from '@/components/native-select';
 import {
     DateField,
     LabelPicker,
     OptionalChoicePicker,
+    triggerClass,
 } from '@/components/tickets/property-editors';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -37,6 +39,25 @@ export function pickCustomFieldValues(
     );
 }
 
+/**
+ * The names of the records that the record links on this page point at, by
+ * record id. A page sends them as `customFieldLabels`, or with its ticket
+ * drawer or customer workspace.
+ */
+export function useCustomFieldLabels(): Record<string, string> {
+    const props = usePage().props as {
+        customFieldLabels?: Record<string, string>;
+        workspace?: { custom_field_labels?: Record<string, string> };
+        drawer?: { custom_field_labels?: Record<string, string> } | null;
+    };
+
+    return {
+        ...props.customFieldLabels,
+        ...props.workspace?.custom_field_labels,
+        ...props.drawer?.custom_field_labels,
+    };
+}
+
 type InputProps = {
     field: CustomField;
     /** Undefined when the record holds nothing for the field. */
@@ -61,7 +82,22 @@ function selectedIds(field: CustomField, value: InputProps['value']): string[] {
  * soon as it changes, like the rows around it.
  */
 export function InlineCustomFieldInput({ field, value, onChange }: InputProps) {
+    const labels = useCustomFieldLabels();
+
     switch (field.type) {
+        case 'relation':
+            return (
+                <RecordPicker
+                    field={field}
+                    value={typeof value === 'string' ? value : null}
+                    label={
+                        typeof value === 'string' ? labels[value] : undefined
+                    }
+                    onChange={onChange}
+                    className={triggerClass}
+                />
+            );
+
         case 'text':
         case 'number': {
             const current = value === undefined || value === null ? '' : value;
@@ -159,7 +195,23 @@ export function CustomFieldInput({
     onChange,
     id,
 }: InputProps & { id: string }) {
+    const labels = useCustomFieldLabels();
+
     switch (field.type) {
+        case 'relation':
+            return (
+                <RecordPicker
+                    id={id}
+                    field={field}
+                    value={typeof value === 'string' ? value : null}
+                    label={
+                        typeof value === 'string' ? labels[value] : undefined
+                    }
+                    onChange={onChange}
+                    className="flex h-control-md w-full min-w-0 items-center rounded-md border border-border-strong bg-card px-2.5 text-left text-sm"
+                />
+            );
+
         case 'text':
         case 'number':
         case 'date':

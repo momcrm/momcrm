@@ -32,6 +32,8 @@ export type CustomerBillingType = 'automatic' | 'manual' | 'excluded';
  */
 export type CustomerWorkspace = {
     customer: Customer;
+    /** Names of the records the customer's record links point at, by id. */
+    custom_field_labels: Record<string, string>;
     can: Abilities;
     counts: {
         tickets: number;
@@ -191,7 +193,13 @@ export type CustomFieldType =
     | 'date'
     | 'checkbox'
     | 'select'
-    | 'multi_select';
+    | 'multi_select'
+    | 'relation';
+
+/**
+ * The kinds of record a record-link field can point at.
+ */
+export type CustomFieldRelation = 'member' | 'customer' | 'contact';
 
 /**
  * One thing a select field offers. Records store its id.
@@ -209,6 +217,8 @@ export type CustomField = {
     id: string;
     target: CustomFieldTarget;
     type: CustomFieldType;
+    /** What a record link points at; null for every other type. */
+    relation: CustomFieldRelation | null;
     name: string;
     description: string | null;
     /** Empty unless the field is a select. */
@@ -220,7 +230,8 @@ export type CustomField = {
 
 /**
  * What a record holds for one custom field: text, a number, a date
- * (YYYY-MM-DD), a ticked checkbox, an option's id, or several options' ids.
+ * (YYYY-MM-DD), a ticked checkbox, an option's id, several options' ids, or
+ * the id of a linked record.
  */
 export type CustomFieldValue = string | number | boolean | string[] | null;
 
@@ -268,6 +279,8 @@ export type TicketDrawerData = Omit<
     TicketListItem,
     'subtasks_count' | 'closed_subtasks_count'
 > & {
+    /** Names of the records the ticket's record links point at, by id. */
+    custom_field_labels: Record<string, string>;
     parent: { id: string; number: number; title: string } | null;
     subtasks: {
         id: string;

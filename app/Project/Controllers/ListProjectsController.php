@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Project\Controllers;
 
+use App\CustomField\CustomFieldRelationLabels;
+use App\CustomField\CustomFieldTargetEnum;
 use App\Favorite\Actions\FindFavorite;
 use App\Favorite\FavoritableTypeEnum;
 use App\Project\Actions\FindProject;
@@ -36,10 +38,17 @@ final class ListProjectsController
         $view = in_array($request->query('view'), ['list', 'table'], true) ? (string) $request->query('view') : 'grid';
         $favoriteIds = FindFavorite::idsForUser($teamId, $user->id, FavoritableTypeEnum::Project);
 
+        $projects = FindProject::listForTeam($teamId, $user->id, $search, $status, $sort, $direction, $label);
+
         return Inertia::render('projects/index', [
-            'projects' => FindProject::listForTeam($teamId, $user->id, $search, $status, $sort, $direction, $label)
+            'projects' => $projects
                 ->map(fn (Project $project): array => self::listItem($project, $favoriteIds))
                 ->values(),
+            'customFieldLabels' => CustomFieldRelationLabels::for(
+                $teamId,
+                CustomFieldTargetEnum::Project,
+                ...$projects->map(fn (Project $project): array => $project->getCustomFields()->toValues())->values()->all(),
+            ),
             'filters' => ['search' => $search, 'status' => $status, 'label' => $label, 'sort' => $sort, 'direction' => $direction, 'view' => $view],
             ...ProjectFormOptions::forTeam($teamId),
         ]);
