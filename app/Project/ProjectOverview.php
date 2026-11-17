@@ -9,6 +9,7 @@ use App\Activity\ActivityEloquentModel;
 use App\Activity\ActivityRelationship;
 use App\Activity\Properties\SubjectId;
 use App\Activity\Properties\SubjectType;
+use App\Milestone\Milestone;
 use App\Milestone\MilestoneEloquentModel;
 use App\Milestone\Properties\DueOn as MilestoneDueOn;
 use App\Milestone\Properties\ProjectId as MilestoneProjectId;
@@ -75,6 +76,7 @@ final class ProjectOverview
                     'name' => $milestone->name,
                     'due_on' => substr($milestone->due_on, 0, 10),
                     'completed_at' => $milestone->completed_at?->toIso8601String(),
+                    'custom_fields' => Milestone::fromEloquentModel($milestone)->getCustomFields()->toValues(),
                 ])
                 ->values()
                 ->all(),

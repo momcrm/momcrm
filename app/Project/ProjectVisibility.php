@@ -60,6 +60,14 @@ final class ProjectVisibility
                 }));
     }
 
+    /**
+     * Limits a milestones query to those of projects someone may see.
+     */
+    public static function constrainMilestones(QueryBuilder $query, string $userId, string $table = 'milestones'): void
+    {
+        $query->whereIn("{$table}.project_id", fn (Builder $projects) => self::visibleProjectIds($projects, $userId));
+    }
+
     private static function visibleProjectIds(Builder $projects, string $userId): void
     {
         $projects->select('id')->from(Table::Projects->value);

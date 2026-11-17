@@ -56,12 +56,19 @@ final class ShowProjectController
         $projectId = $found->getId()->toString();
         $tab = in_array($request->query('view'), self::TABS, true) ? (string) $request->query('view') : 'overview';
 
+        $overview = $tab === 'overview' ? $this->overview($projectId, $teamId, $user->id) : [];
+        /** @var list<array{custom_fields: array<string, mixed>}> $milestones */
+        $milestones = $overview['milestones'] ?? [];
+
         return Inertia::render('projects/show', [
             'project' => [
                 ...ListProjectsController::listItem($found, FindFavorite::idsForUser($teamId, $user->id, FavoritableTypeEnum::Project)),
                 'group_name' => $found->getGroup()->toNullableData()?->getName()->toString(),
             ],
-            'customFieldLabels' => CustomFieldRelationLabels::for($teamId, CustomFieldTargetEnum::Project, $found->getCustomFields()->toValues()),
+            'customFieldLabels' => [
+                ...CustomFieldRelationLabels::for($teamId, CustomFieldTargetEnum::Project, $found->getCustomFields()->toValues()),
+                ...CustomFieldRelationLabels::for($teamId, CustomFieldTargetEnum::Milestone, ...array_column($milestones, 'custom_fields')),
+            ],
             'linkedRecords' => FindLinkedRecords::to($teamId, $user->id, CustomFieldRelationEnum::Project, $projectId),
             'tab' => $tab,
             'can' => AccessAbilities::for($user, AccessResourceEnum::Project, $found),
@@ -84,7 +91,7 @@ final class ShowProjectController
                     'drawer' => TicketDrawer::forRequest($request),
                 ],
                 'overview' => [
-                    ...ProjectOverview::for($projectId),
+                    ...$overview,
                     'favoriteTicketIds' => FindFavorite::idsForUser($teamId, $user->id, FavoritableTypeEnum::Ticket),
                     ...TicketDrawer::options($teamId, $user->id),
                     'drawer' => TicketDrawer::forRequest($request),
@@ -93,5 +100,23 @@ final class ShowProjectController
             },
             ...ProjectFormOptions::forTeam($teamId),
         ]);
+    }
+
+    /**
+     * The Overview tab's data, with what links to each milestone.
+     *
+     * @return array<string, mixed>
+     */
+    private function overview(string $projectId, string $teamId, string $userId): array
+    {
+        $overview = ProjectOverview::for($projectId);
+        /** @var list<array{id: string}> $milestones */
+        $milestones = $overview['milestones'];
+        $linked = FindLinkedRecords::toMany($teamId, $userId, CustomFieldRelationEnum::Milestone, array_column($milestones, 'id'));
+
+        return [
+            ...$overview,
+            'milestones' => array_map(fn (array $milestone): array => [...$milestone, 'linked_records' => $linked[$milestone['id']] ?? []], $milestones),
+        ];
     }
 }

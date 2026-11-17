@@ -6,6 +6,7 @@ namespace App\Milestone;
 
 use App\AuditLog\AuditObserver;
 use App\AuditLog\Contracts\Auditable;
+use App\CustomField\Properties\CustomFieldValues;
 use App\Milestone\Factories\MilestoneFactory;
 use App\Milestone\Properties\CompletedAt;
 use App\Milestone\Properties\Id;
@@ -76,6 +77,7 @@ final class MilestoneEloquentModel extends Model implements Auditable
     {
         return [
             CompletedAt::getDatabaseTableColumnName() => 'immutable_datetime',
+            CustomFieldValues::getDatabaseTableColumnName() => 'array',
         ];
     }
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Milestone;
 
+use App\CustomField\Properties\CustomFieldValues;
 use App\Milestone\Factories\MilestoneFactory;
 use App\Milestone\Properties\CompletedAt;
 use App\Milestone\Properties\CreatedAt;
@@ -25,6 +26,7 @@ final class Milestone extends AbstractData
     public function __construct(
         public CompletedAt $completedAt,
         public CreatedAt $createdAt,
+        public CustomFieldValues $customFields,
         public DueOn $dueOn,
         public Id $id,
         public Name $name,
@@ -53,6 +55,35 @@ final class Milestone extends AbstractData
         }
 
         return MilestoneCollection::make(parent::collect($items, $method)->all());
+    }
+
+    /**
+     * The fields the project page shows.
+     *
+     * @return array{id: string, project_id: string, name: string, due_on: ?string, completed_at: ?string, custom_fields: array<string, mixed>}
+     */
+    public function toSummary(): array
+    {
+        return [
+            'id' => $this->getId()->toString(),
+            'project_id' => $this->getProjectId()->toString(),
+            'name' => $this->getName()->toString(),
+            'due_on' => $this->getDueOn()->toNullableCarbon()?->toDateString(),
+            'completed_at' => $this->getCompletedAt()->toNullableISOString(),
+            'custom_fields' => $this->getCustomFields()->toValues(),
+        ];
+    }
+
+    public function getCustomFields(): CustomFieldValues
+    {
+        return $this->customFields;
+    }
+
+    public function setCustomFields(mixed $customFields): self
+    {
+        $this->customFields = new CustomFieldValues($customFields instanceof AbstractValue ? $customFields->toValue() : $customFields);
+
+        return $this;
     }
 
     public function getCompletedAt(): CompletedAt

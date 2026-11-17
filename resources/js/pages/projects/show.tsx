@@ -1,4 +1,5 @@
 import { Form, Head, Link, router, setLayoutProps } from '@inertiajs/react';
+import MilestoneDialog from '@/components/projects/milestone-dialog';
 import LinkedRecords from '@/components/custom-fields/linked-records';
 import { useCustomFields } from '@/components/custom-fields/custom-field-input';
 import {
@@ -639,7 +640,9 @@ function Overview({
                 </Panel>
                 <Milestones
                     projectId={project.id}
-                    milestones={milestones}
+                    // The Overview tab is sent milestones in full; only the
+                    // Timeline tab gets the slimmer kind.
+                    milestones={milestones as Milestone[]}
                     can={milestoneCan}
                 />
                 <LinkedRecords groups={linkedRecords} />
@@ -658,6 +661,8 @@ function Milestones({
     can: Abilities;
 }) {
     const [adding, setAdding] = useState(false);
+    const [openId, setOpenId] = useState<string | null>(null);
+    const open = milestones.find((milestone) => milestone.id === openId);
 
     return (
         <Panel
@@ -717,15 +722,17 @@ function Milestones({
                                     <Check className="size-3 -rotate-45" />
                                 )}
                             </button>
-                            <span
+                            <button
+                                type="button"
+                                onClick={() => setOpenId(milestone.id)}
                                 className={cn(
-                                    'flex-1 truncate',
+                                    'flex-1 truncate text-left hover:underline',
                                     isDone &&
                                         'text-muted-foreground line-through',
                                 )}
                             >
                                 {milestone.name}
-                            </span>
+                            </button>
                             <span
                                 className={cn(
                                     'text-xs',
@@ -798,6 +805,14 @@ function Milestones({
                         </>
                     )}
                 </Form>
+            )}
+            {open && (
+                <MilestoneDialog
+                    key={open.id}
+                    milestone={open}
+                    canEdit={Boolean(can.update)}
+                    onClose={() => setOpenId(null)}
+                />
             )}
         </Panel>
     );

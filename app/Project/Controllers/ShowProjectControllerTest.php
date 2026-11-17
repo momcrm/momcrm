@@ -3,8 +3,10 @@
 declare(strict_types=1);
 
 use App\Attachment\AttachmentEloquentModel;
+use App\Customer\CustomerEloquentModel;
 use App\CustomField\CustomFieldEloquentModel;
 use App\CustomField\CustomFieldRelationEnum;
+use App\CustomField\CustomFieldTargetEnum;
 use App\CustomObject\CustomObjectEloquentModel;
 use App\Milestone\MilestoneEloquentModel;
 use App\Project\ProjectEloquentModel;
@@ -103,5 +105,27 @@ it('lists what links to the project', function (): void {
             ->where('linkedRecords.0.source', 'Vehicles')
             ->where('linkedRecords.0.field', 'Linked project')
             ->where('linkedRecords.0.records.0', ['id' => $van->id, 'title' => 'Van', 'url' => route('records.show', [$vehicles->id, $van->id])]),
+        );
+});
+
+it('sends each milestone its custom field values, the names they link to, and what links to it', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create(['onboarded_at' => now()]);
+    $team = ['team_id' => $owner->current_team_id];
+    $project = ProjectEloquentModel::factory()->create($team);
+    $customer = CustomerEloquentModel::factory()->create([...$team, 'name' => 'Acme']);
+    $approver = CustomFieldEloquentModel::factory()->on(CustomFieldTargetEnum::Milestone)->linkingTo(CustomFieldRelationEnum::Customer)->create($team);
+    $milestone = MilestoneEloquentModel::factory()->create([...$team, 'project_id' => $project->id, 'custom_fields' => [$approver->id => $customer->id]]);
+    $vehicles = CustomObjectEloquentModel::factory()->create([...$team, 'name_plural' => 'Vehicles']);
+    $link = CustomFieldEloquentModel::factory()->forObject($vehicles)->linkingTo(CustomFieldRelationEnum::Milestone)->create(['name' => 'Needed by']);
+    RecordEloquentModel::factory()->of($vehicles)->create(['name' => 'Van', 'custom_fields' => [$link->id => $milestone->id]]);
+
+    actingAs($owner)
+        ->get(route('projects.show', $project->id))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where("milestones.0.custom_fields.{$approver->id}", $customer->id)
+            ->where('customFieldLabels', [$customer->id => 'Acme'])
+            ->where('milestones.0.linked_records.0.source', 'Vehicles')
+            ->where('milestones.0.linked_records.0.field', 'Needed by')
+            ->where('milestones.0.linked_records.0.records.0.title', 'Van'),
         );
 });

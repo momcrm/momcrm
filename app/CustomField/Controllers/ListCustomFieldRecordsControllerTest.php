@@ -11,6 +11,7 @@ use App\CustomField\CustomFieldRelationEnum;
 use App\CustomObject\CustomObjectEloquentModel;
 use App\Invoice\InvoiceEloquentModel;
 use App\Location\LocationEloquentModel;
+use App\Milestone\MilestoneEloquentModel;
 use App\Project\ProjectEloquentModel;
 use App\Record\RecordEloquentModel;
 use App\Service\ServiceEloquentModel;
@@ -159,4 +160,17 @@ it('lists contracts by title and invoices by number', function (): void {
         ->assertExactJson(['records' => [['value' => $old->id, 'label' => 'INV-0007']]]);
     actingAs($owner)->getJson(route('custom-fields.records', ['customField' => $invoices->id, 'search' => 'acme']))
         ->assertExactJson(['records' => []]);
+});
+
+it("offers a project's milestones only to those who can see the project", function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $team = ['team_id' => $owner->current_team_id];
+    $outsider = UserEloquentModel::factory()->inTeam($owner->current_team_id)->create();
+    $field = CustomFieldEloquentModel::factory()->linkingTo(CustomFieldRelationEnum::Milestone)->create($team);
+    $secret = ProjectEloquentModel::factory()->create([...$team, 'visibility' => 'restricted']);
+    $secret->members()->attach($owner->id);
+    $milestone = MilestoneEloquentModel::factory()->create([...$team, 'project_id' => $secret->id, 'name' => 'Go live']);
+
+    actingAs($owner)->getJson(route('custom-fields.records', $field->id))->assertExactJson(['records' => [['value' => $milestone->id, 'label' => 'Go live']]]);
+    actingAs($outsider)->getJson(route('custom-fields.records', $field->id))->assertExactJson(['records' => []]);
 });

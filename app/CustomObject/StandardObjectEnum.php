@@ -11,6 +11,7 @@ use App\Customer\CustomerEloquentModel;
 use App\Invoice\Invoice;
 use App\Invoice\InvoiceEloquentModel;
 use App\Location\LocationEloquentModel;
+use App\Milestone\MilestoneEloquentModel;
 use App\Project\ProjectEloquentModel;
 use App\Project\ProjectVisibility;
 use App\Service\ServiceEloquentModel;
@@ -40,6 +41,7 @@ enum StandardObjectEnum: string
     case Service = 'service';
     case Contract = 'contract';
     case Invoice = 'invoice';
+    case Milestone = 'milestone';
 
     /**
      * What several of its records are called.
@@ -56,6 +58,7 @@ enum StandardObjectEnum: string
             self::Service => 'Services',
             self::Contract => 'Contracts',
             self::Invoice => 'Invoices',
+            self::Milestone => 'Milestones',
         };
     }
 
@@ -74,12 +77,13 @@ enum StandardObjectEnum: string
             self::Service => 'service',
             self::Contract => 'contract',
             self::Invoice => 'invoice',
+            self::Milestone => 'milestone',
         };
     }
 
     /**
-     * The team's records of this kind that the person may see. Tickets and
-     * projects obey project visibility, so nothing built on this reveals a
+     * The team's records of this kind that the person may see. Tickets,
+     * projects and milestones obey project visibility, so nothing built on this reveals a
      * members-only project.
      *
      * @return Builder<covariant Model>
@@ -96,6 +100,7 @@ enum StandardObjectEnum: string
             self::Service => ServiceEloquentModel::query(),
             self::Contract => ContractEloquentModel::query(),
             self::Invoice => InvoiceEloquentModel::query(),
+            self::Milestone => MilestoneEloquentModel::query(),
         };
 
         $query->withoutGlobalScopes()->where('team_id', $teamId);
@@ -103,6 +108,7 @@ enum StandardObjectEnum: string
         match ($this) {
             self::Ticket => ProjectVisibility::constrainTickets($query->getQuery(), $userId),
             self::Project => ProjectVisibility::constrainProjects($query->getQuery(), $userId),
+            self::Milestone => ProjectVisibility::constrainMilestones($query->getQuery(), $userId),
             default => null,
         };
 
@@ -119,7 +125,7 @@ enum StandardObjectEnum: string
     {
         $columns = match ($this) {
             self::Ticket => ['title'],
-            self::Customer, self::Project, self::Asset, self::Location, self::Service => ['name'],
+            self::Customer, self::Project, self::Asset, self::Location, self::Service, self::Milestone => ['name'],
             self::Contact => ['first_name', 'last_name'],
             self::Contract => ['title'],
             self::Invoice => [],
@@ -173,7 +179,8 @@ enum StandardObjectEnum: string
             $record instanceof ProjectEloquentModel,
             $record instanceof AssetEloquentModel,
             $record instanceof LocationEloquentModel,
-            $record instanceof ServiceEloquentModel => $record->name,
+            $record instanceof ServiceEloquentModel,
+            $record instanceof MilestoneEloquentModel => $record->name,
             $record instanceof ContractEloquentModel => $record->title,
             $record instanceof InvoiceEloquentModel => Invoice::fromEloquentModel($record)->getReference(),
             default => $this->label(),
@@ -182,7 +189,8 @@ enum StandardObjectEnum: string
 
     /**
      * The page that shows a record. A contract has no page of its own: it
-     * opens in a dialog on its customer's Contracts tab.
+     * opens in a dialog on its customer's Contracts tab. Nor has a milestone,
+     * which is shown on its project's page.
      */
     public function url(Model $record): string
     {
@@ -198,6 +206,7 @@ enum StandardObjectEnum: string
             self::Service => route('services.edit', $id),
             self::Contract => route('customers.contracts', ['customer' => $record->getAttribute('customer_id'), 'contract' => $id]),
             self::Invoice => route('invoices.show', $id),
+            self::Milestone => route('projects.show', $record->getAttribute('project_id')),
         };
     }
 }
