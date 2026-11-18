@@ -10,7 +10,8 @@ namespace App\Connector;
 final class ConnectorSession
 {
     /**
-     * Whether the sign-in under way asked for access to shared mailboxes.
+     * The keys of the options chosen for the sign-in under way, such as
+     * access to shared mailboxes.
      */
-    public const string PENDING_SHARED_MAILBOXES = 'connector.pending_shared_mailboxes';
+    public const string PENDING_OPTIONS = 'connector.pending_options';
 }

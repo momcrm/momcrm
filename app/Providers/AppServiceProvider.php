@@ -9,6 +9,12 @@ use App\Attachment\Attachment;
 use App\Attachment\AttachmentPolicy;
 use App\Comment\Comment;
 use App\Comment\CommentPolicy;
+use App\Connector\Sdk\ConnectorRegistry;
+use App\Connector\Types\Google\GoogleConnector;
+use App\Connector\Types\Imap\ImapConnector;
+use App\Connector\Types\Imap\MailServers;
+use App\Connector\Types\Imap\WebklexMailServers;
+use App\Connector\Types\Microsoft\MicrosoftConnector;
 use App\Contact\Contact;
 use App\Contact\ContactPolicy;
 use App\Contract\Contract;
@@ -24,8 +30,6 @@ use App\Invoice\Invoice;
 use App\Invoice\InvoicePolicy;
 use App\Location\Location;
 use App\Location\LocationPolicy;
-use App\Mailbox\Clients\WebklexMailServers;
-use App\Mailbox\Contracts\MailServers;
 use App\Milestone\Milestone;
 use App\Milestone\MilestonePolicy;
 use App\Passkey\FormRequests\PasskeyVerificationFormRequest;
@@ -73,6 +77,11 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(PasskeyVerificationRequest::class, PasskeyVerificationFormRequest::class);
         $this->app->bind(MailServers::class, WebklexMailServers::class);
+        $this->app->singleton(ConnectorRegistry::class, fn (): ConnectorRegistry => new ConnectorRegistry(
+            new MicrosoftConnector,
+            new GoogleConnector,
+            new ImapConnector,
+        ));
         $this->app->bind(EnvironmentFile::class, fn (): EnvironmentFile => new EnvironmentFile(
             path: $this->app->environmentFilePath(),
             backupDirectory: storage_path('app/private/environment-backups'),

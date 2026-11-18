@@ -8,6 +8,7 @@ use App\Connector\Connector;
 use App\Connector\ConnectorEloquentModel;
 use App\Connector\ConnectorStatusEnum;
 use App\Connector\Exceptions\CouldNotReachConnector;
+use App\Connector\Sdk\ConnectsBySignIn;
 use App\Shared\Types;
 use App\Team\Scopes\CurrentTeamScope;
 use Illuminate\Http\Client\ConnectionException;
@@ -41,7 +42,8 @@ final readonly class GetConnectorAccessToken
             return $cached;
         }
 
-        $type = $this->connector->getType()->toEnum();
+        $type = $this->connector->connectorType();
+        $company = $type->company();
 
         $model = ConnectorEloquentModel::query()
             ->withoutGlobalScope(CurrentTeamScope::class)
@@ -50,29 +52,28 @@ final readonly class GetConnectorAccessToken
         $refreshToken = $model?->credentials[ConnectorEloquentModel::REFRESH_TOKEN] ?? null;
 
         if ($model === null || $model->status !== ConnectorStatusEnum::Connected->value || ! is_string($refreshToken) || $refreshToken === '') {
-            throw CouldNotReachConnector::needsReconnect($type);
+            throw CouldNotReachConnector::needsReconnect($company);
         }
 
-        $provider = $type->signInProvider()?->value;
-        $tokenUrl = $type->tokenUrl();
-
-        if ($provider === null || $tokenUrl === null) {
-            throw CouldNotReachConnector::needsReconnect($type);
+        if (! $type instanceof ConnectsBySignIn) {
+            throw CouldNotReachConnector::needsReconnect($company);
         }
+
+        $driver = $type->signInDriver();
 
         try {
             $response = Http::asForm()
                 ->acceptJson()
                 ->connectTimeout(5)
                 ->timeout(20)
-                ->post($tokenUrl, [
-                    'client_id' => config()->string("services.{$provider}.client_id"),
-                    'client_secret' => config()->string("services.{$provider}.client_secret"),
+                ->post($type->tokenUrl(), [
+                    'client_id' => config()->string("services.{$driver}.client_id"),
+                    'client_secret' => config()->string("services.{$driver}.client_secret"),
                     'grant_type' => 'refresh_token',
                     'refresh_token' => $refreshToken,
                 ]);
         } catch (ConnectionException $exception) {
-            throw CouldNotReachConnector::unavailable($type, $exception);
+            throw CouldNotReachConnector::unavailable($company, $exception);
         }
 
         /*
@@ -87,7 +88,7 @@ final readonly class GetConnectorAccessToken
         $accessToken = $response->json('access_token');
 
         if (! $response->successful() || ! is_string($accessToken) || $accessToken === '') {
-            throw CouldNotReachConnector::unavailable($type);
+            throw CouldNotReachConnector::unavailable($company);
         }
 
         $replacement = $response->json('refresh_token');

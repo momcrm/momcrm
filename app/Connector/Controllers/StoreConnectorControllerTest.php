@@ -2,10 +2,17 @@
 
 declare(strict_types=1);
 
+use App\Connector\Connector;
 use App\Connector\ConnectorEloquentModel;
-use App\Connector\ConnectorTypeEnum;
 use App\Connector\Exceptions\CouldNotReachConnector;
-use App\Mailbox\Contracts\MailServers;
+use App\Connector\Sdk\ConnectedAccount;
+use App\Connector\Sdk\ConnectorRegistry;
+use App\Connector\Sdk\ConnectorType;
+use App\Connector\Sdk\ConnectsByForm;
+use App\Connector\Sdk\CouldNotConnect;
+use App\Connector\Sdk\Field;
+use App\Connector\Types\Imap\ImapConnector;
+use App\Connector\Types\Imap\MailServers;
 use App\User\UserEloquentModel;
 use Tests\Support\FakeMailServers;
 
@@ -44,7 +51,7 @@ it('connects a mailbox once both of its servers let us in, keeping the passwords
     $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
 
     actingAs($owner)
-        ->post(route('connectors.store'), mailServerInput())
+        ->post(route('connectors.store', 'imap'), mailServerInput())
         ->assertSessionHasNoErrors()
         ->assertRedirectToRoute('connectors.index')
         ->assertInertiaFlash('toast', ['type' => 'success', 'message' => 'help@helpdesk.test connected.']);
@@ -82,7 +89,7 @@ it('signs in to SMTP as it does to IMAP when no other username and password are 
     $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
 
     actingAs($owner)
-        ->post(route('connectors.store'), mailServerInput(['from_name' => null, 'smtp_username' => null, 'smtp_password' => null]))
+        ->post(route('connectors.store', 'imap'), mailServerInput(['from_name' => null, 'smtp_username' => null, 'smtp_password' => null]))
         ->assertSessionHasNoErrors();
 
     expect(ConnectorEloquentModel::query()->withoutGlobalScopes()->sole())
@@ -100,7 +107,7 @@ it('replaces the servers and passwords of an address the team already connected'
     ]);
 
     actingAs($owner)
-        ->post(route('connectors.store'), mailServerInput(['imap_password' => 'new-secret', 'imap_host' => '203.0.113.99']))
+        ->post(route('connectors.store', 'imap'), mailServerInput(['imap_password' => 'new-secret', 'imap_host' => '203.0.113.99']))
         ->assertSessionHasNoErrors();
 
     expect($connector->refresh())
@@ -115,7 +122,7 @@ it('saves nothing and says which field to look at', function (Closure $setUp, ar
     $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
 
     actingAs($owner)
-        ->post(route('connectors.store'), $setUp($this->servers))
+        ->post(route('connectors.store', 'imap'), $setUp($this->servers))
         ->assertSessionHasErrors($errors);
 
     expect(ConnectorEloquentModel::query()->withoutGlobalScopes()->exists())->toBeFalse();
@@ -146,7 +153,7 @@ it('saves nothing and says which field to look at', function (Closure $setUp, ar
     ],
     'an IMAP server that refuses the password' => [
         function (FakeMailServers $servers): array {
-            $servers->imapFailure = CouldNotReachConnector::needsReconnect(ConnectorTypeEnum::Imap);
+            $servers->imapFailure = CouldNotReachConnector::needsReconnect(ImapConnector::COMPANY);
 
             return mailServerInput();
         },
@@ -154,7 +161,7 @@ it('saves nothing and says which field to look at', function (Closure $setUp, ar
     ],
     'an IMAP server that cannot be reached' => [
         function (FakeMailServers $servers): array {
-            $servers->imapFailure = CouldNotReachConnector::unavailable(ConnectorTypeEnum::Imap);
+            $servers->imapFailure = CouldNotReachConnector::unavailable(ImapConnector::COMPANY);
 
             return mailServerInput();
         },
@@ -162,7 +169,7 @@ it('saves nothing and says which field to look at', function (Closure $setUp, ar
     ],
     'an SMTP server that refuses the password' => [
         function (FakeMailServers $servers): array {
-            $servers->smtpFailure = CouldNotReachConnector::needsReconnect(ConnectorTypeEnum::Imap);
+            $servers->smtpFailure = CouldNotReachConnector::needsReconnect(ImapConnector::COMPANY);
 
             return mailServerInput();
         },
@@ -170,7 +177,7 @@ it('saves nothing and says which field to look at', function (Closure $setUp, ar
     ],
     'an SMTP server that cannot be reached' => [
         function (FakeMailServers $servers): array {
-            $servers->smtpFailure = CouldNotReachConnector::unavailable(ConnectorTypeEnum::Imap);
+            $servers->smtpFailure = CouldNotReachConnector::unavailable(ImapConnector::COMPANY);
 
             return mailServerInput();
         },
@@ -181,7 +188,7 @@ it('saves nothing and says which field to look at', function (Closure $setUp, ar
 it('signs in to no server it may not connect to', function (): void {
     $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
 
-    actingAs($owner)->post(route('connectors.store'), mailServerInput(['smtp_host' => '169.254.169.254']))->assertSessionHasErrors('smtp_host');
+    actingAs($owner)->post(route('connectors.store', 'imap'), mailServerInput(['smtp_host' => '169.254.169.254']))->assertSessionHasErrors('smtp_host');
 
     expect($this->servers->imapSignIns)->toBe([])
         ->and($this->servers->smtpSignIns)->toBe([]);
@@ -191,7 +198,88 @@ it('forbids members', function (): void {
     $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
     $member = UserEloquentModel::factory()->inTeam($owner->current_team_id)->create();
 
-    actingAs($member)->post(route('connectors.store'), mailServerInput())->assertForbidden();
+    actingAs($member)->post(route('connectors.store', 'imap'), mailServerInput())->assertForbidden();
 
     expect(ConnectorEloquentModel::query()->withoutGlobalScopes()->exists())->toBeFalse();
+});
+
+it('connects an account of any registered type that has a form, with no other code', function (): void {
+    ConnectorRegistry::instance()->register(new class extends ConnectorType implements ConnectsByForm
+    {
+        public function key(): string
+        {
+            return 'weather_station';
+        }
+
+        public function label(): string
+        {
+            return 'Weather station';
+        }
+
+        public function description(): string
+        {
+            return 'Readings from the roof.';
+        }
+
+        public function formIntroduction(): string
+        {
+            return 'The key is printed on the station.';
+        }
+
+        public function fields(): array
+        {
+            return [
+                Field::text('station', 'Station')->required(),
+                Field::password('api_key', 'API key')->required(),
+            ];
+        }
+
+        public function accountField(): string
+        {
+            return 'station';
+        }
+
+        public function connect(array $values): ConnectedAccount
+        {
+            if ($values['api_key'] !== 'right-key') {
+                throw CouldNotConnect::because('api_key', 'The station did not accept that key.');
+            }
+
+            return new ConnectedAccount((string) $values['station'], 'Roof', ['station' => $values['station']], ['api_key' => $values['api_key']]);
+        }
+    });
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+
+    actingAs($owner)
+        ->post(route('connectors.store', 'weather_station'), ['station' => 'roof-1'])
+        ->assertSessionHasErrors(['api_key' => 'The api key field is required.']);
+
+    actingAs($owner)
+        ->post(route('connectors.store', 'weather_station'), ['station' => 'roof-1', 'api_key' => 'wrong-key'])
+        ->assertSessionHasErrors(['api_key' => 'The station did not accept that key.']);
+
+    actingAs($owner)
+        ->post(route('connectors.store', 'weather_station'), ['station' => 'roof-1', 'api_key' => 'right-key'])
+        ->assertSessionHasNoErrors()
+        ->assertInertiaFlash('toast', ['type' => 'success', 'message' => 'roof-1 connected.']);
+
+    $connector = ConnectorEloquentModel::query()->withoutGlobalScopes()->sole();
+
+    expect($connector)
+        ->type->toBe('weather_station')
+        ->name->toBe('Roof')
+        ->account->toBe('roof-1')
+        ->settings->toBe(['station' => 'roof-1'])
+        ->credentials->toBe(['api_key' => 'right-key'])
+        ->and(Connector::fromEloquentModel($connector)->toListItem())
+        ->type_label->toBe('Weather station')
+        ->capabilities->toBe([])
+        ->settings->toBe(['station' => 'roof-1']);
+});
+
+it('is not found for a type that does not exist or has no form', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+
+    actingAs($owner)->post(route('connectors.store', 'carrier_pigeon'), mailServerInput())->assertNotFound();
+    actingAs($owner)->post(route('connectors.store', 'microsoft'), mailServerInput())->assertNotFound();
 });

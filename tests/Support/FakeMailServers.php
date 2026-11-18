@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Tests\Support;
 
 use App\Connector\Exceptions\CouldNotReachConnector;
-use App\Mailbox\Contracts\ImapInbox;
-use App\Mailbox\Contracts\MailServers;
-use App\Mailbox\MailServerSettings;
+use App\Connector\Types\Imap\ImapInbox;
+use App\Connector\Types\Imap\MailServers;
+use App\Connector\Types\Imap\MailServerSettings;
 use Carbon\CarbonImmutable;
 use Symfony\Component\Mime\Email;
 

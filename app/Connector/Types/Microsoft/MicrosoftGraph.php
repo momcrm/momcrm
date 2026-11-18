@@ -2,11 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Mailbox;
+namespace App\Connector\Types\Microsoft;
 
 use App\Connector\Actions\GetConnectorAccessToken;
 use App\Connector\Connector;
-use App\Connector\ConnectorTypeEnum;
 use App\Connector\Exceptions\CouldNotReachConnector;
 use App\Shared\Types;
 use Carbon\CarbonImmutable;
@@ -241,7 +240,7 @@ final readonly class MicrosoftGraph
         try {
             return $this->request()->send(mb_strtoupper($method), $url, $body === [] ? [] : ['json' => $body]);
         } catch (ConnectionException $exception) {
-            throw CouldNotReachConnector::unavailable(ConnectorTypeEnum::Microsoft, $exception);
+            throw CouldNotReachConnector::unavailable(MicrosoftConnector::COMPANY, $exception);
         }
     }
 
@@ -261,7 +260,7 @@ final readonly class MicrosoftGraph
             // Passing an empty query would strip the one a next-page address carries.
             return $query === [] ? $request->get($url) : $request->get($url, $query);
         } catch (ConnectionException $exception) {
-            throw CouldNotReachConnector::unavailable(ConnectorTypeEnum::Microsoft, $exception);
+            throw CouldNotReachConnector::unavailable(MicrosoftConnector::COMPANY, $exception);
         }
     }
 
@@ -304,11 +303,11 @@ final readonly class MicrosoftGraph
         }
 
         if ($response->serverError() || $response->status() === 429) {
-            throw CouldNotReachConnector::unavailable(ConnectorTypeEnum::Microsoft);
+            throw CouldNotReachConnector::unavailable(MicrosoftConnector::COMPANY);
         }
 
         if ($response->status() === 401) {
-            throw CouldNotReachConnector::needsReconnect(ConnectorTypeEnum::Microsoft);
+            throw CouldNotReachConnector::needsReconnect(MicrosoftConnector::COMPANY);
         }
 
         $message = $response->json('error.message');

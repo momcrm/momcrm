@@ -9,7 +9,9 @@ use App\Connector\Actions\SaveConnector;
 use App\Connector\Connector;
 use App\Connector\ConnectorEloquentModel;
 use App\Connector\ConnectorSession;
-use App\Connector\ConnectorTypeEnum;
+use App\Connector\Sdk\ConnectorRegistry;
+use App\Connector\Sdk\ConnectsBySignIn;
+use App\Shared\Types;
 use App\Team\Actions\FindTeam;
 use App\Team\Exceptions\CouldNotViewTeam;
 use Illuminate\Http\RedirectResponse;
@@ -42,21 +44,19 @@ final class HandleConnectorCallbackController
 
         Gate::authorize('manageConnectors', $team);
 
-        $type = ConnectorTypeEnum::tryFrom((string) $request->route('type'));
+        $type = ConnectorRegistry::instance()->find((string) $request->route('type'));
 
-        $signIn = $type?->signInProvider();
-
-        if ($type === null || $signIn === null || ! $type->isAvailable()) {
+        if (! $type instanceof ConnectsBySignIn || ! $type->isAvailable()) {
             throw new NotFoundHttpException;
         }
 
-        $withSharedMailboxes = $request->session()->pull(ConnectorSession::PENDING_SHARED_MAILBOXES) === true;
+        $options = Types::stringList($request->session()->pull(ConnectorSession::PENDING_OPTIONS) ?? []);
         $company = $type->company();
 
         try {
             /** @var AbstractProvider $provider */
-            $provider = Socialite::driver($signIn->value);
-            $signedIn = $provider->redirectUrl(route('connectors.callback', ['type' => $type->value]))->user();
+            $provider = Socialite::driver($type->signInDriver());
+            $signedIn = $provider->redirectUrl(route('connectors.callback', ['type' => $type->key()]))->user();
         } catch (Throwable) {
             return self::failed(__("We couldn't sign in to :company. Try connecting again.", ['company' => $company]));
         }
@@ -74,10 +74,10 @@ final class HandleConnectorCallbackController
         $connector = SaveConnector::fromConnector(
             Connector::new()
                 ->setTeamId($team->getId()->toString())
-                ->setType($type)
+                ->setType($type->key())
                 ->setAccount($account)
                 ->setName(filled($signedIn->getName()) ? $signedIn->getName() : $account)
-                ->setSettings($withSharedMailboxes ? [Connector::SETTING_SHARED_MAILBOXES => true] : [])
+                ->setSettings(array_fill_keys($options, true))
                 ->setConnectedById((string) $request->user()?->id),
             [ConnectorEloquentModel::REFRESH_TOKEN => $signedIn->refreshToken],
         );

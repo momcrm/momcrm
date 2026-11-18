@@ -2,11 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Mailbox\Clients;
+namespace App\Connector\Types\Google;
 
 use App\Connector\Actions\GetConnectorAccessToken;
 use App\Connector\Connector;
-use App\Connector\ConnectorTypeEnum;
 use App\Connector\Exceptions\CouldNotReachConnector;
 use App\Mailbox\Contracts\MailClient;
 use App\Mailbox\OutgoingMail;
@@ -418,7 +417,7 @@ final class GoogleMailClient implements MailClient
         try {
             return $this->request()->post($path, $body);
         } catch (ConnectionException $exception) {
-            throw CouldNotReachConnector::unavailable(ConnectorTypeEnum::Google, $exception);
+            throw CouldNotReachConnector::unavailable(GoogleConnector::COMPANY, $exception);
         }
     }
 
@@ -434,7 +433,7 @@ final class GoogleMailClient implements MailClient
                 ->retry([200, 1000], when: self::isTransient(...), throw: false)
                 ->get($path, $query);
         } catch (ConnectionException $exception) {
-            throw CouldNotReachConnector::unavailable(ConnectorTypeEnum::Google, $exception);
+            throw CouldNotReachConnector::unavailable(GoogleConnector::COMPANY, $exception);
         }
     }
 
@@ -469,11 +468,11 @@ final class GoogleMailClient implements MailClient
         }
 
         if ($response->serverError() || $response->status() === 429) {
-            throw CouldNotReachConnector::unavailable(ConnectorTypeEnum::Google);
+            throw CouldNotReachConnector::unavailable(GoogleConnector::COMPANY);
         }
 
         if ($response->status() === 401) {
-            throw CouldNotReachConnector::needsReconnect(ConnectorTypeEnum::Google);
+            throw CouldNotReachConnector::needsReconnect(GoogleConnector::COMPANY);
         }
 
         $message = $response->json('error.message');

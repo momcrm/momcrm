@@ -28,7 +28,7 @@ final readonly class MarkConnectorAsNeedingReconnect
      */
     public function __invoke(): CouldNotReachConnector
     {
-        $exception = CouldNotReachConnector::needsReconnect($this->connector->getType()->toEnum());
+        $exception = CouldNotReachConnector::needsReconnect($this->connector->connectorType()->company());
 
         ConnectorEloquentModel::query()
             ->withoutGlobalScope(CurrentTeamScope::class)

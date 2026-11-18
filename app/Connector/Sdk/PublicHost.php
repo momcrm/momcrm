@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Connector;
+namespace App\Connector\Sdk;
 
 /**
  * Whether a server someone typed in may be connected to. This app connects

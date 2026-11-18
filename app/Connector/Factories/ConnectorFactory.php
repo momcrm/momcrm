@@ -4,16 +4,17 @@ declare(strict_types=1);
 
 namespace App\Connector\Factories;
 
-use App\Connector\Connector;
 use App\Connector\ConnectorEloquentModel;
 use App\Connector\ConnectorStatusEnum;
-use App\Connector\ConnectorTypeEnum;
 use App\Connector\Properties\Account;
 use App\Connector\Properties\Name;
 use App\Connector\Properties\Settings;
 use App\Connector\Properties\Status;
 use App\Connector\Properties\TeamId;
 use App\Connector\Properties\Type;
+use App\Connector\Types\Google\GoogleConnector;
+use App\Connector\Types\Imap\ImapConnector;
+use App\Connector\Types\Microsoft\MicrosoftConnector;
 use App\Team\TeamEloquentModel;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -33,7 +34,7 @@ final class ConnectorFactory extends Factory
 
         return [
             TeamId::getDatabaseTableColumnName() => TeamEloquentModel::factory(),
-            Type::getDatabaseTableColumnName() => ConnectorTypeEnum::Microsoft->value,
+            Type::getDatabaseTableColumnName() => MicrosoftConnector::KEY,
             Name::getDatabaseTableColumnName() => fake()->name(),
             Account::getDatabaseTableColumnName() => $account,
             Status::getDatabaseTableColumnName() => ConnectorStatusEnum::Connected->value,
@@ -43,7 +44,7 @@ final class ConnectorFactory extends Factory
 
     public function google(): static
     {
-        return $this->state([Type::getDatabaseTableColumnName() => ConnectorTypeEnum::Google->value]);
+        return $this->state([Type::getDatabaseTableColumnName() => GoogleConnector::KEY]);
     }
 
     /**
@@ -52,7 +53,7 @@ final class ConnectorFactory extends Factory
     public function imap(): static
     {
         return $this->state([
-            Type::getDatabaseTableColumnName() => ConnectorTypeEnum::Imap->value,
+            Type::getDatabaseTableColumnName() => ImapConnector::KEY,
             Settings::getDatabaseTableColumnName() => [
                 'from_name' => 'Help Desk',
                 'imap_host' => '203.0.113.10',
@@ -78,6 +79,6 @@ final class ConnectorFactory extends Factory
      */
     public function withSharedMailboxes(): static
     {
-        return $this->state([Settings::getDatabaseTableColumnName() => [Connector::SETTING_SHARED_MAILBOXES => true]]);
+        return $this->state([Settings::getDatabaseTableColumnName() => [MicrosoftConnector::SHARED_MAILBOXES => true]]);
     }
 }

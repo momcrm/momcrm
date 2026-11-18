@@ -45,7 +45,7 @@ final readonly class SendMailboxMessage
         } catch (CouldNotReachConnector $exception) {
             // Reading mail is tried again by itself; sending is not, so do not say it will be.
             return self::failed($this->message, $exception->isTemporary
-                ? __(':company could not be reached, so this reply was not sent.', ['company' => $exception->type?->company() ?? __('The mail service')])
+                ? __(':company could not be reached, so this reply was not sent.', ['company' => $exception->company ?? __('The mail service')])
                 : $exception->getMessage());
         } catch (Throwable $exception) {
             report($exception);
@@ -92,7 +92,7 @@ final readonly class SendMailboxMessage
         $connector = FindConnector::byId($mailbox->getConnectorId()->toNullableString());
 
         if ($mailbox->isNull() || ! $connector->isConnected()) {
-            throw CouldNotReachConnector::needsReconnect($connector->getType()->toEnum());
+            throw CouldNotReachConnector::needsReconnect($connector->connectorType()->company());
         }
 
         if ($ticket->isNull() || $to === []) {

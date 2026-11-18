@@ -85,7 +85,7 @@ final class Mailbox extends AbstractData
             'status' => $connector->getStatus()->toEnum()->value,
             'connector_id' => $this->getConnectorId()->toString(),
             'connector_name' => $connector->getName()->toString(),
-            'connector_type' => $connector->getType()->toNullableEnum()?->label(),
+            'connector_type' => $connector->isNull() ? null : $connector->connectorType()->label(),
             'group_id' => $this->getGroupId()->toNullableString(),
             'auto_create_tickets' => $this->getAutoCreateTickets()->toBoolean(),
             'last_synced_at' => $this->getLastSyncedAt()->toNullableCarbon()?->toIso8601String(),

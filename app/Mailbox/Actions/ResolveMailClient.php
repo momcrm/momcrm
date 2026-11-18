@@ -6,18 +6,14 @@ namespace App\Mailbox\Actions;
 
 use App\Connector\Actions\FindConnector;
 use App\Connector\Connector;
-use App\Connector\ConnectorTypeEnum;
 use App\Connector\Exceptions\CouldNotReachConnector;
-use App\Mailbox\Clients\GoogleMailClient;
-use App\Mailbox\Clients\ImapMailClient;
-use App\Mailbox\Clients\MicrosoftMailClient;
 use App\Mailbox\Contracts\MailClient;
+use App\Mailbox\Contracts\ProvidesMail;
 use App\Mailbox\Mailbox;
-use App\Mailbox\MicrosoftGraph;
 
 /**
- * The mail client for a mailbox, picked by the type of connector it goes
- * through. This is the one place that knows which service is which.
+ * The mail client for a mailbox, which the type of connector it goes through
+ * provides. Nothing here knows one mail service from another.
  */
 final class ResolveMailClient
 {
@@ -46,10 +42,12 @@ final class ResolveMailClient
      */
     public static function forConnector(Connector $connector, ?string $sharedAddress = null): MailClient
     {
-        return match ($connector->getType()->toEnum()) {
-            ConnectorTypeEnum::Microsoft => new MicrosoftMailClient(MicrosoftGraph::forConnector($connector, $sharedAddress)),
-            ConnectorTypeEnum::Google => GoogleMailClient::forConnector($connector),
-            ConnectorTypeEnum::Imap => ImapMailClient::forConnector($connector),
-        };
+        $type = $connector->connectorType();
+
+        if (! $type instanceof ProvidesMail) {
+            throw CouldNotReachConnector::refused((string) __(':type accounts cannot be used for email.', ['type' => $type->label()]));
+        }
+
+        return $type->mailClient($connector, $sharedAddress);
     }
 }

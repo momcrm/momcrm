@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 use App\Attachment\AttachmentEloquentModel;
 use App\Connector\ConnectorEloquentModel;
-use App\Connector\ConnectorTypeEnum;
 use App\Connector\Exceptions\CouldNotReachConnector;
+use App\Connector\Types\Imap\ImapConnector;
+use App\Connector\Types\Imap\MailServers;
 use App\Mailbox\Actions\ResolveMailClient;
 use App\Mailbox\Actions\SyncMailbox;
-use App\Mailbox\Contracts\MailServers;
 use App\Mailbox\Mailbox;
 use App\Mailbox\MailboxEloquentModel;
 use App\Mailbox\OutgoingMail;
@@ -169,7 +169,7 @@ it('sends a reply that names the message it answers and the thread before it', f
 });
 
 it('passes on why a reply could not be sent, and sends nothing', function (): void {
-    $this->servers->smtpFailure = CouldNotReachConnector::unavailable(ConnectorTypeEnum::Imap);
+    $this->servers->smtpFailure = CouldNotReachConnector::unavailable(ImapConnector::COMPANY);
 
     expect(fn () => ResolveMailClient::forMailbox(imapMailbox())->send(new OutgoingMail(['kim@acme.test'], 'We are on it.', 'Printer offline', '[#12]', MailboxMessage::new())))
         ->toThrow(CouldNotReachConnector::class, 'The mail server could not be reached. It will be tried again.');
@@ -190,11 +190,11 @@ it('asks for a reconnect once a server refuses the stored username and password'
         ->last_error->toBe('The mail server no longer accepts the sign-in for this connector. Connect it again.');
 })->with([
     'reading' => [
-        fn (FakeMailServers $servers) => $servers->imapFailure = CouldNotReachConnector::needsReconnect(ConnectorTypeEnum::Imap),
+        fn (FakeMailServers $servers) => $servers->imapFailure = CouldNotReachConnector::needsReconnect(ImapConnector::COMPANY),
         fn ($client) => $client->inboxMessagesSince(CarbonImmutable::now(), 10),
     ],
     'sending' => [
-        fn (FakeMailServers $servers) => $servers->smtpFailure = CouldNotReachConnector::needsReconnect(ConnectorTypeEnum::Imap),
+        fn (FakeMailServers $servers) => $servers->smtpFailure = CouldNotReachConnector::needsReconnect(ImapConnector::COMPANY),
         fn ($client) => $client->send(new OutgoingMail(['kim@acme.test'], 'We are on it.', 'Printer offline', '[#12]', MailboxMessage::new())),
     ],
 ]);

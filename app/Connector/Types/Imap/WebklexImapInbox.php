@@ -2,11 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Mailbox\Clients;
+namespace App\Connector\Types\Imap;
 
-use App\Connector\ConnectorTypeEnum;
 use App\Connector\Exceptions\CouldNotReachConnector;
-use App\Mailbox\Contracts\ImapInbox;
 use Carbon\CarbonImmutable;
 use Throwable;
 use Webklex\PHPIMAP\Attachment;
@@ -156,7 +154,7 @@ final readonly class WebklexImapInbox implements ImapInbox
         $connection = $this->client->getConnection();
 
         if (! $connection instanceof ImapProtocol) {
-            throw CouldNotReachConnector::unavailable(ConnectorTypeEnum::Imap);
+            throw CouldNotReachConnector::unavailable(ImapConnector::COMPANY);
         }
 
         return $connection;
@@ -172,8 +170,8 @@ final readonly class WebklexImapInbox implements ImapInbox
         }
 
         return $exception instanceof AuthFailedException
-            ? CouldNotReachConnector::needsReconnect(ConnectorTypeEnum::Imap)
-            : CouldNotReachConnector::unavailable(ConnectorTypeEnum::Imap, $exception);
+            ? CouldNotReachConnector::needsReconnect(ImapConnector::COMPANY)
+            : CouldNotReachConnector::unavailable(ImapConnector::COMPANY, $exception);
     }
 
     /**

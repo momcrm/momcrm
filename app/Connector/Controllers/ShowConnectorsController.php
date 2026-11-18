@@ -6,7 +6,8 @@ namespace App\Connector\Controllers;
 
 use App\Connector\Actions\FindConnector;
 use App\Connector\Connector;
-use App\Connector\ConnectorTypeEnum;
+use App\Connector\Sdk\ConnectorRegistry;
+use App\Connector\Sdk\ConnectorType;
 use App\Mailbox\Actions\FindMailbox;
 use App\Mailbox\Mailbox;
 use App\Team\Actions\FindTeam;
@@ -51,7 +52,10 @@ final class ShowConnectorsController
                 ])
                 ->values()
                 ->all(),
-            'types' => ConnectorTypeEnum::catalog(),
+            'types' => array_map(
+                fn (ConnectorType $type): array => $type->toCatalogItem(),
+                ConnectorRegistry::instance()->all(),
+            ),
         ]);
     }
 }

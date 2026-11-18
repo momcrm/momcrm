@@ -6,7 +6,9 @@ namespace App\Connector\FormRequests;
 
 use App\Connector\Actions\FindConnector;
 use App\Connector\ConnectorSession;
-use App\Connector\ConnectorTypeEnum;
+use App\Connector\Sdk\ConnectorRegistry;
+use App\Connector\Sdk\ConnectsBySignIn;
+use App\Connector\Sdk\SignInOption;
 use App\Team\Actions\FindTeam;
 use App\Team\Exceptions\CouldNotViewTeam;
 use App\Team\Team;
@@ -47,14 +49,21 @@ final class ConnectConnectorFormRequest extends FormRequest
     }
 
     /**
+     * Each of the type's sign-in options may be ticked; a type that is not
+     * signed in to has none, and is turned away in process().
+     *
      * @return array<string, array<int, mixed>>
      */
     public function rules(): array
     {
-        return [
-            'shared_mailboxes' => ['nullable', 'boolean'],
-            'connector' => ['nullable', 'uuid'],
-        ];
+        $type = ConnectorRegistry::instance()->find((string) $this->route('type'));
+        $rules = ['connector' => ['nullable', 'uuid']];
+
+        foreach ($type instanceof ConnectsBySignIn ? $type->signInOptions() : [] as $option) {
+            $rules[$option->key] = ['nullable', 'boolean'];
+        }
+
+        return $rules;
     }
 
     /**
@@ -64,28 +73,31 @@ final class ConnectConnectorFormRequest extends FormRequest
      */
     public function process(): RedirectResponse
     {
-        $type = ConnectorTypeEnum::tryFrom((string) $this->route('type'));
+        $type = ConnectorRegistry::instance()->find((string) $this->route('type'));
 
-        $signIn = $type?->signInProvider();
-
-        if ($type === null || $signIn === null || ! $type->isAvailable()) {
+        if (! $type instanceof ConnectsBySignIn || ! $type->isAvailable()) {
             throw new NotFoundHttpException;
         }
 
         $reconnecting = FindConnector::byIdForTeam($this->string('connector')->toString() ?: null, $this->team->getId()->toString());
-        $isReconnecting = $reconnecting->isNotNull() && $reconnecting->getType()->toNullableEnum() === $type;
+        $isReconnecting = $reconnecting->isNotNull() && $reconnecting->getType()->toNullableString() === $type->key();
 
-        $withSharedMailboxes = $type->supportsSharedMailboxes()
-            && ($isReconnecting ? $reconnecting->reachesSharedMailboxes() : $this->boolean('shared_mailboxes'));
+        $options = array_values(array_map(
+            fn (SignInOption $option): string => $option->key,
+            array_filter(
+                $type->signInOptions(),
+                fn (SignInOption $option): bool => $isReconnecting ? $reconnecting->hasOption($option->key) : $this->boolean($option->key),
+            ),
+        ));
 
-        $this->session()->put(ConnectorSession::PENDING_SHARED_MAILBOXES, $withSharedMailboxes);
+        $this->session()->put(ConnectorSession::PENDING_OPTIONS, $options);
 
         /** @var AbstractProvider $provider */
-        $provider = Socialite::driver($signIn->value);
+        $provider = Socialite::driver($type->signInDriver());
 
         return $provider
-            ->scopes($type->scopes($withSharedMailboxes))
-            ->redirectUrl(route('connectors.callback', ['type' => $type->value]))
+            ->scopes($type->scopes($options))
+            ->redirectUrl(route('connectors.callback', ['type' => $type->key()]))
             ->with([
                 ...$type->signInParameters(),
                 ...($isReconnecting ? ['login_hint' => $reconnecting->getAccount()->toString()] : []),
