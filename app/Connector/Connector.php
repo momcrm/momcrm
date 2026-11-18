@@ -95,7 +95,7 @@ final class Connector extends AbstractData
     /**
      * The fields the connectors page shows.
      *
-     * @return array{id: string, type: string, type_label: string, name: string, account: string, status: string, capabilities: list<string>, shared_mailboxes: bool, last_error: ?string, uses_sign_in: bool, settings: array<string, mixed>|null}
+     * @return array{id: string, type: string, type_label: string, name: string, account: string, status: string, capabilities: list<string>, shared_mailboxes: bool, last_error: ?string, uses_sign_in: bool, settings: array<string, mixed>|null, connected_at: ?string}
      */
     public function toListItem(): array
     {
@@ -114,6 +114,7 @@ final class Connector extends AbstractData
             'uses_sign_in' => $type->usesSignIn(),
             // Only what was typed in to connect, to fill the form again. Never the passwords.
             'settings' => $type->usesSignIn() ? null : Types::stringKeyed($this->getSettings()->toArray()),
+            'connected_at' => $this->getCreatedAt()->toNullableCarbon()?->toIso8601String(),
         ];
     }
 

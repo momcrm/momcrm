@@ -11,6 +11,7 @@ use App\Mailbox\Actions\FindMailbox;
 use App\Mailbox\Mailbox;
 use App\Team\Actions\FindTeam;
 use App\Team\Exceptions\CouldNotViewTeam;
+use App\User\Actions\FindUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
@@ -41,6 +42,7 @@ final class ShowConnectorsController
             'connectors' => FindConnector::allForTeam($team->getId()->toString())
                 ->map(fn (Connector $connector): array => [
                     ...$connector->toListItem(),
+                    'connected_by' => FindUser::byId($connector->getConnectedById()->toNullableString())->getName()->toNullableString(),
                     'mailboxes' => $mailboxes
                         ->filter(fn (Mailbox $mailbox): bool => $mailbox->getConnectorId()->toString() === $connector->getId()->toString())
                         ->map(fn (Mailbox $mailbox): string => $mailbox->getAddress()->toString())
@@ -49,7 +51,7 @@ final class ShowConnectorsController
                 ])
                 ->values()
                 ->all(),
-            'types' => ConnectorTypeEnum::available(),
+            'types' => ConnectorTypeEnum::catalog(),
         ]);
     }
 }

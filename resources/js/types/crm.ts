@@ -666,6 +666,9 @@ export type Connector = {
     settings: MailServerSettings | null;
     /** The addresses of the mailboxes that go through this connector. */
     mailboxes: string[];
+    connected_at: string | null;
+    /** The name of whoever connected it, when they are still around. */
+    connected_by: string | null;
 };
 
 /** Where a mailbox's IMAP and SMTP servers are, without the passwords. */
@@ -694,6 +697,10 @@ export type MailConnector = {
 export type ConnectorType = {
     value: string;
     label: string;
+    /** What it connects, in a line. */
+    description: string;
+    /** Whether this installation is set up to connect it. */
+    available: boolean;
     capabilities: string[];
     supports_shared_mailboxes: boolean;
     uses_sign_in: boolean;
