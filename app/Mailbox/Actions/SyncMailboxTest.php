@@ -2,8 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Attachment\AttachmentEloquentModel;
 use App\Mailbox\Actions\GetMailboxAccessToken;
 use App\Mailbox\Actions\SyncMailbox;
+use App\Mailbox\Exceptions\CouldNotReachMailbox;
 use App\Mailbox\Mailbox;
 use App\Mailbox\MailboxEloquentModel;
 use App\MailboxMessage\MailboxMessageEloquentModel;
@@ -12,6 +14,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 
 use function Pest\Laravel\freezeSecond;
 use function Pest\Laravel\travelTo;
@@ -187,6 +190,49 @@ it('reports a message it cannot take in and carries on with the rest', function 
         ->and(MailboxEloquentModel::query()->withoutGlobalScopes()->sole()->last_synced_at)->not->toBeNull();
 
     Exceptions::assertReported(fn (RuntimeException $exception): bool => $exception->getMessage() === 'Could not save the ticket.');
+});
+
+it('saves an email\'s attachments on the ticket it opens', function (): void {
+    Http::preventStrayRequests();
+    Storage::fake('local');
+    $mailbox = mailboxToSync();
+    Http::fake([
+        INBOX_MESSAGES => Http::response(['value' => [listed('graph-1')]]),
+        'graph.microsoft.com/v1.0/me/messages/graph-1/attachments/file-1/$value' => Http::response('pdf-bytes'),
+        'graph.microsoft.com/v1.0/me/messages/graph-1/attachments?*' => Http::response(['value' => [[
+            '@odata.type' => '#microsoft.graph.fileAttachment',
+            'id' => 'file-1',
+            'name' => 'quote.pdf',
+            'contentType' => 'application/pdf',
+            'size' => 9,
+            'isInline' => false,
+        ]]]),
+        'graph.microsoft.com/v1.0/me/messages/graph-1?*' => Http::response(graphMessage(['hasAttachments' => true])),
+    ]);
+
+    SyncMailbox::fromMailbox($mailbox);
+
+    expect(AttachmentEloquentModel::query()->withoutGlobalScopes()->sole())
+        ->name->toBe('quote.pdf')
+        ->attachable_id->toBe(TicketEloquentModel::query()->withoutGlobalScopes()->sole()->id);
+});
+
+it('still opens the ticket, and reports it, when the attachments cannot be fetched', function (): void {
+    Http::preventStrayRequests();
+    Exceptions::fake();
+    $mailbox = mailboxToSync();
+    Http::fake([
+        INBOX_MESSAGES => Http::response(['value' => [listed('graph-1')]]),
+        'graph.microsoft.com/v1.0/me/messages/graph-1/attachments?*' => Http::response(['error' => ['code' => 'ErrorAccessDenied', 'message' => 'Access is denied.']], 403),
+        'graph.microsoft.com/v1.0/me/messages/graph-1?*' => Http::response(graphMessage(['hasAttachments' => true])),
+    ]);
+
+    expect(SyncMailbox::fromMailbox($mailbox))->toBe(1)
+        ->and(TicketEloquentModel::query()->withoutGlobalScopes()->count())->toBe(1)
+        ->and(AttachmentEloquentModel::query()->withoutGlobalScopes()->exists())->toBeFalse()
+        ->and(MailboxEloquentModel::query()->withoutGlobalScopes()->sole()->last_error)->toBeNull();
+
+    Exceptions::assertReported(fn (CouldNotReachMailbox $exception): bool => $exception->getMessage() === 'Access is denied.');
 });
 
 it('does not read a mailbox that needs reconnecting', function (): void {

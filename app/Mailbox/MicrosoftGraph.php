@@ -133,6 +133,69 @@ final readonly class MicrosoftGraph
     }
 
     /**
+     * What is attached to a message: each attachment's id, name, type and
+     * size in bytes, whether it is a file (not a linked or embedded item) and
+     * whether it is an image shown inside the message. Never the contents.
+     *
+     * @return list<array{id: string, name: string, content_type: ?string, size: int, is_file: bool, is_inline: bool}>
+     *
+     * @throws CouldNotReachMailbox
+     */
+    public function attachments(string $messageId): array
+    {
+        $attachments = [];
+        $url = $this->path('messages/'.rawurlencode($messageId).'/attachments');
+        $query = ['$select' => 'id,name,contentType,size,isInline'];
+
+        while ($url !== null) {
+            $page = self::json($this->get($url, $query));
+
+            foreach (is_array($page['value'] ?? null) ? $page['value'] : [] as $attachment) {
+                $id = is_array($attachment) ? ($attachment['id'] ?? null) : null;
+
+                if (! is_array($attachment) || ! is_string($id)) {
+                    continue;
+                }
+
+                $type = $attachment['@odata.type'] ?? '';
+                $name = $attachment['name'] ?? '';
+                $contentType = $attachment['contentType'] ?? null;
+
+                $attachments[] = [
+                    'id' => $id,
+                    'name' => is_string($name) ? $name : '',
+                    'content_type' => is_string($contentType) ? $contentType : null,
+                    'size' => is_numeric($attachment['size'] ?? null) ? (int) $attachment['size'] : 0,
+                    'is_file' => is_string($type) && str_ends_with($type, 'fileAttachment'),
+                    'is_inline' => ($attachment['isInline'] ?? false) === true,
+                ];
+            }
+
+            $next = $page['@odata.nextLink'] ?? null;
+            $url = is_string($next) && $next !== '' ? $next : null;
+            $query = [];
+        }
+
+        return $attachments;
+    }
+
+    /**
+     * The bytes of a file attached to a message.
+     *
+     * @throws CouldNotReachMailbox
+     */
+    public function attachmentContents(string $messageId, string $attachmentId): string
+    {
+        $response = $this->get($this->path('messages/'.rawurlencode($messageId).'/attachments/'.rawurlencode($attachmentId).'/$value'));
+
+        if (! $response->successful()) {
+            self::json($response);
+        }
+
+        return $response->body();
+    }
+
+    /**
      * A draft reply to a message in the mailbox, which Microsoft threads
      * under it. Null when that message is no longer in the mailbox.
      *

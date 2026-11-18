@@ -75,6 +75,36 @@ it('has no message when it has gone from the mailbox', function (): void {
     expect(MicrosoftGraph::withToken('access-token')->message('graph-1'))->toBeNull();
 });
 
+it('lists what is attached to a message without fetching the files', function (): void {
+    Http::fake(['graph.microsoft.com/v1.0/me/messages/graph-1/attachments?*' => Http::response(['value' => [
+        ['@odata.type' => '#microsoft.graph.fileAttachment', 'id' => 'file-1', 'name' => 'quote.pdf', 'contentType' => 'application/pdf', 'size' => 1200, 'isInline' => false],
+        ['@odata.type' => '#microsoft.graph.fileAttachment', 'id' => 'file-2', 'name' => 'logo.png', 'contentType' => 'image/png', 'size' => 300, 'isInline' => true],
+        ['@odata.type' => '#microsoft.graph.itemAttachment', 'id' => 'item-1', 'name' => 'Forwarded message', 'contentType' => null, 'size' => 4000, 'isInline' => false],
+        ['name' => 'An attachment with no id'],
+    ]])]);
+
+    expect(MicrosoftGraph::withToken('access-token')->attachments('graph-1'))->toBe([
+        ['id' => 'file-1', 'name' => 'quote.pdf', 'content_type' => 'application/pdf', 'size' => 1200, 'is_file' => true, 'is_inline' => false],
+        ['id' => 'file-2', 'name' => 'logo.png', 'content_type' => 'image/png', 'size' => 300, 'is_file' => true, 'is_inline' => true],
+        ['id' => 'item-1', 'name' => 'Forwarded message', 'content_type' => null, 'size' => 4000, 'is_file' => false, 'is_inline' => false],
+    ]);
+
+    Http::assertSent(fn (Request $request): bool => $request['$select'] === 'id,name,contentType,size,isInline');
+});
+
+it('fetches a file attached to a message as it is', function (): void {
+    Http::fake(['graph.microsoft.com/v1.0/me/messages/graph-1/attachments/file-1/$value' => Http::response("\x89PNG\r\n")]);
+
+    expect(MicrosoftGraph::withToken('access-token')->attachmentContents('graph-1', 'file-1'))->toBe("\x89PNG\r\n");
+});
+
+it('says why a file attached to a message could not be fetched', function (): void {
+    Http::fake(['graph.microsoft.com/v1.0/me/messages/graph-1/attachments/file-1/$value' => Http::response(['error' => ['code' => 'ErrorItemNotFound', 'message' => 'The specified object was not found in the store.']], 404)]);
+
+    expect(fn () => MicrosoftGraph::withToken('access-token')->attachmentContents('graph-1', 'file-1'))
+        ->toThrow(CouldNotReachMailbox::class, 'The specified object was not found in the store.');
+});
+
 it('passes on why Microsoft refused', function (): void {
     Http::fake(['graph.microsoft.com/v1.0/me/mailFolders/inbox*' => Http::response(['error' => ['code' => 'ErrorAccessDenied', 'message' => 'Access is denied.']], 403)]);
 
