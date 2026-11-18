@@ -6,10 +6,6 @@ namespace App\Connector\FormRequests;
 
 use App\Connector\Actions\SaveConnector;
 use App\Connector\Connector;
-use App\Connector\Sdk\ConnectorRegistry;
-use App\Connector\Sdk\ConnectorType;
-use App\Connector\Sdk\ConnectsByForm;
-use App\Connector\Sdk\CouldNotConnect;
 use App\Shared\Types;
 use App\Team\Actions\FindTeam;
 use App\Team\Exceptions\CouldNotViewTeam;
@@ -20,6 +16,10 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
+use Mom\Connectors\ConnectorRegistry;
+use Mom\Connectors\ConnectorType;
+use Mom\Connectors\ConnectsByForm;
+use Mom\Connectors\CouldNotConnect;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**

@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Connector\Types\Google;
 
 use App\Connector\Connector;
-use App\Connector\Sdk\ConnectorType;
-use App\Connector\Sdk\ConnectsBySignIn;
 use App\Mailbox\Contracts\MailClient;
 use App\Mailbox\Contracts\ProvidesMail;
+use Mom\Connectors\ConnectorType;
+use Mom\Connectors\ConnectsBySignIn;
 
 /**
  * A Gmail or Google Workspace account, connected by signing in with Google.

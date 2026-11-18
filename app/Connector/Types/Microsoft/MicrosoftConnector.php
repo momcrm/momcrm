@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\Connector\Types\Microsoft;
 
 use App\Connector\Connector;
-use App\Connector\Sdk\ConnectorType;
-use App\Connector\Sdk\ConnectsBySignIn;
-use App\Connector\Sdk\SignInOption;
 use App\Mailbox\Contracts\MailClient;
 use App\Mailbox\Contracts\ProvidesMail;
+use Mom\Connectors\ConnectorType;
+use Mom\Connectors\ConnectsBySignIn;
+use Mom\Connectors\SignInOption;
 
 /**
  * A Microsoft 365 account, connected by signing in with Microsoft. Its

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Connector\Types\Imap;
 
 use App\Connector\Exceptions\CouldNotReachConnector;
-use App\Connector\Sdk\PublicHost;
+use Mom\Connectors\PublicHost;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport;
 use Symfony\Component\Mailer\Transport\Smtp\Stream\SocketStream;

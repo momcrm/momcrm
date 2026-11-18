@@ -9,8 +9,6 @@ use App\Connector\Actions\SaveConnector;
 use App\Connector\Connector;
 use App\Connector\ConnectorEloquentModel;
 use App\Connector\ConnectorSession;
-use App\Connector\Sdk\ConnectorRegistry;
-use App\Connector\Sdk\ConnectsBySignIn;
 use App\Shared\Types;
 use App\Team\Actions\FindTeam;
 use App\Team\Exceptions\CouldNotViewTeam;
@@ -21,6 +19,8 @@ use Inertia\Inertia;
 use Laravel\Socialite\Socialite;
 use Laravel\Socialite\Two\AbstractProvider;
 use Laravel\Socialite\Two\User as SignedInUser;
+use Mom\Connectors\ConnectorRegistry;
+use Mom\Connectors\ConnectsBySignIn;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
 
