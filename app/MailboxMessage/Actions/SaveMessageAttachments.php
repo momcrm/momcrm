@@ -11,10 +11,12 @@ use Mom\Connectors\CouldNotReachConnector;
 use Mom\Connectors\Mail\MailClient;
 
 /**
- * Saves the files attached to an email on the ticket it opened or was added
- * to. Images shown inside the message, such as signature logos, are left out,
- * as are linked and embedded items, files over the size people may upload and
- * any beyond the number of files people may upload at once.
+ * Saves the files that came with an email on the ticket it opened or was added
+ * to. Images shown inside the message are saved too, because a screenshot
+ * pasted into an email is often its point. Attached files are saved before
+ * them, so a signature's logos never take the place of a file someone
+ * attached. Linked and embedded items are left out, as are files over the
+ * size people may upload and any beyond the number people may upload at once.
  */
 final readonly class SaveMessageAttachments
 {
@@ -44,15 +46,12 @@ final readonly class SaveMessageAttachments
         $sender = $this->message->getFromName()->toNullableString() ?? $this->message->getFromAddress()->toNullableString();
         $saved = 0;
 
-        foreach ($this->client->attachments($externalId) as $attachment) {
-            if ($saved >= self::MAX_FILES) {
-                break;
-            }
+        $attachments = collect($this->client->attachments($externalId))
+            ->filter(fn (array $attachment): bool => $attachment['is_file'] && $attachment['size'] <= self::MAX_BYTES)
+            ->sortBy(fn (array $attachment): int => $attachment['is_inline'] ? 1 : 0)
+            ->take(self::MAX_FILES);
 
-            if (! $attachment['is_file'] || $attachment['is_inline'] || $attachment['size'] > self::MAX_BYTES) {
-                continue;
-            }
-
+        foreach ($attachments as $attachment) {
             CreateAttachment::fromContents(
                 $attachment['name'],
                 $this->client->attachmentContents($externalId, $attachment['id']),
