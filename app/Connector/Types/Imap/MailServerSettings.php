@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Mailbox;
+namespace App\Connector\Types\Imap;
 
 use App\Connector\Connector;
 use App\Connector\ConnectorEloquentModel;

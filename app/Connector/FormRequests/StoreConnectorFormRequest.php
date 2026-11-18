@@ -6,11 +6,11 @@ namespace App\Connector\FormRequests;
 
 use App\Connector\Actions\SaveConnector;
 use App\Connector\Connector;
-use App\Connector\ConnectorTypeEnum;
-use App\Connector\Exceptions\CouldNotReachConnector;
-use App\Connector\PublicHost;
-use App\Mailbox\Contracts\MailServers;
-use App\Mailbox\MailServerSettings;
+use App\Connector\Sdk\ConnectorRegistry;
+use App\Connector\Sdk\ConnectorType;
+use App\Connector\Sdk\ConnectsByForm;
+use App\Connector\Sdk\CouldNotConnect;
+use App\Shared\Types;
 use App\Team\Actions\FindTeam;
 use App\Team\Exceptions\CouldNotViewTeam;
 use App\Team\Team;
@@ -18,13 +18,13 @@ use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
- * Connects a mailbox on any mail server, by where its IMAP and SMTP servers
- * are and how to sign in to them.
+ * Connects an account of a type that is connected by filling in a form. The
+ * type says what the form asks for and checks that what was typed works.
  */
 final class StoreConnectorFormRequest extends FormRequest
 {
@@ -59,24 +59,13 @@ final class StoreConnectorFormRequest extends FormRequest
      */
     public function rules(): array
     {
-        $host = ['required', 'string', 'max:255', 'regex:/^[A-Za-z0-9.\-:\[\]]+$/'];
-        $port = ['required', 'integer', 'between:1,65535'];
-        $encryption = ['required', Rule::in(MailServerSettings::ENCRYPTIONS)];
+        $rules = [];
 
-        return [
-            'from_address' => ['required', 'string', 'email', 'max:255'],
-            'from_name' => ['nullable', 'string', 'max:255'],
-            'imap_host' => $host,
-            'imap_port' => $port,
-            'imap_encryption' => $encryption,
-            'imap_username' => ['required', 'string', 'max:255'],
-            'imap_password' => ['required', 'string', 'max:1000'],
-            'smtp_host' => $host,
-            'smtp_port' => $port,
-            'smtp_encryption' => $encryption,
-            'smtp_username' => ['nullable', 'string', 'max:255'],
-            'smtp_password' => ['nullable', 'string', 'max:1000'],
-        ];
+        foreach ($this->type()->fields() as $field) {
+            $rules[$field->name] = $field->validationRules();
+        }
+
+        return $rules;
     }
 
     /**
@@ -84,76 +73,61 @@ final class StoreConnectorFormRequest extends FormRequest
      */
     public function messages(): array
     {
-        return [
-            'imap_host.regex' => __('Enter the server\'s name, such as imap.yourcompany.com, without "https://" or a path.'),
-            'smtp_host.regex' => __('Enter the server\'s name, such as smtp.yourcompany.com, without "https://" or a path.'),
-        ];
+        $messages = [];
+
+        foreach ($this->type()->fields() as $field) {
+            foreach ($field->messages as $rule => $message) {
+                $messages["{$field->name}.{$rule}"] = $message;
+            }
+        }
+
+        return $messages;
     }
 
     /**
-     * Signs in to both servers before saving anything, so a connector that
-     * cannot read or cannot send is never listed. Connecting an address the
-     * team already has replaces its servers and passwords.
+     * Nothing is saved until the type says what was typed works. Connecting
+     * an account the team already has replaces its settings and credentials.
      *
      * @throws ValidationException
      */
     public function process(): RedirectResponse
     {
-        $validated = $this->validated();
-
-        $settings = MailServerSettings::fromArray([
-            ...$validated,
-            'smtp_username' => filled($validated['smtp_username'] ?? null) ? $validated['smtp_username'] : $validated['imap_username'],
-            'smtp_password' => filled($validated['smtp_password'] ?? null) ? $validated['smtp_password'] : $validated['imap_password'],
-        ]);
-
-        foreach (['imap_host' => $settings->imapHost, 'smtp_host' => $settings->smtpHost] as $field => $host) {
-            if (! PublicHost::allows($host)) {
-                throw ValidationException::withMessages([
-                    $field => __("MomCRM can't connect to :host. Check the name, and that the server can be reached from the internet.", ['host' => $host]),
-                ]);
-            }
-        }
-
-        $servers = app(MailServers::class);
+        $type = $this->type();
 
         try {
-            $servers->inbox($settings);
-        } catch (CouldNotReachConnector $exception) {
-            throw self::refused($exception, 'imap', 'IMAP', $settings->imapHost, $settings->imapPort);
-        }
-
-        try {
-            $servers->checkSmtp($settings);
-        } catch (CouldNotReachConnector $exception) {
-            throw self::refused($exception, 'smtp', 'SMTP', $settings->smtpHost, $settings->smtpPort);
+            $account = $type->connect(Types::stringKeyed($this->validated()));
+        } catch (CouldNotConnect $exception) {
+            throw ValidationException::withMessages([$exception->field => $exception->getMessage()]);
         }
 
         SaveConnector::fromConnector(
             Connector::new()
                 ->setTeamId($this->team->getId()->toString())
-                ->setType(ConnectorTypeEnum::Imap)
-                ->setAccount($settings->fromAddress)
-                ->setName($settings->fromName ?? $settings->fromAddress)
-                ->setSettings($settings->toSettings())
+                ->setType($type->key())
+                ->setAccount($account->account)
+                ->setName($account->name)
+                ->setSettings($account->settings)
                 ->setConnectedById((string) $this->user()?->id),
-            $settings->toCredentials(),
+            $account->credentials,
         );
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __(':account connected.', ['account' => $settings->fromAddress])]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __(':account connected.', ['account' => $account->account])]);
 
         return to_route('connectors.index');
     }
 
     /**
-     * Why a server would not let us in, against the field to look at.
+     * The type being connected, which must be one that has a form and that
+     * this installation can connect.
      */
-    private static function refused(CouldNotReachConnector $exception, string $prefix, string $protocol, string $host, int $port): ValidationException
+    private function type(): ConnectsByForm&ConnectorType
     {
-        return ValidationException::withMessages(match (true) {
-            $exception->needsReconnect => ["{$prefix}_password" => __('The :protocol server did not accept that username and password.', ['protocol' => $protocol])],
-            $exception->isTemporary => ["{$prefix}_host" => __("We couldn't reach the :protocol server at :host on port :port. Check the server, port and encryption.", ['protocol' => $protocol, 'host' => $host, 'port' => $port])],
-            default => ["{$prefix}_host" => $exception->getMessage()],
-        });
+        $type = ConnectorRegistry::instance()->find((string) $this->route('type'));
+
+        if (! $type instanceof ConnectsByForm || ! $type->isAvailable()) {
+            throw new NotFoundHttpException;
+        }
+
+        return $type;
     }
 }

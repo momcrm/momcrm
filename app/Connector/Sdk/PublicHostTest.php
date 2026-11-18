@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use App\Connector\PublicHost;
+use App\Connector\Sdk\PublicHost;
 
 it('allows a server on the internet and refuses one only this machine can reach', function (string $host, bool $allowed): void {
     expect(PublicHost::allows($host))->toBe($allowed);

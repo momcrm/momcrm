@@ -9,6 +9,7 @@ use App\Connector\Connector;
 use App\Connector\ConnectorCapabilityEnum;
 use App\Group\Actions\FindGroup;
 use App\Mailbox\Actions\FindMailbox;
+use App\Mailbox\Contracts\ProvidesMail;
 use App\Mailbox\Mailbox;
 use App\Team\Actions\FindTeam;
 use App\Team\Exceptions\CouldNotViewTeam;
@@ -50,8 +51,8 @@ final class ShowEmailSettingsController
                     'id' => $connector->getId()->toString(),
                     'name' => $connector->getName()->toString(),
                     'account' => $connector->getAccount()->toString(),
-                    'type_label' => $connector->getType()->toEnum()->label(),
-                    'shared_mailboxes' => $connector->reachesSharedMailboxes(),
+                    'type_label' => $connector->connectorType()->label(),
+                    'shared_mailboxes' => self::opensSharedMailboxes($connector),
                 ])
                 ->values()
                 ->all(),
@@ -60,5 +61,12 @@ final class ShowEmailSettingsController
                 ->values()
                 ->all(),
         ]);
+    }
+
+    private static function opensSharedMailboxes(Connector $connector): bool
+    {
+        $type = $connector->connectorType();
+
+        return $type instanceof ProvidesMail && $type->opensSharedMailboxes($connector);
     }
 }

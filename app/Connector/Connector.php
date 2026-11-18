@@ -16,6 +16,11 @@ use App\Connector\Properties\Status;
 use App\Connector\Properties\TeamId;
 use App\Connector\Properties\Type;
 use App\Connector\Properties\UpdatedAt;
+use App\Connector\Sdk\ConnectorRegistry;
+use App\Connector\Sdk\ConnectorType;
+use App\Connector\Sdk\ConnectsByForm;
+use App\Connector\Sdk\ConnectsBySignIn;
+use App\Connector\Sdk\SignInOption;
 use App\Shared\Types;
 use Illuminate\Support\Collection;
 use Mom\Data\AbstractData;
@@ -30,11 +35,6 @@ use Mom\Data\AbstractValue;
  */
 final class Connector extends AbstractData
 {
-    /**
-     * The setting that says a Microsoft sign-in covers shared mailboxes.
-     */
-    public const string SETTING_SHARED_MAILBOXES = 'shared_mailboxes';
-
     public function __construct(
         public Account $account,
         public ConnectedById $connectedById,
@@ -79,41 +79,69 @@ final class Connector extends AbstractData
         return $this->getStatus()->toEnum() === ConnectorStatusEnum::Connected;
     }
 
+    /**
+     * What kind of account this is, and so what it can do. A type that is
+     * no longer installed is stood in for by one that can do nothing.
+     */
+    public function connectorType(): ConnectorType
+    {
+        return ConnectorRegistry::instance()->get($this->getType()->toNullableString());
+    }
+
     public function hasCapability(ConnectorCapabilityEnum $capability): bool
     {
-        return $this->getType()->toNullableEnum()?->hasCapability($capability) === true;
+        return $this->connectorType()->provides($capability);
     }
 
     /**
-     * Whether the sign-in covers shared mailboxes the account can open.
+     * Whether an option was chosen when the account was signed in to.
      */
-    public function reachesSharedMailboxes(): bool
+    public function hasOption(string $option): bool
     {
-        return ($this->getSettings()->toArray()[self::SETTING_SHARED_MAILBOXES] ?? false) === true;
+        return ($this->getSettings()->toArray()[$option] ?? false) === true;
+    }
+
+    /**
+     * The options chosen at sign-in, each in a word or two.
+     *
+     * @return list<string>
+     */
+    public function options(): array
+    {
+        $type = $this->connectorType();
+
+        if (! $type instanceof ConnectsBySignIn) {
+            return [];
+        }
+
+        return array_values(array_map(
+            fn (SignInOption $option): string => $option->summary ?? $option->label,
+            array_filter($type->signInOptions(), fn (SignInOption $option): bool => $this->hasOption($option->key)),
+        ));
     }
 
     /**
      * The fields the connectors page shows.
      *
-     * @return array{id: string, type: string, type_label: string, name: string, account: string, status: string, capabilities: list<string>, shared_mailboxes: bool, last_error: ?string, uses_sign_in: bool, settings: array<string, mixed>|null, connected_at: ?string}
+     * @return array{id: string, type: string, type_label: string, name: string, account: string, status: string, capabilities: list<string>, options: list<string>, last_error: ?string, uses_sign_in: bool, settings: array<string, mixed>|null, connected_at: ?string}
      */
     public function toListItem(): array
     {
-        $type = $this->getType()->toEnum();
+        $type = $this->connectorType();
 
         return [
             'id' => $this->getId()->toString(),
-            'type' => $type->value,
+            'type' => $type->key(),
             'type_label' => $type->label(),
             'name' => $this->getName()->toString(),
             'account' => $this->getAccount()->toString(),
             'status' => $this->getStatus()->toEnum()->value,
             'capabilities' => array_map(fn (ConnectorCapabilityEnum $capability): string => $capability->label(), $type->capabilities()),
-            'shared_mailboxes' => $this->reachesSharedMailboxes(),
+            'options' => $this->options(),
             'last_error' => $this->getLastError()->toNullableString(),
-            'uses_sign_in' => $type->usesSignIn(),
-            // Only what was typed in to connect, to fill the form again. Never the passwords.
-            'settings' => $type->usesSignIn() ? null : Types::stringKeyed($this->getSettings()->toArray()),
+            'uses_sign_in' => $type instanceof ConnectsBySignIn,
+            // Only what was typed into a form to connect, to fill it again. Never the secrets.
+            'settings' => $type instanceof ConnectsByForm ? Types::stringKeyed($this->getSettings()->toArray()) : null,
             'connected_at' => $this->getCreatedAt()->toNullableCarbon()?->toIso8601String(),
         ];
     }

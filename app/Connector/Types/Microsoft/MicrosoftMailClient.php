@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Mailbox\Clients;
+namespace App\Connector\Types\Microsoft;
 
 use App\Mailbox\Contracts\MailClient;
-use App\Mailbox\MicrosoftGraph;
+use App\Connector\Types\Microsoft\MicrosoftGraph;
 use App\Mailbox\OutgoingMail;
 use App\Mailbox\SentMail;
 use App\MailboxMessage\MailboxMessage;

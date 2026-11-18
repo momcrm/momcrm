@@ -651,6 +651,7 @@ export type AccessCondition = {
 /** An outside account the team has connected, such as a Microsoft 365 sign-in. */
 export type Connector = {
     id: string;
+    /** The key of its connector type, such as "microsoft". */
     type: string;
     type_label: string;
     name: string;
@@ -658,30 +659,18 @@ export type Connector = {
     status: 'connected' | 'needs_reconnect';
     /** What the connector can be used for, such as "Email". */
     capabilities: string[];
-    shared_mailboxes: boolean;
+    /** What was chosen at sign-in, each in a word or two. */
+    options: string[];
     last_error: string | null;
     /** Whether it is connected by signing in at the service, not by a form. */
     uses_sign_in: boolean;
-    /** What was typed in to connect a mail server; never the passwords. */
-    settings: MailServerSettings | null;
+    /** What was typed into its form, by field name; never the secrets. */
+    settings: Record<string, string | number | null> | null;
     /** The addresses of the mailboxes that go through this connector. */
     mailboxes: string[];
     connected_at: string | null;
     /** The name of whoever connected it, when they are still around. */
     connected_by: string | null;
-};
-
-/** Where a mailbox's IMAP and SMTP servers are, without the passwords. */
-export type MailServerSettings = {
-    from_name: string | null;
-    imap_host: string;
-    imap_port: number;
-    imap_encryption: string;
-    imap_username: string;
-    smtp_host: string;
-    smtp_port: number;
-    smtp_encryption: string;
-    smtp_username: string;
 };
 
 /** A connected account a mailbox can be added through. */
@@ -693,17 +682,47 @@ export type MailConnector = {
     shared_mailboxes: boolean;
 };
 
-/** A kind of outside account this installation can connect. */
+/** Something a person may tick before signing in to connect an account. */
+export type ConnectorSignInOption = {
+    key: string;
+    label: string;
+    hint: string | null;
+};
+
+/** One field of the form a connector type is connected with. */
+export type ConnectorField = {
+    name: string;
+    label: string;
+    kind: 'text' | 'email' | 'password' | 'number' | 'select';
+    required: boolean;
+    placeholder: string | null;
+    hint: string | null;
+    default: string | number | null;
+    options: { value: string; label: string }[];
+    /** The titled box it is shown in, with the others of the same group. */
+    group: string | null;
+    /** How many of a group's six columns it takes. */
+    span: number;
+};
+
+/** A kind of outside account, as its connector type describes itself. */
 export type ConnectorType = {
     value: string;
     label: string;
     /** What it connects, in a line. */
     description: string;
+    /** Its logo as an image address; none means a plain icon. */
+    logo: string | null;
+    capabilities: string[];
     /** Whether this installation is set up to connect it. */
     available: boolean;
-    capabilities: string[];
-    supports_shared_mailboxes: boolean;
-    uses_sign_in: boolean;
+    /** How an account is connected: by signing in, or by filling in a form. */
+    connection: 'sign_in' | 'form' | null;
+    options: ConnectorSignInOption[];
+    fields: ConnectorField[];
+    /** The form field that says which account it is. */
+    account_field: string | null;
+    form_introduction: string | null;
 };
 
 /** A mailbox whose mail opens tickets, read and sent through a connector. */

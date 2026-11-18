@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Connector\Exceptions;
 
-use App\Connector\ConnectorTypeEnum;
 use RuntimeException;
 use Throwable;
 
@@ -26,20 +25,21 @@ final class CouldNotReachConnector extends RuntimeException
     public bool $needsReconnect = false;
 
     /**
-     * The kind of connector that could not be reached, when it is known.
+     * Who runs the service that could not be reached, when it is known,
+     * such as "Microsoft".
      */
-    public ?ConnectorTypeEnum $type = null;
+    public ?string $company = null;
 
     /**
      * What we have stored is gone or no longer accepted, so only connecting
      * the account again will fix it.
      */
-    public static function needsReconnect(ConnectorTypeEnum $type): self
+    public static function needsReconnect(string $company): self
     {
         $exception = new self((string) __(':company no longer accepts the sign-in for this connector. Connect it again.', [
-            'company' => $type->company(),
+            'company' => $company,
         ]));
-        $exception->type = $type;
+        $exception->company = $company;
         $exception->needsReconnect = true;
 
         return $exception;
@@ -48,13 +48,13 @@ final class CouldNotReachConnector extends RuntimeException
     /**
      * The service could not be reached or answered with an error that may pass.
      */
-    public static function unavailable(ConnectorTypeEnum $type, ?Throwable $previous = null): self
+    public static function unavailable(string $company, ?Throwable $previous = null): self
     {
         $exception = new self((string) __(':company could not be reached. It will be tried again.', [
-            'company' => $type->company(),
+            'company' => $company,
         ]), previous: $previous);
         $exception->isTemporary = true;
-        $exception->type = $type;
+        $exception->company = $company;
 
         return $exception;
     }

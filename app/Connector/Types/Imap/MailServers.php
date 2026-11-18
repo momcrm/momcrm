@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Mailbox\Contracts;
+namespace App\Connector\Types\Imap;
 
 use App\Connector\Exceptions\CouldNotReachConnector;
-use App\Mailbox\MailServerSettings;
+use App\Connector\Types\Imap\MailServerSettings;
 use Symfony\Component\Mime\Email;
 
 /**

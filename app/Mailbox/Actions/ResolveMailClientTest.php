@@ -42,3 +42,11 @@ it('refuses a mailbox whose connector is gone', function (): void {
     expect(fn () => ResolveMailClient::forMailbox($mailbox))
         ->toThrow(CouldNotReachConnector::class, 'The account this mailbox went through is no longer connected.');
 });
+
+it('refuses a mailbox whose connector is of a type that cannot do email', function (): void {
+    $connector = ConnectorEloquentModel::factory()->create(['type' => 'carrier_pigeon']);
+    $mailbox = Mailbox::fromEloquentModel(MailboxEloquentModel::factory()->create(['team_id' => $connector->team_id, 'connector_id' => $connector->id]));
+
+    expect(fn () => ResolveMailClient::forMailbox($mailbox))
+        ->toThrow(CouldNotReachConnector::class, 'Carrier Pigeon accounts cannot be used for email.');
+});

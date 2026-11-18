@@ -11,6 +11,7 @@ use App\Connector\Exceptions\CouldNotReachConnector;
 use App\Mailbox\Actions\CreateMailbox;
 use App\Mailbox\Actions\FindMailbox;
 use App\Mailbox\Actions\ResolveMailClient;
+use App\Mailbox\Contracts\ProvidesMail;
 use App\Mailbox\Mailbox;
 use App\Team\Actions\FindTeam;
 use App\Team\Exceptions\CouldNotViewTeam;
@@ -77,7 +78,9 @@ final class StoreMailboxFormRequest extends FormRequest
         $typed = mb_strtolower(mb_trim($this->string('address')->toString()));
         $sharedAddress = $typed === '' || $typed === $account ? null : $typed;
 
-        if ($sharedAddress !== null && ! $connector->reachesSharedMailboxes()) {
+        $type = $connector->connectorType();
+
+        if ($sharedAddress !== null && ! ($type instanceof ProvidesMail && $type->opensSharedMailboxes($connector))) {
             throw ValidationException::withMessages([
                 'address' => __(':account was connected without shared mailboxes. Reconnect it with them turned on to add one.', ['account' => $account]),
             ]);

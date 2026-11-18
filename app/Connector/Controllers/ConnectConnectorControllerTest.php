@@ -33,10 +33,10 @@ it('sends an admin to Microsoft asking for their own mailbox', function (): void
     $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
 
     $response = actingAs($owner)
-        ->withSession([ConnectorSession::PENDING_SHARED_MAILBOXES => true])
+        ->withSession([ConnectorSession::PENDING_OPTIONS => ['shared_mailboxes']])
         ->get(route('connectors.connect', 'microsoft'))
         ->assertRedirect()
-        ->assertSessionHas(ConnectorSession::PENDING_SHARED_MAILBOXES, false);
+        ->assertSessionHas(ConnectorSession::PENDING_OPTIONS, []);
 
     $query = connectorSignInQuery($response);
 
@@ -53,7 +53,7 @@ it('asks only for shared access when shared mailboxes are wanted', function (): 
     $response = actingAs($owner)
         ->get(route('connectors.connect', ['type' => 'microsoft', 'shared_mailboxes' => 1]))
         ->assertRedirect()
-        ->assertSessionHas(ConnectorSession::PENDING_SHARED_MAILBOXES, true);
+        ->assertSessionHas(ConnectorSession::PENDING_OPTIONS, ['shared_mailboxes']);
 
     expect(explode(' ', connectorSignInQuery($response)['scope']))
         ->toEqualCanonicalizing(['openid', 'profile', 'User.Read', 'offline_access', 'Mail.ReadWrite.Shared', 'Mail.Send.Shared']);
@@ -69,7 +69,7 @@ it('reconnects with what the connector already has, suggesting its account', fun
     $response = actingAs($owner)
         ->get(route('connectors.connect', ['type' => 'microsoft', 'connector' => $connector->id]))
         ->assertRedirect()
-        ->assertSessionHas(ConnectorSession::PENDING_SHARED_MAILBOXES, true);
+        ->assertSessionHas(ConnectorSession::PENDING_OPTIONS, ['shared_mailboxes']);
 
     $query = connectorSignInQuery($response);
 
@@ -84,7 +84,7 @@ it('does not reconnect another team\'s connector', function (): void {
     $response = actingAs($owner)
         ->get(route('connectors.connect', ['type' => 'microsoft', 'connector' => $theirs->id]))
         ->assertRedirect()
-        ->assertSessionHas(ConnectorSession::PENDING_SHARED_MAILBOXES, false);
+        ->assertSessionHas(ConnectorSession::PENDING_OPTIONS, []);
 
     expect(connectorSignInQuery($response))->not->toHaveKey('login_hint');
 });
@@ -96,7 +96,7 @@ it('sends an admin to Google asking for lasting access to read and send mail', f
     $response = actingAs($owner)
         ->get(route('connectors.connect', ['type' => 'google', 'shared_mailboxes' => 1]))
         ->assertRedirect()
-        ->assertSessionHas(ConnectorSession::PENDING_SHARED_MAILBOXES, false);
+        ->assertSessionHas(ConnectorSession::PENDING_OPTIONS, []);
 
     $location = (string) $response->headers->get('Location');
     parse_str((string) parse_url($location, PHP_URL_QUERY), $query);

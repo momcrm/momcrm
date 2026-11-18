@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace App\Mailbox\Clients;
+namespace App\Connector\Types\Imap;
 
 use App\Connector\Actions\MarkConnectorAsNeedingReconnect;
 use App\Connector\Connector;
 use App\Connector\Exceptions\CouldNotReachConnector;
-use App\Mailbox\Contracts\ImapInbox;
+use App\Connector\Types\Imap\ImapInbox;
 use App\Mailbox\Contracts\MailClient;
-use App\Mailbox\Contracts\MailServers;
-use App\Mailbox\MailServerSettings;
+use App\Connector\Types\Imap\MailServers;
+use App\Connector\Types\Imap\MailServerSettings;
 use App\Mailbox\OutgoingMail;
 use App\Mailbox\SentMail;
 use App\MailboxMessage\HtmlToText;

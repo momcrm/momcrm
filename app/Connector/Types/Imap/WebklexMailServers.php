@@ -2,14 +2,13 @@
 
 declare(strict_types=1);
 
-namespace App\Mailbox\Clients;
+namespace App\Connector\Types\Imap;
 
-use App\Connector\ConnectorTypeEnum;
 use App\Connector\Exceptions\CouldNotReachConnector;
-use App\Connector\PublicHost;
-use App\Mailbox\Contracts\ImapInbox;
-use App\Mailbox\Contracts\MailServers;
-use App\Mailbox\MailServerSettings;
+use App\Connector\Sdk\PublicHost;
+use App\Connector\Types\Imap\ImapInbox;
+use App\Connector\Types\Imap\MailServers;
+use App\Connector\Types\Imap\MailServerSettings;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport;
 use Symfony\Component\Mailer\Transport\Smtp\Stream\SocketStream;
@@ -51,10 +50,10 @@ final class WebklexMailServers implements MailServers
             try {
                 $client->connect();
             } catch (ConnectionFailedException $exception) {
-                throw CouldNotReachConnector::unavailable(ConnectorTypeEnum::Imap, $exception);
+                throw CouldNotReachConnector::unavailable(ImapConnector::COMPANY, $exception);
             } catch (AuthFailedException|ImapBadRequestException|ImapServerErrorException|ResponseException) {
                 // The server was reached and answered the sign-in with a refusal.
-                throw CouldNotReachConnector::needsReconnect(ConnectorTypeEnum::Imap);
+                throw CouldNotReachConnector::needsReconnect(ImapConnector::COMPANY);
             }
 
             $status = (array) $client->getConnection()->examineFolder('INBOX')->validatedData();
@@ -124,7 +123,7 @@ final class WebklexMailServers implements MailServers
     private static function smtpFailure(TransportExceptionInterface $exception): CouldNotReachConnector
     {
         return str_starts_with($exception->getMessage(), 'Failed to authenticate')
-            ? CouldNotReachConnector::needsReconnect(ConnectorTypeEnum::Imap)
-            : CouldNotReachConnector::unavailable(ConnectorTypeEnum::Imap, $exception);
+            ? CouldNotReachConnector::needsReconnect(ImapConnector::COMPANY)
+            : CouldNotReachConnector::unavailable(ImapConnector::COMPANY, $exception);
     }
 }

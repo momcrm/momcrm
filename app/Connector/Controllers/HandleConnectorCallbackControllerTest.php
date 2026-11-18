@@ -67,9 +67,9 @@ it('remembers that the sign-in covers shared mailboxes', function (): void {
     fakeConnectorSignIn();
 
     actingAs($owner)
-        ->withSession([ConnectorSession::PENDING_SHARED_MAILBOXES => true])
+        ->withSession([ConnectorSession::PENDING_OPTIONS => ['shared_mailboxes']])
         ->get(route('connectors.callback', 'microsoft'))
-        ->assertSessionMissing(ConnectorSession::PENDING_SHARED_MAILBOXES);
+        ->assertSessionMissing(ConnectorSession::PENDING_OPTIONS);
 
     expect(ConnectorEloquentModel::query()->withoutGlobalScopes()->sole()->settings)->toBe(['shared_mailboxes' => true]);
 });
@@ -128,7 +128,7 @@ it('connects a Google account', function (): void {
     ]));
 
     actingAs($owner)
-        ->withSession([ConnectorSession::PENDING_SHARED_MAILBOXES => false])
+        ->withSession([ConnectorSession::PENDING_OPTIONS => []])
         ->get(route('connectors.callback', 'google'))
         ->assertRedirectToRoute('connectors.index')
         ->assertInertiaFlash('toast', ['type' => 'success', 'message' => 'help@helpdesk.test connected.']);

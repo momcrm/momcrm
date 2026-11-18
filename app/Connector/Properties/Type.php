@@ -4,10 +4,14 @@ declare(strict_types=1);
 
 namespace App\Connector\Properties;
 
-use App\Connector\ConnectorTypeEnum;
-use Mom\Data\AbstractEnum;
+use App\Connector\Types\Microsoft\MicrosoftConnector;
+use Mom\Data\AbstractString;
 
-final class Type extends AbstractEnum
+/**
+ * The key of the connector type the account was connected as, such as
+ * "microsoft". The ConnectorRegistry knows what that type can do.
+ */
+final class Type extends AbstractString
 {
     public static bool $includeInDatabaseUpdate = false;
 
@@ -18,22 +22,6 @@ final class Type extends AbstractEnum
 
     public static function forEloquentFactoryValue(): string
     {
-        return ConnectorTypeEnum::Microsoft->value;
-    }
-
-    public function toNullableEnum(): ?ConnectorTypeEnum
-    {
-        $value = $this->toValue();
-
-        if ($value instanceof ConnectorTypeEnum) {
-            return $value;
-        }
-
-        return is_string($value) ? ConnectorTypeEnum::tryFrom($value) : null;
-    }
-
-    public function toEnum(): ConnectorTypeEnum
-    {
-        return $this->toNullableEnum() ?? ConnectorTypeEnum::Microsoft;
+        return MicrosoftConnector::KEY;
     }
 }

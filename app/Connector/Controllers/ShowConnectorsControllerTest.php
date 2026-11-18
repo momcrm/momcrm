@@ -28,11 +28,23 @@ it('lists the team\'s connectors without their credentials, with their mailboxes
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('settings/connectors')
-            ->where('types', [
-                ['value' => 'microsoft', 'label' => 'Microsoft 365', 'description' => 'Outlook and Exchange Online mailboxes, including shared mailboxes.', 'capabilities' => ['Email'], 'supports_shared_mailboxes' => true, 'uses_sign_in' => true, 'available' => true],
-                ['value' => 'google', 'label' => 'Google', 'description' => 'Gmail and Google Workspace mailboxes.', 'capabilities' => ['Email'], 'supports_shared_mailboxes' => false, 'uses_sign_in' => true, 'available' => false],
-                ['value' => 'imap', 'label' => 'IMAP/SMTP', 'description' => 'Any other mail provider, by its IMAP and SMTP server settings.', 'capabilities' => ['Email'], 'supports_shared_mailboxes' => false, 'uses_sign_in' => false, 'available' => true],
-            ])
+            ->has('types', 3)
+            ->where('types.0.value', 'microsoft')
+            ->where('types.0.label', 'Microsoft 365')
+            ->where('types.0.description', 'Outlook and Exchange Online mailboxes, including shared mailboxes.')
+            ->where('types.0.capabilities', ['Email'])
+            ->where('types.0.available', true)
+            ->where('types.0.connection', 'sign_in')
+            ->where('types.0.options', [[
+                'key' => 'shared_mailboxes',
+                'label' => 'This account opens shared mailboxes',
+                'hint' => 'Such as support@yourcompany.com. Work and school accounts only.',
+            ]])
+            ->where('types.0.fields', [])
+            ->where('types.0.logo', fn (string $logo): bool => str_starts_with($logo, 'data:image/svg+xml;base64,'))
+            ->where('types.1.value', 'google')
+            ->where('types.1.available', false)
+            ->where('types.1.options', [])
             ->has('connectors', 1)
             ->where('connectors.0', [
                 'id' => $connector->id,
@@ -42,7 +54,7 @@ it('lists the team\'s connectors without their credentials, with their mailboxes
                 'account' => 'sam@acme.test',
                 'status' => 'needs_reconnect',
                 'capabilities' => ['Email'],
-                'shared_mailboxes' => true,
+                'options' => ['Shared mailboxes'],
                 'last_error' => 'Connect it again.',
                 'uses_sign_in' => true,
                 'settings' => null,
@@ -63,11 +75,14 @@ it('lists every type, saying which ones this installation is set up for', functi
 
     actingAs($owner)
         ->get(route('connectors.index'))
-        ->assertInertia(fn (Assert $page) => $page->where('types', [
-            ['value' => 'microsoft', 'label' => 'Microsoft 365', 'description' => 'Outlook and Exchange Online mailboxes, including shared mailboxes.', 'capabilities' => ['Email'], 'supports_shared_mailboxes' => true, 'uses_sign_in' => true, 'available' => false],
-            ['value' => 'google', 'label' => 'Google', 'description' => 'Gmail and Google Workspace mailboxes.', 'capabilities' => ['Email'], 'supports_shared_mailboxes' => false, 'uses_sign_in' => true, 'available' => true],
-            ['value' => 'imap', 'label' => 'IMAP/SMTP', 'description' => 'Any other mail provider, by its IMAP and SMTP server settings.', 'capabilities' => ['Email'], 'supports_shared_mailboxes' => false, 'uses_sign_in' => false, 'available' => true],
-        ]));
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('types.0.value', 'microsoft')
+            ->where('types.0.available', false)
+            ->where('types.1.value', 'google')
+            ->where('types.1.available', true)
+            ->where('types.2.value', 'imap')
+            ->where('types.2.available', true),
+        );
 });
 
 it('can always connect IMAP/SMTP, and shows a mail server connector\'s settings without its passwords', function (): void {
@@ -79,7 +94,27 @@ it('can always connect IMAP/SMTP, and shows a mail server connector\'s settings 
         ->get(route('connectors.index'))
         ->assertInertia(fn (Assert $page) => $page
             ->where('types.2.value', 'imap')
-            ->where('types.2.available', true)
+            ->where('types.2.connection', 'form')
+            ->where('types.2.account_field', 'from_address')
+            ->where('types.2.form_introduction', fn (string $introduction): bool => str_contains($introduction, 'IMAP'))
+            ->has('types.2.fields', 12)
+            ->where('types.2.fields.2', [
+                'name' => 'imap_host',
+                'label' => 'Server',
+                'kind' => 'text',
+                'required' => true,
+                'placeholder' => 'imap.yourcompany.com',
+                'hint' => null,
+                'default' => null,
+                'options' => [],
+                'group' => 'Incoming mail (IMAP)',
+                'span' => 3,
+            ])
+            ->where('types.2.fields.4.options', [
+                ['value' => 'ssl', 'label' => 'SSL/TLS'],
+                ['value' => 'starttls', 'label' => 'STARTTLS'],
+                ['value' => 'none', 'label' => 'None'],
+            ])
             ->where('connectors.0.connected_by', null)
             ->where('connectors.0.uses_sign_in', false)
             ->where('connectors.0.settings', [
@@ -105,4 +140,20 @@ it('forbids members', function (): void {
 
 it('sends guests to sign in', function (): void {
     get(route('connectors.index'))->assertRedirectToRoute('login');
+});
+
+it('still lists a connector whose type is no longer installed, as one that can do nothing', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    ConnectorEloquentModel::factory()->create(['team_id' => $owner->current_team_id, 'type' => 'carrier_pigeon']);
+
+    actingAs($owner)
+        ->get(route('connectors.index'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('connectors.0.type', 'carrier_pigeon')
+            ->where('connectors.0.type_label', 'Carrier Pigeon')
+            ->where('connectors.0.capabilities', [])
+            ->where('connectors.0.uses_sign_in', false)
+            ->where('connectors.0.settings', null),
+        );
 });

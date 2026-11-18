@@ -38,7 +38,7 @@ final readonly class SaveConnector
     {
         $identity = [
             TeamId::getDatabaseTableColumnName() => $this->connector->getTeamId()->toString(),
-            Type::getDatabaseTableColumnName() => $this->connector->getType()->toEnum()->value,
+            Type::getDatabaseTableColumnName() => $this->connector->getType()->toString(),
             Account::getDatabaseTableColumnName() => $this->connector->getAccount()->toString(),
         ];
 

@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import ConnectorLogo from '@/components/connectors/connector-logo';
-import MailServerDialog from '@/components/connectors/mail-server-dialog';
+import ConnectorFormDialog from '@/components/connectors/connector-form-dialog';
 import Heading from '@/components/heading';
 import SoftBadge from '@/components/soft-badge';
 import { Button } from '@/components/ui/button';
@@ -65,10 +65,11 @@ export default function Connectors({
     setLayoutProps({ wide: true });
 
     const { canManageEmail, canManageEnvironment } = usePage().props;
-    // The type being connected that first asks what the sign-in should cover.
+    // The type being connected, when it has things to choose before signing in.
     const [choosing, setChoosing] = useState<ConnectorType | null>(null);
-    // The mail server form: for a new connector, or for one being changed.
-    const [mailServer, setMailServer] = useState<{
+    // The form of a type that has one: for a new connector, or one being changed.
+    const [filling, setFilling] = useState<{
+        type: ConnectorType;
         connector: Connector | null;
     } | null>(null);
     const [disconnecting, setDisconnecting] = useState<Connector | null>(null);
@@ -101,12 +102,10 @@ export default function Connectors({
                                 <ConnectedCard
                                     key={connector.id}
                                     connector={connector}
-                                    canReconnect={
-                                        typeOf(connector)?.available === true
-                                    }
+                                    type={typeOf(connector)}
                                     canManageEmail={canManageEmail === true}
-                                    onChange={() =>
-                                        setMailServer({ connector })
+                                    onChange={(type) =>
+                                        setFilling({ type, connector })
                                     }
                                     onDisconnect={() =>
                                         setDisconnecting(connector)
@@ -137,7 +136,7 @@ export default function Connectors({
                                 canSetUp={canManageEnvironment === true}
                                 onChoose={() => setChoosing(type)}
                                 onSetUp={() =>
-                                    setMailServer({ connector: null })
+                                    setFilling({ type, connector: null })
                                 }
                             />
                         ))}
@@ -162,26 +161,32 @@ export default function Connectors({
                             method="get"
                             className="space-y-4"
                         >
-                            <div className="flex items-start gap-2.5 rounded-lg border p-3">
-                                <Checkbox
-                                    id="connector-shared"
-                                    name="shared_mailboxes"
-                                    value="1"
-                                    className="mt-0.5"
-                                />
-                                <div className="grid gap-0.5">
-                                    <Label
-                                        htmlFor="connector-shared"
-                                        className="text-sm font-medium"
-                                    >
-                                        This account opens shared mailboxes
-                                    </Label>
-                                    <p className="text-sm text-muted-foreground">
-                                        Such as support@yourcompany.com. Work
-                                        and school accounts only.
-                                    </p>
+                            {choosing.options.map((option) => (
+                                <div
+                                    key={option.key}
+                                    className="flex items-start gap-2.5 rounded-lg border p-3"
+                                >
+                                    <Checkbox
+                                        id={`connector-option-${option.key}`}
+                                        name={option.key}
+                                        value="1"
+                                        className="mt-0.5"
+                                    />
+                                    <div className="grid gap-0.5">
+                                        <Label
+                                            htmlFor={`connector-option-${option.key}`}
+                                            className="text-sm font-medium"
+                                        >
+                                            {option.label}
+                                        </Label>
+                                        {option.hint && (
+                                            <p className="text-sm text-muted-foreground">
+                                                {option.hint}
+                                            </p>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
+                            ))}
                             <DialogFooter className="gap-2">
                                 <DialogClose asChild>
                                     <Button variant="secondary" type="button">
@@ -238,10 +243,11 @@ export default function Connectors({
                 </DialogContent>
             </Dialog>
 
-            <MailServerDialog
-                open={mailServer !== null}
-                onOpenChange={(open) => !open && setMailServer(null)}
-                connector={mailServer?.connector ?? null}
+            <ConnectorFormDialog
+                type={filling?.type ?? null}
+                connector={filling?.connector ?? null}
+                open={filling !== null}
+                onOpenChange={(open) => !open && setFilling(null)}
             />
         </>
     );
@@ -272,25 +278,29 @@ function SectionTitle({
  */
 function ConnectedCard({
     connector,
-    canReconnect,
+    type,
     canManageEmail,
     onChange,
     onDisconnect,
 }: {
     connector: Connector;
-    /** Whether this installation can still sign in to this kind of account. */
-    canReconnect: boolean;
+    /** Its connector type; none when that type is no longer installed. */
+    type: ConnectorType | undefined;
     canManageEmail: boolean;
-    onChange: () => void;
+    /** Opens the form of a type that has one, to change this connector. */
+    onChange: (type: ConnectorType) => void;
     onDisconnect: () => void;
 }) {
+    // Whether this installation can still sign in to this kind of account.
+    const canReconnect = type?.available === true;
+    const hasForm = type?.connection === 'form' && type.available;
     const isWorking = connector.status === 'connected';
-    const fix = connector.uses_sign_in ? 'Reconnect' : 'Update password';
+    const fix = connector.uses_sign_in ? 'Reconnect' : 'Update';
 
     return (
         <li className="rounded-xl bg-card shadow-card">
             <div className="flex items-start gap-3 p-4">
-                <ConnectorLogo type={connector.type} />
+                <ConnectorLogo logo={type?.logo} />
                 <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                         <h3 className="truncate font-medium">
@@ -323,17 +333,22 @@ function ConnectedCard({
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
                     {!isWorking &&
-                        (connector.uses_sign_in ? (
-                            canReconnect && (
-                                <Button asChild size="sm">
-                                    <a href={reconnectUrl(connector)}>{fix}</a>
-                                </Button>
-                            )
-                        ) : (
-                            <Button size="sm" onClick={onChange}>
-                                {fix}
-                            </Button>
-                        ))}
+                        (connector.uses_sign_in
+                            ? canReconnect && (
+                                  <Button asChild size="sm">
+                                      <a href={reconnectUrl(connector)}>
+                                          {fix}
+                                      </a>
+                                  </Button>
+                              )
+                            : hasForm && (
+                                  <Button
+                                      size="sm"
+                                      onClick={() => onChange(type)}
+                                  >
+                                      {fix}
+                                  </Button>
+                              ))}
                     <DropdownMenu>
                         <DropdownMenuTrigger
                             aria-label={`More for ${connector.account}`}
@@ -350,10 +365,12 @@ function ConnectedCard({
                                     </a>
                                 </DropdownMenuItem>
                             )}
-                            {!connector.uses_sign_in && (
-                                <DropdownMenuItem onSelect={onChange}>
+                            {hasForm && (
+                                <DropdownMenuItem
+                                    onSelect={() => onChange(type)}
+                                >
                                     <Settings2 />
-                                    Change servers or password
+                                    Change settings
                                 </DropdownMenuItem>
                             )}
                             {canManageEmail && (
@@ -395,11 +412,11 @@ function ConnectedCard({
             <dl className="grid gap-x-6 gap-y-3 border-t px-4 py-3 text-sm sm:grid-cols-[1fr_1.5fr_1fr]">
                 <Detail label="Used for">
                     {connector.capabilities.length > 0
-                        ? uses(connector.capabilities).replace(/^./, (first) =>
-                              first.toUpperCase(),
-                          )
+                        ? [
+                              ...connector.capabilities,
+                              ...connector.options,
+                          ].join(' · ')
                         : 'Nothing yet'}
-                    {connector.shared_mailboxes && ', with shared mailboxes'}
                 </Detail>
                 <Detail label="Mailboxes">
                     {connector.mailboxes.length > 0 ? (
@@ -473,7 +490,7 @@ function TypeCard({
         <li className="flex flex-col gap-3 rounded-xl bg-card p-4 shadow-card">
             <div className="flex items-start justify-between gap-2">
                 <ConnectorLogo
-                    type={type.value}
+                    logo={type.logo}
                     className={cn(!type.available && 'opacity-50 grayscale')}
                 />
                 {connected > 0 && (
@@ -501,11 +518,12 @@ function TypeCard({
                             Not set up here
                         </span>
                     )
-                ) : !type.uses_sign_in ? (
+                ) : type.connection === 'form' ? (
                     <Button size="sm" variant="outline" onClick={onSetUp}>
                         Set up
                     </Button>
-                ) : type.supports_shared_mailboxes ? (
+                ) : type.connection !== 'sign_in' ? null : type.options.length >
+                  0 ? (
                     <Button size="sm" variant="outline" onClick={onChoose}>
                         Connect
                     </Button>
