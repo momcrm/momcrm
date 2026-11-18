@@ -117,6 +117,35 @@ final class MailboxMessage extends AbstractData
     }
 
     /**
+     * A message as its own headers describe it, for the mail services that
+     * hand us the headers and the text and leave the rest to us. Header names
+     * are in lower case. What the sender wrote is told apart from the quoted
+     * history by QuotedReply.
+     *
+     * @param  array<string, string>  $headers
+     */
+    public static function fromHeaders(array $headers, ?string $externalId, ?string $bodyText, ?CarbonImmutable $receivedAt): self
+    {
+        $headers = array_map(self::decodeHeader(...), $headers);
+        $from = self::sender($headers['from'] ?? '');
+        $bodyText = self::text($bodyText);
+
+        return self::new()
+            ->setDirection(MailboxMessageDirectionEnum::Inbound)
+            ->setExternalId($externalId)
+            ->setInternetMessageId(InternetMessageId::normalize($headers['message-id'] ?? null))
+            ->setInReplyTo(InternetMessageId::normalize($headers['in-reply-to'] ?? null))
+            ->setReferenceIds(self::referenceIds($headers['references'] ?? null))
+            ->setFromAddress($from['address'])
+            ->setFromName($from['name'])
+            ->setToRecipients(self::addressesIn($headers['to'] ?? ''))
+            ->setSubject(self::text($headers['subject'] ?? null))
+            ->setBodyText($bodyText)
+            ->setReplyText(QuotedReply::strip($bodyText))
+            ->setReceivedAt($receivedAt?->utc());
+    }
+
+    /**
      * Every id this message says it follows, most recent first: the message
      * it answers, then the rest of the thread.
      *
@@ -453,6 +482,45 @@ final class MailboxMessage extends AbstractData
                 $addresses[] = $address;
             }
         }
+
+        return $addresses === [] ? null : $addresses;
+    }
+
+    /**
+     * A header as people read it: mail programs encode anything that is not
+     * plain ASCII, such as "=?UTF-8?B?…?=".
+     */
+    private static function decodeHeader(string $value): string
+    {
+        $decoded = iconv_mime_decode($value, ICONV_MIME_DECODE_CONTINUE_ON_ERROR, 'UTF-8');
+
+        return $decoded === false ? $value : $decoded;
+    }
+
+    /**
+     * The name and address in a From header, such as "Kim Lee <kim@acme.test>".
+     *
+     * @return array{name: ?string, address: ?string}
+     */
+    private static function sender(string $header): array
+    {
+        if (preg_match('/^(.*)<([^<>\s]+@[^<>\s]+)>\s*$/', $header, $matches) === 1) {
+            return ['name' => self::text(mb_trim($matches[1], " \n\r\t\v\0\"'")), 'address' => self::address($matches[2])];
+        }
+
+        return ['name' => null, 'address' => self::addressesIn($header)[0] ?? null];
+    }
+
+    /**
+     * Every email address in a header, in lower case.
+     *
+     * @return list<string>|null
+     */
+    private static function addressesIn(string $header): ?array
+    {
+        preg_match_all('/[^\s<>,;:"\'()]+@[^\s<>,;:"\'()]+/', $header, $matches);
+
+        $addresses = array_values(array_unique(array_map(mb_strtolower(...), $matches[0])));
 
         return $addresses === [] ? null : $addresses;
     }

@@ -54,3 +54,22 @@ it('leaves out what a message does not have', function (): void {
         ->and($message->getReplyText()->toString())->toBe('Hello')
         ->and($message->threadIds())->toBe([]);
 });
+
+it('reads a message from its headers, whatever shape the sender\'s address takes', function (string $from, ?string $name, ?string $address): void {
+    $message = MailboxMessage::fromHeaders(['from' => $from, 'message-id' => '<Msg-1@Acme.test>'], 'outside-1', " Hello \n", null);
+
+    expect($message->getFromName()->toNullableString())->toBe($name)
+        ->and($message->getFromAddress()->toNullableString())->toBe($address)
+        ->and($message->getInternetMessageId()->toString())->toBe('Msg-1@Acme.test')
+        ->and($message->getExternalId()->toString())->toBe('outside-1')
+        ->and($message->getBodyText()->toString())->toBe('Hello')
+        ->and($message->getToRecipients()->toArray())->toBe([])
+        ->and($message->getSubject()->toNullableString())->toBeNull();
+})->with([
+    'a name and an address' => ['Kim Lee <Kim@Acme.test>', 'Kim Lee', 'kim@acme.test'],
+    'a quoted name with a comma' => ['"Lee, Kim" <kim@acme.test>', 'Lee, Kim', 'kim@acme.test'],
+    'an encoded name' => ['=?UTF-8?Q?Kim_=C3=85ker?= <kim@acme.test>', 'Kim Åker', 'kim@acme.test'],
+    'only an address' => ['kim@acme.test', null, 'kim@acme.test'],
+    'an address in brackets' => ['<kim@acme.test>', null, 'kim@acme.test'],
+    'nothing' => ['', null, null],
+]);
