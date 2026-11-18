@@ -84,9 +84,14 @@ const sections: { title: string; items: NavItem[] }[] = [
 ];
 
 /**
- * Settings pages share a grouped second-level menu on the left.
+ * Settings pages share a grouped second-level menu on the left. Most are
+ * forms and keep to a narrow column; a page that lays things out side by
+ * side asks for a wide one with `setLayoutProps({ wide: true })`.
  */
-export default function SettingsLayout({ children }: PropsWithChildren) {
+export default function SettingsLayout({
+    wide = false,
+    children,
+}: PropsWithChildren<{ wide?: boolean }>) {
     const { isCurrentOrParentUrl } = useCurrentUrl();
     const {
         canManageAccessRules,
@@ -155,8 +160,15 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                 </nav>
             </aside>
 
-            <div className="min-w-0 flex-1 md:max-w-2xl">
-                <section className="max-w-xl space-y-12">{children}</section>
+            <div
+                className={cn(
+                    'min-w-0 flex-1',
+                    wide ? 'md:max-w-4xl' : 'md:max-w-2xl',
+                )}
+            >
+                <section className={cn('space-y-12', !wide && 'max-w-xl')}>
+                    {children}
+                </section>
             </div>
         </div>
     );

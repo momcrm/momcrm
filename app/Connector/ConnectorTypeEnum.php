@@ -29,6 +29,18 @@ enum ConnectorTypeEnum: string
     }
 
     /**
+     * What it connects, in a line, for the page that offers it.
+     */
+    public function description(): string
+    {
+        return match ($this) {
+            self::Microsoft => 'Outlook and Exchange Online mailboxes, including shared mailboxes.',
+            self::Google => 'Gmail and Google Workspace mailboxes.',
+            self::Imap => 'Any other mail provider, by its IMAP and SMTP server settings.',
+        };
+    }
+
+    /**
      * Who runs the service, as error messages name it.
      */
     public function company(): string
@@ -150,21 +162,24 @@ enum ConnectorTypeEnum: string
     }
 
     /**
-     * The types this installation can connect, for the page that offers them.
+     * Every type, for the page that offers them, with whether this
+     * installation is set up to connect it.
      *
-     * @return list<array{value: string, label: string, capabilities: list<string>, supports_shared_mailboxes: bool, uses_sign_in: bool}>
+     * @return list<array{value: string, label: string, description: string, capabilities: list<string>, supports_shared_mailboxes: bool, uses_sign_in: bool, available: bool}>
      */
-    public static function available(): array
+    public static function catalog(): array
     {
         return array_values(array_map(
             fn (self $type): array => [
                 'value' => $type->value,
                 'label' => $type->label(),
+                'description' => $type->description(),
                 'capabilities' => array_map(fn (ConnectorCapabilityEnum $capability): string => $capability->label(), $type->capabilities()),
                 'supports_shared_mailboxes' => $type->supportsSharedMailboxes(),
                 'uses_sign_in' => $type->usesSignIn(),
+                'available' => $type->isAvailable(),
             ],
-            array_filter(self::cases(), fn (self $type): bool => $type->isAvailable()),
+            self::cases(),
         ));
     }
 }
