@@ -11,15 +11,13 @@ use Mom\Connectors\CouldNotReachConnector;
 use Mom\Connectors\Mail\MailClient;
 
 /**
- * Saves the files attached to an email on the ticket it opened or was added
- * to. Images shown inside the message, such as signature logos, are left out,
- * as are linked and embedded items, files over the size people may upload and
- * any beyond the number of files people may upload at once.
+ * Saves the files that came with an email on the ticket it opened or was added
+ * to, however many there are. Images shown inside the message are saved too,
+ * because a screenshot pasted into an email is often its point. Linked and
+ * embedded items are left out, as are files over the size people may upload.
  */
 final readonly class SaveMessageAttachments
 {
-    public const int MAX_FILES = 10;
-
     public const int MAX_BYTES = 20 * 1024 * 1024;
 
     public function __construct(
@@ -45,11 +43,7 @@ final readonly class SaveMessageAttachments
         $saved = 0;
 
         foreach ($this->client->attachments($externalId) as $attachment) {
-            if ($saved >= self::MAX_FILES) {
-                break;
-            }
-
-            if (! $attachment['is_file'] || $attachment['is_inline'] || $attachment['size'] > self::MAX_BYTES) {
+            if (! $attachment['is_file'] || $attachment['size'] > self::MAX_BYTES) {
                 continue;
             }
 

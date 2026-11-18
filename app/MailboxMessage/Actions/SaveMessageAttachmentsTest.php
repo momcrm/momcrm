@@ -44,49 +44,51 @@ function emailOnTicket(): MailboxMessage
     ]));
 }
 
-it('saves the files on the ticket, leaving out what is not a file anyone attached and what is too big', function (): void {
+it('saves the files on the ticket, images shown inside the email included, leaving out what is not a file and what is too big', function (): void {
     Http::preventStrayRequests();
     Storage::fake('local');
     $message = emailOnTicket();
     Http::fake([
         'graph.microsoft.com/v1.0/me/messages/graph-1/attachments/quote/$value' => Http::response('quote-bytes'),
         'graph.microsoft.com/v1.0/me/messages/graph-1/attachments/photo/$value' => Http::response('photo-bytes'),
+        'graph.microsoft.com/v1.0/me/messages/graph-1/attachments/screenshot/$value' => Http::response('screenshot-bytes'),
         'graph.microsoft.com/v1.0/me/messages/graph-1/attachments?*' => Http::response(['value' => [
             listedAttachment('quote'),
-            listedAttachment('logo', ['name' => 'logo.png', 'isInline' => true]),
+            listedAttachment('screenshot', ['name' => 'screenshot.png', 'contentType' => 'image/png', 'isInline' => true]),
             listedAttachment('forwarded', ['@odata.type' => '#microsoft.graph.itemAttachment']),
             listedAttachment('video', ['size' => SaveMessageAttachments::MAX_BYTES + 1]),
             listedAttachment('photo', ['@odata.type' => 'microsoft.graph.fileAttachment', 'name' => 'photo.jpg', 'contentType' => 'image/jpeg', 'size' => SaveMessageAttachments::MAX_BYTES]),
         ]]),
     ]);
 
-    expect(SaveMessageAttachments::fromMessage(mailClientWithToken(), $message))->toBe(2);
+    expect(SaveMessageAttachments::fromMessage(mailClientWithToken(), $message))->toBe(3);
 
     $saved = AttachmentEloquentModel::query()->withoutGlobalScopes()->orderBy('name')->get();
 
-    expect($saved->pluck('name')->all())->toBe(['photo.jpg', 'quote.pdf'])
+    expect($saved->pluck('name')->all())->toBe(['photo.jpg', 'quote.pdf', 'screenshot.png'])
         ->and($saved->pluck('attachable_id')->unique()->all())->toBe([$message->getTicketId()->toString()])
-        ->and($saved->pluck('mime_type')->all())->toBe(['image/jpeg', 'application/pdf'])
-        ->and(Storage::disk('local')->get($saved[1]->path))->toBe('quote-bytes');
+        ->and($saved->pluck('mime_type')->all())->toBe(['image/jpeg', 'application/pdf', 'image/png'])
+        ->and(Storage::disk('local')->get($saved[1]->path))->toBe('quote-bytes')
+        ->and(Storage::disk('local')->get($saved[2]->path))->toBe('screenshot-bytes');
 
-    Http::assertSentCount(3);
+    Http::assertSentCount(4);
 });
 
-it('saves no more files than people may upload at once', function (): void {
+it('saves every file, however many the email carries', function (): void {
     Http::preventStrayRequests();
     Storage::fake('local');
     $message = emailOnTicket();
     Http::fake([
         'graph.microsoft.com/v1.0/me/messages/graph-1/attachments/*/$value' => Http::response('bytes'),
         'graph.microsoft.com/v1.0/me/messages/graph-1/attachments?*' => Http::response([
-            'value' => array_map(fn (int $index): array => listedAttachment("file-{$index}"), range(1, SaveMessageAttachments::MAX_FILES + 2)),
+            'value' => array_map(fn (int $index): array => listedAttachment("file-{$index}"), range(1, 25)),
         ]),
     ]);
 
-    expect(SaveMessageAttachments::fromMessage(mailClientWithToken(), $message))->toBe(SaveMessageAttachments::MAX_FILES)
-        ->and(AttachmentEloquentModel::query()->withoutGlobalScopes()->count())->toBe(SaveMessageAttachments::MAX_FILES);
+    expect(SaveMessageAttachments::fromMessage(mailClientWithToken(), $message))->toBe(25)
+        ->and(AttachmentEloquentModel::query()->withoutGlobalScopes()->count())->toBe(25);
 
-    Http::assertSentCount(SaveMessageAttachments::MAX_FILES + 1);
+    Http::assertSentCount(26);
 });
 
 it('asks for nothing when the email is on no ticket', function (): void {
