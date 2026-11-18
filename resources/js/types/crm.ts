@@ -648,6 +648,28 @@ export type AccessCondition = {
     value: string | string[] | null;
 };
 
+/** An outside account the team has connected, such as a Microsoft 365 sign-in. */
+export type Connector = {
+    id: string;
+    type: string;
+    type_label: string;
+    name: string;
+    account: string;
+    status: 'connected' | 'needs_reconnect';
+    /** What the connector can be used for, such as "Email". */
+    capabilities: string[];
+    shared_mailboxes: boolean;
+    last_error: string | null;
+};
+
+/** A kind of outside account this installation can connect. */
+export type ConnectorType = {
+    value: string;
+    label: string;
+    capabilities: string[];
+    supports_shared_mailboxes: boolean;
+};
+
 /** A Microsoft 365 mailbox the team has connected. */
 export type Mailbox = {
     id: string;

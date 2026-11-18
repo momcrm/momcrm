@@ -13,6 +13,11 @@ use App\Choice\Controllers\RestoreChoiceController;
 use App\Choice\Controllers\ShowWorkflowController;
 use App\Choice\Controllers\StoreChoiceController;
 use App\Choice\Controllers\UpdateChoiceController;
+use App\Connector\ConnectorTypeEnum;
+use App\Connector\Controllers\ConnectConnectorController;
+use App\Connector\Controllers\DeleteConnectorController;
+use App\Connector\Controllers\HandleConnectorCallbackController;
+use App\Connector\Controllers\ShowConnectorsController;
 use App\CustomField\Controllers\ArchiveCustomFieldController;
 use App\CustomField\Controllers\DeleteCustomFieldController;
 use App\CustomField\Controllers\ReorderCustomFieldsController;
@@ -109,6 +114,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('settings/objects/{customObject}/archive', ArchiveCustomObjectController::class)->whereUuid('customObject')->name('custom-objects.archive');
     Route::post('settings/objects/{customObject}/restore', RestoreCustomObjectController::class)->whereUuid('customObject')->name('custom-objects.restore');
     Route::delete('settings/objects/{customObject}', DeleteCustomObjectController::class)->whereUuid('customObject')->name('custom-objects.destroy');
+
+    Route::get('settings/connectors', ShowConnectorsController::class)->name('connectors.index');
+    Route::get('settings/connectors/{type}/connect', ConnectConnectorController::class)->whereIn('type', ConnectorTypeEnum::values())->name('connectors.connect');
+    Route::get('settings/connectors/{type}/callback', HandleConnectorCallbackController::class)->whereIn('type', ConnectorTypeEnum::values())->name('connectors.callback');
+    Route::delete('settings/connectors/{connector}', DeleteConnectorController::class)->whereUuid('connector')->name('connectors.destroy');
 
     Route::get('settings/email', ShowEmailSettingsController::class)->name('mailboxes.index');
     Route::get('settings/email/connect', ConnectMailboxController::class)->name('mailboxes.connect');

@@ -13,6 +13,7 @@ enum Table: string
     case AuditLogs = 'audit_logs';
     case Choices = 'choices';
     case Comments = 'comments';
+    case Connectors = 'connectors';
     case Contacts = 'contacts';
     case Contracts = 'contracts';
     case CustomFields = 'custom_fields';
