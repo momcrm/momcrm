@@ -2,6 +2,7 @@ import { Link, usePage } from '@inertiajs/react';
 import {
     Activity,
     Boxes,
+    FileCog,
     KeyRound,
     Mail,
     Palette,
@@ -17,6 +18,7 @@ import { index as accessRulesIndex } from '@/routes/access-rules';
 import { index as activityIndex } from '@/routes/activity';
 import { edit as editAppearance } from '@/routes/appearance';
 import { edit as editCustomObjects } from '@/routes/custom-objects';
+import { edit as editEnvironment } from '@/routes/environment';
 import { index as mailboxesIndex } from '@/routes/mailboxes';
 import { edit } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
@@ -48,6 +50,12 @@ const emailItem: NavItem = {
     icon: Mail,
 };
 
+const environmentItem: NavItem = {
+    title: 'Environment',
+    href: editEnvironment(),
+    icon: FileCog,
+};
+
 const sections: { title: string; items: NavItem[] }[] = [
     {
         title: 'Account',
@@ -76,9 +84,16 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
         canManageAccessRules,
         canManageCustomObjects,
         canManageEmail,
+        canManageEnvironment,
         canManageWorkflow,
     } = usePage().props;
-    const visibleSections = sections.map((section) =>
+    const visibleSections = [
+        ...sections,
+        // The .env belongs to the whole installation, not to a team.
+        ...(canManageEnvironment
+            ? [{ title: 'Installation', items: [environmentItem] }]
+            : []),
+    ].map((section) =>
         section.title === 'Workspace'
             ? {
                   ...section,

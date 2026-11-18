@@ -12,6 +12,7 @@ use App\User\Properties\Email;
 use App\User\Properties\EmailVerifiedAt;
 use App\User\Properties\GettingStartedDismissedAt;
 use App\User\Properties\Id;
+use App\User\Properties\IsPlatformAdmin;
 use App\User\Properties\JobTitle;
 use App\User\Properties\Name;
 use App\User\Properties\OnboardedAt;
@@ -41,6 +42,7 @@ final class User extends AbstractData
         public EmailVerifiedAt $emailVerifiedAt,
         public GettingStartedDismissedAt $gettingStartedDismissedAt,
         public Id $id,
+        public IsPlatformAdmin $isPlatformAdmin,
         public JobTitle $jobTitle,
         public Name $name,
         public OnboardedAt $onboardedAt,
@@ -195,6 +197,18 @@ final class User extends AbstractData
         }
 
         $this->id = Id::fromNullableUuid($id);
+
+        return $this;
+    }
+
+    public function getIsPlatformAdmin(): IsPlatformAdmin
+    {
+        return $this->isPlatformAdmin;
+    }
+
+    public function setIsPlatformAdmin(mixed $isPlatformAdmin): self
+    {
+        $this->isPlatformAdmin = new IsPlatformAdmin($isPlatformAdmin instanceof AbstractValue ? $isPlatformAdmin->toValue() : $isPlatformAdmin);
 
         return $this;
     }

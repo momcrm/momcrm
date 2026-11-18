@@ -15,6 +15,9 @@ use App\Contract\Contract;
 use App\Contract\ContractPolicy;
 use App\Customer\Customer;
 use App\Customer\CustomerPolicy;
+use App\Environment\EnvironmentFile;
+use App\Environment\EnvironmentPolicy;
+use App\Environment\EnvironmentVariables;
 use App\Group\Group;
 use App\Group\GroupPolicy;
 use App\Invoice\Invoice;
@@ -67,6 +70,10 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(PasskeyVerificationRequest::class, PasskeyVerificationFormRequest::class);
+        $this->app->bind(EnvironmentFile::class, fn (): EnvironmentFile => new EnvironmentFile(
+            path: $this->app->environmentFilePath(),
+            backupDirectory: storage_path('app/private/environment-backups'),
+        ));
     }
 
     /**
@@ -158,6 +165,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Comment::class, CommentPolicy::class);
         Gate::policy(Contact::class, ContactPolicy::class);
         Gate::policy(Customer::class, CustomerPolicy::class);
+        Gate::policy(EnvironmentVariables::class, EnvironmentPolicy::class);
         Gate::policy(Group::class, GroupPolicy::class);
         Gate::policy(Invoice::class, InvoicePolicy::class);
         Gate::policy(Location::class, LocationPolicy::class);

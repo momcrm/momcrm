@@ -9,6 +9,7 @@ use App\TeamUser\Actions\CreateTeamUser;
 use App\TeamUser\TeamRoleEnum;
 use App\User\Properties\Email;
 use App\User\Properties\EmailVerifiedAt;
+use App\User\Properties\IsPlatformAdmin;
 use App\User\Properties\Name;
 use App\User\Properties\OnboardedAt;
 use App\User\Properties\Password;
@@ -90,6 +91,16 @@ final class UserFactory extends Factory
             ->afterCreating(function (UserEloquentModel $user) use ($teamId, $role): void {
                 CreateTeamUser::fromIds(teamId: $teamId, userId: $user->id, role: $role);
             });
+    }
+
+    /**
+     * Indicate that the user looks after the installation, such as its `.env`.
+     */
+    public function platformAdmin(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            IsPlatformAdmin::getDatabaseTableColumnName() => true,
+        ]);
     }
 
     /**
