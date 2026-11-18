@@ -3,9 +3,10 @@
 declare(strict_types=1);
 
 use App\MailboxMessage\MailboxMessage;
+use App\MailboxMessage\MailboxMessageEloquentModel;
 
-it('reads a message from Microsoft with addresses in lower case and ids without brackets', function (): void {
-    $message = MailboxMessage::fromMicrosoftGraph(graphMessage([
+it('keeps an email from Microsoft with addresses in lower case and ids without brackets', function (): void {
+    $message = messageFromGraph(graphMessage([
         'body' => ['contentType' => 'text', 'content' => "Still broken.\r\n\r\nOn Monday Support wrote:\r\n> Try turning it off and on."],
         'uniqueBody' => ['contentType' => 'text', 'content' => "Still broken.\r\n"],
         'internetMessageHeaders' => [
@@ -29,7 +30,7 @@ it('reads a message from Microsoft with addresses in lower case and ids without 
 });
 
 it('lists the thread a message follows, the message it answers first', function (): void {
-    $message = MailboxMessage::fromMicrosoftGraph(graphMessage(['internetMessageHeaders' => [
+    $message = messageFromGraph(graphMessage(['internetMessageHeaders' => [
         ['name' => 'In-Reply-To', 'value' => '<reply-2@helpdesk.test>'],
         ['name' => 'References', 'value' => '<message-1@acme.test> <reply-2@helpdesk.test>'],
     ]]));
@@ -38,7 +39,7 @@ it('lists the thread a message follows, the message it answers first', function 
 });
 
 it('leaves out what a message does not have', function (): void {
-    $message = MailboxMessage::fromMicrosoftGraph([
+    $message = messageFromGraph([
         'id' => 'graph-2',
         'subject' => '  ',
         'from' => null,
@@ -55,21 +56,23 @@ it('leaves out what a message does not have', function (): void {
         ->and($message->threadIds())->toBe([]);
 });
 
-it('reads a message from its headers, whatever shape the sender\'s address takes', function (string $from, ?string $name, ?string $address): void {
-    $message = MailboxMessage::fromHeaders(['from' => $from, 'message-id' => '<Msg-1@Acme.test>'], 'outside-1', " Hello \n", null);
+it('hands a stored message back as the email a reply answers', function (): void {
+    $stored = MailboxMessage::fromEloquentModel(MailboxMessageEloquentModel::factory()->create([
+        'external_id' => 'graph-1',
+        'internet_message_id' => 'message-1@acme.test',
+        'in_reply_to' => 'reply-2@helpdesk.test',
+        'reference_ids' => ['message-0@acme.test'],
+        'from_address' => 'sam@acme.test',
+        'to_recipients' => ['support@helpdesk.test'],
+        'subject' => 'Printer offline',
+    ]));
 
-    expect($message->getFromName()->toNullableString())->toBe($name)
-        ->and($message->getFromAddress()->toNullableString())->toBe($address)
-        ->and($message->getInternetMessageId()->toString())->toBe('Msg-1@Acme.test')
-        ->and($message->getExternalId()->toString())->toBe('outside-1')
-        ->and($message->getBodyText()->toString())->toBe('Hello')
-        ->and($message->getToRecipients()->toArray())->toBe([])
-        ->and($message->getSubject()->toNullableString())->toBeNull();
-})->with([
-    'a name and an address' => ['Kim Lee <Kim@Acme.test>', 'Kim Lee', 'kim@acme.test'],
-    'a quoted name with a comma' => ['"Lee, Kim" <kim@acme.test>', 'Lee, Kim', 'kim@acme.test'],
-    'an encoded name' => ['=?UTF-8?Q?Kim_=C3=85ker?= <kim@acme.test>', 'Kim Åker', 'kim@acme.test'],
-    'only an address' => ['kim@acme.test', null, 'kim@acme.test'],
-    'an address in brackets' => ['<kim@acme.test>', null, 'kim@acme.test'],
-    'nothing' => ['', null, null],
-]);
+    expect($stored->toInboundMail())
+        ->externalId->toBe('graph-1')
+        ->messageId->toBe('message-1@acme.test')
+        ->inReplyTo->toBe('reply-2@helpdesk.test')
+        ->references->toBe(['message-0@acme.test'])
+        ->fromAddress->toBe('sam@acme.test')
+        ->to->toBe(['support@helpdesk.test'])
+        ->subject->toBe('Printer offline');
+});

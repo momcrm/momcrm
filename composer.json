@@ -19,8 +19,9 @@
         "laravel/socialite": "^5.32",
         "laravel/tinker": "^3.0",
         "laravel/wayfinder": "^0.1.14",
-        "mom/connectors": "6.3.0",
-        "mom/data": "6.3.0",
+        "mom/connectors": "6.4.0",
+        "mom/data": "6.4.0",
+        "mom/microsoft": "6.4.0",
         "socialiteproviders/microsoft": "^4.10",
         "webklex/php-imap": "^6.2"
     },

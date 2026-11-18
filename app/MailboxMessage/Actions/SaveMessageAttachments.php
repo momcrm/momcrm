@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\MailboxMessage\Actions;
 
 use App\Attachment\Actions\CreateAttachment;
-use App\Connector\Exceptions\CouldNotReachConnector;
-use App\Mailbox\Contracts\MailClient;
 use App\MailboxMessage\MailboxMessage;
 use App\Ticket\TicketEloquentModel;
+use Mom\Connectors\CouldNotReachConnector;
+use Mom\Connectors\Mail\MailClient;
 
 /**
  * Saves the files attached to an email on the ticket it opened or was added

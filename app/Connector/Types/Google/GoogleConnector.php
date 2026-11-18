@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Connector\Types\Google;
 
-use App\Connector\Connector;
-use App\Mailbox\Contracts\MailClient;
-use App\Mailbox\Contracts\ProvidesMail;
+use Mom\Connectors\Connection;
 use Mom\Connectors\ConnectorType;
 use Mom\Connectors\ConnectsBySignIn;
+use Mom\Connectors\Mail\MailClient;
+use Mom\Connectors\Mail\ProvidesMail;
 
 /**
  * A Gmail or Google Workspace account, connected by signing in with Google.
@@ -67,15 +67,15 @@ final class GoogleConnector extends ConnectorType implements ConnectsBySignIn, P
         return 'https://oauth2.googleapis.com/token';
     }
 
-    public function mailClient(Connector $connector, ?string $sharedAddress = null): MailClient
+    public function mailClient(Connection $connection, ?string $sharedAddress = null): MailClient
     {
-        return GoogleMailClient::forConnector($connector);
+        return GoogleMailClient::forConnection($connection);
     }
 
     /**
      * Google has no shared mailboxes to open through someone else's sign-in.
      */
-    public function opensSharedMailboxes(Connector $connector): bool
+    public function opensSharedMailboxes(Connection $connection): bool
     {
         return false;
     }

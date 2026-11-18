@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 use App\Connector\Connector;
 use App\Connector\ConnectorEloquentModel;
-use App\Connector\Exceptions\CouldNotReachConnector;
 use App\Connector\Types\Imap\ImapConnector;
 use App\Connector\Types\Imap\MailServers;
 use App\User\UserEloquentModel;
@@ -13,6 +12,7 @@ use Mom\Connectors\ConnectorRegistry;
 use Mom\Connectors\ConnectorType;
 use Mom\Connectors\ConnectsByForm;
 use Mom\Connectors\CouldNotConnect;
+use Mom\Connectors\CouldNotReachConnector;
 use Mom\Connectors\Field;
 use Tests\Support\FakeMailServers;
 

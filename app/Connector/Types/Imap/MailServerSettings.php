@@ -4,10 +4,7 @@ declare(strict_types=1);
 
 namespace App\Connector\Types\Imap;
 
-use App\Connector\Connector;
-use App\Connector\ConnectorEloquentModel;
-use App\Shared\Types;
-use App\Team\Scopes\CurrentTeamScope;
+use Mom\Connectors\Connection;
 
 /**
  * Where a mailbox's IMAP and SMTP servers are and how to sign in to them:
@@ -77,18 +74,15 @@ final readonly class MailServerSettings
     }
 
     /**
-     * What a saved IMAP/SMTP connector holds.
+     * What a connected IMAP/SMTP account holds: its settings, its encrypted
+     * passwords and the address it is known by.
      */
-    public static function fromConnector(Connector $connector): self
+    public static function fromConnection(Connection $connection): self
     {
-        $model = ConnectorEloquentModel::query()
-            ->withoutGlobalScope(CurrentTeamScope::class)
-            ->find($connector->getId()->toString());
-
         return self::fromArray([
-            ...Types::stringKeyed($connector->getSettings()->toArray()),
-            ...($model === null ? [] : $model->credentials),
-            'from_address' => $connector->getAccount()->toString(),
+            ...$connection->settings(),
+            ...$connection->credentials(),
+            'from_address' => $connection->account(),
         ]);
     }
 

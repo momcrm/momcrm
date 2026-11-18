@@ -14,9 +14,9 @@ use App\Connector\Properties\TeamId;
 use App\Connector\Properties\Type;
 use App\Connector\Types\Google\GoogleConnector;
 use App\Connector\Types\Imap\ImapConnector;
-use App\Connector\Types\Microsoft\MicrosoftConnector;
 use App\Team\TeamEloquentModel;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Mom\Microsoft\MicrosoftConnector;
 
 /**
  * @extends Factory<ConnectorEloquentModel>

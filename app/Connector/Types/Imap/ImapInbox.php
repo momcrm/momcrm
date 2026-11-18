@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Connector\Types\Imap;
 
-use App\Connector\Exceptions\CouldNotReachConnector;
 use Carbon\CarbonImmutable;
+use Mom\Connectors\CouldNotReachConnector;
 
 /**
  * The inbox of a mailbox on an IMAP server, signed in and open. It gives

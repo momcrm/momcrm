@@ -5,15 +5,15 @@ declare(strict_types=1);
 namespace App\MailboxMessage\Actions;
 
 use App\Connector\Actions\FindConnector;
-use App\Connector\Exceptions\CouldNotReachConnector;
 use App\Mailbox\Actions\FindMailbox;
 use App\Mailbox\Actions\ResolveMailClient;
-use App\Mailbox\OutgoingMail;
 use App\MailboxMessage\MailboxMessage;
 use App\MailboxMessage\MailboxMessageStatusEnum;
 use App\Shared\Types;
 use App\Ticket\Actions\FindTicket;
 use Carbon\CarbonImmutable;
+use Mom\Connectors\CouldNotReachConnector;
+use Mom\Connectors\Mail\OutgoingMail;
 use Throwable;
 
 /**
@@ -99,12 +99,14 @@ final readonly class SendMailboxMessage
             throw CouldNotReachConnector::refused((string) __('This ticket has no email address to reply to.'));
         }
 
+        $answered = FindMailboxMessage::latestInboundOnTicket($ticket->getId()->toString(), $teamId, $mailbox->getId()->toString());
+
         $sent = ResolveMailClient::forMailbox($mailbox)->send(new OutgoingMail(
             to: $to,
             bodyText: $this->message->getBodyText()->toString(),
             subject: $ticket->getTitle()->toString(),
             subjectTag: "[#{$ticket->getNumber()->toInteger()}]",
-            answered: FindMailboxMessage::latestInboundOnTicket($ticket->getId()->toString(), $teamId, $mailbox->getId()->toString()),
+            answered: $answered->isNull() ? null : $answered->toInboundMail(),
         ));
 
         return UpdateMailboxMessage::fromMessage(

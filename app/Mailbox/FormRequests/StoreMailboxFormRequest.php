@@ -7,11 +7,9 @@ namespace App\Mailbox\FormRequests;
 use App\Connector\Actions\FindConnector;
 use App\Connector\Connector;
 use App\Connector\ConnectorCapabilityEnum;
-use App\Connector\Exceptions\CouldNotReachConnector;
 use App\Mailbox\Actions\CreateMailbox;
 use App\Mailbox\Actions\FindMailbox;
 use App\Mailbox\Actions\ResolveMailClient;
-use App\Mailbox\Contracts\ProvidesMail;
 use App\Mailbox\Mailbox;
 use App\Team\Actions\FindTeam;
 use App\Team\Exceptions\CouldNotViewTeam;
@@ -22,6 +20,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
+use Mom\Connectors\CouldNotReachConnector;
+use Mom\Connectors\Mail\ProvidesMail;
 
 final class StoreMailboxFormRequest extends FormRequest
 {

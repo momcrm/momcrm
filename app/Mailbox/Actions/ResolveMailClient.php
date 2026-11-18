@@ -6,10 +6,10 @@ namespace App\Mailbox\Actions;
 
 use App\Connector\Actions\FindConnector;
 use App\Connector\Connector;
-use App\Connector\Exceptions\CouldNotReachConnector;
-use App\Mailbox\Contracts\MailClient;
-use App\Mailbox\Contracts\ProvidesMail;
 use App\Mailbox\Mailbox;
+use Mom\Connectors\CouldNotReachConnector;
+use Mom\Connectors\Mail\MailClient;
+use Mom\Connectors\Mail\ProvidesMail;
 
 /**
  * The mail client for a mailbox, which the type of connector it goes through

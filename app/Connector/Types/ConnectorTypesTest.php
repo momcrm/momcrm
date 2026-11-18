@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 use App\Connector\Types\Google\GoogleConnector;
 use App\Connector\Types\Imap\ImapConnector;
-use App\Connector\Types\Microsoft\MicrosoftConnector;
 use Mom\Connectors\Capability;
 use Mom\Connectors\ConnectorRegistry;
+use Mom\Microsoft\MicrosoftConnector;
 
 it('registers the app\'s own connector types, in the order they are offered', function (): void {
     $keys = array_map(fn ($type): string => $type->key(), ConnectorRegistry::instance()->all());

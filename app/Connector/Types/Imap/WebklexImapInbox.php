@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Connector\Types\Imap;
 
-use App\Connector\Exceptions\CouldNotReachConnector;
 use Carbon\CarbonImmutable;
+use Mom\Connectors\CouldNotReachConnector;
 use Throwable;
 use Webklex\PHPIMAP\Attachment;
 use Webklex\PHPIMAP\Client;

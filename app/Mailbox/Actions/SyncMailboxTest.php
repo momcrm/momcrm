@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 use App\Attachment\AttachmentEloquentModel;
 use App\Connector\ConnectorEloquentModel;
-use App\Connector\Exceptions\CouldNotReachConnector;
 use App\Mailbox\Actions\SyncMailbox;
 use App\Mailbox\Mailbox;
 use App\Mailbox\MailboxEloquentModel;
@@ -15,6 +14,7 @@ use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use Mom\Connectors\CouldNotReachConnector;
 
 use function Pest\Laravel\freezeSecond;
 use function Pest\Laravel\travelTo;
