@@ -6,6 +6,7 @@ import {
     KeyRound,
     Mail,
     Palette,
+    Plug,
     Shield,
     UserRound,
     UsersRound,
@@ -17,6 +18,7 @@ import { cn, toUrl } from '@/lib/utils';
 import { index as accessRulesIndex } from '@/routes/access-rules';
 import { index as activityIndex } from '@/routes/activity';
 import { edit as editAppearance } from '@/routes/appearance';
+import { index as connectorsIndex } from '@/routes/connectors';
 import { edit as editCustomObjects } from '@/routes/custom-objects';
 import { edit as editEnvironment } from '@/routes/environment';
 import { index as mailboxesIndex } from '@/routes/mailboxes';
@@ -42,6 +44,12 @@ const customObjectsItem: NavItem = {
     title: 'Objects',
     href: editCustomObjects(),
     icon: Boxes,
+};
+
+const connectorsItem: NavItem = {
+    title: 'Connectors',
+    href: connectorsIndex(),
+    icon: Plug,
 };
 
 const emailItem: NavItem = {
@@ -82,6 +90,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
     const { isCurrentOrParentUrl } = useCurrentUrl();
     const {
         canManageAccessRules,
+        canManageConnectors,
         canManageCustomObjects,
         canManageEmail,
         canManageEnvironment,
@@ -102,6 +111,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                       ...(canManageWorkflow ? [workflowItem] : []),
                       ...(canManageCustomObjects ? [customObjectsItem] : []),
                       ...(canManageEmail ? [emailItem] : []),
+                      ...(canManageConnectors ? [connectorsItem] : []),
                       ...(canManageAccessRules ? [accessRulesItem] : []),
                   ],
               }
