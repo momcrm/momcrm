@@ -3,6 +3,7 @@ import {
     Activity,
     Boxes,
     KeyRound,
+    Mail,
     Palette,
     Shield,
     UserRound,
@@ -16,6 +17,7 @@ import { index as accessRulesIndex } from '@/routes/access-rules';
 import { index as activityIndex } from '@/routes/activity';
 import { edit as editAppearance } from '@/routes/appearance';
 import { edit as editCustomObjects } from '@/routes/custom-objects';
+import { index as mailboxesIndex } from '@/routes/mailboxes';
 import { edit } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
 import { edit as editTeam } from '@/routes/team';
@@ -38,6 +40,12 @@ const customObjectsItem: NavItem = {
     title: 'Objects',
     href: editCustomObjects(),
     icon: Boxes,
+};
+
+const emailItem: NavItem = {
+    title: 'Email',
+    href: mailboxesIndex(),
+    icon: Mail,
 };
 
 const sections: { title: string; items: NavItem[] }[] = [
@@ -64,8 +72,12 @@ const sections: { title: string; items: NavItem[] }[] = [
  */
 export default function SettingsLayout({ children }: PropsWithChildren) {
     const { isCurrentOrParentUrl } = useCurrentUrl();
-    const { canManageAccessRules, canManageCustomObjects, canManageWorkflow } =
-        usePage().props;
+    const {
+        canManageAccessRules,
+        canManageCustomObjects,
+        canManageEmail,
+        canManageWorkflow,
+    } = usePage().props;
     const visibleSections = sections.map((section) =>
         section.title === 'Workspace'
             ? {
@@ -74,6 +86,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                       ...section.items,
                       ...(canManageWorkflow ? [workflowItem] : []),
                       ...(canManageCustomObjects ? [customObjectsItem] : []),
+                      ...(canManageEmail ? [emailItem] : []),
                       ...(canManageAccessRules ? [accessRulesItem] : []),
                   ],
               }

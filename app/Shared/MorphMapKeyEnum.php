@@ -23,6 +23,7 @@ use App\Group\GroupEloquentModel;
 use App\Invoice\InvoiceEloquentModel;
 use App\InvoiceItem\InvoiceItemEloquentModel;
 use App\Location\LocationEloquentModel;
+use App\Mailbox\MailboxEloquentModel;
 use App\Milestone\MilestoneEloquentModel;
 use App\Passkey\PasskeyEloquentModel;
 use App\Project\ProjectEloquentModel;
@@ -68,6 +69,7 @@ enum MorphMapKeyEnum: string
     case Invoice = 'invoice';
     case InvoiceItem = 'invoice_item';
     case Location = 'location';
+    case Mailbox = 'mailbox';
     case Milestone = 'milestone';
     case Passkey = 'passkey';
     case Project = 'project';
@@ -126,6 +128,7 @@ enum MorphMapKeyEnum: string
             self::Invoice => InvoiceEloquentModel::class,
             self::InvoiceItem => InvoiceItemEloquentModel::class,
             self::Location => LocationEloquentModel::class,
+            self::Mailbox => MailboxEloquentModel::class,
             self::Milestone => MilestoneEloquentModel::class,
             self::Passkey => PasskeyEloquentModel::class,
             self::Project => ProjectEloquentModel::class,

@@ -66,6 +66,7 @@ class HandleInertiaRequests extends Middleware
             'canManageAccessRules' => fn (): bool => $this->allowsOnCurrentTeam($request, 'manageAccessRules'),
             'canManageCustomFields' => fn (): bool => $this->allowsOnCurrentTeam($request, 'manageCustomFields'),
             'canManageCustomObjects' => fn (): bool => $this->allowsOnCurrentTeam($request, 'manageCustomObjects'),
+            'canManageEmail' => fn (): bool => $this->allowsOnCurrentTeam($request, 'manageEmail'),
             'canManageWorkflow' => fn (): bool => $this->allowsOnCurrentTeam($request, 'manageWorkflow'),
             'sidebarCounts' => fn (): ?array => $this->sidebarCounts($request),
             'choices' => fn (): ?array => $this->choices($request),

@@ -21,11 +21,13 @@ export default function ConfirmDelete({
     title,
     description,
     trigger = 'Delete',
+    confirmLabel = 'Delete',
 }: {
     action: Action;
     title: string;
     description: ReactNode;
     trigger?: string;
+    confirmLabel?: string;
 }) {
     return (
         <Dialog>
@@ -48,7 +50,7 @@ export default function ConfirmDelete({
                                 disabled={processing}
                                 data-test="confirm-delete-button"
                             >
-                                Delete
+                                {confirmLabel}
                             </Button>
                         </DialogFooter>
                     )}
