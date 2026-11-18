@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 use App\Attachment\AttachmentEloquentModel;
 use App\Connector\ConnectorEloquentModel;
-use App\Connector\Exceptions\CouldNotReachConnector;
 use App\Connector\Types\Imap\ImapConnector;
 use App\Connector\Types\Imap\MailServers;
 use App\Mailbox\Actions\ResolveMailClient;
 use App\Mailbox\Actions\SyncMailbox;
 use App\Mailbox\Mailbox;
 use App\Mailbox\MailboxEloquentModel;
-use App\Mailbox\OutgoingMail;
 use App\MailboxMessage\MailboxMessage;
 use App\MailboxMessage\MailboxMessageEloquentModel;
 use App\Ticket\TicketEloquentModel;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Storage;
+use Mom\Connectors\CouldNotReachConnector;
+use Mom\Connectors\Mail\OutgoingMail;
 use Tests\Support\FakeMailServers;
 
 use function Pest\Laravel\travelTo;
@@ -80,23 +80,23 @@ it('reads a message from its headers and text, once', function (): void {
     $message = $client->message('7:5');
     $client->message('7:5');
 
-    expect($message?->getExternalId()->toString())->toBe('7:5')
-        ->and($message?->getInternetMessageId()->toString())->toBe('msg-5@acme.test')
-        ->and($message?->getInReplyTo()->toString())->toBe('sent-1@helpdesk.test')
-        ->and($message?->getReferenceIds()->toArray())->toBe(['msg-0@acme.test', 'sent-1@helpdesk.test'])
-        ->and($message?->getFromName()->toString())->toBe('Kim Lee')
-        ->and($message?->getFromAddress()->toString())->toBe('kim@acme.test')
-        ->and($message?->getSubject()->toString())->toBe('RE: Printer offline [#12]')
-        ->and($message?->getReplyText()->toString())->toBe('It is the one on level 2.')
-        ->and($message?->getReceivedAt()->toCarbon()->toIso8601String())->toBe('2026-11-18T01:00:00+00:00')
-        ->and($message?->getHasAttachments()->toBoolean())->toBeFalse()
+    expect($message?->externalId)->toBe('7:5')
+        ->and($message?->messageId)->toBe('msg-5@acme.test')
+        ->and($message?->inReplyTo)->toBe('sent-1@helpdesk.test')
+        ->and($message?->references)->toBe(['msg-0@acme.test', 'sent-1@helpdesk.test'])
+        ->and($message?->fromName)->toBe('Kim Lee')
+        ->and($message?->fromAddress)->toBe('kim@acme.test')
+        ->and($message?->subject)->toBe('RE: Printer offline [#12]')
+        ->and($message?->replyText)->toBe('It is the one on level 2.')
+        ->and($message?->receivedAt?->toIso8601String())->toBe('2026-11-18T01:00:00+00:00')
+        ->and($message?->hasAttachments)->toBeFalse()
         ->and($this->servers->fetched)->toBe([5]);
 });
 
 it('turns a message with only HTML into text', function (): void {
     $this->servers->deliver(5, '2026-11-18 01:00:00', text: null, html: '<p>The printer is <b>offline</b>.</p>');
 
-    expect(ResolveMailClient::forMailbox(imapMailbox())->message('7:5')?->getBodyText()->toString())->toBe('The printer is offline.');
+    expect(ResolveMailClient::forMailbox(imapMailbox())->message('7:5')?->bodyText)->toBe('The printer is offline.');
 });
 
 it('has no message for a draft, one that has gone, or one numbered in an inbox that was rebuilt', function (): void {
@@ -119,7 +119,7 @@ it('lists a message\'s files and hands over their contents', function (): void {
     ]);
     $client = ResolveMailClient::forMailbox(imapMailbox());
 
-    expect($client->message('7:5')?->getHasAttachments()->toBoolean())->toBeTrue()
+    expect($client->message('7:5')?->hasAttachments)->toBeTrue()
         ->and($client->attachments('7:5'))->toBe([
             ['id' => '0', 'name' => 'invoice.pdf', 'content_type' => 'application/pdf', 'size' => 4, 'is_file' => true, 'is_inline' => false],
             ['id' => '1', 'name' => 'logo.png', 'content_type' => 'image/png', 'size' => 4, 'is_file' => true, 'is_inline' => true],
@@ -130,7 +130,7 @@ it('lists a message\'s files and hands over their contents', function (): void {
 });
 
 it('sends a new thread over SMTP from the mailbox\'s name and address', function (): void {
-    $sent = ResolveMailClient::forMailbox(imapMailbox())->send(new OutgoingMail(['kim@acme.test'], "We are on it.\nBack soon.", 'Printer offline', '[#12]', MailboxMessage::new()));
+    $sent = ResolveMailClient::forMailbox(imapMailbox())->send(new OutgoingMail(['kim@acme.test'], "We are on it.\nBack soon.", 'Printer offline', '[#12]'));
 
     $email = $this->servers->sent[0];
 
@@ -159,7 +159,7 @@ it('sends a reply that names the message it answers and the thread before it', f
         'subject' => 'Printer offline',
     ]));
 
-    $sent = ResolveMailClient::forMailbox($mailbox)->send(new OutgoingMail(['kim@acme.test'], 'Which printer is it?', 'A ticket title', '[#12]', $answered));
+    $sent = ResolveMailClient::forMailbox($mailbox)->send(new OutgoingMail(['kim@acme.test'], 'Which printer is it?', 'A ticket title', '[#12]', $answered->toInboundMail()));
 
     $headers = $this->servers->sent[0]->getHeaders();
 
@@ -171,7 +171,7 @@ it('sends a reply that names the message it answers and the thread before it', f
 it('passes on why a reply could not be sent, and sends nothing', function (): void {
     $this->servers->smtpFailure = CouldNotReachConnector::unavailable(ImapConnector::COMPANY);
 
-    expect(fn () => ResolveMailClient::forMailbox(imapMailbox())->send(new OutgoingMail(['kim@acme.test'], 'We are on it.', 'Printer offline', '[#12]', MailboxMessage::new())))
+    expect(fn () => ResolveMailClient::forMailbox(imapMailbox())->send(new OutgoingMail(['kim@acme.test'], 'We are on it.', 'Printer offline', '[#12]')))
         ->toThrow(CouldNotReachConnector::class, 'The mail server could not be reached. It will be tried again.');
 
     expect($this->servers->sent)->toBe([])
@@ -195,7 +195,7 @@ it('asks for a reconnect once a server refuses the stored username and password'
     ],
     'sending' => [
         fn (FakeMailServers $servers) => $servers->smtpFailure = CouldNotReachConnector::needsReconnect(ImapConnector::COMPANY),
-        fn ($client) => $client->send(new OutgoingMail(['kim@acme.test'], 'We are on it.', 'Printer offline', '[#12]', MailboxMessage::new())),
+        fn ($client) => $client->send(new OutgoingMail(['kim@acme.test'], 'We are on it.', 'Printer offline', '[#12]')),
     ],
 ]);
 

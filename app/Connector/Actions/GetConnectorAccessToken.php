@@ -7,13 +7,13 @@ namespace App\Connector\Actions;
 use App\Connector\Connector;
 use App\Connector\ConnectorEloquentModel;
 use App\Connector\ConnectorStatusEnum;
-use App\Connector\Exceptions\CouldNotReachConnector;
 use App\Shared\Types;
 use App\Team\Scopes\CurrentTeamScope;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Mom\Connectors\ConnectsBySignIn;
+use Mom\Connectors\CouldNotReachConnector;
 
 /**
  * A token that lets us act as a connected account for the next hour or so. It

@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace App\Connector\Types\Imap;
 
-use App\Connector\Connector;
-use App\Connector\Exceptions\CouldNotReachConnector;
-use App\Mailbox\Contracts\MailClient;
-use App\Mailbox\Contracts\ProvidesMail;
 use Mom\Connectors\ConnectedAccount;
+use Mom\Connectors\Connection;
 use Mom\Connectors\ConnectorType;
 use Mom\Connectors\ConnectsByForm;
 use Mom\Connectors\CouldNotConnect;
+use Mom\Connectors\CouldNotReachConnector;
 use Mom\Connectors\Field;
+use Mom\Connectors\Mail\MailClient;
+use Mom\Connectors\Mail\ProvidesMail;
 use Mom\Connectors\PublicHost;
 
 /**
@@ -132,15 +132,15 @@ final class ImapConnector extends ConnectorType implements ConnectsByForm, Provi
         );
     }
 
-    public function mailClient(Connector $connector, ?string $sharedAddress = null): MailClient
+    public function mailClient(Connection $connection, ?string $sharedAddress = null): MailClient
     {
-        return ImapMailClient::forConnector($connector);
+        return ImapMailClient::forConnection($connection);
     }
 
     /**
      * A sign-in on a mail server reaches one mailbox: its own.
      */
-    public function opensSharedMailboxes(Connector $connector): bool
+    public function opensSharedMailboxes(Connection $connection): bool
     {
         return false;
     }

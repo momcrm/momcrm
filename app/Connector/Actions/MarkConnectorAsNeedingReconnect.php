@@ -7,10 +7,10 @@ namespace App\Connector\Actions;
 use App\Connector\Connector;
 use App\Connector\ConnectorEloquentModel;
 use App\Connector\ConnectorStatusEnum;
-use App\Connector\Exceptions\CouldNotReachConnector;
 use App\Connector\Properties\LastError;
 use App\Connector\Properties\Status;
 use App\Team\Scopes\CurrentTeamScope;
+use Mom\Connectors\CouldNotReachConnector;
 
 /**
  * Records that the outside service turned away what a connector has stored.

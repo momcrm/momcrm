@@ -30,7 +30,7 @@ function takeInEmail(MailboxEloquentModel $mailbox, array $message = []): Mailbo
 {
     return ProcessInboundMessage::fromMessage(
         Mailbox::fromEloquentModel($mailbox),
-        MailboxMessage::fromMicrosoftGraph(graphMessage($message)),
+        messageFromGraph(graphMessage($message)),
     );
 }
 

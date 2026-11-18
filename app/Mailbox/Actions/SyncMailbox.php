@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace App\Mailbox\Actions;
 
 use App\Connector\Actions\FindConnector;
-use App\Connector\Exceptions\CouldNotReachConnector;
-use App\Mailbox\Contracts\MailClient;
 use App\Mailbox\Mailbox;
 use App\Mailbox\MailboxEloquentModel;
 use App\Mailbox\Properties\LastError;
@@ -18,6 +16,9 @@ use App\MailboxMessage\Actions\SaveMessageAttachments;
 use App\MailboxMessage\MailboxMessage;
 use App\Team\Scopes\CurrentTeamScope;
 use Carbon\CarbonImmutable;
+use Mom\Connectors\CouldNotReachConnector;
+use Mom\Connectors\Mail\InboundMail;
+use Mom\Connectors\Mail\MailClient;
 use Throwable;
 
 /**
@@ -130,17 +131,17 @@ final readonly class SyncMailbox
      * if they cannot be fetched the ticket still stands, and the failure is
      * reported.
      */
-    private function takeIn(MailClient $client, MailboxMessage $message): bool
+    private function takeIn(MailClient $client, InboundMail $mail): bool
     {
         try {
-            $kept = ProcessInboundMessage::fromMessage($this->mailbox, $message);
+            $kept = ProcessInboundMessage::fromMessage($this->mailbox, MailboxMessage::fromInboundMail($mail));
         } catch (Throwable $exception) {
             report($exception);
 
             return false;
         }
 
-        if ($kept->isNotNull() && $kept->getTicketId()->isNotNull() && $message->getHasAttachments()->toBoolean()) {
+        if ($kept->isNotNull() && $kept->getTicketId()->isNotNull() && $mail->hasAttachments) {
             try {
                 SaveMessageAttachments::fromMessage($client, $kept);
             } catch (Throwable $exception) {

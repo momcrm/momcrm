@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Connector\Types\Imap;
 
-use App\Connector\Exceptions\CouldNotReachConnector;
+use Mom\Connectors\CouldNotReachConnector;
 use Symfony\Component\Mime\Email;
 
 /**

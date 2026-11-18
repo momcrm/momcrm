@@ -3,12 +3,12 @@
 declare(strict_types=1);
 
 use App\Connector\ConnectorEloquentModel;
-use App\Connector\Exceptions\CouldNotReachConnector;
 use App\Mailbox\Actions\ResolveMailClient;
 use App\Mailbox\Mailbox;
 use App\Mailbox\MailboxEloquentModel;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+use Mom\Connectors\CouldNotReachConnector;
 
 beforeEach(function (): void {
     Http::preventStrayRequests();

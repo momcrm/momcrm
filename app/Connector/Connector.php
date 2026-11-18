@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Connector;
 
+use App\Connector\Actions\GetConnectorAccessToken;
 use App\Connector\Factories\ConnectorFactory;
 use App\Connector\Properties\Account;
 use App\Connector\Properties\ConnectedById;
@@ -17,12 +18,15 @@ use App\Connector\Properties\TeamId;
 use App\Connector\Properties\Type;
 use App\Connector\Properties\UpdatedAt;
 use App\Shared\Types;
+use App\Team\Scopes\CurrentTeamScope;
 use Illuminate\Support\Collection;
 use Mom\Connectors\Capability;
+use Mom\Connectors\Connection;
 use Mom\Connectors\ConnectorRegistry;
 use Mom\Connectors\ConnectorType;
 use Mom\Connectors\ConnectsByForm;
 use Mom\Connectors\ConnectsBySignIn;
+use Mom\Connectors\CouldNotReachConnector;
 use Mom\Connectors\SignInOption;
 use Mom\Data\AbstractData;
 use Mom\Data\AbstractValue;
@@ -30,11 +34,12 @@ use Mom\Data\AbstractValue;
 /**
  * An outside account a team has connected. The credentials that reach it are
  * deliberately not on this object, so it can be listed, logged and sent to
- * pages without giving them away: the actions that use them read them.
+ * pages without giving them away: they are read from the database only when
+ * a connector type asks for them.
  *
  * @extends AbstractData<ConnectorEloquentModel>
  */
-final class Connector extends AbstractData
+final class Connector extends AbstractData implements Connection
 {
     public function __construct(
         public Account $account,
@@ -92,6 +97,42 @@ final class Connector extends AbstractData
     public function hasCapability(ConnectorCapabilityEnum $capability): bool
     {
         return $this->connectorType()->provides($capability->contract());
+    }
+
+    public function connectionId(): string
+    {
+        return $this->getId()->toString();
+    }
+
+    public function account(): string
+    {
+        return $this->getAccount()->toString();
+    }
+
+    public function settings(): array
+    {
+        return Types::stringKeyed($this->getSettings()->toArray());
+    }
+
+    /**
+     * @throws CouldNotReachConnector
+     */
+    public function accessToken(): string
+    {
+        return GetConnectorAccessToken::forConnector($this);
+    }
+
+    /**
+     * Read from the encrypted column each time it is asked for, and never
+     * kept on this object.
+     */
+    public function credentials(): array
+    {
+        $model = ConnectorEloquentModel::query()
+            ->withoutGlobalScope(CurrentTeamScope::class)
+            ->find($this->getId()->toString());
+
+        return $model === null ? [] : $model->credentials;
     }
 
     /**

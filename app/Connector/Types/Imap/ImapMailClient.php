@@ -6,14 +6,16 @@ namespace App\Connector\Types\Imap;
 
 use App\Connector\Actions\MarkConnectorAsNeedingReconnect;
 use App\Connector\Connector;
-use App\Connector\Exceptions\CouldNotReachConnector;
-use App\Mailbox\Contracts\MailClient;
-use App\Mailbox\OutgoingMail;
-use App\Mailbox\SentMail;
 use App\MailboxMessage\HtmlToText;
-use App\MailboxMessage\MailboxMessage;
+use App\MailboxMessage\MailHeaders;
 use App\MailboxMessage\Properties\InternetMessageId;
 use Carbon\CarbonImmutable;
+use Mom\Connectors\Connection;
+use Mom\Connectors\CouldNotReachConnector;
+use Mom\Connectors\Mail\InboundMail;
+use Mom\Connectors\Mail\MailClient;
+use Mom\Connectors\Mail\OutgoingMail;
+use Mom\Connectors\Mail\SentMail;
 use Symfony\Component\Mime\Address;
 
 /**
@@ -38,12 +40,12 @@ final class ImapMailClient implements MailClient
     private function __construct(
         private readonly MailServers $servers,
         private readonly MailServerSettings $settings,
-        private readonly Connector $connector,
+        private readonly Connection $connection,
     ) {}
 
-    public static function forConnector(Connector $connector): self
+    public static function forConnection(Connection $connection): self
     {
-        return new self(app(MailServers::class), MailServerSettings::fromConnector($connector), $connector);
+        return new self(app(MailServers::class), MailServerSettings::fromConnection($connection), $connection);
     }
 
     public function checkInbox(): void
@@ -70,7 +72,7 @@ final class ImapMailClient implements MailClient
         return array_slice($messages, 0, $limit);
     }
 
-    public function message(string $id): ?MailboxMessage
+    public function message(string $id): ?InboundMail
     {
         $message = $this->raw($id);
 
@@ -80,8 +82,7 @@ final class ImapMailClient implements MailClient
 
         $text = $message['text'] ?? ($message['html'] === null ? null : HtmlToText::convert($message['html']));
 
-        return MailboxMessage::fromHeaders($message['headers'], $id, $text, $message['received_at'])
-            ->setHasAttachments($message['attachments'] !== []);
+        return MailHeaders::toInboundMail($message['headers'], $id, $text, $message['received_at'], $message['attachments'] !== []);
     }
 
     /**
@@ -171,6 +172,8 @@ final class ImapMailClient implements MailClient
      */
     private function remembering(CouldNotReachConnector $exception): CouldNotReachConnector
     {
-        return $exception->needsReconnect ? MarkConnectorAsNeedingReconnect::fromConnector($this->connector) : $exception;
+        return $exception->needsReconnect && $this->connection instanceof Connector
+            ? MarkConnectorAsNeedingReconnect::fromConnector($this->connection)
+            : $exception;
     }
 }

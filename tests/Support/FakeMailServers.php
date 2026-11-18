@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Support;
 
-use App\Connector\Exceptions\CouldNotReachConnector;
 use App\Connector\Types\Imap\ImapInbox;
 use App\Connector\Types\Imap\MailServers;
 use App\Connector\Types\Imap\MailServerSettings;
 use Carbon\CarbonImmutable;
+use Mom\Connectors\CouldNotReachConnector;
 use Symfony\Component\Mime\Email;
 
 /**

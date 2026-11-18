@@ -3,13 +3,10 @@
 declare(strict_types=1);
 
 use App\Connector\ConnectorEloquentModel;
-use App\Connector\Exceptions\CouldNotReachConnector;
 use App\Mailbox\Actions\ResolveMailClient;
 use App\Mailbox\Actions\SyncMailbox;
-use App\Mailbox\Contracts\MailClient;
 use App\Mailbox\Mailbox;
 use App\Mailbox\MailboxEloquentModel;
-use App\Mailbox\OutgoingMail;
 use App\MailboxMessage\MailboxMessage;
 use App\MailboxMessage\MailboxMessageEloquentModel;
 use App\Ticket\TicketEloquentModel;
@@ -17,6 +14,9 @@ use Carbon\CarbonImmutable;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Sleep;
+use Mom\Connectors\CouldNotReachConnector;
+use Mom\Connectors\Mail\MailClient;
+use Mom\Connectors\Mail\OutgoingMail;
 
 use function Pest\Laravel\travelTo;
 
@@ -143,7 +143,7 @@ it('lists the oldest inbox messages since a time, oldest first, and fetches each
 
     expect(array_column($messages, 'id'))->toBe(['gmail-1', 'gmail-2'])
         ->and($messages[0]['received_at']->toIso8601String())->toBe('2026-11-18T01:00:00+00:00')
-        ->and($client->message('gmail-2')?->getExternalId()->toString())->toBe('gmail-2');
+        ->and($client->message('gmail-2')?->externalId)->toBe('gmail-2');
 
     Http::assertSentCount(5);
     Http::assertSent(function (Request $request) use ($since): bool {
@@ -171,18 +171,18 @@ it('reads a message from its headers, taking the plain text and leaving out quot
     $message = googleMailClient()->message('gmail-1');
 
     expect($message)->not->toBeNull()
-        ->and($message?->getExternalId()->toString())->toBe('gmail-1')
-        ->and($message?->getInternetMessageId()->toString())->toBe('msg-1@acme.test')
-        ->and($message?->getInReplyTo()->toString())->toBe('sent-1@helpdesk.test')
-        ->and($message?->getReferenceIds()->toArray())->toBe(['msg-0@acme.test', 'sent-1@helpdesk.test'])
-        ->and($message?->getFromName()->toString())->toBe('Kim Åker')
-        ->and($message?->getFromAddress()->toString())->toBe('kim@acme.test')
-        ->and($message?->getToRecipients()->toArray())->toBe(['help@helpdesk.test', 'other@acme.test'])
-        ->and($message?->getSubject()->toString())->toBe('RE: Printer offline [#12]')
-        ->and($message?->getBodyText()->toString())->toStartWith('It is the one on level 2.')->toContain('> Which printer is it?')
-        ->and($message?->getReplyText()->toString())->toBe('It is the one on level 2.')
-        ->and($message?->getReceivedAt()->toCarbon()->toIso8601String())->toBe('2026-11-18T01:00:00+00:00')
-        ->and($message?->getHasAttachments()->toBoolean())->toBeFalse();
+        ->and($message?->externalId)->toBe('gmail-1')
+        ->and($message?->messageId)->toBe('msg-1@acme.test')
+        ->and($message?->inReplyTo)->toBe('sent-1@helpdesk.test')
+        ->and($message?->references)->toBe(['msg-0@acme.test', 'sent-1@helpdesk.test'])
+        ->and($message?->fromName)->toBe('Kim Åker')
+        ->and($message?->fromAddress)->toBe('kim@acme.test')
+        ->and($message?->to)->toBe(['help@helpdesk.test', 'other@acme.test'])
+        ->and($message?->subject)->toBe('RE: Printer offline [#12]')
+        ->and($message?->bodyText)->toStartWith('It is the one on level 2.')->toContain('> Which printer is it?')
+        ->and($message?->replyText)->toBe('It is the one on level 2.')
+        ->and($message?->receivedAt?->toIso8601String())->toBe('2026-11-18T01:00:00+00:00')
+        ->and($message?->hasAttachments)->toBeFalse();
 });
 
 it('turns an HTML-only message into text, whatever its character set', function (): void {
@@ -190,7 +190,7 @@ it('turns an HTML-only message into text, whatever its character set', function 
         gmailPart('0', 'text/html', mb_convert_encoding('<p>Caf&eacute; printer is <b>offline</b>.<br>Señor Kim</p>', 'ISO-8859-1', 'UTF-8'), 'ISO-8859-1'),
     ]))]);
 
-    expect(googleMailClient()->message('gmail-1')?->getBodyText()->toString())->toBe("Café printer is offline.\nSeñor Kim");
+    expect(googleMailClient()->message('gmail-1')?->bodyText)->toBe("Café printer is offline.\nSeñor Kim");
 });
 
 it('has no message for a draft or one that has gone', function (): void {
@@ -217,7 +217,7 @@ it('lists a message\'s files and fetches their contents', function (): void {
 
     $client = googleMailClient();
 
-    expect($client->message('gmail-1')?->getHasAttachments()->toBoolean())->toBeTrue()
+    expect($client->message('gmail-1')?->hasAttachments)->toBeTrue()
         ->and($client->attachments('gmail-1'))->toBe([
             ['id' => 'att-1', 'name' => 'invoice.pdf', 'content_type' => 'application/pdf', 'size' => 2048, 'is_file' => true, 'is_inline' => false],
             ['id' => 'part:2', 'name' => 'logo.png', 'content_type' => 'image/png', 'size' => 4, 'is_file' => true, 'is_inline' => true],
@@ -239,7 +239,6 @@ it('sends a new thread from the connected account and keeps the id Gmail gave it
         bodyText: "We are on it.\n<b>Not markup</b>",
         subject: 'Printer offline',
         subjectTag: '[#12]',
-        answered: MailboxMessage::new(),
     ));
 
     expect($sent->externalId)->toBe('gmail-sent')
@@ -279,7 +278,7 @@ it('sends a reply into the conversation of the message it answers', function ():
         'subject' => 'Printer offline',
     ]));
 
-    $sent = ResolveMailClient::forMailbox($mailbox)->send(new OutgoingMail(['kim@acme.test'], 'Which printer is it?', 'A ticket title', '[#12]', $answered));
+    $sent = ResolveMailClient::forMailbox($mailbox)->send(new OutgoingMail(['kim@acme.test'], 'Which printer is it?', 'A ticket title', '[#12]', $answered->toInboundMail()));
 
     expect($sent->subject)->toBe('Re: Printer offline [#12]')
         ->and($sent->internetMessageId)->toBe('sent-2@mail.gmail.com');
@@ -305,7 +304,7 @@ it('still counts a reply as sent, under the id it was given, when Gmail cannot b
         GMAIL.'/messages/gmail-sent?format=metadata*' => Http::response(['error' => ['message' => 'Backend Error']], 503),
     ]);
 
-    $sent = googleMailClient()->send(new OutgoingMail(['kim@acme.test'], 'We are on it.', 'Printer offline', '[#12]', MailboxMessage::new()));
+    $sent = googleMailClient()->send(new OutgoingMail(['kim@acme.test'], 'We are on it.', 'Printer offline', '[#12]'));
 
     expect($sent->externalId)->toBe('gmail-sent')
         ->and($sent->internetMessageId)->toEndWith('@helpdesk.test');
@@ -314,7 +313,7 @@ it('still counts a reply as sent, under the id it was given, when Gmail cannot b
 it('never sends twice, and says why it could not send', function (Closure $response, string $message): void {
     Http::fake([GMAIL.'/messages/send' => $response()]);
 
-    expect(fn () => googleMailClient()->send(new OutgoingMail(['kim@acme.test'], 'We are on it.', 'Printer offline', '[#12]', MailboxMessage::new())))
+    expect(fn () => googleMailClient()->send(new OutgoingMail(['kim@acme.test'], 'We are on it.', 'Printer offline', '[#12]')))
         ->toThrow(CouldNotReachConnector::class, $message);
 
     Http::assertSentCount(1);

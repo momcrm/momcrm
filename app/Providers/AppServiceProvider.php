@@ -14,7 +14,6 @@ use App\Connector\Types\Google\GoogleConnector;
 use App\Connector\Types\Imap\ImapConnector;
 use App\Connector\Types\Imap\MailServers;
 use App\Connector\Types\Imap\WebklexMailServers;
-use App\Connector\Types\Microsoft\MicrosoftConnector;
 use App\Contact\Contact;
 use App\Contact\ContactPolicy;
 use App\Contract\Contract;
@@ -67,6 +66,7 @@ use Laravel\Passkeys\Http\Requests\PasskeyVerificationRequest;
 use Laravel\Passkeys\Passkeys;
 use Mom\Connectors\Capability;
 use Mom\Connectors\ConnectorRegistry;
+use Mom\Microsoft\MicrosoftConnector;
 use SocialiteProviders\Manager\SocialiteWasCalled;
 use SocialiteProviders\Microsoft\Provider as MicrosoftProvider;
 

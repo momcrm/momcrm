@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Connector\Properties;
 
-use App\Connector\Types\Microsoft\MicrosoftConnector;
 use Mom\Data\AbstractString;
+use Mom\Microsoft\MicrosoftConnector;
 
 /**
  * The key of the connector type the account was connected as, such as

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Connector;
 
-use App\Mailbox\Contracts\ProvidesMail;
 use App\Shared\Traits\Enum;
+use Mom\Connectors\Mail\ProvidesMail;
 
 /**
  * What a connector can be used for. A feature asks for the connectors that

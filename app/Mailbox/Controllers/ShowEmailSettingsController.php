@@ -9,7 +9,6 @@ use App\Connector\Connector;
 use App\Connector\ConnectorCapabilityEnum;
 use App\Group\Actions\FindGroup;
 use App\Mailbox\Actions\FindMailbox;
-use App\Mailbox\Contracts\ProvidesMail;
 use App\Mailbox\Mailbox;
 use App\Team\Actions\FindTeam;
 use App\Team\Exceptions\CouldNotViewTeam;
@@ -17,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
+use Mom\Connectors\Mail\ProvidesMail;
 
 /**
  * The team's mailboxes, and the connected accounts a mailbox can be added

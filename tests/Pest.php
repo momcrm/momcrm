@@ -4,14 +4,15 @@ use App\Choice\Actions\FindChoice;
 use App\Choice\ChoiceListEnum;
 use App\Connector\Actions\FindConnector;
 use App\Connector\Actions\GetConnectorAccessToken;
-use App\Connector\Types\Microsoft\MicrosoftGraph;
 use App\Environment\EnvironmentFile;
 use App\Mailbox\Actions\ResolveMailClient;
-use App\Mailbox\Contracts\MailClient;
 use App\Mailbox\Mailbox;
 use App\Mailbox\MailboxEloquentModel;
+use App\MailboxMessage\MailboxMessage;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
+use Mom\Connectors\Mail\MailClient;
+use Mom\Microsoft\MicrosoftMailClient;
 use Tests\TestCase;
 
 /*
@@ -85,14 +86,13 @@ function rememberMailboxToken(Mailbox|MailboxEloquentModel $mailbox, string $tok
 }
 
 /**
- * Microsoft Graph for a new mailbox whose connector already has a token.
+ * An email as Microsoft Graph returns it, as the message we would store.
+ *
+ * @param  array<string, mixed>  $message
  */
-function graphWithToken(): MicrosoftGraph
+function messageFromGraph(array $message): MailboxMessage
 {
-    $mailbox = MailboxEloquentModel::factory()->create();
-    rememberMailboxToken($mailbox);
-
-    return MicrosoftGraph::forConnector(FindConnector::byId($mailbox->connector_id));
+    return MailboxMessage::fromInboundMail(MicrosoftMailClient::toInboundMail($message));
 }
 
 /**

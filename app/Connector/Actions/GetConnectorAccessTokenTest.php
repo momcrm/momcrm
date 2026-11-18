@@ -5,9 +5,9 @@ declare(strict_types=1);
 use App\Connector\Actions\GetConnectorAccessToken;
 use App\Connector\Connector;
 use App\Connector\ConnectorEloquentModel;
-use App\Connector\Exceptions\CouldNotReachConnector;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+use Mom\Connectors\CouldNotReachConnector;
 
 use function Pest\Laravel\travel;
 

@@ -13,7 +13,6 @@ use App\MailboxMessage\Properties\Error;
 use App\MailboxMessage\Properties\ExternalId;
 use App\MailboxMessage\Properties\FromAddress;
 use App\MailboxMessage\Properties\FromName;
-use App\MailboxMessage\Properties\HasAttachments;
 use App\MailboxMessage\Properties\Id;
 use App\MailboxMessage\Properties\InReplyTo;
 use App\MailboxMessage\Properties\InternetMessageId;
@@ -27,12 +26,11 @@ use App\MailboxMessage\Properties\TeamId;
 use App\MailboxMessage\Properties\TicketId;
 use App\MailboxMessage\Properties\ToRecipients;
 use App\MailboxMessage\Properties\UpdatedAt;
-use Carbon\CarbonImmutable;
-use Illuminate\Support\Arr;
+use App\Shared\Types;
 use Illuminate\Support\Collection;
+use Mom\Connectors\Mail\InboundMail;
 use Mom\Data\AbstractData;
 use Mom\Data\AbstractValue;
-use Throwable;
 
 /**
  * An email read from, or sent through, a connected mailbox.
@@ -49,7 +47,6 @@ final class MailboxMessage extends AbstractData
         public Error $error,
         public FromAddress $fromAddress,
         public FromName $fromName,
-        public HasAttachments $hasAttachments,
         public Id $id,
         public InReplyTo $inReplyTo,
         public InternetMessageId $internetMessageId,
@@ -89,60 +86,43 @@ final class MailboxMessage extends AbstractData
     }
 
     /**
-     * A message as Microsoft Graph returns it, asked for with its headers and
-     * with its body as plain text. Addresses are lower-cased, and ids lose
-     * their angle brackets, so they compare with what is stored.
-     *
-     * @param  array<string, mixed>  $message
+     * An email a mail client read from a mailbox, as the message we keep.
      */
-    public static function fromMicrosoftGraph(array $message): self
+    public static function fromInboundMail(InboundMail $mail): self
     {
-        $headers = self::headers($message);
-        $externalId = Arr::get($message, 'id');
-        $bodyText = self::text(Arr::get($message, 'body.content'));
-
         return self::new()
             ->setDirection(MailboxMessageDirectionEnum::Inbound)
-            ->setExternalId(is_string($externalId) ? $externalId : null)
-            ->setInternetMessageId(InternetMessageId::normalize(Arr::get($message, 'internetMessageId')))
-            ->setInReplyTo(InternetMessageId::normalize($headers['in-reply-to'] ?? null))
-            ->setReferenceIds(self::referenceIds($headers['references'] ?? null))
-            ->setFromAddress(self::address(Arr::get($message, 'from.emailAddress.address')))
-            ->setFromName(self::text(Arr::get($message, 'from.emailAddress.name')))
-            ->setToRecipients(self::addresses(Arr::get($message, 'toRecipients')))
-            ->setSubject(self::text(Arr::get($message, 'subject')))
-            ->setBodyText($bodyText)
-            ->setReplyText(self::text(Arr::get($message, 'uniqueBody.content')) ?? $bodyText)
-            ->setReceivedAt(self::date(Arr::get($message, 'receivedDateTime')));
+            ->setExternalId($mail->externalId)
+            ->setInternetMessageId(InternetMessageId::normalize($mail->messageId))
+            ->setInReplyTo(InternetMessageId::normalize($mail->inReplyTo))
+            ->setReferenceIds($mail->references === [] ? null : $mail->references)
+            ->setFromAddress($mail->fromAddress)
+            ->setFromName($mail->fromName)
+            ->setToRecipients($mail->to === [] ? null : $mail->to)
+            ->setSubject($mail->subject)
+            ->setBodyText($mail->bodyText)
+            ->setReplyText($mail->replyText ?? $mail->bodyText)
+            ->setReceivedAt($mail->receivedAt);
     }
 
     /**
-     * A message as its own headers describe it, for the mail services that
-     * hand us the headers and the text and leave the rest to us. Header names
-     * are in lower case. What the sender wrote is told apart from the quoted
-     * history by QuotedReply.
-     *
-     * @param  array<string, string>  $headers
+     * A message we keep, as the email a mail client answers when it sends
+     * a reply.
      */
-    public static function fromHeaders(array $headers, ?string $externalId, ?string $bodyText, ?CarbonImmutable $receivedAt): self
+    public function toInboundMail(): InboundMail
     {
-        $headers = array_map(self::decodeHeader(...), $headers);
-        $from = self::sender($headers['from'] ?? '');
-        $bodyText = self::text($bodyText);
-
-        return self::new()
-            ->setDirection(MailboxMessageDirectionEnum::Inbound)
-            ->setExternalId($externalId)
-            ->setInternetMessageId(InternetMessageId::normalize($headers['message-id'] ?? null))
-            ->setInReplyTo(InternetMessageId::normalize($headers['in-reply-to'] ?? null))
-            ->setReferenceIds(self::referenceIds($headers['references'] ?? null))
-            ->setFromAddress($from['address'])
-            ->setFromName($from['name'])
-            ->setToRecipients(self::addressesIn($headers['to'] ?? ''))
-            ->setSubject(self::text($headers['subject'] ?? null))
-            ->setBodyText($bodyText)
-            ->setReplyText(QuotedReply::strip($bodyText))
-            ->setReceivedAt($receivedAt?->utc());
+        return new InboundMail(
+            externalId: $this->getExternalId()->toNullableString(),
+            messageId: $this->getInternetMessageId()->toNullableString(),
+            inReplyTo: $this->getInReplyTo()->toNullableString(),
+            references: Types::stringList($this->getReferenceIds()->toArray()),
+            fromAddress: $this->getFromAddress()->toNullableString(),
+            fromName: $this->getFromName()->toNullableString(),
+            to: Types::stringList($this->getToRecipients()->toArray()),
+            subject: $this->getSubject()->toNullableString(),
+            bodyText: $this->getBodyText()->toNullableString(),
+            receivedAt: $this->getReceivedAt()->toNullableCarbon(),
+        );
     }
 
     /**
@@ -236,18 +216,6 @@ final class MailboxMessage extends AbstractData
     public function setFromName(mixed $fromName): self
     {
         $this->fromName = new FromName($fromName instanceof AbstractValue ? $fromName->toValue() : $fromName);
-
-        return $this;
-    }
-
-    public function getHasAttachments(): HasAttachments
-    {
-        return $this->hasAttachments;
-    }
-
-    public function setHasAttachments(mixed $hasAttachments): self
-    {
-        $this->hasAttachments = new HasAttachments($hasAttachments instanceof AbstractValue ? $hasAttachments->toValue() : $hasAttachments);
 
         return $this;
     }
@@ -411,141 +379,5 @@ final class MailboxMessage extends AbstractData
     public function getUpdatedAt(): UpdatedAt
     {
         return $this->updatedAt;
-    }
-
-    /**
-     * The message's headers by lower-case name. When a header repeats, the
-     * first one, which is the one nearest the top, is kept.
-     *
-     * @param  array<string, mixed>  $message
-     * @return array<string, string>
-     */
-    private static function headers(array $message): array
-    {
-        $headers = [];
-        $entries = Arr::get($message, 'internetMessageHeaders');
-
-        foreach (is_array($entries) ? $entries : [] as $entry) {
-            $name = is_array($entry) ? ($entry['name'] ?? null) : null;
-            $value = is_array($entry) ? ($entry['value'] ?? null) : null;
-
-            if (is_string($name) && is_string($value) && ! isset($headers[mb_strtolower($name)])) {
-                $headers[mb_strtolower($name)] = $value;
-            }
-        }
-
-        return $headers;
-    }
-
-    /**
-     * The ids in a References header, which lists them separated by space.
-     *
-     * @return list<string>|null
-     */
-    private static function referenceIds(?string $header): ?array
-    {
-        if ($header === null) {
-            return null;
-        }
-
-        $ids = [];
-
-        foreach (preg_split('/[\s,]+/', $header) ?: [] as $id) {
-            $id = InternetMessageId::normalize($id);
-
-            if ($id !== null) {
-                $ids[] = $id;
-            }
-        }
-
-        return $ids === [] ? null : $ids;
-    }
-
-    private static function address(mixed $address): ?string
-    {
-        $address = self::text($address);
-
-        return $address === null ? null : mb_strtolower($address);
-    }
-
-    /**
-     * @return list<string>|null
-     */
-    private static function addresses(mixed $recipients): ?array
-    {
-        $addresses = [];
-
-        foreach (is_array($recipients) ? $recipients : [] as $recipient) {
-            $address = self::address(Arr::get(is_array($recipient) ? $recipient : [], 'emailAddress.address'));
-
-            if ($address !== null) {
-                $addresses[] = $address;
-            }
-        }
-
-        return $addresses === [] ? null : $addresses;
-    }
-
-    /**
-     * A header as people read it: mail programs encode anything that is not
-     * plain ASCII, such as "=?UTF-8?B?…?=".
-     */
-    private static function decodeHeader(string $value): string
-    {
-        $decoded = iconv_mime_decode($value, ICONV_MIME_DECODE_CONTINUE_ON_ERROR, 'UTF-8');
-
-        return $decoded === false ? $value : $decoded;
-    }
-
-    /**
-     * The name and address in a From header, such as "Kim Lee <kim@acme.test>".
-     *
-     * @return array{name: ?string, address: ?string}
-     */
-    private static function sender(string $header): array
-    {
-        if (preg_match('/^(.*)<([^<>\s]+@[^<>\s]+)>\s*$/', $header, $matches) === 1) {
-            return ['name' => self::text(mb_trim($matches[1], " \n\r\t\v\0\"'")), 'address' => self::address($matches[2])];
-        }
-
-        return ['name' => null, 'address' => self::addressesIn($header)[0] ?? null];
-    }
-
-    /**
-     * Every email address in a header, in lower case.
-     *
-     * @return list<string>|null
-     */
-    private static function addressesIn(string $header): ?array
-    {
-        preg_match_all('/[^\s<>,;:"\'()]+@[^\s<>,;:"\'()]+/', $header, $matches);
-
-        $addresses = array_values(array_unique(array_map(mb_strtolower(...), $matches[0])));
-
-        return $addresses === [] ? null : $addresses;
-    }
-
-    private static function text(mixed $value): ?string
-    {
-        if (! is_string($value)) {
-            return null;
-        }
-
-        $value = mb_trim($value);
-
-        return $value === '' ? null : $value;
-    }
-
-    private static function date(mixed $value): ?CarbonImmutable
-    {
-        if (! is_string($value) || $value === '') {
-            return null;
-        }
-
-        try {
-            return CarbonImmutable::parse($value)->utc();
-        } catch (Throwable) {
-            return null;
-        }
     }
 }

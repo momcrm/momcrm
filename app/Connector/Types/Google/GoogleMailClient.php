@@ -4,14 +4,8 @@ declare(strict_types=1);
 
 namespace App\Connector\Types\Google;
 
-use App\Connector\Actions\GetConnectorAccessToken;
-use App\Connector\Connector;
-use App\Connector\Exceptions\CouldNotReachConnector;
-use App\Mailbox\Contracts\MailClient;
-use App\Mailbox\OutgoingMail;
-use App\Mailbox\SentMail;
 use App\MailboxMessage\HtmlToText;
-use App\MailboxMessage\MailboxMessage;
+use App\MailboxMessage\MailHeaders;
 use App\MailboxMessage\Properties\InternetMessageId;
 use App\Shared\Types;
 use Carbon\CarbonImmutable;
@@ -20,6 +14,12 @@ use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
+use Mom\Connectors\Connection;
+use Mom\Connectors\CouldNotReachConnector;
+use Mom\Connectors\Mail\InboundMail;
+use Mom\Connectors\Mail\MailClient;
+use Mom\Connectors\Mail\OutgoingMail;
+use Mom\Connectors\Mail\SentMail;
 use Symfony\Component\Mime\Address;
 use Throwable;
 
@@ -56,9 +56,9 @@ final class GoogleMailClient implements MailClient
     /**
      * @throws CouldNotReachConnector
      */
-    public static function forConnector(Connector $connector): self
+    public static function forConnection(Connection $connection): self
     {
-        return new self(GetConnectorAccessToken::forConnector($connector), $connector->getAccount()->toString());
+        return new self($connection->accessToken(), $connection->account());
     }
 
     public function checkInbox(): void
@@ -112,7 +112,7 @@ final class GoogleMailClient implements MailClient
         return $messages;
     }
 
-    public function message(string $id): ?MailboxMessage
+    public function message(string $id): ?InboundMail
     {
         $raw = $this->raw($id);
 
@@ -122,8 +122,7 @@ final class GoogleMailClient implements MailClient
 
         $payload = self::map($raw['payload'] ?? []);
 
-        return MailboxMessage::fromHeaders(self::headers($payload), $id, $this->bodyText($id, $payload), self::receivedAt($raw))
-            ->setHasAttachments(self::fileParts($payload) !== []);
+        return MailHeaders::toInboundMail(self::headers($payload), $id, $this->bodyText($id, $payload), self::receivedAt($raw), self::fileParts($payload) !== []);
     }
 
     public function attachments(string $messageId): array
@@ -177,7 +176,8 @@ final class GoogleMailClient implements MailClient
     public function send(OutgoingMail $mail): SentMail
     {
         $email = $mail->toEmail(new Address($this->address));
-        $threadId = $mail->answered->isNull() ? null : $this->threadId($mail->answered->getExternalId()->toString());
+        $answeredId = $mail->answered?->externalId;
+        $threadId = $answeredId === null ? null : $this->threadId($answeredId);
 
         $sent = self::json($this->write('messages/send', [
             'raw' => rtrim(strtr(base64_encode($email->toString()), '+/', '-_'), '='),
