@@ -74,44 +74,21 @@ it('saves the files on the ticket, images shown inside the email included, leavi
     Http::assertSentCount(4);
 });
 
-it('saves attached files before images shown inside the email when there are too many of both', function (): void {
-    Http::preventStrayRequests();
-    Storage::fake('local');
-    $message = emailOnTicket();
-    Http::fake([
-        'graph.microsoft.com/v1.0/me/messages/graph-1/attachments/*/$value' => Http::response('bytes'),
-        'graph.microsoft.com/v1.0/me/messages/graph-1/attachments?*' => Http::response(['value' => [
-            ...array_map(
-                fn (int $index): array => listedAttachment("logo-{$index}", ['name' => "logo-{$index}.png", 'isInline' => true]),
-                range(1, SaveMessageAttachments::MAX_FILES),
-            ),
-            listedAttachment('quote'),
-        ]]),
-    ]);
-
-    expect(SaveMessageAttachments::fromMessage(mailClientWithToken(), $message))->toBe(SaveMessageAttachments::MAX_FILES);
-
-    $names = AttachmentEloquentModel::query()->withoutGlobalScopes()->pluck('name');
-
-    expect($names)->toContain('quote.pdf')
-        ->and($names)->not->toContain('logo-'.SaveMessageAttachments::MAX_FILES.'.png');
-});
-
-it('saves no more files than people may upload at once', function (): void {
+it('saves every file, however many the email carries', function (): void {
     Http::preventStrayRequests();
     Storage::fake('local');
     $message = emailOnTicket();
     Http::fake([
         'graph.microsoft.com/v1.0/me/messages/graph-1/attachments/*/$value' => Http::response('bytes'),
         'graph.microsoft.com/v1.0/me/messages/graph-1/attachments?*' => Http::response([
-            'value' => array_map(fn (int $index): array => listedAttachment("file-{$index}"), range(1, SaveMessageAttachments::MAX_FILES + 2)),
+            'value' => array_map(fn (int $index): array => listedAttachment("file-{$index}"), range(1, 25)),
         ]),
     ]);
 
-    expect(SaveMessageAttachments::fromMessage(mailClientWithToken(), $message))->toBe(SaveMessageAttachments::MAX_FILES)
-        ->and(AttachmentEloquentModel::query()->withoutGlobalScopes()->count())->toBe(SaveMessageAttachments::MAX_FILES);
+    expect(SaveMessageAttachments::fromMessage(mailClientWithToken(), $message))->toBe(25)
+        ->and(AttachmentEloquentModel::query()->withoutGlobalScopes()->count())->toBe(25);
 
-    Http::assertSentCount(SaveMessageAttachments::MAX_FILES + 1);
+    Http::assertSentCount(26);
 });
 
 it('asks for nothing when the email is on no ticket', function (): void {
