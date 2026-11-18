@@ -120,6 +120,27 @@ it('will not leave a ticket with neither customer nor project', function (): voi
         ->assertSessionHasErrors('customer_id');
 });
 
+it('lets a ticket opened by an email be worked on before it has a customer, and be given one', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $customer = CustomerEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
+    $ticket = patchableTicket($user, ['customer_id' => null, 'requester_email' => 'sam@acme.test']);
+
+    actingAs($user)
+        ->patch(route('tickets.patch', $ticket->id), ['assignee_id' => $user->id])
+        ->assertSessionHasNoErrors();
+
+    expect($ticket->refresh())
+        ->assignee_id->toBe($user->id)
+        ->customer_id->toBeNull()
+        ->requester_email->toBe('sam@acme.test');
+
+    actingAs($user)
+        ->patch(route('tickets.patch', $ticket->id), ['customer_id' => $customer->id])
+        ->assertSessionHasNoErrors();
+
+    expect($ticket->refresh()->customer_id)->toBe($customer->id);
+});
+
 it("rejects another team's priority", function (): void {
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
     $ticket = patchableTicket($user);

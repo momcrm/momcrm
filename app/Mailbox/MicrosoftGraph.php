@@ -7,6 +7,7 @@ namespace App\Mailbox;
 use App\Mailbox\Actions\GetMailboxAccessToken;
 use App\Mailbox\Exceptions\CouldNotReachMailbox;
 use App\Shared\Types;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\RequestException;
@@ -32,6 +33,8 @@ final readonly class MicrosoftGraph
     public const array SHARED_SCOPES = ['offline_access', 'User.Read', 'Mail.ReadWrite.Shared', 'Mail.Send.Shared'];
 
     private const string BASE_URL = 'https://graph.microsoft.com/v1.0';
+
+    private const int PAGE_SIZE = 100;
 
     private function __construct(
         private string $accessToken,
@@ -67,26 +70,86 @@ final readonly class MicrosoftGraph
      */
     public function inbox(): array
     {
-        return $this->get('mailFolders/inbox', ['$select' => 'id,displayName']);
+        return self::json($this->get($this->path('mailFolders/inbox'), ['$select' => 'id,displayName']));
+    }
+
+    /**
+     * The inbox's messages received at or after a time, oldest first: just
+     * their ids and when they arrived, and no more than the limit.
+     *
+     * @return list<array{id: string, received_at: CarbonImmutable}>
+     *
+     * @throws CouldNotReachMailbox
+     */
+    public function inboxMessagesSince(CarbonImmutable $since, int $limit): array
+    {
+        $messages = [];
+        $url = $this->path('mailFolders/inbox/messages');
+        $query = [
+            '$filter' => 'receivedDateTime ge '.$since->utc()->format('Y-m-d\TH:i:s\Z'),
+            '$orderby' => 'receivedDateTime asc',
+            '$select' => 'id,receivedDateTime',
+            '$top' => (string) min($limit, self::PAGE_SIZE),
+        ];
+
+        while ($url !== null && count($messages) < $limit) {
+            $page = self::json($this->get($url, $query));
+
+            foreach (is_array($page['value'] ?? null) ? $page['value'] : [] as $message) {
+                $id = is_array($message) ? ($message['id'] ?? null) : null;
+                $receivedAt = is_array($message) ? ($message['receivedDateTime'] ?? null) : null;
+
+                if (is_string($id) && is_string($receivedAt) && count($messages) < $limit) {
+                    $messages[] = ['id' => $id, 'received_at' => CarbonImmutable::parse($receivedAt)->utc()];
+                }
+            }
+
+            // The next page's address already carries the query.
+            $next = $page['@odata.nextLink'] ?? null;
+            $url = is_string($next) && $next !== '' ? $next : null;
+            $query = [];
+        }
+
+        return $messages;
+    }
+
+    /**
+     * One message with its headers, and its body as plain text. Null when it
+     * is no longer in the mailbox.
+     *
+     * @return array<string, mixed>|null
+     *
+     * @throws CouldNotReachMailbox
+     */
+    public function message(string $id): ?array
+    {
+        $response = $this->get(
+            $this->path('messages/'.rawurlencode($id)),
+            ['$select' => 'id,subject,from,toRecipients,receivedDateTime,internetMessageId,isDraft,hasAttachments,body,uniqueBody,internetMessageHeaders'],
+            ['Prefer' => 'IdType="ImmutableId", outlook.body-content-type="text"'],
+        );
+
+        return $response->notFound() ? null : self::json($response);
     }
 
     /**
      * @param  array<string, string>  $query
-     * @return array<string, mixed>
+     * @param  array<string, string>  $headers
      *
      * @throws CouldNotReachMailbox
      */
-    private function get(string $path, array $query = []): array
+    private function get(string $url, array $query = [], array $headers = []): Response
     {
         try {
-            $response = $this->request()
-                ->retry([200, 1000], when: self::isTransient(...), throw: false)
-                ->get($this->path($path), $query);
+            $request = $this->request()
+                ->withHeaders($headers)
+                ->retry([200, 1000], when: self::isTransient(...), throw: false);
+
+            // Passing an empty query would strip the one a next-page address carries.
+            return $query === [] ? $request->get($url) : $request->get($url, $query);
         } catch (ConnectionException $exception) {
             throw CouldNotReachMailbox::unavailable($exception);
         }
-
-        return self::json($response);
     }
 
     private function request(): PendingRequest

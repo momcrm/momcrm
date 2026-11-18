@@ -2,6 +2,7 @@
 
 use App\Activity\ActivityEloquentModel;
 use App\AuditLog\AuditLogEloquentModel;
+use App\Mailbox\Actions\SyncMailboxes;
 use App\Ticket\Actions\RemindDueTickets;
 use Illuminate\Console\Command;
 use Illuminate\Foundation\Inspiring;
@@ -39,3 +40,12 @@ Artisan::command('tickets:remind-due', function (): int {
 })->purpose('Notify assignees of open tickets due tomorrow');
 
 Schedule::command('tickets:remind-due')->dailyAt('07:00');
+
+// Reads new mail from every connected mailbox, one queued job per mailbox.
+Artisan::command('mailboxes:sync', function (): int {
+    $this->components->info(__(':count mailboxes queued.', ['count' => SyncMailboxes::run()]));
+
+    return Command::SUCCESS;
+})->purpose('Read new mail from every connected mailbox');
+
+Schedule::command('mailboxes:sync')->everyFiveMinutes()->withoutOverlapping(10);

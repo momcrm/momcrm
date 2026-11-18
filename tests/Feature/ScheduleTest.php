@@ -40,3 +40,16 @@ it('reminds assignees of tickets due tomorrow every morning', function (): void 
 it('runs the due reminder without errors', function (): void {
     artisan('tickets:remind-due')->assertSuccessful();
 });
+
+it('reads connected mailboxes every five minutes, one run at a time', function (): void {
+    $sync = collect(app(Schedule::class)->events())
+        ->first(fn (Event $event): bool => str_contains((string) $event->command, 'mailboxes:sync'));
+
+    expect($sync)->not->toBeNull()
+        ->and($sync->expression)->toBe('*/5 * * * *')
+        ->and($sync->withoutOverlapping)->toBeTrue();
+});
+
+it('queues the mailbox reads without errors', function (): void {
+    artisan('mailboxes:sync')->expectsOutputToContain('0 mailboxes queued.')->assertSuccessful();
+});

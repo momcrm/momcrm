@@ -379,6 +379,11 @@ export type TicketDrawerData = Omit<
         email: string | null;
         phone: string | null;
     } | null;
+    /** Who wrote in, for a ticket opened by an email. */
+    requester: {
+        name: string | null;
+        email: string;
+    } | null;
     location_name: string | null;
     can: Abilities;
     attachment_can: Abilities;

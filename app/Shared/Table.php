@@ -29,6 +29,7 @@ enum Table: string
     case LabelProject = 'label_project';
     case LabelTicket = 'label_ticket';
     case Locations = 'locations';
+    case MailboxMessages = 'mailbox_messages';
     case Mailboxes = 'mailboxes';
     case Milestones = 'milestones';
     case Notifications = 'notifications';

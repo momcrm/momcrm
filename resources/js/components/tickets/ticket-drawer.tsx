@@ -43,6 +43,7 @@ import {
     Picker,
 } from '@/components/tickets/property-editors';
 import TicketConversation from '@/components/tickets/ticket-conversation';
+import SoftBadge from '@/components/soft-badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -487,6 +488,23 @@ export function TicketDetails({
                             )}
                         </Picker>
                     </Property>
+                    {ticket.requester && (
+                        <Property label="Requester">
+                            <span className="flex min-w-0 items-center gap-2 px-2">
+                                <span className="truncate">
+                                    {[
+                                        ticket.requester.name,
+                                        ticket.requester.email,
+                                    ]
+                                        .filter(Boolean)
+                                        .join(' · ')}
+                                </span>
+                                <SoftBadge tone="info" className="shrink-0">
+                                    via email
+                                </SoftBadge>
+                            </span>
+                        </Property>
+                    )}
                     {ticket.contact && (
                         <Property label="Contact">
                             <span className="block truncate px-2">

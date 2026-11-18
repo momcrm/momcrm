@@ -49,6 +49,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int|null $estimate_minutes
  * @property string $id
  * @property string|null $location_id
+ * @property string|null $mailbox_id
  * @property int $number
  * @property string|null $parent_id
  * @property int $position
@@ -56,6 +57,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $type_id
  * @property string|null $group_id
  * @property string|null $project_id
+ * @property string|null $requester_email
+ * @property string|null $requester_name
  * @property string|null $starts_on
  * @property string|null $status_id
  * @property string $team_id
