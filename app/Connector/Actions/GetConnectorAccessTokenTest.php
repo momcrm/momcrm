@@ -123,3 +123,12 @@ it('asks nothing of the service for a connector with no refresh token', function
 
     Http::assertNothingSent();
 });
+
+it('has no token for a connector that is not signed in to', function (): void {
+    $model = ConnectorEloquentModel::factory()->imap()->create(['credentials' => ['refresh_token' => 'not-used']]);
+
+    expect(fn () => GetConnectorAccessToken::forConnector(Connector::fromEloquentModel($model)))
+        ->toThrow(CouldNotReachConnector::class, 'The mail server no longer accepts the sign-in for this connector. Connect it again.');
+
+    Http::assertNothingSent();
+});

@@ -24,6 +24,8 @@ use App\Invoice\Invoice;
 use App\Invoice\InvoicePolicy;
 use App\Location\Location;
 use App\Location\LocationPolicy;
+use App\Mailbox\Clients\WebklexMailServers;
+use App\Mailbox\Contracts\MailServers;
 use App\Milestone\Milestone;
 use App\Milestone\MilestonePolicy;
 use App\Passkey\FormRequests\PasskeyVerificationFormRequest;
@@ -70,6 +72,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(PasskeyVerificationRequest::class, PasskeyVerificationFormRequest::class);
+        $this->app->bind(MailServers::class, WebklexMailServers::class);
         $this->app->bind(EnvironmentFile::class, fn (): EnvironmentFile => new EnvironmentFile(
             path: $this->app->environmentFilePath(),
             backupDirectory: storage_path('app/private/environment-backups'),

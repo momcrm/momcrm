@@ -27,7 +27,10 @@ it('lists the team\'s connectors without their credentials, with their mailboxes
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('settings/connectors')
-            ->where('types', [['value' => 'microsoft', 'label' => 'Microsoft 365', 'capabilities' => ['Email'], 'supports_shared_mailboxes' => true]])
+            ->where('types', [
+                ['value' => 'microsoft', 'label' => 'Microsoft 365', 'capabilities' => ['Email'], 'supports_shared_mailboxes' => true, 'uses_sign_in' => true],
+                ['value' => 'imap', 'label' => 'IMAP/SMTP', 'capabilities' => ['Email'], 'supports_shared_mailboxes' => false, 'uses_sign_in' => false],
+            ])
             ->has('connectors', 1)
             ->where('connectors.0', [
                 'id' => $connector->id,
@@ -39,6 +42,8 @@ it('lists the team\'s connectors without their credentials, with their mailboxes
                 'capabilities' => ['Email'],
                 'shared_mailboxes' => true,
                 'last_error' => 'Connect it again.',
+                'uses_sign_in' => true,
+                'settings' => null,
                 'mailboxes' => ['support@acme.test'],
             ]),
         );
@@ -55,17 +60,33 @@ it('offers every type whose sign-in keys are set', function (): void {
     actingAs($owner)
         ->get(route('connectors.index'))
         ->assertInertia(fn (Assert $page) => $page->where('types', [
-            ['value' => 'google', 'label' => 'Google', 'capabilities' => ['Email'], 'supports_shared_mailboxes' => false],
+            ['value' => 'google', 'label' => 'Google', 'capabilities' => ['Email'], 'supports_shared_mailboxes' => false, 'uses_sign_in' => true],
+            ['value' => 'imap', 'label' => 'IMAP/SMTP', 'capabilities' => ['Email'], 'supports_shared_mailboxes' => false, 'uses_sign_in' => false],
         ]));
 });
 
-it('offers no types when none is set up on this installation', function (): void {
+it('always offers IMAP/SMTP, and shows a mail server connector\'s settings without its passwords', function (): void {
     $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    ConnectorEloquentModel::factory()->imap()->create(['team_id' => $owner->current_team_id, 'account' => 'help@helpdesk.test']);
     config(['services.microsoft.client_id' => null, 'services.google.client_id' => null]);
 
     actingAs($owner)
         ->get(route('connectors.index'))
-        ->assertInertia(fn (Assert $page) => $page->where('types', []));
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('types', [['value' => 'imap', 'label' => 'IMAP/SMTP', 'capabilities' => ['Email'], 'supports_shared_mailboxes' => false, 'uses_sign_in' => false]])
+            ->where('connectors.0.uses_sign_in', false)
+            ->where('connectors.0.settings', [
+                'from_name' => 'Help Desk',
+                'imap_host' => '203.0.113.10',
+                'imap_port' => 993,
+                'imap_encryption' => 'ssl',
+                'imap_username' => 'help',
+                'smtp_host' => '203.0.113.20',
+                'smtp_port' => 587,
+                'smtp_encryption' => 'starttls',
+                'smtp_username' => 'help',
+            ]),
+        );
 });
 
 it('forbids members', function (): void {

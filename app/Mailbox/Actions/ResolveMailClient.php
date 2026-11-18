@@ -9,6 +9,7 @@ use App\Connector\Connector;
 use App\Connector\ConnectorTypeEnum;
 use App\Connector\Exceptions\CouldNotReachConnector;
 use App\Mailbox\Clients\GoogleMailClient;
+use App\Mailbox\Clients\ImapMailClient;
 use App\Mailbox\Clients\MicrosoftMailClient;
 use App\Mailbox\Contracts\MailClient;
 use App\Mailbox\Mailbox;
@@ -48,6 +49,7 @@ final class ResolveMailClient
         return match ($connector->getType()->toEnum()) {
             ConnectorTypeEnum::Microsoft => new MicrosoftMailClient(MicrosoftGraph::forConnector($connector, $sharedAddress)),
             ConnectorTypeEnum::Google => GoogleMailClient::forConnector($connector),
+            ConnectorTypeEnum::Imap => ImapMailClient::forConnector($connector),
         };
     }
 }

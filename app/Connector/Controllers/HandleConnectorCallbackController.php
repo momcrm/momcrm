@@ -44,7 +44,9 @@ final class HandleConnectorCallbackController
 
         $type = ConnectorTypeEnum::tryFrom((string) $request->route('type'));
 
-        if ($type === null || ! $type->isAvailable()) {
+        $signIn = $type?->signInProvider();
+
+        if ($type === null || $signIn === null || ! $type->isAvailable()) {
             throw new NotFoundHttpException;
         }
 
@@ -53,7 +55,7 @@ final class HandleConnectorCallbackController
 
         try {
             /** @var AbstractProvider $provider */
-            $provider = Socialite::driver($type->signInProvider()->value);
+            $provider = Socialite::driver($signIn->value);
             $signedIn = $provider->redirectUrl(route('connectors.callback', ['type' => $type->value]))->user();
         } catch (Throwable) {
             return self::failed(__("We couldn't sign in to :company. Try connecting again.", ['company' => $company]));

@@ -20,6 +20,12 @@ final class CouldNotReachConnector extends RuntimeException
     public bool $isTemporary = false;
 
     /**
+     * Whether the service turned away what we have stored, so that only
+     * connecting the account again will help.
+     */
+    public bool $needsReconnect = false;
+
+    /**
      * The kind of connector that could not be reached, when it is known.
      */
     public ?ConnectorTypeEnum $type = null;
@@ -34,6 +40,7 @@ final class CouldNotReachConnector extends RuntimeException
             'company' => $type->company(),
         ]));
         $exception->type = $type;
+        $exception->needsReconnect = true;
 
         return $exception;
     }

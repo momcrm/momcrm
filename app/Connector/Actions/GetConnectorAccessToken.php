@@ -8,8 +8,6 @@ use App\Connector\Connector;
 use App\Connector\ConnectorEloquentModel;
 use App\Connector\ConnectorStatusEnum;
 use App\Connector\Exceptions\CouldNotReachConnector;
-use App\Connector\Properties\LastError;
-use App\Connector\Properties\Status;
 use App\Shared\Types;
 use App\Team\Scopes\CurrentTeamScope;
 use Illuminate\Http\Client\ConnectionException;
@@ -55,14 +53,19 @@ final readonly class GetConnectorAccessToken
             throw CouldNotReachConnector::needsReconnect($type);
         }
 
-        $provider = $type->signInProvider()->value;
+        $provider = $type->signInProvider()?->value;
+        $tokenUrl = $type->tokenUrl();
+
+        if ($provider === null || $tokenUrl === null) {
+            throw CouldNotReachConnector::needsReconnect($type);
+        }
 
         try {
             $response = Http::asForm()
                 ->acceptJson()
                 ->connectTimeout(5)
                 ->timeout(20)
-                ->post($type->tokenUrl(), [
+                ->post($tokenUrl, [
                     'client_id' => config()->string("services.{$provider}.client_id"),
                     'client_secret' => config()->string("services.{$provider}.client_secret"),
                     'grant_type' => 'refresh_token',
@@ -78,14 +81,7 @@ final readonly class GetConnectorAccessToken
          * would not fix it, so the connector is left as it is.
          */
         if (in_array($response->json('error'), ['invalid_grant', 'interaction_required'], true)) {
-            $exception = CouldNotReachConnector::needsReconnect($type);
-
-            $model->forceFill([
-                Status::getDatabaseTableColumnName() => ConnectorStatusEnum::NeedsReconnect->value,
-                LastError::getDatabaseTableColumnName() => $exception->getMessage(),
-            ])->save();
-
-            throw $exception;
+            throw MarkConnectorAsNeedingReconnect::fromConnector($this->connector);
         }
 
         $accessToken = $response->json('access_token');

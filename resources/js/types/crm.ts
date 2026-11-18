@@ -660,8 +660,25 @@ export type Connector = {
     capabilities: string[];
     shared_mailboxes: boolean;
     last_error: string | null;
+    /** Whether it is connected by signing in at the service, not by a form. */
+    uses_sign_in: boolean;
+    /** What was typed in to connect a mail server; never the passwords. */
+    settings: MailServerSettings | null;
     /** The addresses of the mailboxes that go through this connector. */
     mailboxes: string[];
+};
+
+/** Where a mailbox's IMAP and SMTP servers are, without the passwords. */
+export type MailServerSettings = {
+    from_name: string | null;
+    imap_host: string;
+    imap_port: number;
+    imap_encryption: string;
+    imap_username: string;
+    smtp_host: string;
+    smtp_port: number;
+    smtp_encryption: string;
+    smtp_username: string;
 };
 
 /** A connected account a mailbox can be added through. */
@@ -679,6 +696,7 @@ export type ConnectorType = {
     label: string;
     capabilities: string[];
     supports_shared_mailboxes: boolean;
+    uses_sign_in: boolean;
 };
 
 /** A mailbox whose mail opens tickets, read and sent through a connector. */

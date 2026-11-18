@@ -185,12 +185,13 @@ it('saves nothing for an account with no address', function (): void {
     expect(ConnectorEloquentModel::query()->withoutGlobalScopes()->exists())->toBeFalse();
 });
 
-it('is not found when the type is not set up', function (): void {
+it('is not found when the type is not set up or has no sign-in', function (): void {
     $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
     config(['services.microsoft.client_id' => null]);
     fakeConnectorSignIn();
 
     actingAs($owner)->get(route('connectors.callback', 'microsoft'))->assertNotFound();
+    actingAs($owner)->get(route('connectors.callback', 'imap'))->assertNotFound();
 });
 
 it('forbids members', function (): void {

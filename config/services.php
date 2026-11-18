@@ -48,4 +48,8 @@ return [
         'tenant' => env('MICROSOFT_TENANT', 'common'),
     ],
 
+    'imap' => [
+        'allow_private_hosts' => (bool) env('IMAP_ALLOW_PRIVATE_HOSTS', false),
+    ],
+
 ];

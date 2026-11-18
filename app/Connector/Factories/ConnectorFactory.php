@@ -46,6 +46,28 @@ final class ConnectorFactory extends Factory
         return $this->state([Type::getDatabaseTableColumnName() => ConnectorTypeEnum::Google->value]);
     }
 
+    /**
+     * A mailbox on a mail server, connected by its servers and passwords.
+     */
+    public function imap(): static
+    {
+        return $this->state([
+            Type::getDatabaseTableColumnName() => ConnectorTypeEnum::Imap->value,
+            Settings::getDatabaseTableColumnName() => [
+                'from_name' => 'Help Desk',
+                'imap_host' => '203.0.113.10',
+                'imap_port' => 993,
+                'imap_encryption' => 'ssl',
+                'imap_username' => 'help',
+                'smtp_host' => '203.0.113.20',
+                'smtp_port' => 587,
+                'smtp_encryption' => 'starttls',
+                'smtp_username' => 'help',
+            ],
+            ConnectorEloquentModel::CREDENTIALS => ['imap_password' => 'imap-secret', 'smtp_password' => 'smtp-secret'],
+        ]);
+    }
+
     public function needsReconnect(): static
     {
         return $this->state([Status::getDatabaseTableColumnName() => ConnectorStatusEnum::NeedsReconnect->value]);
