@@ -13,6 +13,7 @@ use App\Mailbox\Properties\LastSyncedAt;
 use App\Mailbox\Properties\SyncedThrough;
 use App\MailboxMessage\Actions\FindMailboxMessage;
 use App\MailboxMessage\Actions\ProcessInboundMessage;
+use App\MailboxMessage\Actions\SaveMessageAttachments;
 use App\MailboxMessage\MailboxMessage;
 use App\Team\Scopes\CurrentTeamScope;
 use Carbon\CarbonImmutable;
@@ -73,7 +74,7 @@ final readonly class SyncMailbox
 
                 $message = $graph->message($item['id']);
 
-                if ($message !== null && $this->takeIn($message)) {
+                if ($message !== null && $this->takeIn($graph, $message)) {
                     $taken++;
                 }
             }
@@ -123,23 +124,36 @@ final readonly class SyncMailbox
     }
 
     /**
-     * Whether the message was new and has been kept.
+     * Whether the message was new and has been kept. Its attachments are
+     * saved on its ticket afterwards, and are the one thing not tried again:
+     * if they cannot be fetched the ticket still stands, and the failure is
+     * reported.
      *
      * @param  array<string, mixed>  $message
      */
-    private function takeIn(array $message): bool
+    private function takeIn(MicrosoftGraph $graph, array $message): bool
     {
         if (($message['isDraft'] ?? false) === true) {
             return false;
         }
 
         try {
-            return ProcessInboundMessage::fromMessage($this->mailbox, MailboxMessage::fromMicrosoftGraph($message))->isNotNull();
+            $kept = ProcessInboundMessage::fromMessage($this->mailbox, MailboxMessage::fromMicrosoftGraph($message));
         } catch (Throwable $exception) {
             report($exception);
 
             return false;
         }
+
+        if ($kept->isNotNull() && $kept->getTicketId()->isNotNull() && ($message['hasAttachments'] ?? false) === true) {
+            try {
+                SaveMessageAttachments::fromMessage($graph, $kept);
+            } catch (Throwable $exception) {
+                report($exception);
+            }
+        }
+
+        return $kept->isNotNull();
     }
 
     /**
