@@ -10,10 +10,13 @@ use App\Comment\Properties\CreatedAt;
 use App\Comment\Properties\Id;
 use App\Comment\Properties\Mentions;
 use App\Comment\Properties\RecordId;
+use App\Comment\Properties\SenderEmail;
+use App\Comment\Properties\SenderName;
 use App\Comment\Properties\TeamId;
 use App\Comment\Properties\TicketId;
 use App\Comment\Properties\UpdatedAt;
 use App\Comment\Properties\UserId;
+use App\Comment\Properties\Visibility;
 use Illuminate\Support\Collection;
 use Mom\Data\AbstractData;
 use Mom\Data\AbstractValue;
@@ -29,10 +32,13 @@ final class Comment extends AbstractData
         public Id $id,
         public Mentions $mentions,
         public RecordId $recordId,
+        public SenderEmail $senderEmail,
+        public SenderName $senderName,
         public TeamId $teamId,
         public TicketId $ticketId,
         public UpdatedAt $updatedAt,
         public UserId $userId,
+        public Visibility $visibility,
     ) {}
 
     public static function getFactory(): CommentFactory
@@ -147,6 +153,42 @@ final class Comment extends AbstractData
     public function setUserId(mixed $userId): self
     {
         $this->userId = new UserId($userId instanceof AbstractValue ? $userId->toValue() : $userId);
+
+        return $this;
+    }
+
+    public function getSenderEmail(): SenderEmail
+    {
+        return $this->senderEmail;
+    }
+
+    public function setSenderEmail(mixed $senderEmail): self
+    {
+        $this->senderEmail = new SenderEmail($senderEmail instanceof AbstractValue ? $senderEmail->toValue() : $senderEmail);
+
+        return $this;
+    }
+
+    public function getSenderName(): SenderName
+    {
+        return $this->senderName;
+    }
+
+    public function setSenderName(mixed $senderName): self
+    {
+        $this->senderName = new SenderName($senderName instanceof AbstractValue ? $senderName->toValue() : $senderName);
+
+        return $this;
+    }
+
+    public function getVisibility(): Visibility
+    {
+        return $this->visibility;
+    }
+
+    public function setVisibility(mixed $visibility): self
+    {
+        $this->visibility = new Visibility($visibility instanceof AbstractValue ? $visibility->toValue() : $visibility);
 
         return $this;
     }

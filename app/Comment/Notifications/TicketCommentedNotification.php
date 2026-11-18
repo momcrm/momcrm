@@ -13,7 +13,8 @@ use Illuminate\Contracts\Queue\ShouldQueueAfterCommit;
 use Illuminate\Notifications\Notification;
 
 /**
- * Tells a ticket's watchers someone commented on it.
+ * Tells a ticket's watchers someone commented on it, or that the customer
+ * replied by email, in which case the sender is named as there is no actor.
  */
 final class TicketCommentedNotification extends Notification implements ShouldQueueAfterCommit
 {
@@ -23,6 +24,7 @@ final class TicketCommentedNotification extends Notification implements ShouldQu
         public readonly TicketEloquentModel $ticket,
         public readonly ?UserEloquentModel $actor,
         public readonly string $excerpt,
+        public readonly ?string $senderName = null,
     ) {}
 
     /**
@@ -38,6 +40,13 @@ final class TicketCommentedNotification extends Notification implements ShouldQu
      */
     public function toArray(object $notifiable): array
     {
-        return InboxPayload::forTicket(InboxKindEnum::Comment, $this->ticket, $this->actor, __('commented'), $this->excerpt);
+        return InboxPayload::forTicket(
+            InboxKindEnum::Comment,
+            $this->ticket,
+            $this->actor,
+            $this->senderName === null ? __('commented') : __('replied by email'),
+            $this->excerpt,
+            actorName: $this->senderName,
+        );
     }
 }

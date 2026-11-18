@@ -28,11 +28,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property CarbonImmutable|null $created_at
  * @property string $id
  * @property array<int, string>|null $mentions
+ * @property string|null $sender_email
+ * @property string|null $sender_name
  * @property string $team_id
  * @property string|null $record_id
  * @property string|null $ticket_id
  * @property CarbonImmutable|null $updated_at
  * @property string|null $user_id
+ * @property string $visibility
  */
 #[ObservedBy(AuditObserver::class)]
 #[ScopedBy(CurrentTeamScope::class)]

@@ -44,6 +44,14 @@ final class FindTicket
     }
 
     /**
+     * The team's ticket with this number, as people quote it: "#123".
+     */
+    public static function byNumberForTeam(int $number, string $teamId): Ticket
+    {
+        return Ticket::fromEloquentModel(self::query($teamId)->where(Number::getDatabaseTableColumnName(), $number)->first());
+    }
+
+    /**
      * Live (not archived) tickets newest first, optionally only open or closed
      * ones, matching a search on the title or the ticket number.
      *

@@ -396,7 +396,12 @@ export type TicketComment = {
     id: string;
     body: string;
     author_id: string | null;
+    /** The team member who wrote it, or the person whose email it is. */
     author_name: string | null;
+    /** Set when the comment arrived by email. */
+    sender_email: string | null;
+    /** An internal note, or part of the conversation with the customer. */
+    visibility: 'internal' | 'public';
     mentions: string[];
     created_at: string | null;
     can_delete: boolean;

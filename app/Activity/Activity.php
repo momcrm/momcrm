@@ -72,10 +72,21 @@ final class Activity extends AbstractData
             'type' => $this->getType()->toString(),
             'label' => $this->getType()->toEnum()->label(),
             'details' => $this->getDetails()->toNullableArray(),
-            'actor' => $this->getActor()->toNullableData()?->getName()->toString(),
+            'actor' => $this->getActor()->toNullableData()?->getName()->toString() ?? $this->actorNameFromDetails(),
             'ip_address' => $this->getIpAddress()->toNullableString(),
             'created_at' => $this->getCreatedAt()->toNullableISOString(),
         ];
+    }
+
+    /**
+     * Who did it when it was nobody in the team, such as a customer replying
+     * by email: the name recorded with the activity.
+     */
+    private function actorNameFromDetails(): ?string
+    {
+        $name = $this->getDetails()->toNullableArray()['actor_name'] ?? null;
+
+        return is_string($name) && $name !== '' ? $name : null;
     }
 
     public function getCreatedAt(): CreatedAt

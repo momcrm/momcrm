@@ -3,6 +3,7 @@ import { Trash2 } from 'lucide-react';
 import { Fragment, useRef, useState } from 'react';
 import type { KeyboardEvent, ReactNode } from 'react';
 import { toast } from 'sonner';
+import SoftBadge from '@/components/soft-badge';
 import { AssigneeAvatar } from '@/components/tickets/ticket-meta';
 import { Button } from '@/components/ui/button';
 import { timeAgo } from '@/lib/format';
@@ -76,6 +77,13 @@ export default function TicketConversation({
                                         <span className="font-medium">
                                             {comment.author_name ?? 'Someone'}
                                         </span>
+                                        {comment.sender_email && (
+                                            <span title={comment.sender_email}>
+                                                <SoftBadge tone="info">
+                                                    Customer
+                                                </SoftBadge>
+                                            </span>
+                                        )}
                                         <span className="text-xs text-subtle-foreground">
                                             {timeAgo(comment.created_at)}
                                         </span>

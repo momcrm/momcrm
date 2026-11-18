@@ -19,7 +19,7 @@ final class InboxPayload
     /**
      * @return array{kind: string, team_id: string, actor_id: ?string, actor_name: ?string, subject_type: string, subject_id: string, number: int, title: string, project_name: ?string, message: string, excerpt: ?string}
      */
-    public static function forTicket(InboxKindEnum $kind, TicketEloquentModel $ticket, ?UserEloquentModel $actor, string $message, ?string $excerpt = null): array
+    public static function forTicket(InboxKindEnum $kind, TicketEloquentModel $ticket, ?UserEloquentModel $actor, string $message, ?string $excerpt = null, ?string $actorName = null): array
     {
         $project = $ticket->getRelationValue(TicketRelationship::Project->value);
 
@@ -27,7 +27,7 @@ final class InboxPayload
             'kind' => $kind->value,
             'team_id' => $ticket->team_id,
             'actor_id' => $actor?->id,
-            'actor_name' => $actor?->name,
+            'actor_name' => $actor instanceof UserEloquentModel ? $actor->name : $actorName,
             'subject_type' => 'ticket',
             'subject_id' => $ticket->id,
             'number' => $ticket->number,
