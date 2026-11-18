@@ -115,6 +115,35 @@ it('lets two teams connect the same account, each with its own connector', funct
         ->and(ConnectorEloquentModel::query()->withoutGlobalScopes()->where('team_id', $owner->current_team_id)->count())->toBe(1);
 });
 
+it('connects a Google account', function (): void {
+    config(['services.google.client_id' => 'google-id', 'services.google.client_secret' => 'secret']);
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    Socialite::fake('google', SignedInUser::fake([
+        'id' => 'google-123',
+        'name' => 'Help Desk',
+        'email' => 'Help@Helpdesk.test',
+        'token' => 'google-access-token',
+        'refreshToken' => 'google-refresh-token',
+        'expiresIn' => 3599,
+    ]));
+
+    actingAs($owner)
+        ->withSession([ConnectorSession::PENDING_SHARED_MAILBOXES => false])
+        ->get(route('connectors.callback', 'google'))
+        ->assertRedirectToRoute('connectors.index')
+        ->assertInertiaFlash('toast', ['type' => 'success', 'message' => 'help@helpdesk.test connected.']);
+
+    $connector = ConnectorEloquentModel::query()->withoutGlobalScopes()->sole();
+
+    expect($connector)
+        ->type->toBe('google')
+        ->name->toBe('Help Desk')
+        ->account->toBe('help@helpdesk.test')
+        ->settings->toBe([])
+        ->credentials->toBe(['refresh_token' => 'google-refresh-token'])
+        ->and(GetConnectorAccessToken::forConnector(Connector::fromEloquentModel($connector)))->toBe('google-access-token');
+});
+
 it('saves nothing when the service gives no lasting access', function (): void {
     $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
     fakeConnectorSignIn(['refreshToken' => null]);

@@ -89,6 +89,32 @@ it('leaves the connector connected when the failure is not about its sign-in', f
     'the connection fails' => [fn () => Http::failedConnection()],
 ]);
 
+it('exchanges a Google connector\'s refresh token at Google, with Google\'s keys', function (): void {
+    config(['services.google.client_id' => 'google-id', 'services.google.client_secret' => 'google-secret']);
+    $model = ConnectorEloquentModel::factory()->google()->create(['credentials' => ['refresh_token' => 'google-refresh-token']]);
+    Http::fake(['oauth2.googleapis.com/token' => Http::response(['access_token' => 'google-access-token', 'expires_in' => 3599])]);
+
+    expect(GetConnectorAccessToken::forConnector(Connector::fromEloquentModel($model)))->toBe('google-access-token');
+
+    Http::assertSent(fn (Request $request): bool => $request->data() === [
+        'client_id' => 'google-id',
+        'client_secret' => 'google-secret',
+        'grant_type' => 'refresh_token',
+        'refresh_token' => 'google-refresh-token',
+    ]);
+});
+
+it('names Google when Google refuses the sign-in', function (): void {
+    config(['services.google.client_id' => 'google-id', 'services.google.client_secret' => 'google-secret']);
+    $model = ConnectorEloquentModel::factory()->google()->create();
+    Http::fake(['oauth2.googleapis.com/token' => Http::response(['error' => 'invalid_grant', 'error_description' => 'Token has been expired or revoked.'], 400)]);
+
+    expect(fn () => GetConnectorAccessToken::forConnector(Connector::fromEloquentModel($model)))
+        ->toThrow(CouldNotReachConnector::class, 'Google no longer accepts the sign-in for this connector. Connect it again.');
+
+    expect($model->refresh()->status)->toBe('needs_reconnect');
+});
+
 it('asks nothing of the service for a connector with no refresh token', function (): void {
     $model = ConnectorEloquentModel::factory()->create(['credentials' => []]);
 

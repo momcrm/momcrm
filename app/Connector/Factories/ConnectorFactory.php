@@ -41,6 +41,11 @@ final class ConnectorFactory extends Factory
         ];
     }
 
+    public function google(): static
+    {
+        return $this->state([Type::getDatabaseTableColumnName() => ConnectorTypeEnum::Google->value]);
+    }
+
     public function needsReconnect(): static
     {
         return $this->state([Status::getDatabaseTableColumnName() => ConnectorStatusEnum::NeedsReconnect->value]);

@@ -73,7 +73,8 @@ final class ConnectConnectorFormRequest extends FormRequest
         $reconnecting = FindConnector::byIdForTeam($this->string('connector')->toString() ?: null, $this->team->getId()->toString());
         $isReconnecting = $reconnecting->isNotNull() && $reconnecting->getType()->toNullableEnum() === $type;
 
-        $withSharedMailboxes = $isReconnecting ? $reconnecting->reachesSharedMailboxes() : $this->boolean('shared_mailboxes');
+        $withSharedMailboxes = $type->supportsSharedMailboxes()
+            && ($isReconnecting ? $reconnecting->reachesSharedMailboxes() : $this->boolean('shared_mailboxes'));
 
         $this->session()->put(ConnectorSession::PENDING_SHARED_MAILBOXES, $withSharedMailboxes);
 
@@ -84,7 +85,7 @@ final class ConnectConnectorFormRequest extends FormRequest
             ->scopes($type->scopes($withSharedMailboxes))
             ->redirectUrl(route('connectors.callback', ['type' => $type->value]))
             ->with([
-                'prompt' => 'select_account',
+                ...$type->signInParameters(),
                 ...($isReconnecting ? ['login_hint' => $reconnecting->getAccount()->toString()] : []),
             ])
             ->redirect();

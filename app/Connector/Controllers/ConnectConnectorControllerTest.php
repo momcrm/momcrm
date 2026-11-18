@@ -89,6 +89,30 @@ it('does not reconnect another team\'s connector', function (): void {
     expect(connectorSignInQuery($response))->not->toHaveKey('login_hint');
 });
 
+it('sends an admin to Google asking for lasting access to read and send mail', function (): void {
+    config(['services.google.client_id' => 'google-id', 'services.google.client_secret' => 'secret']);
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+
+    $response = actingAs($owner)
+        ->get(route('connectors.connect', ['type' => 'google', 'shared_mailboxes' => 1]))
+        ->assertRedirect()
+        ->assertSessionHas(ConnectorSession::PENDING_SHARED_MAILBOXES, false);
+
+    $location = (string) $response->headers->get('Location');
+    parse_str((string) parse_url($location, PHP_URL_QUERY), $query);
+
+    expect($location)->toStartWith('https://accounts.google.com/o/oauth2/auth?')
+        ->and($query['redirect_uri'])->toBe(route('connectors.callback', 'google'))
+        ->and($query['client_id'])->toBe('google-id')
+        ->and($query['access_type'])->toBe('offline')
+        ->and($query['prompt'])->toBe('consent select_account')
+        ->and(explode(' ', $query['scope']))->toEqualCanonicalizing([
+            'openid', 'profile', 'email',
+            'https://www.googleapis.com/auth/gmail.readonly',
+            'https://www.googleapis.com/auth/gmail.send',
+        ]);
+});
+
 it('is not found for a type that does not exist or is not set up', function (): void {
     $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
 

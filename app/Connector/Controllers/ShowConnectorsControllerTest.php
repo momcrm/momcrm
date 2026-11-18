@@ -20,7 +20,7 @@ it('lists the team\'s connectors without their credentials, with their mailboxes
     ]);
     MailboxEloquentModel::factory()->create(['team_id' => $owner->current_team_id, 'connector_id' => $connector->id, 'address' => 'support@acme.test']);
     ConnectorEloquentModel::factory()->create(['account' => 'other@elsewhere.test']);
-    config(['services.microsoft.client_id' => 'id', 'services.microsoft.client_secret' => 'secret']);
+    config(['services.microsoft.client_id' => 'id', 'services.microsoft.client_secret' => 'secret', 'services.google.client_id' => null]);
 
     actingAs($owner)
         ->get(route('connectors.index'))
@@ -44,9 +44,24 @@ it('lists the team\'s connectors without their credentials, with their mailboxes
         );
 });
 
+it('offers every type whose sign-in keys are set', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    config([
+        'services.microsoft.client_id' => null,
+        'services.google.client_id' => 'google-id',
+        'services.google.client_secret' => 'secret',
+    ]);
+
+    actingAs($owner)
+        ->get(route('connectors.index'))
+        ->assertInertia(fn (Assert $page) => $page->where('types', [
+            ['value' => 'google', 'label' => 'Google', 'capabilities' => ['Email'], 'supports_shared_mailboxes' => false],
+        ]));
+});
+
 it('offers no types when none is set up on this installation', function (): void {
     $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
-    config(['services.microsoft.client_id' => null, 'services.microsoft.client_secret' => null]);
+    config(['services.microsoft.client_id' => null, 'services.google.client_id' => null]);
 
     actingAs($owner)
         ->get(route('connectors.index'))

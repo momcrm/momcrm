@@ -16,11 +16,13 @@ enum ConnectorTypeEnum: string
     use Enum;
 
     case Microsoft = 'microsoft';
+    case Google = 'google';
 
     public function label(): string
     {
         return match ($this) {
             self::Microsoft => 'Microsoft 365',
+            self::Google => 'Google',
         };
     }
 
@@ -31,6 +33,7 @@ enum ConnectorTypeEnum: string
     {
         return match ($this) {
             self::Microsoft => 'Microsoft',
+            self::Google => 'Google',
         };
     }
 
@@ -40,7 +43,7 @@ enum ConnectorTypeEnum: string
     public function capabilities(): array
     {
         return match ($this) {
-            self::Microsoft => [ConnectorCapabilityEnum::Mail],
+            self::Microsoft, self::Google => [ConnectorCapabilityEnum::Mail],
         };
     }
 
@@ -56,6 +59,7 @@ enum ConnectorTypeEnum: string
     {
         return match ($this) {
             self::Microsoft => SocialProviderEnum::Microsoft,
+            self::Google => SocialProviderEnum::Google,
         };
     }
 
@@ -80,6 +84,25 @@ enum ConnectorTypeEnum: string
             self::Microsoft => $withSharedMailboxes
                 ? ['offline_access', 'User.Read', 'Mail.ReadWrite.Shared', 'Mail.Send.Shared']
                 : ['offline_access', 'User.Read', 'Mail.ReadWrite', 'Mail.Send'],
+            self::Google => [
+                'https://www.googleapis.com/auth/gmail.readonly',
+                'https://www.googleapis.com/auth/gmail.send',
+            ],
+        };
+    }
+
+    /**
+     * What the sign-in page is told besides the permissions: to let the
+     * person choose the account, and, at Google, to give lasting access even
+     * when they have agreed before.
+     *
+     * @return array<string, string>
+     */
+    public function signInParameters(): array
+    {
+        return match ($this) {
+            self::Microsoft => ['prompt' => 'select_account'],
+            self::Google => ['access_type' => 'offline', 'prompt' => 'consent select_account'],
         };
     }
 
@@ -90,6 +113,7 @@ enum ConnectorTypeEnum: string
     {
         return match ($this) {
             self::Microsoft => true,
+            self::Google => false,
         };
     }
 
@@ -103,6 +127,7 @@ enum ConnectorTypeEnum: string
                 'https://login.microsoftonline.com/%s/oauth2/v2.0/token',
                 config()->string('services.microsoft.tenant', 'common'),
             ),
+            self::Google => 'https://oauth2.googleapis.com/token',
         };
     }
 
