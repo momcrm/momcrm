@@ -10,10 +10,10 @@ use App\MailboxMessage\MailboxMessageEloquentModel;
 use App\MailboxMessage\MailboxMessageStatusEnum;
 use App\MailboxMessage\Properties\BodyText;
 use App\MailboxMessage\Properties\Direction;
+use App\MailboxMessage\Properties\ExternalId;
 use App\MailboxMessage\Properties\FromAddress;
 use App\MailboxMessage\Properties\InternetMessageId;
 use App\MailboxMessage\Properties\MailboxId;
-use App\MailboxMessage\Properties\MicrosoftId;
 use App\MailboxMessage\Properties\ReceivedAt;
 use App\MailboxMessage\Properties\Status;
 use App\MailboxMessage\Properties\Subject;
@@ -41,7 +41,7 @@ final class MailboxMessageFactory extends Factory
                 ->value('team_id')),
             Direction::getDatabaseTableColumnName() => MailboxMessageDirectionEnum::Inbound->value,
             Status::getDatabaseTableColumnName() => MailboxMessageStatusEnum::Processed->value,
-            MicrosoftId::getDatabaseTableColumnName() => fake()->unique()->sha256(),
+            ExternalId::getDatabaseTableColumnName() => fake()->unique()->sha256(),
             InternetMessageId::getDatabaseTableColumnName() => fake()->unique()->uuid().'@mail.example.test',
             FromAddress::getDatabaseTableColumnName() => fake()->safeEmail(),
             Subject::getDatabaseTableColumnName() => fake()->sentence(4),

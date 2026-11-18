@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace App\Mailbox\Actions;
 
-use App\Mailbox\Exceptions\CouldNotReachMailbox;
+use App\Connector\Actions\FindConnector;
+use App\Connector\Exceptions\CouldNotReachConnector;
 use App\Mailbox\Mailbox;
 use App\Mailbox\MailboxEloquentModel;
 use App\Mailbox\MicrosoftGraph;
@@ -51,7 +52,7 @@ final readonly class SyncMailbox
      */
     public function __invoke(): int
     {
-        if ($this->mailbox->isNull() || ! $this->mailbox->isConnected()) {
+        if ($this->mailbox->isNull() || ! FindConnector::byId($this->mailbox->getConnectorId()->toNullableString())->isConnected()) {
             return 0;
         }
 
@@ -61,7 +62,7 @@ final readonly class SyncMailbox
         try {
             $graph = MicrosoftGraph::forMailbox($this->mailbox);
             $listed = $graph->inboxMessagesSince($this->since(), self::MAX_MESSAGES);
-            $known = FindMailboxMessage::knownMicrosoftIds(
+            $known = FindMailboxMessage::knownExternalIds(
                 $this->mailbox->getId()->toString(),
                 $this->mailbox->getTeamId()->toString(),
                 array_column($listed, 'id'),
@@ -78,7 +79,7 @@ final readonly class SyncMailbox
                     $taken++;
                 }
             }
-        } catch (CouldNotReachMailbox $exception) {
+        } catch (CouldNotReachConnector $exception) {
             $this->save([LastError::getDatabaseTableColumnName() => $exception->getMessage()]);
 
             return $taken;

@@ -10,13 +10,13 @@ use App\MailboxMessage\Properties\CommentId;
 use App\MailboxMessage\Properties\CreatedAt;
 use App\MailboxMessage\Properties\Direction;
 use App\MailboxMessage\Properties\Error;
+use App\MailboxMessage\Properties\ExternalId;
 use App\MailboxMessage\Properties\FromAddress;
 use App\MailboxMessage\Properties\FromName;
 use App\MailboxMessage\Properties\Id;
 use App\MailboxMessage\Properties\InReplyTo;
 use App\MailboxMessage\Properties\InternetMessageId;
 use App\MailboxMessage\Properties\MailboxId;
-use App\MailboxMessage\Properties\MicrosoftId;
 use App\MailboxMessage\Properties\ReceivedAt;
 use App\MailboxMessage\Properties\ReferenceIds;
 use App\MailboxMessage\Properties\ReplyText;
@@ -52,7 +52,7 @@ final class MailboxMessage extends AbstractData
         public InReplyTo $inReplyTo,
         public InternetMessageId $internetMessageId,
         public MailboxId $mailboxId,
-        public MicrosoftId $microsoftId,
+        public ExternalId $externalId,
         public ReceivedAt $receivedAt,
         public ReferenceIds $referenceIds,
         public ReplyText $replyText,
@@ -96,12 +96,12 @@ final class MailboxMessage extends AbstractData
     public static function fromMicrosoftGraph(array $message): self
     {
         $headers = self::headers($message);
-        $microsoftId = Arr::get($message, 'id');
+        $externalId = Arr::get($message, 'id');
         $bodyText = self::text(Arr::get($message, 'body.content'));
 
         return self::new()
             ->setDirection(MailboxMessageDirectionEnum::Inbound)
-            ->setMicrosoftId(is_string($microsoftId) ? $microsoftId : null)
+            ->setExternalId(is_string($externalId) ? $externalId : null)
             ->setInternetMessageId(InternetMessageId::normalize(Arr::get($message, 'internetMessageId')))
             ->setInReplyTo(InternetMessageId::normalize($headers['in-reply-to'] ?? null))
             ->setReferenceIds(self::referenceIds($headers['references'] ?? null))
@@ -257,14 +257,14 @@ final class MailboxMessage extends AbstractData
         return $this;
     }
 
-    public function getMicrosoftId(): MicrosoftId
+    public function getExternalId(): ExternalId
     {
-        return $this->microsoftId;
+        return $this->externalId;
     }
 
-    public function setMicrosoftId(mixed $microsoftId): self
+    public function setExternalId(mixed $externalId): self
     {
-        $this->microsoftId = new MicrosoftId($microsoftId instanceof AbstractValue ? $microsoftId->toValue() : $microsoftId);
+        $this->externalId = new ExternalId($externalId instanceof AbstractValue ? $externalId->toValue() : $externalId);
 
         return $this;
     }

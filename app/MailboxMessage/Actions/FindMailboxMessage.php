@@ -9,11 +9,11 @@ use App\MailboxMessage\MailboxMessageDirectionEnum;
 use App\MailboxMessage\MailboxMessageEloquentModel;
 use App\MailboxMessage\Properties\CommentId;
 use App\MailboxMessage\Properties\Direction;
+use App\MailboxMessage\Properties\ExternalId;
 use App\MailboxMessage\Properties\FromAddress;
 use App\MailboxMessage\Properties\Id;
 use App\MailboxMessage\Properties\InternetMessageId;
 use App\MailboxMessage\Properties\MailboxId;
-use App\MailboxMessage\Properties\MicrosoftId;
 use App\MailboxMessage\Properties\ReceivedAt;
 use App\MailboxMessage\Properties\TeamId;
 use App\MailboxMessage\Properties\TicketId;
@@ -101,7 +101,7 @@ final class FindMailboxMessage
                 ->where(TicketId::getDatabaseTableColumnName(), $ticketId)
                 ->where(MailboxId::getDatabaseTableColumnName(), $mailboxId)
                 ->where(Direction::getDatabaseTableColumnName(), MailboxMessageDirectionEnum::Inbound->value)
-                ->whereNotNull(MicrosoftId::getDatabaseTableColumnName())
+                ->whereNotNull(ExternalId::getDatabaseTableColumnName())
                 ->latest(ReceivedAt::getDatabaseTableColumnName())
                 ->latest(Id::getDatabaseTableColumnName())
                 ->first(),
@@ -135,20 +135,20 @@ final class FindMailboxMessage
      * Which of these Microsoft ids are already kept for a mailbox, so mail
      * read before is not fetched again.
      *
-     * @param  list<string>  $microsoftIds
+     * @param  list<string>  $externalIds
      * @return list<string>
      */
-    public static function knownMicrosoftIds(string $mailboxId, string $teamId, array $microsoftIds): array
+    public static function knownExternalIds(string $mailboxId, string $teamId, array $externalIds): array
     {
-        if ($microsoftIds === []) {
+        if ($externalIds === []) {
             return [];
         }
 
         return Types::stringList(
             self::query($teamId)
                 ->where(MailboxId::getDatabaseTableColumnName(), $mailboxId)
-                ->whereIn(MicrosoftId::getDatabaseTableColumnName(), $microsoftIds)
-                ->pluck(MicrosoftId::getDatabaseTableColumnName())
+                ->whereIn(ExternalId::getDatabaseTableColumnName(), $externalIds)
+                ->pluck(ExternalId::getDatabaseTableColumnName())
                 ->all(),
         );
     }

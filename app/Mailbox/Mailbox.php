@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace App\Mailbox;
 
+use App\Connector\Connector;
 use App\Mailbox\Factories\MailboxFactory;
 use App\Mailbox\Properties\Address;
 use App\Mailbox\Properties\AutoCreateTickets;
-use App\Mailbox\Properties\ConnectedById;
+use App\Mailbox\Properties\ConnectorId;
 use App\Mailbox\Properties\CreatedAt;
 use App\Mailbox\Properties\DisplayName;
 use App\Mailbox\Properties\GroupId;
@@ -15,7 +16,6 @@ use App\Mailbox\Properties\Id;
 use App\Mailbox\Properties\IsShared;
 use App\Mailbox\Properties\LastError;
 use App\Mailbox\Properties\LastSyncedAt;
-use App\Mailbox\Properties\Status;
 use App\Mailbox\Properties\SyncedThrough;
 use App\Mailbox\Properties\TeamId;
 use App\Mailbox\Properties\UpdatedAt;
@@ -24,9 +24,8 @@ use Mom\Data\AbstractData;
 use Mom\Data\AbstractValue;
 
 /**
- * A Microsoft 365 mailbox a team has connected. The refresh token that reaches
- * it is deliberately not on this object, so it can be listed, logged and sent
- * to pages without giving it away: GetMailboxAccessToken reads it.
+ * A mailbox whose mail becomes tickets. It is read and sent through a
+ * connector, which holds the sign-in; the mailbox keeps what is about tickets.
  *
  * @extends AbstractData<MailboxEloquentModel>
  */
@@ -35,7 +34,7 @@ final class Mailbox extends AbstractData
     public function __construct(
         public Address $address,
         public AutoCreateTickets $autoCreateTickets,
-        public ConnectedById $connectedById,
+        public ConnectorId $connectorId,
         public CreatedAt $createdAt,
         public DisplayName $displayName,
         public GroupId $groupId,
@@ -43,7 +42,6 @@ final class Mailbox extends AbstractData
         public IsShared $isShared,
         public LastError $lastError,
         public LastSyncedAt $lastSyncedAt,
-        public Status $status,
         public SyncedThrough $syncedThrough,
         public TeamId $teamId,
         public UpdatedAt $updatedAt,
@@ -72,30 +70,26 @@ final class Mailbox extends AbstractData
     }
 
     /**
-     * Whether the mailbox can be read and sent from right now.
-     */
-    public function isConnected(): bool
-    {
-        return $this->getStatus()->toEnum() === MailboxStatusEnum::Connected;
-    }
-
-    /**
-     * The fields the email settings page shows.
+     * The fields the email settings page shows. Whether the mailbox works
+     * depends on the connector it goes through.
      *
-     * @return array{id: string, address: string, display_name: ?string, is_shared: bool, status: string, group_id: ?string, auto_create_tickets: bool, last_synced_at: ?string, last_error: ?string}
+     * @return array{id: string, address: string, display_name: ?string, is_shared: bool, status: string, connector_id: string, connector_name: string, connector_type: ?string, group_id: ?string, auto_create_tickets: bool, last_synced_at: ?string, last_error: ?string}
      */
-    public function toListItem(): array
+    public function toListItem(Connector $connector): array
     {
         return [
             'id' => $this->getId()->toString(),
             'address' => $this->getAddress()->toString(),
             'display_name' => $this->getDisplayName()->toNullableString(),
             'is_shared' => $this->getIsShared()->toBoolean(),
-            'status' => $this->getStatus()->toEnum()->value,
+            'status' => $connector->getStatus()->toEnum()->value,
+            'connector_id' => $this->getConnectorId()->toString(),
+            'connector_name' => $connector->getName()->toString(),
+            'connector_type' => $connector->getType()->toNullableEnum()?->label(),
             'group_id' => $this->getGroupId()->toNullableString(),
             'auto_create_tickets' => $this->getAutoCreateTickets()->toBoolean(),
             'last_synced_at' => $this->getLastSyncedAt()->toNullableCarbon()?->toIso8601String(),
-            'last_error' => $this->getLastError()->toNullableString(),
+            'last_error' => $this->getLastError()->toNullableString() ?? $connector->getLastError()->toNullableString(),
         ];
     }
 
@@ -123,14 +117,14 @@ final class Mailbox extends AbstractData
         return $this;
     }
 
-    public function getConnectedById(): ConnectedById
+    public function getConnectorId(): ConnectorId
     {
-        return $this->connectedById;
+        return $this->connectorId;
     }
 
-    public function setConnectedById(mixed $connectedById): self
+    public function setConnectorId(mixed $connectorId): self
     {
-        $this->connectedById = new ConnectedById($connectedById instanceof AbstractValue ? $connectedById->toValue() : $connectedById);
+        $this->connectorId = new ConnectorId($connectorId instanceof AbstractValue ? $connectorId->toValue() : $connectorId);
 
         return $this;
     }
@@ -208,18 +202,6 @@ final class Mailbox extends AbstractData
     public function setLastSyncedAt(mixed $lastSyncedAt): self
     {
         $this->lastSyncedAt = new LastSyncedAt($lastSyncedAt instanceof AbstractValue ? $lastSyncedAt->toValue() : $lastSyncedAt);
-
-        return $this;
-    }
-
-    public function getStatus(): Status
-    {
-        return $this->status;
-    }
-
-    public function setStatus(mixed $status): self
-    {
-        $this->status = new Status($status instanceof AbstractValue ? $status->toValue() : $status);
 
         return $this;
     }

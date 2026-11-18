@@ -4,13 +4,17 @@ declare(strict_types=1);
 
 namespace App\Mailbox\Actions;
 
+use App\Connector\Actions\FindConnector;
+use App\Connector\Connector;
+use App\Connector\ConnectorEloquentModel;
+use App\Connector\ConnectorStatusEnum;
+use App\Connector\Properties\Status as ConnectorStatus;
 use App\Mailbox\Mailbox;
 use App\Mailbox\MailboxCollection;
 use App\Mailbox\MailboxEloquentModel;
-use App\Mailbox\MailboxStatusEnum;
 use App\Mailbox\Properties\Address;
+use App\Mailbox\Properties\ConnectorId;
 use App\Mailbox\Properties\Id;
-use App\Mailbox\Properties\Status;
 use App\Mailbox\Properties\TeamId;
 use App\Team\Scopes\CurrentTeamScope;
 use Illuminate\Database\Eloquent\Builder;
@@ -47,15 +51,35 @@ final class FindMailbox
 
     /**
      * The mailbox a team sends from: the one asked for when it is theirs and
-     * connected, otherwise the first of their connected mailboxes.
+     * its connector works, otherwise the first of their mailboxes that does.
      */
     public static function toSendFromForTeam(?string $preferredId, string $teamId): Mailbox
     {
-        $connected = self::allForTeam($teamId)->filter(fn (Mailbox $mailbox): bool => $mailbox->isConnected());
+        $working = FindConnector::allForTeam($teamId)
+            ->filter(fn (Connector $connector): bool => $connector->isConnected())
+            ->map(fn (Connector $connector): string => $connector->getId()->toString())
+            ->all();
 
-        $preferred = $connected->findById($preferredId);
+        $usable = self::allForTeam($teamId)
+            ->filter(fn (Mailbox $mailbox): bool => in_array($mailbox->getConnectorId()->toString(), $working, true));
 
-        return $preferred->isNotNull() ? $preferred : $connected->first();
+        $preferred = $usable->findById($preferredId);
+
+        return $preferred->isNotNull() ? $preferred : $usable->first();
+    }
+
+    /**
+     * The mailboxes that go through a connector, by address.
+     */
+    public static function forConnector(string $connectorId): MailboxCollection
+    {
+        return Mailbox::collect(
+            self::query()
+                ->where(ConnectorId::getDatabaseTableColumnName(), $connectorId)
+                ->orderBy(Address::getDatabaseTableColumnName())
+                ->get()
+                ->all(),
+        );
     }
 
     /**
@@ -71,13 +95,20 @@ final class FindMailbox
     }
 
     /**
-     * Every team's mailboxes that can be read right now.
+     * Every team's mailboxes that can be read right now: those whose
+     * connector works.
      */
     public static function connected(): MailboxCollection
     {
         return Mailbox::collect(
             self::query()
-                ->where(Status::getDatabaseTableColumnName(), MailboxStatusEnum::Connected->value)
+                ->whereIn(
+                    ConnectorId::getDatabaseTableColumnName(),
+                    ConnectorEloquentModel::query()
+                        ->withoutGlobalScope(CurrentTeamScope::class)
+                        ->where(ConnectorStatus::getDatabaseTableColumnName(), ConnectorStatusEnum::Connected->value)
+                        ->select('id'),
+                )
                 ->orderBy(Id::getDatabaseTableColumnName())
                 ->get()
                 ->all(),

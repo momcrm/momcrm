@@ -65,7 +65,7 @@ it('opens a ticket for mail from someone who is not a contact, keeping who wrote
         ->direction->toBe('inbound')
         ->status->toBe('processed')
         ->ticket_id->toBe($ticket->id)
-        ->microsoft_id->toBe('graph-1')
+        ->external_id->toBe('graph-1')
         ->internet_message_id->toBe('message-1@acme.test')
         ->from_address->toBe('sam@acme.test')
         ->to_recipients->toBe(['support@helpdesk.test'])
@@ -150,14 +150,14 @@ it('titles a message with no subject', function (): void {
     expect(TicketEloquentModel::query()->withoutGlobalScopes()->sole()->title)->toBe('(no subject)');
 });
 
-it('keeps a message that has no Message-ID once, by Microsoft\'s id', function (): void {
+it('keeps a message that has no Message-ID once, by its id in the mailbox', function (): void {
     $mailbox = MailboxEloquentModel::factory()->create();
     $message = ['internetMessageId' => null, 'id' => 'graph-9'];
 
     takeInEmail($mailbox, $message);
     takeInEmail($mailbox, $message);
 
-    expect(MailboxMessageEloquentModel::query()->withoutGlobalScopes()->sole()->internet_message_id)->toBe('microsoft:graph-9')
+    expect(MailboxMessageEloquentModel::query()->withoutGlobalScopes()->sole()->internet_message_id)->toBe("mailbox-{$mailbox->id}:graph-9")
         ->and(TicketEloquentModel::query()->withoutGlobalScopes()->count())->toBe(1);
 });
 

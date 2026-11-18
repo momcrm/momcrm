@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace App\Mailbox;
 
-use App\Mailbox\Actions\GetMailboxAccessToken;
-use App\Mailbox\Exceptions\CouldNotReachMailbox;
+use App\Connector\Actions\FindConnector;
+use App\Connector\Actions\GetConnectorAccessToken;
+use App\Connector\Connector;
+use App\Connector\ConnectorTypeEnum;
+use App\Connector\Exceptions\CouldNotReachConnector;
 use App\Shared\Types;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Client\ConnectionException;
@@ -22,16 +25,6 @@ use Throwable;
  */
 final readonly class MicrosoftGraph
 {
-    /**
-     * What a person agrees to when connecting their own mailbox.
-     */
-    public const array SCOPES = ['offline_access', 'User.Read', 'Mail.ReadWrite', 'Mail.Send'];
-
-    /**
-     * What a person agrees to when connecting a shared mailbox they can open.
-     */
-    public const array SHARED_SCOPES = ['offline_access', 'User.Read', 'Mail.ReadWrite.Shared', 'Mail.Send.Shared'];
-
     private const string BASE_URL = 'https://graph.microsoft.com/v1.0';
 
     private const int PAGE_SIZE = 100;
@@ -42,20 +35,29 @@ final readonly class MicrosoftGraph
     ) {}
 
     /**
-     * For a mailbox that is not saved yet, with the token Microsoft just gave.
+     * Through a connected Microsoft account: its own mailbox, or a shared
+     * mailbox it can open when an address is given.
+     *
+     * @throws CouldNotReachConnector
      */
-    public static function withToken(string $accessToken, ?string $sharedAddress = null): self
+    public static function forConnector(Connector $connector, ?string $sharedAddress = null): self
     {
-        return new self($accessToken, $sharedAddress);
+        return new self(GetConnectorAccessToken::forConnector($connector), $sharedAddress);
     }
 
     /**
-     * @throws CouldNotReachMailbox
+     * @throws CouldNotReachConnector
      */
     public static function forMailbox(Mailbox $mailbox): self
     {
-        return new self(
-            GetMailboxAccessToken::forMailbox($mailbox),
+        $connector = FindConnector::byId($mailbox->getConnectorId()->toNullableString());
+
+        if ($connector->isNull()) {
+            throw CouldNotReachConnector::needsReconnect(ConnectorTypeEnum::Microsoft);
+        }
+
+        return self::forConnector(
+            $connector,
             $mailbox->getIsShared()->toBoolean() ? $mailbox->getAddress()->toString() : null,
         );
     }
@@ -66,7 +68,7 @@ final readonly class MicrosoftGraph
      *
      * @return array<string, mixed>
      *
-     * @throws CouldNotReachMailbox
+     * @throws CouldNotReachConnector
      */
     public function inbox(): array
     {
@@ -79,7 +81,7 @@ final readonly class MicrosoftGraph
      *
      * @return list<array{id: string, received_at: CarbonImmutable}>
      *
-     * @throws CouldNotReachMailbox
+     * @throws CouldNotReachConnector
      */
     public function inboxMessagesSince(CarbonImmutable $since, int $limit): array
     {
@@ -119,7 +121,7 @@ final readonly class MicrosoftGraph
      *
      * @return array<string, mixed>|null
      *
-     * @throws CouldNotReachMailbox
+     * @throws CouldNotReachConnector
      */
     public function message(string $id): ?array
     {
@@ -139,7 +141,7 @@ final readonly class MicrosoftGraph
      *
      * @return list<array{id: string, name: string, content_type: ?string, size: int, is_file: bool, is_inline: bool}>
      *
-     * @throws CouldNotReachMailbox
+     * @throws CouldNotReachConnector
      */
     public function attachments(string $messageId): array
     {
@@ -182,7 +184,7 @@ final readonly class MicrosoftGraph
     /**
      * The bytes of a file attached to a message.
      *
-     * @throws CouldNotReachMailbox
+     * @throws CouldNotReachConnector
      */
     public function attachmentContents(string $messageId, string $attachmentId): string
     {
@@ -201,7 +203,7 @@ final readonly class MicrosoftGraph
      *
      * @return array<string, mixed>|null
      *
-     * @throws CouldNotReachMailbox
+     * @throws CouldNotReachConnector
      */
     public function createReplyDraft(string $messageId): ?array
     {
@@ -216,7 +218,7 @@ final readonly class MicrosoftGraph
      * @param  array<string, mixed>  $message
      * @return array<string, mixed>
      *
-     * @throws CouldNotReachMailbox
+     * @throws CouldNotReachConnector
      */
     public function createDraft(array $message): array
     {
@@ -227,7 +229,7 @@ final readonly class MicrosoftGraph
      * @param  array<string, mixed>  $changes
      * @return array<string, mixed>
      *
-     * @throws CouldNotReachMailbox
+     * @throws CouldNotReachConnector
      */
     public function updateDraft(string $draftId, array $changes): array
     {
@@ -237,7 +239,7 @@ final readonly class MicrosoftGraph
     /**
      * Sends a draft, which Microsoft then keeps in Sent Items.
      *
-     * @throws CouldNotReachMailbox
+     * @throws CouldNotReachConnector
      */
     public function sendDraft(string $draftId): void
     {
@@ -250,14 +252,14 @@ final readonly class MicrosoftGraph
      *
      * @param  array<string, mixed>  $body
      *
-     * @throws CouldNotReachMailbox
+     * @throws CouldNotReachConnector
      */
     private function write(string $method, string $url, array $body = []): Response
     {
         try {
             return $this->request()->send(mb_strtoupper($method), $url, $body === [] ? [] : ['json' => $body]);
         } catch (ConnectionException $exception) {
-            throw CouldNotReachMailbox::unavailable($exception);
+            throw CouldNotReachConnector::unavailable(ConnectorTypeEnum::Microsoft, $exception);
         }
     }
 
@@ -265,7 +267,7 @@ final readonly class MicrosoftGraph
      * @param  array<string, string>  $query
      * @param  array<string, string>  $headers
      *
-     * @throws CouldNotReachMailbox
+     * @throws CouldNotReachConnector
      */
     private function get(string $url, array $query = [], array $headers = []): Response
     {
@@ -277,7 +279,7 @@ final readonly class MicrosoftGraph
             // Passing an empty query would strip the one a next-page address carries.
             return $query === [] ? $request->get($url) : $request->get($url, $query);
         } catch (ConnectionException $exception) {
-            throw CouldNotReachMailbox::unavailable($exception);
+            throw CouldNotReachConnector::unavailable(ConnectorTypeEnum::Microsoft, $exception);
         }
     }
 
@@ -311,7 +313,7 @@ final readonly class MicrosoftGraph
     /**
      * @return array<string, mixed>
      *
-     * @throws CouldNotReachMailbox
+     * @throws CouldNotReachConnector
      */
     private static function json(Response $response): array
     {
@@ -320,16 +322,16 @@ final readonly class MicrosoftGraph
         }
 
         if ($response->serverError() || $response->status() === 429) {
-            throw CouldNotReachMailbox::unavailable();
+            throw CouldNotReachConnector::unavailable(ConnectorTypeEnum::Microsoft);
         }
 
         if ($response->status() === 401) {
-            throw CouldNotReachMailbox::needsReconnect();
+            throw CouldNotReachConnector::needsReconnect(ConnectorTypeEnum::Microsoft);
         }
 
         $message = $response->json('error.message');
 
-        throw CouldNotReachMailbox::refused(is_string($message) && $message !== ''
+        throw CouldNotReachConnector::refused(is_string($message) && $message !== ''
             ? $message
             : 'Microsoft refused the request.');
     }

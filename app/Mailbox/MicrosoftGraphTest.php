@@ -2,8 +2,7 @@
 
 declare(strict_types=1);
 
-use App\Mailbox\Actions\GetMailboxAccessToken;
-use App\Mailbox\Exceptions\CouldNotReachMailbox;
+use App\Connector\Exceptions\CouldNotReachConnector;
 use App\Mailbox\Mailbox;
 use App\Mailbox\MailboxEloquentModel;
 use App\Mailbox\MicrosoftGraph;
@@ -16,9 +15,9 @@ beforeEach(function (): void {
     Http::preventStrayRequests();
 });
 
-it('reads a person\'s own mailbox as "me" with the mailbox\'s token', function (): void {
+it('reads a person\'s own mailbox as "me" with its connector\'s token', function (): void {
     $mailbox = Mailbox::fromEloquentModel(MailboxEloquentModel::factory()->create());
-    GetMailboxAccessToken::remember($mailbox, 'access-token', 3600);
+    rememberMailboxToken($mailbox);
     Http::fake(['graph.microsoft.com/v1.0/me/mailFolders/inbox*' => Http::response(['id' => 'inbox-id'])]);
 
     expect(MicrosoftGraph::forMailbox($mailbox)->inbox())->toBe(['id' => 'inbox-id']);
@@ -29,7 +28,7 @@ it('reads a person\'s own mailbox as "me" with the mailbox\'s token', function (
 
 it('reads a shared mailbox by its address', function (): void {
     $mailbox = Mailbox::fromEloquentModel(MailboxEloquentModel::factory()->shared()->create(['address' => 'support@acme.test']));
-    GetMailboxAccessToken::remember($mailbox, 'access-token', 3600);
+    rememberMailboxToken($mailbox);
     Http::fake(['graph.microsoft.com/v1.0/users/support%40acme.test/mailFolders/inbox*' => Http::response(['id' => 'inbox-id'])]);
 
     expect(MicrosoftGraph::forMailbox($mailbox)->inbox())->toBe(['id' => 'inbox-id']);
@@ -47,7 +46,7 @@ it('lists the inbox oldest first from a time, following pages until it has enoug
         ], '@odata.nextLink' => 'https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages?%24skip=2']),
     });
 
-    $messages = MicrosoftGraph::withToken('access-token')->inboxMessagesSince(CarbonImmutable::parse('2026-11-18 11:00:00', 'Australia/Brisbane'), 3);
+    $messages = graphWithToken()->inboxMessagesSince(CarbonImmutable::parse('2026-11-18 11:00:00', 'Australia/Brisbane'), 3);
 
     expect(array_column($messages, 'id'))->toBe(['graph-1', 'graph-2', 'graph-3'])
         ->and($messages[1]['received_at']->toIso8601ZuluString())->toBe('2026-11-18T01:02:00Z');
@@ -62,7 +61,7 @@ it('lists the inbox oldest first from a time, following pages until it has enoug
 it('reads a message with its headers and a plain-text body', function (): void {
     Http::fake(['graph.microsoft.com/v1.0/me/messages/graph-1*' => Http::response(graphMessage())]);
 
-    expect(MicrosoftGraph::withToken('access-token')->message('graph-1'))->toBe(graphMessage());
+    expect(graphWithToken()->message('graph-1'))->toBe(graphMessage());
 
     Http::assertSent(fn (Request $request): bool => $request->hasHeader('Prefer', 'IdType="ImmutableId", outlook.body-content-type="text"')
         && str_contains($request['$select'], 'internetMessageHeaders')
@@ -72,7 +71,7 @@ it('reads a message with its headers and a plain-text body', function (): void {
 it('has no message when it has gone from the mailbox', function (): void {
     Http::fake(['graph.microsoft.com/v1.0/me/messages/graph-1*' => Http::response(['error' => ['code' => 'ErrorItemNotFound']], 404)]);
 
-    expect(MicrosoftGraph::withToken('access-token')->message('graph-1'))->toBeNull();
+    expect(graphWithToken()->message('graph-1'))->toBeNull();
 });
 
 it('lists what is attached to a message without fetching the files', function (): void {
@@ -83,7 +82,7 @@ it('lists what is attached to a message without fetching the files', function ()
         ['name' => 'An attachment with no id'],
     ]])]);
 
-    expect(MicrosoftGraph::withToken('access-token')->attachments('graph-1'))->toBe([
+    expect(graphWithToken()->attachments('graph-1'))->toBe([
         ['id' => 'file-1', 'name' => 'quote.pdf', 'content_type' => 'application/pdf', 'size' => 1200, 'is_file' => true, 'is_inline' => false],
         ['id' => 'file-2', 'name' => 'logo.png', 'content_type' => 'image/png', 'size' => 300, 'is_file' => true, 'is_inline' => true],
         ['id' => 'item-1', 'name' => 'Forwarded message', 'content_type' => null, 'size' => 4000, 'is_file' => false, 'is_inline' => false],
@@ -95,28 +94,28 @@ it('lists what is attached to a message without fetching the files', function ()
 it('fetches a file attached to a message as it is', function (): void {
     Http::fake(['graph.microsoft.com/v1.0/me/messages/graph-1/attachments/file-1/$value' => Http::response("\x89PNG\r\n")]);
 
-    expect(MicrosoftGraph::withToken('access-token')->attachmentContents('graph-1', 'file-1'))->toBe("\x89PNG\r\n");
+    expect(graphWithToken()->attachmentContents('graph-1', 'file-1'))->toBe("\x89PNG\r\n");
 });
 
 it('says why a file attached to a message could not be fetched', function (): void {
     Http::fake(['graph.microsoft.com/v1.0/me/messages/graph-1/attachments/file-1/$value' => Http::response(['error' => ['code' => 'ErrorItemNotFound', 'message' => 'The specified object was not found in the store.']], 404)]);
 
-    expect(fn () => MicrosoftGraph::withToken('access-token')->attachmentContents('graph-1', 'file-1'))
-        ->toThrow(CouldNotReachMailbox::class, 'The specified object was not found in the store.');
+    expect(fn () => graphWithToken()->attachmentContents('graph-1', 'file-1'))
+        ->toThrow(CouldNotReachConnector::class, 'The specified object was not found in the store.');
 });
 
 it('passes on why Microsoft refused', function (): void {
     Http::fake(['graph.microsoft.com/v1.0/me/mailFolders/inbox*' => Http::response(['error' => ['code' => 'ErrorAccessDenied', 'message' => 'Access is denied.']], 403)]);
 
-    expect(fn () => MicrosoftGraph::withToken('access-token')->inbox())
-        ->toThrow(CouldNotReachMailbox::class, 'Access is denied.');
+    expect(fn () => graphWithToken()->inbox())
+        ->toThrow(CouldNotReachConnector::class, 'Access is denied.');
 });
 
 it('asks for a reconnect when the token is no longer accepted', function (): void {
     Http::fake(['graph.microsoft.com/v1.0/me/mailFolders/inbox*' => Http::response(['error' => ['code' => 'InvalidAuthenticationToken']], 401)]);
 
-    expect(fn () => MicrosoftGraph::withToken('access-token')->inbox())
-        ->toThrow(CouldNotReachMailbox::class, 'Microsoft no longer accepts the sign-in for this mailbox. Connect it again.');
+    expect(fn () => graphWithToken()->inbox())
+        ->toThrow(CouldNotReachConnector::class, 'Microsoft no longer accepts the sign-in for this connector. Connect it again.');
 });
 
 it('tries again when Microsoft is busy, then reads the mailbox', function (): void {
@@ -125,7 +124,7 @@ it('tries again when Microsoft is busy, then reads the mailbox', function (): vo
         ->push(['error' => ['code' => 'serviceNotAvailable']], 503)
         ->push(['id' => 'inbox-id'])]);
 
-    expect(MicrosoftGraph::withToken('access-token')->inbox())->toBe(['id' => 'inbox-id']);
+    expect(graphWithToken()->inbox())->toBe(['id' => 'inbox-id']);
 
     Http::assertSentCount(2);
 });
@@ -134,8 +133,8 @@ it('gives up for now when Microsoft stays unavailable', function (Closure $respo
     Sleep::fake();
     Http::fake(['graph.microsoft.com/v1.0/me/mailFolders/inbox*' => $response()]);
 
-    expect(fn () => MicrosoftGraph::withToken('access-token')->inbox())
-        ->toThrow(CouldNotReachMailbox::class, 'Microsoft could not be reached. It will be tried again.');
+    expect(fn () => graphWithToken()->inbox())
+        ->toThrow(CouldNotReachConnector::class, 'Microsoft could not be reached. It will be tried again.');
 
     Http::assertSentCount(3);
 })->with([

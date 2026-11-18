@@ -3,9 +3,9 @@
 declare(strict_types=1);
 
 use App\Attachment\AttachmentEloquentModel;
-use App\Mailbox\Actions\GetMailboxAccessToken;
+use App\Connector\ConnectorEloquentModel;
+use App\Connector\Exceptions\CouldNotReachConnector;
 use App\Mailbox\Actions\SyncMailbox;
-use App\Mailbox\Exceptions\CouldNotReachMailbox;
 use App\Mailbox\Mailbox;
 use App\Mailbox\MailboxEloquentModel;
 use App\MailboxMessage\MailboxMessageEloquentModel;
@@ -29,7 +29,7 @@ const INBOX_MESSAGES = 'graph.microsoft.com/v1.0/me/mailFolders/inbox/messages*'
 function mailboxToSync(array $attributes = []): Mailbox
 {
     $mailbox = Mailbox::fromEloquentModel(MailboxEloquentModel::factory()->create($attributes));
-    GetMailboxAccessToken::remember($mailbox, 'access-token', 3600);
+    rememberMailboxToken($mailbox);
 
     return $mailbox;
 }
@@ -82,7 +82,7 @@ it('looks a little way back past the last read, and fetches only what it has not
     Http::preventStrayRequests();
     travelTo('2026-11-18 01:05:00');
     $mailbox = mailboxToSync(['created_at' => '2026-11-18 00:00:00', 'synced_through' => '2026-11-18 01:00:00']);
-    MailboxMessageEloquentModel::factory()->create(['mailbox_id' => $mailbox->getId()->toString(), 'microsoft_id' => 'graph-1']);
+    MailboxMessageEloquentModel::factory()->create(['mailbox_id' => $mailbox->getId()->toString(), 'external_id' => 'graph-1']);
     Http::fake([
         INBOX_MESSAGES => Http::response(['value' => [listed('graph-1', '2026-11-18T00:55:00Z'), listed('graph-2')]]),
         'graph.microsoft.com/v1.0/me/messages/graph-2*' => Http::response(graphMessage(['id' => 'graph-2'])),
@@ -152,7 +152,7 @@ it('keeps its place and says why when Microsoft cannot be reached', function ():
     expect($model->last_error)->toBe('Access is denied.')
         ->and($model->last_synced_at)->toBeNull()
         ->and($model->synced_through?->equalTo($synced))->toBeTrue()
-        ->and($model->status)->toBe('connected');
+        ->and(ConnectorEloquentModel::query()->withoutGlobalScopes()->sole()->status)->toBe('connected');
 });
 
 it('skips drafts and messages that have gone', function (): void {
@@ -186,7 +186,7 @@ it('reports a message it cannot take in and carries on with the rest', function 
 
     expect(SyncMailbox::fromMailbox($mailbox))->toBe(1)
         ->and(TicketEloquentModel::query()->withoutGlobalScopes()->pluck('title')->all())->toBe(['Printer offline'])
-        ->and(MailboxMessageEloquentModel::query()->withoutGlobalScopes()->pluck('microsoft_id')->all())->toBe(['graph-2'])
+        ->and(MailboxMessageEloquentModel::query()->withoutGlobalScopes()->pluck('external_id')->all())->toBe(['graph-2'])
         ->and(MailboxEloquentModel::query()->withoutGlobalScopes()->sole()->last_synced_at)->not->toBeNull();
 
     Exceptions::assertReported(fn (RuntimeException $exception): bool => $exception->getMessage() === 'Could not save the ticket.');
@@ -232,7 +232,7 @@ it('still opens the ticket, and reports it, when the attachments cannot be fetch
         ->and(AttachmentEloquentModel::query()->withoutGlobalScopes()->exists())->toBeFalse()
         ->and(MailboxEloquentModel::query()->withoutGlobalScopes()->sole()->last_error)->toBeNull();
 
-    Exceptions::assertReported(fn (CouldNotReachMailbox $exception): bool => $exception->getMessage() === 'Access is denied.');
+    Exceptions::assertReported(fn (CouldNotReachConnector $exception): bool => $exception->getMessage() === 'Access is denied.');
 });
 
 it('does not read a mailbox that needs reconnecting', function (): void {

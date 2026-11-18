@@ -39,10 +39,9 @@ use App\Environment\Controllers\RevealEnvironmentVariableController;
 use App\Environment\Controllers\ShowEnvironmentController;
 use App\Environment\Controllers\StoreEnvironmentVariableController;
 use App\Environment\Controllers\UpdateEnvironmentVariableController;
-use App\Mailbox\Controllers\ConnectMailboxController;
 use App\Mailbox\Controllers\DeleteMailboxController;
-use App\Mailbox\Controllers\HandleMailboxCallbackController;
 use App\Mailbox\Controllers\ShowEmailSettingsController;
+use App\Mailbox\Controllers\StoreMailboxController;
 use App\Mailbox\Controllers\SyncMailboxController;
 use App\Mailbox\Controllers\UpdateMailboxController;
 use App\Team\Controllers\EditTeamController;
@@ -121,8 +120,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('settings/connectors/{connector}', DeleteConnectorController::class)->whereUuid('connector')->name('connectors.destroy');
 
     Route::get('settings/email', ShowEmailSettingsController::class)->name('mailboxes.index');
-    Route::get('settings/email/connect', ConnectMailboxController::class)->name('mailboxes.connect');
-    Route::get('settings/email/callback', HandleMailboxCallbackController::class)->name('mailboxes.callback');
+    Route::post('settings/email/mailboxes', StoreMailboxController::class)->name('mailboxes.store');
     Route::put('settings/email/mailboxes/{mailbox}', UpdateMailboxController::class)->whereUuid('mailbox')->name('mailboxes.update');
     Route::delete('settings/email/mailboxes/{mailbox}', DeleteMailboxController::class)->whereUuid('mailbox')->name('mailboxes.destroy');
     Route::post('settings/email/mailboxes/{mailbox}/sync', SyncMailboxController::class)->whereUuid('mailbox')->name('mailboxes.sync');

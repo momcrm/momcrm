@@ -4,15 +4,17 @@ declare(strict_types=1);
 
 namespace App\Mailbox\Factories;
 
+use App\Connector\ConnectorEloquentModel;
+use App\Connector\Factories\ConnectorFactory;
 use App\Mailbox\MailboxEloquentModel;
-use App\Mailbox\MailboxStatusEnum;
 use App\Mailbox\Properties\Address;
 use App\Mailbox\Properties\AutoCreateTickets;
+use App\Mailbox\Properties\ConnectorId;
 use App\Mailbox\Properties\IsShared;
-use App\Mailbox\Properties\Status;
 use App\Mailbox\Properties\SyncedThrough;
 use App\Mailbox\Properties\TeamId;
 use App\Team\TeamEloquentModel;
+use Closure;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -29,11 +31,10 @@ final class MailboxFactory extends Factory
     {
         return [
             TeamId::getDatabaseTableColumnName() => TeamEloquentModel::factory(),
+            ConnectorId::getDatabaseTableColumnName() => self::connector(ConnectorEloquentModel::factory()),
             Address::getDatabaseTableColumnName() => fake()->unique()->safeEmail(),
             IsShared::getDatabaseTableColumnName() => false,
-            Status::getDatabaseTableColumnName() => MailboxStatusEnum::Connected->value,
             AutoCreateTickets::getDatabaseTableColumnName() => true,
-            MailboxEloquentModel::REFRESH_TOKEN => 'refresh-token',
             SyncedThrough::getDatabaseTableColumnName() => now(),
         ];
     }
@@ -43,8 +44,23 @@ final class MailboxFactory extends Factory
         return $this->state([IsShared::getDatabaseTableColumnName() => true]);
     }
 
+    /**
+     * A mailbox whose connector's sign-in is no longer accepted.
+     */
     public function needsReconnect(): static
     {
-        return $this->state([Status::getDatabaseTableColumnName() => MailboxStatusEnum::NeedsReconnect->value]);
+        return $this->state([
+            ConnectorId::getDatabaseTableColumnName() => self::connector(ConnectorEloquentModel::factory()->needsReconnect()),
+        ]);
+    }
+
+    /**
+     * A connector in the mailbox's own team, made once the team is known.
+     *
+     * @return Closure(array<string, mixed>): string
+     */
+    private static function connector(ConnectorFactory $factory): Closure
+    {
+        return fn (array $attributes): string => $factory->createOne(['team_id' => $attributes[TeamId::getDatabaseTableColumnName()]])->id;
     }
 }

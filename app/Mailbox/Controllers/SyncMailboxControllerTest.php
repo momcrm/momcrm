@@ -23,7 +23,7 @@ it('queues a read of the mailbox', function (): void {
     Queue::assertPushed(fn (SyncMailboxJob $job): bool => $job->mailboxId === $mailbox->id);
 });
 
-it('asks for a reconnect first when the mailbox needs one', function (): void {
+it('asks for a reconnect first when the mailbox\'s connector needs one', function (): void {
     $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
     $mailbox = MailboxEloquentModel::factory()->needsReconnect()->create(['team_id' => $owner->current_team_id, 'address' => 'support@acme.test']);
     Queue::fake([SyncMailboxJob::class]);
@@ -31,7 +31,7 @@ it('asks for a reconnect first when the mailbox needs one', function (): void {
     actingAs($owner)
         ->post(route('mailboxes.sync', $mailbox->id))
         ->assertRedirectToRoute('mailboxes.index')
-        ->assertInertiaFlash('toast', ['type' => 'error', 'message' => 'Reconnect support@acme.test before checking it for mail.']);
+        ->assertInertiaFlash('toast', ['type' => 'error', 'message' => 'Reconnect the account support@acme.test goes through before checking it for mail.']);
 
     Queue::assertNotPushed(SyncMailboxJob::class);
 });

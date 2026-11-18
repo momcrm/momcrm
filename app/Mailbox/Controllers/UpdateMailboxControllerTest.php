@@ -25,7 +25,7 @@ it('saves where a mailbox\'s tickets go and whether it opens them', function ():
         ->group_id->toBe($group->id)
         ->auto_create_tickets->toBeFalse()
         ->address->toBe('support@acme.test')
-        ->refresh_token->toBe('refresh-token');
+        ->connector_id->toBe($mailbox->connector_id);
 });
 
 it('clears the group', function (): void {

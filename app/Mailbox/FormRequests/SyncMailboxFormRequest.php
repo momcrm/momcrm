@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Mailbox\FormRequests;
 
+use App\Connector\Actions\FindConnector;
 use App\Mailbox\Actions\FindMailbox;
 use App\Mailbox\Exceptions\CouldNotFindMailbox;
 use App\Mailbox\Jobs\SyncMailboxJob;
@@ -63,8 +64,8 @@ final class SyncMailboxFormRequest extends FormRequest
     {
         $address = $this->mailbox->getAddress()->toString();
 
-        if (! $this->mailbox->isConnected()) {
-            Inertia::flash('toast', ['type' => 'error', 'message' => __('Reconnect :address before checking it for mail.', ['address' => $address])]);
+        if (! FindConnector::byId($this->mailbox->getConnectorId()->toNullableString())->isConnected()) {
+            Inertia::flash('toast', ['type' => 'error', 'message' => __('Reconnect the account :address goes through before checking it for mail.', ['address' => $address])]);
 
             return to_route('mailboxes.index');
         }

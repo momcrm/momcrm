@@ -2,7 +2,12 @@
 
 use App\Choice\Actions\FindChoice;
 use App\Choice\ChoiceListEnum;
+use App\Connector\Actions\FindConnector;
+use App\Connector\Actions\GetConnectorAccessToken;
 use App\Environment\EnvironmentFile;
+use App\Mailbox\Mailbox;
+use App\Mailbox\MailboxEloquentModel;
+use App\Mailbox\MicrosoftGraph;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
 use Tests\TestCase;
@@ -64,6 +69,28 @@ function something()
 function ticketStatusId(string $teamId, string $name): string
 {
     return FindChoice::byNameForTeam($teamId, ChoiceListEnum::TicketStatus, $name)->getId()->toString();
+}
+
+/**
+ * Gives a mailbox's connector an access token that is still good, so reading
+ * or sending through it does not first ask the service for one.
+ */
+function rememberMailboxToken(Mailbox|MailboxEloquentModel $mailbox, string $token = 'access-token'): void
+{
+    $connectorId = $mailbox instanceof Mailbox ? $mailbox->getConnectorId()->toString() : $mailbox->connector_id;
+
+    GetConnectorAccessToken::remember(FindConnector::byId($connectorId), $token, 3600);
+}
+
+/**
+ * Microsoft Graph for a new mailbox whose connector already has a token.
+ */
+function graphWithToken(): MicrosoftGraph
+{
+    $mailbox = MailboxEloquentModel::factory()->create();
+    rememberMailboxToken($mailbox);
+
+    return MicrosoftGraph::forMailbox(Mailbox::fromEloquentModel($mailbox));
 }
 
 /**

@@ -2,27 +2,23 @@
 
 declare(strict_types=1);
 
-use App\Mailbox\Actions\GetMailboxAccessToken;
-use App\Mailbox\Exceptions\CouldNotReachMailbox;
-use App\Mailbox\Mailbox;
+use App\Connector\ConnectorEloquentModel;
 use App\Mailbox\MailboxEloquentModel;
 use App\User\UserEloquentModel;
 
 use function Pest\Laravel\actingAs;
 
-it('disconnects a mailbox and forgets its access', function (): void {
+it('removes a mailbox and leaves its connector connected', function (): void {
     $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
-    $model = MailboxEloquentModel::factory()->create(['team_id' => $owner->current_team_id, 'address' => 'support@acme.test']);
-    $mailbox = Mailbox::fromEloquentModel($model);
-    GetMailboxAccessToken::remember($mailbox, 'access-token', 3600);
+    $mailbox = MailboxEloquentModel::factory()->create(['team_id' => $owner->current_team_id, 'address' => 'support@acme.test']);
 
     actingAs($owner)
-        ->delete(route('mailboxes.destroy', $model->id))
+        ->delete(route('mailboxes.destroy', $mailbox->id))
         ->assertRedirectToRoute('mailboxes.index')
-        ->assertInertiaFlash('toast', ['type' => 'success', 'message' => 'support@acme.test disconnected.']);
+        ->assertInertiaFlash('toast', ['type' => 'success', 'message' => 'support@acme.test removed.']);
 
-    expect($model->fresh())->toBeNull()
-        ->and(fn () => GetMailboxAccessToken::forMailbox($mailbox))->toThrow(CouldNotReachMailbox::class);
+    expect($mailbox->fresh())->toBeNull()
+        ->and(ConnectorEloquentModel::query()->withoutGlobalScopes()->find($mailbox->connector_id)?->status)->toBe('connected');
 });
 
 it('forbids members and hides other teams\' mailboxes', function (): void {

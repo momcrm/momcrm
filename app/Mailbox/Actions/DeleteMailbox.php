@@ -9,8 +9,8 @@ use App\Mailbox\MailboxEloquentModel;
 use App\Team\Scopes\CurrentTeamScope;
 
 /**
- * Disconnects a mailbox: its sign-in is forgotten and it is no longer read.
- * Tickets it already opened stay.
+ * Removes a mailbox: it is no longer read or sent from. Its connector and
+ * the tickets it already opened stay.
  */
 final readonly class DeleteMailbox
 {
@@ -24,8 +24,6 @@ final readonly class DeleteMailbox
             ->withoutGlobalScope(CurrentTeamScope::class)
             ->find($this->mailbox->getId()->toString())
             ?->delete();
-
-        GetMailboxAccessToken::forget($this->mailbox);
     }
 
     public static function fromMailbox(Mailbox $mailbox): void

@@ -14,7 +14,7 @@ it('reads a message from Microsoft with addresses in lower case and ids without 
         ],
     ]));
 
-    expect($message->getMicrosoftId()->toString())->toBe('graph-1')
+    expect($message->getExternalId()->toString())->toBe('graph-1')
         ->and($message->getInternetMessageId()->toString())->toBe('message-1@acme.test')
         ->and($message->getInReplyTo()->toString())->toBe('reply-2@helpdesk.test')
         ->and($message->getReferenceIds()->toArray())->toBe(['message-1@acme.test', 'reply-2@helpdesk.test'])

@@ -63,7 +63,7 @@ final class DeleteMailboxFormRequest extends FormRequest
     {
         DeleteMailbox::fromMailbox($this->mailbox);
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __(':address disconnected.', ['address' => $this->mailbox->getAddress()->toString()])]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __(':address removed.', ['address' => $this->mailbox->getAddress()->toString()])]);
 
         return to_route('mailboxes.index');
     }

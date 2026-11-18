@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use App\Attachment\AttachmentEloquentModel;
-use App\Mailbox\MicrosoftGraph;
 use App\MailboxMessage\Actions\SaveMessageAttachments;
 use App\MailboxMessage\MailboxMessage;
 use App\MailboxMessage\MailboxMessageEloquentModel;
@@ -40,7 +39,7 @@ function emailOnTicket(): MailboxMessage
     return MailboxMessage::fromEloquentModel(MailboxMessageEloquentModel::factory()->create([
         'team_id' => $ticket->team_id,
         'ticket_id' => $ticket->id,
-        'microsoft_id' => 'graph-1',
+        'external_id' => 'graph-1',
         'from_name' => 'Sam Lee',
     ]));
 }
@@ -61,7 +60,7 @@ it('saves the files on the ticket, leaving out what is not a file anyone attache
         ]]),
     ]);
 
-    expect(SaveMessageAttachments::fromMessage(MicrosoftGraph::withToken('access-token'), $message))->toBe(2);
+    expect(SaveMessageAttachments::fromMessage(graphWithToken(), $message))->toBe(2);
 
     $saved = AttachmentEloquentModel::query()->withoutGlobalScopes()->orderBy('name')->get();
 
@@ -84,7 +83,7 @@ it('saves no more files than people may upload at once', function (): void {
         ]),
     ]);
 
-    expect(SaveMessageAttachments::fromMessage(MicrosoftGraph::withToken('access-token'), $message))->toBe(SaveMessageAttachments::MAX_FILES)
+    expect(SaveMessageAttachments::fromMessage(graphWithToken(), $message))->toBe(SaveMessageAttachments::MAX_FILES)
         ->and(AttachmentEloquentModel::query()->withoutGlobalScopes()->count())->toBe(SaveMessageAttachments::MAX_FILES);
 
     Http::assertSentCount(SaveMessageAttachments::MAX_FILES + 1);
@@ -95,7 +94,7 @@ it('asks for nothing when the email is on no ticket', function (): void {
     Http::fake();
     $message = MailboxMessage::fromEloquentModel(MailboxMessageEloquentModel::factory()->create(['status' => 'ignored']));
 
-    expect(SaveMessageAttachments::fromMessage(MicrosoftGraph::withToken('access-token'), $message))->toBe(0);
+    expect(SaveMessageAttachments::fromMessage(graphWithToken(), $message))->toBe(0);
 
     Http::assertNothingSent();
 });
