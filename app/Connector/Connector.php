@@ -16,13 +16,14 @@ use App\Connector\Properties\Status;
 use App\Connector\Properties\TeamId;
 use App\Connector\Properties\Type;
 use App\Connector\Properties\UpdatedAt;
-use App\Connector\Sdk\ConnectorRegistry;
-use App\Connector\Sdk\ConnectorType;
-use App\Connector\Sdk\ConnectsByForm;
-use App\Connector\Sdk\ConnectsBySignIn;
-use App\Connector\Sdk\SignInOption;
 use App\Shared\Types;
 use Illuminate\Support\Collection;
+use Mom\Connectors\Capability;
+use Mom\Connectors\ConnectorRegistry;
+use Mom\Connectors\ConnectorType;
+use Mom\Connectors\ConnectsByForm;
+use Mom\Connectors\ConnectsBySignIn;
+use Mom\Connectors\SignInOption;
 use Mom\Data\AbstractData;
 use Mom\Data\AbstractValue;
 
@@ -90,7 +91,7 @@ final class Connector extends AbstractData
 
     public function hasCapability(ConnectorCapabilityEnum $capability): bool
     {
-        return $this->connectorType()->provides($capability);
+        return $this->connectorType()->provides($capability->contract());
     }
 
     /**
@@ -136,7 +137,7 @@ final class Connector extends AbstractData
             'name' => $this->getName()->toString(),
             'account' => $this->getAccount()->toString(),
             'status' => $this->getStatus()->toEnum()->value,
-            'capabilities' => array_map(fn (ConnectorCapabilityEnum $capability): string => $capability->label(), $type->capabilities()),
+            'capabilities' => array_map(fn (Capability $capability): string => $capability->label, ConnectorRegistry::instance()->capabilitiesOf($type)),
             'options' => $this->options(),
             'last_error' => $this->getLastError()->toNullableString(),
             'uses_sign_in' => $type instanceof ConnectsBySignIn,

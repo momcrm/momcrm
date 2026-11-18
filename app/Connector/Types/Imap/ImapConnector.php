@@ -6,14 +6,14 @@ namespace App\Connector\Types\Imap;
 
 use App\Connector\Connector;
 use App\Connector\Exceptions\CouldNotReachConnector;
-use App\Connector\Sdk\ConnectedAccount;
-use App\Connector\Sdk\ConnectorType;
-use App\Connector\Sdk\ConnectsByForm;
-use App\Connector\Sdk\CouldNotConnect;
-use App\Connector\Sdk\Field;
-use App\Connector\Sdk\PublicHost;
 use App\Mailbox\Contracts\MailClient;
 use App\Mailbox\Contracts\ProvidesMail;
+use Mom\Connectors\ConnectedAccount;
+use Mom\Connectors\ConnectorType;
+use Mom\Connectors\ConnectsByForm;
+use Mom\Connectors\CouldNotConnect;
+use Mom\Connectors\Field;
+use Mom\Connectors\PublicHost;
 
 /**
  * A mailbox on any mail server, connected by typing in where its IMAP and

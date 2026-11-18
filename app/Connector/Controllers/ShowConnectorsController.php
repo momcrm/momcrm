@@ -6,8 +6,6 @@ namespace App\Connector\Controllers;
 
 use App\Connector\Actions\FindConnector;
 use App\Connector\Connector;
-use App\Connector\Sdk\ConnectorRegistry;
-use App\Connector\Sdk\ConnectorType;
 use App\Mailbox\Actions\FindMailbox;
 use App\Mailbox\Mailbox;
 use App\Team\Actions\FindTeam;
@@ -17,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
+use Mom\Connectors\ConnectorRegistry;
 
 /**
  * The outside accounts the team has connected, and the kinds it can add, for
@@ -52,10 +51,7 @@ final class ShowConnectorsController
                 ])
                 ->values()
                 ->all(),
-            'types' => array_map(
-                fn (ConnectorType $type): array => $type->toCatalogItem(),
-                ConnectorRegistry::instance()->all(),
-            ),
+            'types' => ConnectorRegistry::instance()->catalog(),
         ]);
     }
 }

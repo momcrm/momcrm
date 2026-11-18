@@ -10,7 +10,8 @@ use App\Shared\Traits\Enum;
 /**
  * What a connector can be used for. A feature asks for the connectors that
  * have the capability it needs, and never for a particular type. A new
- * capability is a case here and a contract for connector types to implement.
+ * capability is a case here and a contract for connector types to implement;
+ * AppServiceProvider registers each case with the connector registry.
  */
 enum ConnectorCapabilityEnum: string
 {

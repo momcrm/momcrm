@@ -9,7 +9,7 @@ use App\Attachment\Attachment;
 use App\Attachment\AttachmentPolicy;
 use App\Comment\Comment;
 use App\Comment\CommentPolicy;
-use App\Connector\Sdk\ConnectorRegistry;
+use App\Connector\ConnectorCapabilityEnum;
 use App\Connector\Types\Google\GoogleConnector;
 use App\Connector\Types\Imap\ImapConnector;
 use App\Connector\Types\Imap\MailServers;
@@ -65,6 +65,8 @@ use Inertia\ExceptionResponse;
 use Inertia\Inertia;
 use Laravel\Passkeys\Http\Requests\PasskeyVerificationRequest;
 use Laravel\Passkeys\Passkeys;
+use Mom\Connectors\Capability;
+use Mom\Connectors\ConnectorRegistry;
 use SocialiteProviders\Manager\SocialiteWasCalled;
 use SocialiteProviders\Microsoft\Provider as MicrosoftProvider;
 
@@ -77,11 +79,14 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(PasskeyVerificationRequest::class, PasskeyVerificationFormRequest::class);
         $this->app->bind(MailServers::class, WebklexMailServers::class);
-        $this->app->singleton(ConnectorRegistry::class, fn (): ConnectorRegistry => new ConnectorRegistry(
-            new MicrosoftConnector,
-            new GoogleConnector,
-            new ImapConnector,
-        ));
+        $this->callAfterResolving(ConnectorRegistry::class, function (ConnectorRegistry $registry): void {
+            $registry
+                ->capability(...array_map(
+                    fn (ConnectorCapabilityEnum $capability): Capability => new Capability($capability->value, $capability->label(), $capability->contract()),
+                    ConnectorCapabilityEnum::cases(),
+                ))
+                ->register(new MicrosoftConnector, new GoogleConnector, new ImapConnector);
+        });
         $this->app->bind(EnvironmentFile::class, fn (): EnvironmentFile => new EnvironmentFile(
             path: $this->app->environmentFilePath(),
             backupDirectory: storage_path('app/private/environment-backups'),

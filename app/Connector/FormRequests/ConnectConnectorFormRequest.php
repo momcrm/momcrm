@@ -6,9 +6,6 @@ namespace App\Connector\FormRequests;
 
 use App\Connector\Actions\FindConnector;
 use App\Connector\ConnectorSession;
-use App\Connector\Sdk\ConnectorRegistry;
-use App\Connector\Sdk\ConnectsBySignIn;
-use App\Connector\Sdk\SignInOption;
 use App\Team\Actions\FindTeam;
 use App\Team\Exceptions\CouldNotViewTeam;
 use App\Team\Team;
@@ -17,6 +14,9 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 use Laravel\Socialite\Socialite;
 use Laravel\Socialite\Two\AbstractProvider;
+use Mom\Connectors\ConnectorRegistry;
+use Mom\Connectors\ConnectsBySignIn;
+use Mom\Connectors\SignInOption;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 

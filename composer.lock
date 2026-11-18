@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ae9ed4a4dc2a2216398122f9a4e74d9d",
+    "content-hash": "f3160964bd9f668f507f6484c5626b70",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -2838,8 +2838,62 @@
             "published-time": "2026-11-04T13:02:27+00:00"
         },
         {
+            "name": "mom/connectors",
+            "version": "v6.3.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/momphp/connectors.git",
+                "reference": "de095bf5546e8b221eeec197cb99da1820ee8663"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/momphp/connectors/zipball/de095bf5546e8b221eeec197cb99da1820ee8663",
+                "reference": "de095bf5546e8b221eeec197cb99da1820ee8663",
+                "shasum": ""
+            },
+            "require": {
+                "laravel/framework": "^13.30",
+                "php": "^8.4"
+            },
+            "require-dev": {
+                "orchestra/testbench": "^11.0",
+                "pestphp/pest": "^v3.3",
+                "phpstan/phpstan": "^2.1"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Mom\\Connectors\\ConnectorsServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Mom\\Connectors\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Darwin Luague",
+                    "email": "darwinluague9001@gmail.com"
+                }
+            ],
+            "description": "A small SDK for describing the outside accounts a Laravel app connects.",
+            "support": {
+                "issues": "https://github.com/momphp/connectors/issues",
+                "source": "https://github.com/momphp/connectors/tree/v6.3.0"
+            },
+            "time": "2026-11-18T09:29:09+00:00",
+            "published-time": "2026-11-18T09:32:53+00:00"
+        },
+        {
             "name": "mom/data",
-            "version": "v6.2.2",
+            "version": "v6.3.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/momphp/data.git",
@@ -2880,10 +2934,10 @@
             "description": "A simple DTO package.",
             "support": {
                 "issues": "https://github.com/momphp/data/issues",
-                "source": "https://github.com/momphp/data/tree/v6.2.2"
+                "source": "https://github.com/momphp/data/tree/v6.3.0"
             },
             "time": "2026-11-14T04:46:49+00:00",
-            "published-time": "2026-11-14T05:36:59+00:00"
+            "published-time": "2026-11-18T09:31:39+00:00"
         },
         {
             "name": "monolog/monolog",
