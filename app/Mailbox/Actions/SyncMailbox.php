@@ -6,9 +6,9 @@ namespace App\Mailbox\Actions;
 
 use App\Connector\Actions\FindConnector;
 use App\Connector\Exceptions\CouldNotReachConnector;
+use App\Mailbox\Contracts\MailClient;
 use App\Mailbox\Mailbox;
 use App\Mailbox\MailboxEloquentModel;
-use App\Mailbox\MicrosoftGraph;
 use App\Mailbox\Properties\LastError;
 use App\Mailbox\Properties\LastSyncedAt;
 use App\Mailbox\Properties\SyncedThrough;
@@ -24,10 +24,10 @@ use Throwable;
  * Reads the mail that reached a mailbox's inbox since it was last read, and
  * takes in each message that is new.
  *
- * Trouble reaching Microsoft stops the read where it is: the mailbox keeps its
- * place and the error, and the next read starts over from there. A message we
- * cannot make sense of is our fault, not Microsoft's, so it is reported and
- * skipped and the read carries on.
+ * Trouble reaching the mail service stops the read where it is: the mailbox
+ * keeps its place and the error, and the next read starts over from there. A
+ * message we cannot make sense of is our fault, not the service's, so it is
+ * reported and skipped and the read carries on.
  */
 final readonly class SyncMailbox
 {
@@ -60,8 +60,8 @@ final readonly class SyncMailbox
         $taken = 0;
 
         try {
-            $graph = MicrosoftGraph::forMailbox($this->mailbox);
-            $listed = $graph->inboxMessagesSince($this->since(), self::MAX_MESSAGES);
+            $client = ResolveMailClient::forMailbox($this->mailbox);
+            $listed = $client->inboxMessagesSince($this->since(), self::MAX_MESSAGES);
             $known = FindMailboxMessage::knownExternalIds(
                 $this->mailbox->getId()->toString(),
                 $this->mailbox->getTeamId()->toString(),
@@ -73,9 +73,9 @@ final readonly class SyncMailbox
                     continue;
                 }
 
-                $message = $graph->message($item['id']);
+                $message = $client->message($item['id']);
 
-                if ($message !== null && $this->takeIn($graph, $message)) {
+                if ($message !== null && $this->takeIn($client, $message)) {
                     $taken++;
                 }
             }
@@ -129,26 +129,20 @@ final readonly class SyncMailbox
      * saved on its ticket afterwards, and are the one thing not tried again:
      * if they cannot be fetched the ticket still stands, and the failure is
      * reported.
-     *
-     * @param  array<string, mixed>  $message
      */
-    private function takeIn(MicrosoftGraph $graph, array $message): bool
+    private function takeIn(MailClient $client, MailboxMessage $message): bool
     {
-        if (($message['isDraft'] ?? false) === true) {
-            return false;
-        }
-
         try {
-            $kept = ProcessInboundMessage::fromMessage($this->mailbox, MailboxMessage::fromMicrosoftGraph($message));
+            $kept = ProcessInboundMessage::fromMessage($this->mailbox, $message);
         } catch (Throwable $exception) {
             report($exception);
 
             return false;
         }
 
-        if ($kept->isNotNull() && $kept->getTicketId()->isNotNull() && ($message['hasAttachments'] ?? false) === true) {
+        if ($kept->isNotNull() && $kept->getTicketId()->isNotNull() && $message->getHasAttachments()->toBoolean()) {
             try {
-                SaveMessageAttachments::fromMessage($graph, $kept);
+                SaveMessageAttachments::fromMessage($client, $kept);
             } catch (Throwable $exception) {
                 report($exception);
             }

@@ -3,9 +3,6 @@
 declare(strict_types=1);
 
 use App\Connector\Exceptions\CouldNotReachConnector;
-use App\Mailbox\Mailbox;
-use App\Mailbox\MailboxEloquentModel;
-use App\Mailbox\MicrosoftGraph;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
@@ -13,25 +10,6 @@ use Illuminate\Support\Sleep;
 
 beforeEach(function (): void {
     Http::preventStrayRequests();
-});
-
-it('reads a person\'s own mailbox as "me" with its connector\'s token', function (): void {
-    $mailbox = Mailbox::fromEloquentModel(MailboxEloquentModel::factory()->create());
-    rememberMailboxToken($mailbox);
-    Http::fake(['graph.microsoft.com/v1.0/me/mailFolders/inbox*' => Http::response(['id' => 'inbox-id'])]);
-
-    expect(MicrosoftGraph::forMailbox($mailbox)->inbox())->toBe(['id' => 'inbox-id']);
-
-    Http::assertSent(fn (Request $request): bool => $request->hasHeader('Authorization', 'Bearer access-token')
-        && $request->hasHeader('Prefer', 'IdType="ImmutableId"'));
-});
-
-it('reads a shared mailbox by its address', function (): void {
-    $mailbox = Mailbox::fromEloquentModel(MailboxEloquentModel::factory()->shared()->create(['address' => 'support@acme.test']));
-    rememberMailboxToken($mailbox);
-    Http::fake(['graph.microsoft.com/v1.0/users/support%40acme.test/mailFolders/inbox*' => Http::response(['id' => 'inbox-id'])]);
-
-    expect(MicrosoftGraph::forMailbox($mailbox)->inbox())->toBe(['id' => 'inbox-id']);
 });
 
 it('lists the inbox oldest first from a time, following pages until it has enough', function (): void {

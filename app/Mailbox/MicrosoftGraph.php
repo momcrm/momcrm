@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Mailbox;
 
-use App\Connector\Actions\FindConnector;
 use App\Connector\Actions\GetConnectorAccessToken;
 use App\Connector\Connector;
 use App\Connector\ConnectorTypeEnum;
@@ -43,23 +42,6 @@ final readonly class MicrosoftGraph
     public static function forConnector(Connector $connector, ?string $sharedAddress = null): self
     {
         return new self(GetConnectorAccessToken::forConnector($connector), $sharedAddress);
-    }
-
-    /**
-     * @throws CouldNotReachConnector
-     */
-    public static function forMailbox(Mailbox $mailbox): self
-    {
-        $connector = FindConnector::byId($mailbox->getConnectorId()->toNullableString());
-
-        if ($connector->isNull()) {
-            throw CouldNotReachConnector::needsReconnect(ConnectorTypeEnum::Microsoft);
-        }
-
-        return self::forConnector(
-            $connector,
-            $mailbox->getIsShared()->toBoolean() ? $mailbox->getAddress()->toString() : null,
-        );
     }
 
     /**

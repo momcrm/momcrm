@@ -60,7 +60,7 @@ it('saves the files on the ticket, leaving out what is not a file anyone attache
         ]]),
     ]);
 
-    expect(SaveMessageAttachments::fromMessage(graphWithToken(), $message))->toBe(2);
+    expect(SaveMessageAttachments::fromMessage(mailClientWithToken(), $message))->toBe(2);
 
     $saved = AttachmentEloquentModel::query()->withoutGlobalScopes()->orderBy('name')->get();
 
@@ -83,7 +83,7 @@ it('saves no more files than people may upload at once', function (): void {
         ]),
     ]);
 
-    expect(SaveMessageAttachments::fromMessage(graphWithToken(), $message))->toBe(SaveMessageAttachments::MAX_FILES)
+    expect(SaveMessageAttachments::fromMessage(mailClientWithToken(), $message))->toBe(SaveMessageAttachments::MAX_FILES)
         ->and(AttachmentEloquentModel::query()->withoutGlobalScopes()->count())->toBe(SaveMessageAttachments::MAX_FILES);
 
     Http::assertSentCount(SaveMessageAttachments::MAX_FILES + 1);
@@ -94,7 +94,7 @@ it('asks for nothing when the email is on no ticket', function (): void {
     Http::fake();
     $message = MailboxMessage::fromEloquentModel(MailboxMessageEloquentModel::factory()->create(['status' => 'ignored']));
 
-    expect(SaveMessageAttachments::fromMessage(graphWithToken(), $message))->toBe(0);
+    expect(SaveMessageAttachments::fromMessage(mailClientWithToken(), $message))->toBe(0);
 
     Http::assertNothingSent();
 });
