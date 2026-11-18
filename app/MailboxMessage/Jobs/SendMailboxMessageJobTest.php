@@ -2,8 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Mailbox\Actions\GetMailboxAccessToken;
-use App\Mailbox\Mailbox;
 use App\Mailbox\MailboxEloquentModel;
 use App\MailboxMessage\Jobs\SendMailboxMessageJob;
 use App\MailboxMessage\MailboxMessageEloquentModel;
@@ -13,7 +11,7 @@ use Illuminate\Support\Facades\Http;
 it('sends the reply it was queued for', function (): void {
     Http::preventStrayRequests();
     $mailbox = MailboxEloquentModel::factory()->create();
-    GetMailboxAccessToken::remember(Mailbox::fromEloquentModel($mailbox), 'access-token', 3600);
+    rememberMailboxToken($mailbox);
     $ticket = TicketEloquentModel::factory()->create(['team_id' => $mailbox->team_id]);
     $message = MailboxMessageEloquentModel::factory()->outbound()->create(['mailbox_id' => $mailbox->id, 'ticket_id' => $ticket->id, 'status' => 'pending', 'to_recipients' => ['sam@acme.test']]);
     Http::fake([

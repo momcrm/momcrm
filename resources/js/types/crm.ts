@@ -660,6 +660,17 @@ export type Connector = {
     capabilities: string[];
     shared_mailboxes: boolean;
     last_error: string | null;
+    /** The addresses of the mailboxes that go through this connector. */
+    mailboxes: string[];
+};
+
+/** A connected account a mailbox can be added through. */
+export type MailConnector = {
+    id: string;
+    name: string;
+    account: string;
+    type_label: string;
+    shared_mailboxes: boolean;
 };
 
 /** A kind of outside account this installation can connect. */
@@ -670,13 +681,17 @@ export type ConnectorType = {
     supports_shared_mailboxes: boolean;
 };
 
-/** A Microsoft 365 mailbox the team has connected. */
+/** A mailbox whose mail opens tickets, read and sent through a connector. */
 export type Mailbox = {
     id: string;
     address: string;
     display_name: string | null;
     is_shared: boolean;
+    /** How the connector it goes through is doing. */
     status: 'connected' | 'needs_reconnect';
+    connector_id: string;
+    connector_name: string;
+    connector_type: string | null;
     group_id: string | null;
     auto_create_tickets: boolean;
     last_synced_at: string | null;

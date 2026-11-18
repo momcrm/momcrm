@@ -7,6 +7,8 @@ namespace App\Connector\Controllers;
 use App\Connector\Actions\FindConnector;
 use App\Connector\Connector;
 use App\Connector\ConnectorTypeEnum;
+use App\Mailbox\Actions\FindMailbox;
+use App\Mailbox\Mailbox;
 use App\Team\Actions\FindTeam;
 use App\Team\Exceptions\CouldNotViewTeam;
 use Illuminate\Http\Request;
@@ -33,9 +35,18 @@ final class ShowConnectorsController
 
         Gate::authorize('manageConnectors', $team);
 
+        $mailboxes = FindMailbox::allForTeam($team->getId()->toString());
+
         return Inertia::render('settings/connectors', [
             'connectors' => FindConnector::allForTeam($team->getId()->toString())
-                ->map(fn (Connector $connector): array => $connector->toListItem())
+                ->map(fn (Connector $connector): array => [
+                    ...$connector->toListItem(),
+                    'mailboxes' => $mailboxes
+                        ->filter(fn (Mailbox $mailbox): bool => $mailbox->getConnectorId()->toString() === $connector->getId()->toString())
+                        ->map(fn (Mailbox $mailbox): string => $mailbox->getAddress()->toString())
+                        ->values()
+                        ->all(),
+                ])
                 ->values()
                 ->all(),
             'types' => ConnectorTypeEnum::available(),

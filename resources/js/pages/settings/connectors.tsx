@@ -108,6 +108,9 @@ export default function Connectors({
                                             connector.shared_mailboxes
                                                 ? 'Opens shared mailboxes'
                                                 : null,
+                                            connector.mailboxes.length > 0
+                                                ? `Mailboxes: ${connector.mailboxes.join(', ')}`
+                                                : null,
                                         ]
                                             .filter(Boolean)
                                             .join(' · ')}
@@ -138,7 +141,11 @@ export default function Connectors({
                                         trigger="Disconnect"
                                         confirmLabel="Disconnect"
                                         title={`Disconnect ${connector.account}?`}
-                                        description="MomCRM forgets how to reach this account, and whatever uses it stops working."
+                                        description={
+                                            connector.mailboxes.length > 0
+                                                ? `MomCRM forgets how to reach this account, and removes the mailboxes that go through it: ${connector.mailboxes.join(', ')}. Tickets they opened stay.`
+                                                : 'MomCRM forgets how to reach this account.'
+                                        }
                                     />
                                 </div>
                             </li>

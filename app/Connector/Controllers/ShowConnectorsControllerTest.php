@@ -3,13 +3,14 @@
 declare(strict_types=1);
 
 use App\Connector\ConnectorEloquentModel;
+use App\Mailbox\MailboxEloquentModel;
 use App\User\UserEloquentModel;
 use Inertia\Testing\AssertableInertia as Assert;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\get;
 
-it('lists the team\'s connectors without their credentials, and the types it can add', function (): void {
+it('lists the team\'s connectors without their credentials, with their mailboxes and the types it can add', function (): void {
     $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
     $connector = ConnectorEloquentModel::factory()->withSharedMailboxes()->needsReconnect()->create([
         'team_id' => $owner->current_team_id,
@@ -17,6 +18,7 @@ it('lists the team\'s connectors without their credentials, and the types it can
         'account' => 'sam@acme.test',
         'last_error' => 'Connect it again.',
     ]);
+    MailboxEloquentModel::factory()->create(['team_id' => $owner->current_team_id, 'connector_id' => $connector->id, 'address' => 'support@acme.test']);
     ConnectorEloquentModel::factory()->create(['account' => 'other@elsewhere.test']);
     config(['services.microsoft.client_id' => 'id', 'services.microsoft.client_secret' => 'secret']);
 
@@ -37,6 +39,7 @@ it('lists the team\'s connectors without their credentials, and the types it can
                 'capabilities' => ['Email'],
                 'shared_mailboxes' => true,
                 'last_error' => 'Connect it again.',
+                'mailboxes' => ['support@acme.test'],
             ]),
         );
 });

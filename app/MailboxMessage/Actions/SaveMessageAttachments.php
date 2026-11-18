@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\MailboxMessage\Actions;
 
 use App\Attachment\Actions\CreateAttachment;
-use App\Mailbox\Exceptions\CouldNotReachMailbox;
+use App\Connector\Exceptions\CouldNotReachConnector;
 use App\Mailbox\MicrosoftGraph;
 use App\MailboxMessage\MailboxMessage;
 use App\Ticket\TicketEloquentModel;
@@ -30,21 +30,21 @@ final readonly class SaveMessageAttachments
     /**
      * The number of files saved.
      *
-     * @throws CouldNotReachMailbox
+     * @throws CouldNotReachConnector
      */
     public function __invoke(): int
     {
-        $microsoftId = $this->message->getMicrosoftId()->toNullableString();
+        $externalId = $this->message->getExternalId()->toNullableString();
         $ticket = TicketEloquentModel::query()->withoutGlobalScopes()->find($this->message->getTicketId()->toNullableString());
 
-        if ($microsoftId === null || $ticket === null) {
+        if ($externalId === null || $ticket === null) {
             return 0;
         }
 
         $sender = $this->message->getFromName()->toNullableString() ?? $this->message->getFromAddress()->toNullableString();
         $saved = 0;
 
-        foreach ($this->graph->attachments($microsoftId) as $attachment) {
+        foreach ($this->graph->attachments($externalId) as $attachment) {
             if ($saved >= self::MAX_FILES) {
                 break;
             }
@@ -55,7 +55,7 @@ final readonly class SaveMessageAttachments
 
             CreateAttachment::fromContents(
                 $attachment['name'],
-                $this->graph->attachmentContents($microsoftId, $attachment['id']),
+                $this->graph->attachmentContents($externalId, $attachment['id']),
                 $attachment['content_type'],
                 $ticket,
                 $sender,
@@ -68,7 +68,7 @@ final readonly class SaveMessageAttachments
     }
 
     /**
-     * @throws CouldNotReachMailbox
+     * @throws CouldNotReachConnector
      */
     public static function fromMessage(MicrosoftGraph $graph, MailboxMessage $message): int
     {
@@ -76,7 +76,7 @@ final readonly class SaveMessageAttachments
     }
 
     /**
-     * @throws CouldNotReachMailbox
+     * @throws CouldNotReachConnector
      */
     public function handle(): int
     {
@@ -84,7 +84,7 @@ final readonly class SaveMessageAttachments
     }
 
     /**
-     * @throws CouldNotReachMailbox
+     * @throws CouldNotReachConnector
      */
     public function execute(): int
     {

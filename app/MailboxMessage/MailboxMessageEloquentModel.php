@@ -32,7 +32,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $in_reply_to
  * @property string $internet_message_id
  * @property string|null $mailbox_id
- * @property string|null $microsoft_id
+ * @property string|null $external_id
  * @property CarbonImmutable|null $received_at
  * @property array<int, string>|null $reference_ids
  * @property string $status

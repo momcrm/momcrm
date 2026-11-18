@@ -54,7 +54,7 @@ final readonly class ProcessInboundMessage
     {
         $teamId = $this->mailbox->getTeamId()->toString();
         $internetMessageId = $this->message->getInternetMessageId()->toNullableString()
-            ?? InternetMessageId::normalize('microsoft:'.$this->message->getMicrosoftId()->toString());
+            ?? InternetMessageId::normalize("mailbox-{$this->mailbox->getId()->toString()}:{$this->message->getExternalId()->toString()}");
 
         return DB::transaction(function () use ($teamId, $internetMessageId): MailboxMessage {
             if (FindMailboxMessage::byInternetMessageIdForTeam($internetMessageId, $teamId)->isNotNull()) {

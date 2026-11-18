@@ -1,4 +1,4 @@
-import { Head, router, usePage } from '@inertiajs/react';
+import { Form, Head, Link, router, usePage } from '@inertiajs/react';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import ConfirmDelete from '@/components/confirm-delete';
@@ -20,32 +20,26 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { timeAgo } from '@/lib/format';
-import { connect, destroy, sync, update } from '@/routes/mailboxes';
-import type { Mailbox } from '@/types';
+import { index as connectorsIndex } from '@/routes/connectors';
+import { destroy, store, sync, update } from '@/routes/mailboxes';
+import type { Mailbox, MailConnector } from '@/types';
 
 type GroupOption = { id: string; name: string };
-
-/**
- * Where "Reconnect" sends someone: back to Microsoft for the same mailbox.
- * These are full page loads, because Microsoft's page is not an Inertia page.
- */
-function reconnectUrl(mailbox: Mailbox): string {
-    return connect.url(
-        mailbox.is_shared ? { query: { address: mailbox.address } } : undefined,
-    );
-}
 
 export default function Email({
     mailboxes,
     groups,
-    canConnect,
+    connectors,
 }: {
     mailboxes: Mailbox[];
     groups: GroupOption[];
-    canConnect: boolean;
+    connectors: MailConnector[];
 }) {
-    const { errors } = usePage().props;
-    const [connecting, setConnecting] = useState(false);
+    const { canManageConnectors } = usePage().props;
+    const [adding, setAdding] = useState(false);
+    const [connectorId, setConnectorId] = useState(connectors[0]?.id ?? '');
+    const connector = connectors.find((item) => item.id === connectorId);
+    const canAdd = connectors.length > 0;
 
     const save = (mailbox: Mailbox, changes: Partial<Mailbox>) =>
         router.put(
@@ -69,32 +63,38 @@ export default function Email({
                     <Heading
                         variant="small"
                         title="Email"
-                        description="Connect a Microsoft 365 mailbox, and mail sent to it opens tickets. Only mail that arrives after you connect it is read."
+                        description="Mail sent to these mailboxes opens tickets. A mailbox is read and sent through a connected account, and only mail that arrives after it is added is read."
                     />
-                    {canConnect && (
+                    {canAdd && (
                         <Button
                             size="sm"
                             className="shrink-0"
-                            onClick={() => setConnecting(true)}
+                            onClick={() => setAdding(true)}
                         >
                             <Plus />
-                            Connect mailbox
+                            Add mailbox
                         </Button>
                     )}
                 </div>
 
-                <InputError message={errors?.address} />
-
-                {!canConnect && (
+                {!canAdd && (
                     <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
-                        Microsoft sign-in isn’t set up for this installation, so
-                        mailboxes can’t be connected yet.
+                        Connect an account that can do email first, then add its
+                        mailbox here.{' '}
+                        {canManageConnectors && (
+                            <Link
+                                href={connectorsIndex()}
+                                className="font-medium text-foreground underline underline-offset-4"
+                            >
+                                Go to Connectors
+                            </Link>
+                        )}
                     </p>
                 )}
 
-                {canConnect && mailboxes.length === 0 && (
+                {canAdd && mailboxes.length === 0 && (
                     <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
-                        No mailboxes connected yet.
+                        No mailboxes added yet.
                     </p>
                 )}
 
@@ -129,6 +129,9 @@ export default function Email({
                                         <p className="text-sm text-muted-foreground">
                                             {[
                                                 mailbox.display_name,
+                                                mailbox.connector_type
+                                                    ? `Through ${mailbox.connector_type} (${mailbox.connector_name})`
+                                                    : null,
                                                 mailbox.last_synced_at
                                                     ? `Checked ${timeAgo(mailbox.last_synced_at)}`
                                                     : 'Not checked yet',
@@ -142,21 +145,14 @@ export default function Email({
                                             </p>
                                         )}
                                     </div>
-                                    {canConnect && (
-                                        <Button
-                                            asChild
-                                            size="sm"
-                                            variant={
-                                                mailbox.status === 'connected'
-                                                    ? 'outline'
-                                                    : 'default'
-                                            }
-                                        >
-                                            <a href={reconnectUrl(mailbox)}>
-                                                Reconnect
-                                            </a>
-                                        </Button>
-                                    )}
+                                    {mailbox.status !== 'connected' &&
+                                        canManageConnectors && (
+                                            <Button asChild size="sm">
+                                                <Link href={connectorsIndex()}>
+                                                    Reconnect in Connectors
+                                                </Link>
+                                            </Button>
+                                        )}
                                 </div>
 
                                 <div className="flex flex-wrap items-end justify-between gap-3 border-t pt-3">
@@ -231,10 +227,10 @@ export default function Email({
                                         </Button>
                                         <ConfirmDelete
                                             action={destroy.form(mailbox.id)}
-                                            trigger="Disconnect"
-                                            confirmLabel="Disconnect"
-                                            title={`Disconnect ${mailbox.address}?`}
-                                            description="MomCRM stops reading this mailbox and can no longer send from it. Tickets it already opened stay."
+                                            trigger="Remove"
+                                            confirmLabel="Remove"
+                                            title={`Remove ${mailbox.address}?`}
+                                            description="MomCRM stops reading this mailbox and can no longer send from it. The account it goes through stays connected, and tickets it already opened stay."
                                         />
                                     </div>
                                 </div>
@@ -244,41 +240,79 @@ export default function Email({
                 )}
             </div>
 
-            <Dialog open={connecting} onOpenChange={setConnecting}>
+            <Dialog open={adding} onOpenChange={setAdding}>
                 <DialogContent>
-                    <DialogTitle>Connect a mailbox</DialogTitle>
+                    <DialogTitle>Add a mailbox</DialogTitle>
                     <DialogDescription>
-                        You’ll sign in with Microsoft and let MomCRM read and
-                        send mail for the mailbox.
+                        Choose the connected account to read and send the
+                        mailbox through.
                     </DialogDescription>
-                    {/* A plain form: Microsoft's page is a full page load. */}
-                    <form
-                        action={connect.url()}
-                        method="get"
+                    <Form
+                        {...store.form()}
                         className="space-y-4"
+                        resetOnSuccess
+                        onSuccess={() => setAdding(false)}
                     >
-                        <FormField
-                            id="mailbox-address"
-                            label="Shared mailbox address"
-                            hint="Leave empty to connect the mailbox of the account you sign in with. For a shared mailbox, such as support@yourcompany.com, sign in as someone who can open it."
-                        >
-                            <Input
-                                id="mailbox-address"
-                                name="address"
-                                type="email"
-                                placeholder="Optional"
-                                autoComplete="off"
-                            />
-                        </FormField>
-                        <DialogFooter className="gap-2">
-                            <DialogClose asChild>
-                                <Button variant="secondary" type="button">
-                                    Cancel
-                                </Button>
-                            </DialogClose>
-                            <Button type="submit">Continue to Microsoft</Button>
-                        </DialogFooter>
-                    </form>
+                        {({ errors, processing }) => (
+                            <>
+                                <FormField
+                                    id="mailbox-connector"
+                                    label="Connected account"
+                                    error={errors.connector_id}
+                                >
+                                    <NativeSelect
+                                        id="mailbox-connector"
+                                        name="connector_id"
+                                        value={connectorId}
+                                        onChange={(event) =>
+                                            setConnectorId(event.target.value)
+                                        }
+                                    >
+                                        {connectors.map((item) => (
+                                            <option
+                                                key={item.id}
+                                                value={item.id}
+                                            >
+                                                {item.account} (
+                                                {item.type_label})
+                                            </option>
+                                        ))}
+                                    </NativeSelect>
+                                </FormField>
+                                {connector?.shared_mailboxes ? (
+                                    <FormField
+                                        id="mailbox-address"
+                                        label="Shared mailbox address"
+                                        hint={`Leave empty to add ${connector.account} itself. For a shared mailbox, such as support@yourcompany.com, the account must be able to open it.`}
+                                        error={errors.address}
+                                    >
+                                        <Input
+                                            id="mailbox-address"
+                                            name="address"
+                                            type="email"
+                                            placeholder="Optional"
+                                            autoComplete="off"
+                                        />
+                                    </FormField>
+                                ) : (
+                                    <InputError message={errors.address} />
+                                )}
+                                <DialogFooter className="gap-2">
+                                    <DialogClose asChild>
+                                        <Button
+                                            variant="secondary"
+                                            type="button"
+                                        >
+                                            Cancel
+                                        </Button>
+                                    </DialogClose>
+                                    <Button type="submit" disabled={processing}>
+                                        Add mailbox
+                                    </Button>
+                                </DialogFooter>
+                            </>
+                        )}
+                    </Form>
                 </DialogContent>
             </Dialog>
         </>

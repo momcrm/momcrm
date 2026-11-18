@@ -6,6 +6,7 @@ use App\Connector\Actions\GetConnectorAccessToken;
 use App\Connector\Connector;
 use App\Connector\ConnectorEloquentModel;
 use App\Connector\Exceptions\CouldNotReachConnector;
+use App\Mailbox\MailboxEloquentModel;
 use App\User\UserEloquentModel;
 
 use function Pest\Laravel\actingAs;
@@ -23,6 +24,18 @@ it('disconnects a connector and forgets its access', function (): void {
 
     expect($model->fresh())->toBeNull()
         ->and(fn () => GetConnectorAccessToken::forConnector($connector))->toThrow(CouldNotReachConnector::class);
+});
+
+it('removes the mailboxes that went through the connector, and leaves the others', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $connector = ConnectorEloquentModel::factory()->create(['team_id' => $owner->current_team_id]);
+    $through = MailboxEloquentModel::factory()->create(['team_id' => $owner->current_team_id, 'connector_id' => $connector->id]);
+    $other = MailboxEloquentModel::factory()->create(['team_id' => $owner->current_team_id]);
+
+    actingAs($owner)->delete(route('connectors.destroy', $connector->id))->assertRedirectToRoute('connectors.index');
+
+    expect($through->fresh())->toBeNull()
+        ->and($other->fresh())->not->toBeNull();
 });
 
 it('forbids members and hides other teams\' connectors', function (): void {

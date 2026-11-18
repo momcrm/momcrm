@@ -22,12 +22,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * The refresh token is encrypted with the app key and hidden, so it stays out
- * of arrays, JSON and the audit log.
- *
  * @property string $address
  * @property bool $auto_create_tickets
- * @property string|null $connected_by_id
+ * @property string $connector_id
  * @property CarbonImmutable|null $created_at
  * @property string|null $display_name
  * @property string|null $group_id
@@ -35,8 +32,6 @@ use Illuminate\Database\Eloquent\Model;
  * @property bool $is_shared
  * @property string|null $last_error
  * @property CarbonImmutable|null $last_synced_at
- * @property string $refresh_token
- * @property string $status
  * @property CarbonImmutable|null $synced_through
  * @property string $team_id
  * @property CarbonImmutable|null $updated_at
@@ -50,11 +45,7 @@ final class MailboxEloquentModel extends Model implements Auditable
 
     use HasUuids;
 
-    public const string REFRESH_TOKEN = 'refresh_token';
-
     protected $guarded = [];
-
-    protected $hidden = [self::REFRESH_TOKEN];
 
     public function auditTeamId(): string
     {
@@ -77,7 +68,6 @@ final class MailboxEloquentModel extends Model implements Auditable
     protected function casts(): array
     {
         return [
-            self::REFRESH_TOKEN => 'encrypted',
             AutoCreateTickets::getDatabaseTableColumnName() => 'boolean',
             IsShared::getDatabaseTableColumnName() => 'boolean',
             LastSyncedAt::getDatabaseTableColumnName() => 'immutable_datetime',

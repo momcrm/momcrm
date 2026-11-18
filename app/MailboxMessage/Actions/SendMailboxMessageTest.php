@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Mailbox\Actions\GetMailboxAccessToken;
 use App\Mailbox\Mailbox;
 use App\Mailbox\MailboxEloquentModel;
 use App\MailboxMessage\Actions\SendMailboxMessage;
@@ -24,14 +23,14 @@ use function Pest\Laravel\freezeSecond;
 function waitingReply(array $attributes = [], ?MailboxEloquentModel $mailbox = null): MailboxMessageEloquentModel
 {
     $mailbox ??= MailboxEloquentModel::factory()->create(['address' => 'support@helpdesk.test']);
-    GetMailboxAccessToken::remember(Mailbox::fromEloquentModel($mailbox), 'access-token', 3600);
+    rememberMailboxToken($mailbox);
     $ticket = TicketEloquentModel::factory()->create(['team_id' => $mailbox->team_id, 'number' => 42, 'title' => 'Printer offline', 'requester_email' => 'sam@acme.test']);
 
     return MailboxMessageEloquentModel::factory()->outbound()->create([
         'mailbox_id' => $mailbox->id,
         'ticket_id' => $ticket->id,
         'status' => 'pending',
-        'microsoft_id' => null,
+        'external_id' => null,
         'internet_message_id' => 'pending:1',
         'from_address' => 'support@helpdesk.test',
         'to_recipients' => ['sam@acme.test'],
@@ -51,8 +50,8 @@ it('answers the customer\'s last message so the reply threads under it', functio
     Http::preventStrayRequests();
     $now = freezeSecond();
     $message = waitingReply();
-    MailboxMessageEloquentModel::factory()->create(['mailbox_id' => $message->mailbox_id, 'ticket_id' => $message->ticket_id, 'microsoft_id' => 'graph-first', 'received_at' => now()->subDay()]);
-    MailboxMessageEloquentModel::factory()->create(['mailbox_id' => $message->mailbox_id, 'ticket_id' => $message->ticket_id, 'microsoft_id' => 'graph-latest', 'received_at' => now()->subHour()]);
+    MailboxMessageEloquentModel::factory()->create(['mailbox_id' => $message->mailbox_id, 'ticket_id' => $message->ticket_id, 'external_id' => 'graph-first', 'received_at' => now()->subDay()]);
+    MailboxMessageEloquentModel::factory()->create(['mailbox_id' => $message->mailbox_id, 'ticket_id' => $message->ticket_id, 'external_id' => 'graph-latest', 'received_at' => now()->subHour()]);
     Http::fake([
         'graph.microsoft.com/v1.0/me/messages/graph-latest/createReply' => Http::response(['id' => 'draft-1', 'subject' => 'RE: Printer offline', 'internetMessageId' => '<draft-1@helpdesk.test>'], 201),
         'graph.microsoft.com/v1.0/me/messages/draft-1/send' => Http::response(null, 202),
@@ -64,7 +63,7 @@ it('answers the customer\'s last message so the reply threads under it', functio
     expect($message->refresh())
         ->status->toBe('sent')
         ->error->toBeNull()
-        ->microsoft_id->toBe('draft-1')
+        ->external_id->toBe('draft-1')
         ->internet_message_id->toBe('draft-1@helpdesk.test')
         ->subject->toBe('RE: Printer offline [#42]')
         ->and($message->received_at?->equalTo($now))->toBeTrue();
@@ -105,7 +104,7 @@ it('starts a thread, with the ticket number in the subject, when the customer ha
     'in a message still in the mailbox' => [fn (MailboxMessageEloquentModel $message) => MailboxMessageEloquentModel::factory()->create([
         'mailbox_id' => $message->mailbox_id,
         'ticket_id' => $message->ticket_id,
-        'microsoft_id' => 'graph-gone',
+        'external_id' => 'graph-gone',
     ])],
 ]);
 
@@ -171,7 +170,7 @@ it('does not retry a request that changes the mailbox when Microsoft is busy', f
     Http::assertSentCount(1);
 });
 
-it('does not send from a mailbox that needs reconnecting', function (): void {
+it('does not send from a mailbox whose connector needs reconnecting', function (): void {
     Http::preventStrayRequests();
     Http::fake();
     $message = waitingReply(mailbox: MailboxEloquentModel::factory()->needsReconnect()->create());
@@ -180,7 +179,7 @@ it('does not send from a mailbox that needs reconnecting', function (): void {
 
     expect($message->refresh())
         ->status->toBe('failed')
-        ->error->toBe('Microsoft no longer accepts the sign-in for this mailbox. Connect it again.');
+        ->error->toBe('Microsoft no longer accepts the sign-in for this connector. Connect it again.');
 
     Http::assertNothingSent();
 });

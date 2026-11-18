@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace App\MailboxMessage\Actions;
 
+use App\Connector\Actions\FindConnector;
+use App\Connector\Exceptions\CouldNotReachConnector;
 use App\Mailbox\Actions\FindMailbox;
-use App\Mailbox\Exceptions\CouldNotReachMailbox;
 use App\Mailbox\MicrosoftGraph;
 use App\MailboxMessage\MailboxMessage;
 use App\MailboxMessage\MailboxMessageStatusEnum;
@@ -42,7 +43,7 @@ final readonly class SendMailboxMessage
 
         try {
             return $this->send();
-        } catch (CouldNotReachMailbox $exception) {
+        } catch (CouldNotReachConnector $exception) {
             // Reading mail is tried again by itself; sending is not, so do not say it will be.
             return self::failed($this->message, $exception->isTemporary
                 ? __('Microsoft could not be reached, so this reply was not sent.')
@@ -80,7 +81,7 @@ final readonly class SendMailboxMessage
     }
 
     /**
-     * @throws CouldNotReachMailbox
+     * @throws CouldNotReachConnector
      */
     private function send(): MailboxMessage
     {
@@ -89,12 +90,14 @@ final readonly class SendMailboxMessage
         $ticket = FindTicket::byIdForTeam($this->message->getTicketId()->toNullableString(), $teamId);
         $to = Types::stringList($this->message->getToRecipients()->toArray());
 
-        if ($mailbox->isNull() || ! $mailbox->isConnected()) {
-            throw CouldNotReachMailbox::needsReconnect();
+        $connector = FindConnector::byId($mailbox->getConnectorId()->toNullableString());
+
+        if ($mailbox->isNull() || ! $connector->isConnected()) {
+            throw CouldNotReachConnector::needsReconnect($connector->getType()->toEnum());
         }
 
         if ($ticket->isNull() || $to === []) {
-            throw CouldNotReachMailbox::refused((string) __('This ticket has no email address to reply to.'));
+            throw CouldNotReachConnector::refused((string) __('This ticket has no email address to reply to.'));
         }
 
         $graph = MicrosoftGraph::forMailbox($mailbox);
@@ -104,7 +107,7 @@ final readonly class SendMailboxMessage
         ];
 
         $answered = FindMailboxMessage::latestInboundOnTicket($ticket->getId()->toString(), $teamId, $mailbox->getId()->toString());
-        $reply = $answered->isNull() ? null : $graph->createReplyDraft($answered->getMicrosoftId()->toString());
+        $reply = $answered->isNull() ? null : $graph->createReplyDraft($answered->getExternalId()->toString());
 
         $draft = $reply === null
             ? $graph->createDraft(['subject' => self::subject($ticket, $ticket->getTitle()->toString()), ...$content])
@@ -119,7 +122,7 @@ final readonly class SendMailboxMessage
             $this->message
                 ->setStatus(MailboxMessageStatusEnum::Sent)
                 ->setError(null)
-                ->setMicrosoftId($draft['id'] ?? null)
+                ->setExternalId($draft['id'] ?? null)
                 ->setInternetMessageId(InternetMessageId::normalize($draft['internetMessageId'] ?? null) ?? $this->message->getInternetMessageId())
                 ->setSubject($draft['subject'] ?? null)
                 ->setReceivedAt(CarbonImmutable::now()),
