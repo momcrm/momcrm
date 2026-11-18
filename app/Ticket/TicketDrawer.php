@@ -139,7 +139,9 @@ final class TicketDrawer
                     'id' => $comment->id,
                     'body' => $comment->body,
                     'author_id' => $comment->user_id,
-                    'author_name' => $comment->author?->name,
+                    'author_name' => $comment->author->name ?? $comment->sender_name ?? $comment->sender_email,
+                    'sender_email' => $comment->sender_email,
+                    'visibility' => $comment->visibility,
                     'mentions' => $comment->mentions ?? [],
                     'created_at' => $comment->created_at?->toIso8601String(),
                     'can_delete' => $comment->user_id === $userId

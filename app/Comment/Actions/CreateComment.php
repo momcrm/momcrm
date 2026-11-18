@@ -20,7 +20,8 @@ use Illuminate\Support\Str;
 
 /**
  * Adds a comment to a ticket. Everyone @mentioned is told so; the ticket's
- * other watchers are told there's a new comment.
+ * other watchers are told there's a new comment. A comment that arrived by
+ * email has no author in the team, so its sender is named in their place.
  */
 final readonly class CreateComment
 {
@@ -38,6 +39,7 @@ final readonly class CreateComment
             $model = CommentEloquentModel::query()->create($this->comment->forDatabaseCreate());
             $ticket = TicketEloquentModel::query()->withoutGlobalScopes()->findOrFail($model->ticket_id);
             $author = $model->user_id === null ? null : UserEloquentModel::query()->find($model->user_id);
+            $sender = $model->sender_name ?? $model->sender_email;
             $excerpt = Str::limit($model->body, 140);
             $mentionedIds = array_values(array_diff($model->mentions ?? [], [$model->user_id]));
 
@@ -46,7 +48,11 @@ final readonly class CreateComment
                 userId: $model->user_id,
                 teamId: $model->team_id,
                 subject: $ticket,
-                details: ['number' => $ticket->number, 'title' => $ticket->title],
+                details: array_filter([
+                    'number' => $ticket->number,
+                    'title' => $ticket->title,
+                    'actor_name' => $author === null ? $sender : null,
+                ], fn (mixed $value): bool => $value !== null),
             );
 
             $mentioned = UserEloquentModel::query()->whereIn('id', $mentionedIds)->get();
@@ -57,7 +63,7 @@ final readonly class CreateComment
 
             NotifyTicketWatchers::send(
                 $ticket,
-                new TicketCommentedNotification($ticket, $author, $excerpt),
+                new TicketCommentedNotification($ticket, $author, $excerpt, senderName: $author === null ? $sender : null),
                 actorId: $model->user_id,
                 except: $mentionedIds,
             );

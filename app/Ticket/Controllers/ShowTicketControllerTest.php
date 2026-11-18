@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Activity\Actions\RecordActivity;
+use App\Activity\ActivityTypeEnum;
+use App\Comment\CommentEloquentModel;
 use App\Contact\ContactEloquentModel;
 use App\Customer\CustomerEloquentModel;
 use App\CustomField\CustomFieldEloquentModel;
@@ -120,4 +123,32 @@ it('shows who wrote in on a ticket opened by an email', function (): void {
     actingAs($user)
         ->get(route('tickets.show', $typed->id))
         ->assertInertia(fn (Assert $page) => $page->where('drawer.requester', null));
+});
+
+it('shows a reply that arrived by email as part of the conversation, under its sender\'s name', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create(['name' => 'Jane Smith']);
+    $ticket = TicketEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
+    CommentEloquentModel::factory()->create(['ticket_id' => $ticket->id, 'user_id' => $user->id, 'body' => 'Checking the toner.', 'created_at' => now()->subHour()]);
+    CommentEloquentModel::factory()->fromCustomer('sam@acme.test', 'Sam Lee')->create(['ticket_id' => $ticket->id, 'body' => 'Still offline.']);
+    RecordActivity::for(
+        type: ActivityTypeEnum::TicketCommented,
+        userId: null,
+        teamId: $user->current_team_id,
+        subject: $ticket,
+        details: ['number' => $ticket->number, 'title' => $ticket->title, 'actor_name' => 'Sam Lee'],
+    );
+
+    actingAs($user)
+        ->get(route('tickets.show', $ticket->id))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('drawer.comments.0.author_name', 'Jane Smith')
+            ->where('drawer.comments.0.sender_email', null)
+            ->where('drawer.comments.0.visibility', 'internal')
+            ->where('drawer.comments.1.author_name', 'Sam Lee')
+            ->where('drawer.comments.1.author_id', null)
+            ->where('drawer.comments.1.sender_email', 'sam@acme.test')
+            ->where('drawer.comments.1.visibility', 'public')
+            ->where('drawer.comments.1.can_delete', false)
+            ->where('drawer.activity.0.actor', 'Sam Lee'));
 });
