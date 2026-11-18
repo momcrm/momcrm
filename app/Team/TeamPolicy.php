@@ -96,6 +96,16 @@ final class TeamPolicy
     }
 
     /**
+     * Owners and admins connect the mailboxes whose mail becomes tickets.
+     */
+    public function manageEmail(UserEloquentModel $user, Team $team): Response
+    {
+        return $this->isOwnerOrAdmin($user, $team)
+            ? Response::allow()
+            : Response::deny('Only team owners and admins can connect mailboxes.');
+    }
+
+    /**
      * Owners remove admins and members, admins remove members. Nobody removes
      * the owner or themselves.
      */

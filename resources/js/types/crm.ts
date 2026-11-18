@@ -623,6 +623,19 @@ export type AccessCondition = {
     value: string | string[] | null;
 };
 
+/** A Microsoft 365 mailbox the team has connected. */
+export type Mailbox = {
+    id: string;
+    address: string;
+    display_name: string | null;
+    is_shared: boolean;
+    status: 'connected' | 'needs_reconnect';
+    group_id: string | null;
+    auto_create_tickets: boolean;
+    last_synced_at: string | null;
+    last_error: string | null;
+};
+
 export type AccessRuleItem = {
     id: string;
     name: string;

@@ -18,6 +18,7 @@ declare module '@inertiajs/core' {
             canManageAccessRules?: boolean;
             canManageCustomFields?: boolean;
             canManageCustomObjects?: boolean;
+            canManageEmail?: boolean;
             canManageWorkflow?: boolean;
             sidebarCounts?: {
                 openTickets: number;

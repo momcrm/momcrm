@@ -24,3 +24,19 @@ it('lets owners and admins invite people, but not members or outsiders', functio
     'member' => [TeamRoleEnum::Member, false],
     'not in the team' => [null, false],
 ]);
+
+it('lets owners and admins connect mailboxes, but not members or outsiders', function (?TeamRoleEnum $role, bool $allowed): void {
+    $team = TeamEloquentModel::factory()->create();
+    $user = UserEloquentModel::factory()->create();
+
+    if ($role !== null) {
+        CreateTeamUser::fromIds(teamId: $team->id, userId: $user->id, role: $role);
+    }
+
+    expect(Gate::forUser($user)->allows('manageEmail', Team::fromEloquentModel($team)))->toBe($allowed);
+})->with([
+    'owner' => [TeamRoleEnum::Owner, true],
+    'admin' => [TeamRoleEnum::Admin, true],
+    'member' => [TeamRoleEnum::Member, false],
+    'not in the team' => [null, false],
+]);

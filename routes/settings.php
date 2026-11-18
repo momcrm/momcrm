@@ -28,6 +28,11 @@ use App\CustomObject\Controllers\ShowCustomObjectsController;
 use App\CustomObject\Controllers\ShowObjectFieldsController;
 use App\CustomObject\Controllers\StoreCustomObjectController;
 use App\CustomObject\Controllers\UpdateCustomObjectController;
+use App\Mailbox\Controllers\ConnectMailboxController;
+use App\Mailbox\Controllers\DeleteMailboxController;
+use App\Mailbox\Controllers\HandleMailboxCallbackController;
+use App\Mailbox\Controllers\ShowEmailSettingsController;
+use App\Mailbox\Controllers\UpdateMailboxController;
 use App\Team\Controllers\EditTeamController;
 use App\Team\Controllers\UpdateTeamController;
 use App\TeamInvitation\Controllers\DeleteTeamInvitationController;
@@ -97,6 +102,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('settings/objects/{customObject}/archive', ArchiveCustomObjectController::class)->whereUuid('customObject')->name('custom-objects.archive');
     Route::post('settings/objects/{customObject}/restore', RestoreCustomObjectController::class)->whereUuid('customObject')->name('custom-objects.restore');
     Route::delete('settings/objects/{customObject}', DeleteCustomObjectController::class)->whereUuid('customObject')->name('custom-objects.destroy');
+
+    Route::get('settings/email', ShowEmailSettingsController::class)->name('mailboxes.index');
+    Route::get('settings/email/connect', ConnectMailboxController::class)->name('mailboxes.connect');
+    Route::get('settings/email/callback', HandleMailboxCallbackController::class)->name('mailboxes.callback');
+    Route::put('settings/email/mailboxes/{mailbox}', UpdateMailboxController::class)->whereUuid('mailbox')->name('mailboxes.update');
+    Route::delete('settings/email/mailboxes/{mailbox}', DeleteMailboxController::class)->whereUuid('mailbox')->name('mailboxes.destroy');
 
     Route::get('settings/activity', ListAccountActivityController::class)->name('activity.index');
 
