@@ -20,7 +20,8 @@
         "laravel/tinker": "^3.0",
         "laravel/wayfinder": "^0.1.14",
         "mom/data": "6.2.2",
-        "socialiteproviders/microsoft": "^4.10"
+        "socialiteproviders/microsoft": "^4.10",
+        "webklex/php-imap": "^6.2"
     },
     "require-dev": {
         "brianium/paratest": "7.27.5",

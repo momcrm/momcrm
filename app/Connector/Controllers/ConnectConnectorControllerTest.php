@@ -113,10 +113,12 @@ it('sends an admin to Google asking for lasting access to read and send mail', f
         ]);
 });
 
-it('is not found for a type that does not exist or is not set up', function (): void {
+it('is not found for a type that does not exist, has no sign-in or is not set up', function (): void {
     $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
 
     actingAs($owner)->get('/settings/connectors/carrier-pigeon/connect')->assertNotFound();
+
+    actingAs($owner)->get(route('connectors.connect', 'imap'))->assertNotFound();
 
     config(['services.microsoft.client_id' => null]);
 

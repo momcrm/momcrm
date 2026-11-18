@@ -17,23 +17,26 @@ enum ConnectorTypeEnum: string
 
     case Microsoft = 'microsoft';
     case Google = 'google';
+    case Imap = 'imap';
 
     public function label(): string
     {
         return match ($this) {
             self::Microsoft => 'Microsoft 365',
             self::Google => 'Google',
+            self::Imap => 'IMAP/SMTP',
         };
     }
 
     /**
-     * The company people sign in with, as error messages name it.
+     * Who runs the service, as error messages name it.
      */
     public function company(): string
     {
         return match ($this) {
             self::Microsoft => 'Microsoft',
             self::Google => 'Google',
+            self::Imap => 'The mail server',
         };
     }
 
@@ -43,7 +46,7 @@ enum ConnectorTypeEnum: string
     public function capabilities(): array
     {
         return match ($this) {
-            self::Microsoft, self::Google => [ConnectorCapabilityEnum::Mail],
+            self::Microsoft, self::Google, self::Imap => [ConnectorCapabilityEnum::Mail],
         };
     }
 
@@ -53,14 +56,25 @@ enum ConnectorTypeEnum: string
     }
 
     /**
-     * The sign-in provider whose keys this type connects with.
+     * The sign-in provider whose keys this type connects with; none for a
+     * type that is connected by filling in a form.
      */
-    public function signInProvider(): SocialProviderEnum
+    public function signInProvider(): ?SocialProviderEnum
     {
         return match ($this) {
             self::Microsoft => SocialProviderEnum::Microsoft,
             self::Google => SocialProviderEnum::Google,
+            self::Imap => null,
         };
+    }
+
+    /**
+     * Whether an account is connected by signing in at the service, and not
+     * by typing in where its servers are.
+     */
+    public function usesSignIn(): bool
+    {
+        return $this->signInProvider() !== null;
     }
 
     /**
@@ -68,7 +82,7 @@ enum ConnectorTypeEnum: string
      */
     public function isAvailable(): bool
     {
-        return $this->signInProvider()->isConfigured();
+        return $this->signInProvider()?->isConfigured() ?? true;
     }
 
     /**
@@ -88,6 +102,7 @@ enum ConnectorTypeEnum: string
                 'https://www.googleapis.com/auth/gmail.readonly',
                 'https://www.googleapis.com/auth/gmail.send',
             ],
+            self::Imap => [],
         };
     }
 
@@ -103,6 +118,7 @@ enum ConnectorTypeEnum: string
         return match ($this) {
             self::Microsoft => ['prompt' => 'select_account'],
             self::Google => ['access_type' => 'offline', 'prompt' => 'consent select_account'],
+            self::Imap => [],
         };
     }
 
@@ -113,14 +129,15 @@ enum ConnectorTypeEnum: string
     {
         return match ($this) {
             self::Microsoft => true,
-            self::Google => false,
+            self::Google, self::Imap => false,
         };
     }
 
     /**
-     * Where a stored refresh token is exchanged for an access token.
+     * Where a stored refresh token is exchanged for an access token; nowhere
+     * for a type that has no tokens.
      */
-    public function tokenUrl(): string
+    public function tokenUrl(): ?string
     {
         return match ($this) {
             self::Microsoft => sprintf(
@@ -128,13 +145,14 @@ enum ConnectorTypeEnum: string
                 config()->string('services.microsoft.tenant', 'common'),
             ),
             self::Google => 'https://oauth2.googleapis.com/token',
+            self::Imap => null,
         };
     }
 
     /**
      * The types this installation can connect, for the page that offers them.
      *
-     * @return list<array{value: string, label: string, capabilities: list<string>, supports_shared_mailboxes: bool}>
+     * @return list<array{value: string, label: string, capabilities: list<string>, supports_shared_mailboxes: bool, uses_sign_in: bool}>
      */
     public static function available(): array
     {
@@ -144,6 +162,7 @@ enum ConnectorTypeEnum: string
                 'label' => $type->label(),
                 'capabilities' => array_map(fn (ConnectorCapabilityEnum $capability): string => $capability->label(), $type->capabilities()),
                 'supports_shared_mailboxes' => $type->supportsSharedMailboxes(),
+                'uses_sign_in' => $type->usesSignIn(),
             ],
             array_filter(self::cases(), fn (self $type): bool => $type->isAvailable()),
         ));

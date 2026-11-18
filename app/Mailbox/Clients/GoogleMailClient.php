@@ -21,7 +21,7 @@ use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
-use Symfony\Component\Mime\Email;
+use Symfony\Component\Mime\Address;
 use Throwable;
 
 /**
@@ -177,29 +177,8 @@ final class GoogleMailClient implements MailClient
      */
     public function send(OutgoingMail $mail): SentMail
     {
-        $answered = $mail->answered;
-        $subject = $mail->tagged($answered->isNull()
-            ? $mail->subject
-            : self::replySubject($answered->getSubject()->toNullableString() ?? $mail->subject));
-
-        $email = new Email()
-            ->from($this->address)
-            ->to(...$mail->to)
-            ->subject($subject)
-            ->text($mail->bodyText)
-            ->html($mail->bodyHtml());
-
-        $threadId = null;
-        $answeredId = $answered->getInternetMessageId()->toNullableString();
-
-        if ($answered->isNotNull() && $answeredId !== null) {
-            $email->getHeaders()->addIdHeader('In-Reply-To', $answeredId);
-            $email->getHeaders()->addIdHeader('References', [...Types::stringList($answered->getReferenceIds()->toArray()), $answeredId]);
-            $threadId = $this->threadId($answered->getExternalId()->toString());
-        }
-
-        $messageId = $email->generateMessageId();
-        $email->getHeaders()->addIdHeader('Message-ID', $messageId);
+        $email = $mail->toEmail(new Address($this->address));
+        $threadId = $mail->answered->isNull() ? null : $this->threadId($mail->answered->getExternalId()->toString());
 
         $sent = self::json($this->write('messages/send', [
             'raw' => rtrim(strtr(base64_encode($email->toString()), '+/', '-_'), '='),
@@ -208,7 +187,11 @@ final class GoogleMailClient implements MailClient
 
         $id = is_string($sent['id'] ?? null) ? $sent['id'] : null;
 
-        return new SentMail($id, $this->messageIdOf($id) ?? InternetMessageId::normalize($messageId), $subject);
+        return new SentMail(
+            $id,
+            $this->messageIdOf($id) ?? OutgoingMail::messageId($email),
+            $email->getSubject(),
+        );
     }
 
     /**
@@ -406,11 +389,6 @@ final class GoogleMailClient implements MailClient
     private static function str(mixed $value): string
     {
         return is_string($value) ? $value : '';
-    }
-
-    private static function replySubject(string $subject): string
-    {
-        return preg_match('/^re:/i', mb_trim($subject)) === 1 ? $subject : "Re: {$subject}";
     }
 
     /**

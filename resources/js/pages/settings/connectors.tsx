@@ -2,6 +2,7 @@ import { Head } from '@inertiajs/react';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import ConfirmDelete from '@/components/confirm-delete';
+import MailServerDialog from '@/components/connectors/mail-server-dialog';
 import Heading from '@/components/heading';
 import SoftBadge from '@/components/soft-badge';
 import { Button } from '@/components/ui/button';
@@ -32,8 +33,12 @@ export default function Connectors({
     types: ConnectorType[];
 }) {
     const [adding, setAdding] = useState(false);
-    const canAdd = types.length > 0;
+    // The mail server form: for a new connector, or for one being changed.
+    const [mailServer, setMailServer] = useState<{
+        connector: Connector | null;
+    } | null>(null);
     const canReconnect = (connector: Connector) =>
+        connector.uses_sign_in &&
         types.some((type) => type.value === connector.type);
 
     return (
@@ -47,28 +52,19 @@ export default function Connectors({
                     <Heading
                         variant="small"
                         title="Connectors"
-                        description="Connect the outside accounts MomCRM works through, such as the Microsoft 365 account whose mailbox opens tickets."
+                        description="Connect the outside accounts MomCRM works through, such as the mail account whose mailbox opens tickets."
                     />
-                    {canAdd && (
-                        <Button
-                            size="sm"
-                            className="shrink-0"
-                            onClick={() => setAdding(true)}
-                        >
-                            <Plus />
-                            Add connector
-                        </Button>
-                    )}
+                    <Button
+                        size="sm"
+                        className="shrink-0"
+                        onClick={() => setAdding(true)}
+                    >
+                        <Plus />
+                        Add connector
+                    </Button>
                 </div>
 
-                {!canAdd && (
-                    <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
-                        No kind of connector is set up for this installation
-                        yet, so accounts can’t be connected.
-                    </p>
-                )}
-
-                {canAdd && connectors.length === 0 && (
+                {connectors.length === 0 && (
                     <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
                         No accounts connected yet.
                     </p>
@@ -136,6 +132,20 @@ export default function Connectors({
                                             </a>
                                         </Button>
                                     )}
+                                    {!connector.uses_sign_in && (
+                                        <Button
+                                            variant={
+                                                connector.status === 'connected'
+                                                    ? 'outline'
+                                                    : 'default'
+                                            }
+                                            onClick={() =>
+                                                setMailServer({ connector })
+                                            }
+                                        >
+                                            Change
+                                        </Button>
+                                    )}
                                     <ConfirmDelete
                                         action={destroy.form(connector.id)}
                                         trigger="Disconnect"
@@ -158,67 +168,105 @@ export default function Connectors({
                 <DialogContent>
                     <DialogTitle>Add a connector</DialogTitle>
                     <DialogDescription>
-                        Choose the kind of account. You’ll sign in to it and let
-                        MomCRM work through it.
+                        Choose the kind of account for MomCRM to work through.
                     </DialogDescription>
                     <ul className="space-y-2">
                         {types.map((type) => (
                             <li key={type.value}>
-                                {/* A plain form: the service's page is a full page load. */}
-                                <form
-                                    action={connect.url(type.value)}
-                                    method="get"
-                                    className="space-y-3 rounded-lg border p-3"
-                                >
-                                    <div className="flex items-center justify-between gap-3">
-                                        <div className="min-w-0">
-                                            <p className="font-medium">
-                                                {type.label}
-                                            </p>
-                                            {type.capabilities.length > 0 && (
-                                                <p className="text-sm text-muted-foreground">
-                                                    Used for{' '}
-                                                    {type.capabilities
-                                                        .join(', ')
-                                                        .toLowerCase()}
-                                                </p>
-                                            )}
+                                {type.uses_sign_in ? (
+                                    // A plain form: the service's page is a full page load.
+                                    <form
+                                        action={connect.url(type.value)}
+                                        method="get"
+                                        className="space-y-3 rounded-lg border p-3"
+                                    >
+                                        <div className="flex items-center justify-between gap-3">
+                                            <TypeName type={type} />
+                                            <Button type="submit" size="sm">
+                                                Connect
+                                            </Button>
                                         </div>
-                                        <Button type="submit" size="sm">
-                                            Connect
+                                        {type.supports_shared_mailboxes && (
+                                            <div className="flex items-start gap-2">
+                                                <Checkbox
+                                                    id={`connector-shared-${type.value}`}
+                                                    name="shared_mailboxes"
+                                                    value="1"
+                                                    className="mt-0.5"
+                                                />
+                                                <div className="grid gap-0.5">
+                                                    <Label
+                                                        htmlFor={`connector-shared-${type.value}`}
+                                                        className="text-sm font-normal"
+                                                    >
+                                                        This account opens
+                                                        shared mailboxes
+                                                    </Label>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        Such as
+                                                        support@yourcompany.com.
+                                                        Work and school accounts
+                                                        only.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </form>
+                                ) : (
+                                    <div className="flex items-center justify-between gap-3 rounded-lg border p-3">
+                                        <TypeName
+                                            type={type}
+                                            note="Any mail provider, by its server settings"
+                                        />
+                                        <Button
+                                            size="sm"
+                                            onClick={() => {
+                                                setAdding(false);
+                                                setMailServer({
+                                                    connector: null,
+                                                });
+                                            }}
+                                        >
+                                            Set up
                                         </Button>
                                     </div>
-                                    {type.supports_shared_mailboxes && (
-                                        <div className="flex items-start gap-2">
-                                            <Checkbox
-                                                id={`connector-shared-${type.value}`}
-                                                name="shared_mailboxes"
-                                                value="1"
-                                                className="mt-0.5"
-                                            />
-                                            <div className="grid gap-0.5">
-                                                <Label
-                                                    htmlFor={`connector-shared-${type.value}`}
-                                                    className="text-sm font-normal"
-                                                >
-                                                    This account opens shared
-                                                    mailboxes
-                                                </Label>
-                                                <p className="text-xs text-muted-foreground">
-                                                    Such as
-                                                    support@yourcompany.com.
-                                                    Work and school accounts
-                                                    only.
-                                                </p>
-                                            </div>
-                                        </div>
-                                    )}
-                                </form>
+                                )}
                             </li>
                         ))}
                     </ul>
                 </DialogContent>
             </Dialog>
+
+            <MailServerDialog
+                open={mailServer !== null}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setMailServer(null);
+                    }
+                }}
+                connector={mailServer?.connector ?? null}
+            />
         </>
+    );
+}
+
+/**
+ * A kind of connector in the list to choose from: its name and what it is for.
+ */
+function TypeName({ type, note }: { type: ConnectorType; note?: string }) {
+    return (
+        <div className="min-w-0">
+            <p className="font-medium">{type.label}</p>
+            <p className="text-sm text-muted-foreground">
+                {[
+                    type.capabilities.length > 0
+                        ? `Used for ${type.capabilities.join(', ').toLowerCase()}`
+                        : null,
+                    note,
+                ]
+                    .filter(Boolean)
+                    .join(' · ')}
+            </p>
+        </div>
     );
 }

@@ -66,7 +66,9 @@ final class ConnectConnectorFormRequest extends FormRequest
     {
         $type = ConnectorTypeEnum::tryFrom((string) $this->route('type'));
 
-        if ($type === null || ! $type->isAvailable()) {
+        $signIn = $type?->signInProvider();
+
+        if ($type === null || $signIn === null || ! $type->isAvailable()) {
             throw new NotFoundHttpException;
         }
 
@@ -79,7 +81,7 @@ final class ConnectConnectorFormRequest extends FormRequest
         $this->session()->put(ConnectorSession::PENDING_SHARED_MAILBOXES, $withSharedMailboxes);
 
         /** @var AbstractProvider $provider */
-        $provider = Socialite::driver($type->signInProvider()->value);
+        $provider = Socialite::driver($signIn->value);
 
         return $provider
             ->scopes($type->scopes($withSharedMailboxes))
