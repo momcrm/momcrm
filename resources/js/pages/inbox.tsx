@@ -255,6 +255,7 @@ export default function Inbox({
                                 activity={selected.activity}
                                 members={options.members}
                                 reload={['selected']}
+                                reply={selected.reply}
                             />
                         </div>
                     ) : (

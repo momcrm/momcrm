@@ -379,6 +379,7 @@ export type TicketDrawerData = Omit<
         email: string | null;
         phone: string | null;
     } | null;
+    reply: TicketReply;
     /** Who wrote in, for a ticket opened by an email. */
     requester: {
         name: string | null;
@@ -392,6 +393,15 @@ export type TicketDrawerData = Omit<
     activity: import('./activity').ActivityItem[];
 };
 
+/**
+ * Who a reply to the customer goes to and which mailbox sends it; either is
+ * missing when the ticket has no address or the team no connected mailbox.
+ */
+export type TicketReply = {
+    to: string | null;
+    from: string | null;
+};
+
 export type TicketComment = {
     id: string;
     body: string;
@@ -402,6 +412,11 @@ export type TicketComment = {
     sender_email: string | null;
     /** An internal note, or part of the conversation with the customer. */
     visibility: 'internal' | 'public';
+    /** How a reply emailed to the customer fared. */
+    delivery: {
+        status: 'pending' | 'sent' | 'failed';
+        error: string | null;
+    } | null;
     mentions: string[];
     created_at: string | null;
     can_delete: boolean;

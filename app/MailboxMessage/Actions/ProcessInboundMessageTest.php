@@ -339,3 +339,14 @@ it('says so when a reply has no text', function (): void {
 
     expect(CommentEloquentModel::query()->withoutGlobalScopes()->sole()->body)->toBe('(no text)');
 });
+
+it('adds the customer\'s answer to a reply the team sent', function (): void {
+    $mailbox = MailboxEloquentModel::factory()->create();
+    $ticket = TicketEloquentModel::factory()->create(['team_id' => $mailbox->team_id]);
+    MailboxMessageEloquentModel::factory()->outbound()->create(['mailbox_id' => $mailbox->id, 'ticket_id' => $ticket->id, 'internet_message_id' => 'draft-1@helpdesk.test']);
+
+    takeInEmail($mailbox, replyEmail(['internetMessageHeaders' => [['name' => 'In-Reply-To', 'value' => '<draft-1@helpdesk.test>']]]));
+
+    expect(CommentEloquentModel::query()->withoutGlobalScopes()->sole()->ticket_id)->toBe($ticket->id)
+        ->and(TicketEloquentModel::query()->withoutGlobalScopes()->count())->toBe(1);
+});

@@ -14,6 +14,11 @@ use Throwable;
 final class CouldNotReachMailbox extends RuntimeException
 {
     /**
+     * Whether trying again later may work without anyone doing anything.
+     */
+    public bool $isTemporary = false;
+
+    /**
      * The stored sign-in is gone or no longer accepted, so only connecting the
      * mailbox again will fix it.
      */
@@ -27,7 +32,10 @@ final class CouldNotReachMailbox extends RuntimeException
      */
     public static function unavailable(?Throwable $previous = null): self
     {
-        return new self('Microsoft could not be reached. It will be tried again.', previous: $previous);
+        $exception = new self('Microsoft could not be reached. It will be tried again.', previous: $previous);
+        $exception->isTemporary = true;
+
+        return $exception;
     }
 
     /**

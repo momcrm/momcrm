@@ -606,6 +606,7 @@ export function TicketDetails({
                     activity={ticket.activity}
                     members={options.members}
                     reload={['drawer']}
+                    reply={ticket.reply}
                 />
             </div>
         </>

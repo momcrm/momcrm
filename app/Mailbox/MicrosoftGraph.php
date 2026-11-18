@@ -133,6 +133,72 @@ final readonly class MicrosoftGraph
     }
 
     /**
+     * A draft reply to a message in the mailbox, which Microsoft threads
+     * under it. Null when that message is no longer in the mailbox.
+     *
+     * @return array<string, mixed>|null
+     *
+     * @throws CouldNotReachMailbox
+     */
+    public function createReplyDraft(string $messageId): ?array
+    {
+        $response = $this->write('post', $this->path('messages/'.rawurlencode($messageId).'/createReply'));
+
+        return $response->notFound() ? null : self::json($response);
+    }
+
+    /**
+     * A new draft in the mailbox.
+     *
+     * @param  array<string, mixed>  $message
+     * @return array<string, mixed>
+     *
+     * @throws CouldNotReachMailbox
+     */
+    public function createDraft(array $message): array
+    {
+        return self::json($this->write('post', $this->path('messages'), $message));
+    }
+
+    /**
+     * @param  array<string, mixed>  $changes
+     * @return array<string, mixed>
+     *
+     * @throws CouldNotReachMailbox
+     */
+    public function updateDraft(string $draftId, array $changes): array
+    {
+        return self::json($this->write('patch', $this->path('messages/'.rawurlencode($draftId)), $changes));
+    }
+
+    /**
+     * Sends a draft, which Microsoft then keeps in Sent Items.
+     *
+     * @throws CouldNotReachMailbox
+     */
+    public function sendDraft(string $draftId): void
+    {
+        self::json($this->write('post', $this->path('messages/'.rawurlencode($draftId).'/send')));
+    }
+
+    /**
+     * A request that changes the mailbox. It is never retried here: sending
+     * one twice could send a customer the same email twice.
+     *
+     * @param  array<string, mixed>  $body
+     *
+     * @throws CouldNotReachMailbox
+     */
+    private function write(string $method, string $url, array $body = []): Response
+    {
+        try {
+            return $this->request()->send(mb_strtoupper($method), $url, $body === [] ? [] : ['json' => $body]);
+        } catch (ConnectionException $exception) {
+            throw CouldNotReachMailbox::unavailable($exception);
+        }
+    }
+
+    /**
      * @param  array<string, string>  $query
      * @param  array<string, string>  $headers
      *
