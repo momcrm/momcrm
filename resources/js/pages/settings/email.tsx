@@ -20,7 +20,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { timeAgo } from '@/lib/format';
-import { connect, destroy, update } from '@/routes/mailboxes';
+import { connect, destroy, sync, update } from '@/routes/mailboxes';
 import type { Mailbox } from '@/types';
 
 type GroupOption = { id: string; name: string };
@@ -213,13 +213,30 @@ export default function Email({
                                             </Label>
                                         </div>
                                     </div>
-                                    <ConfirmDelete
-                                        action={destroy.form(mailbox.id)}
-                                        trigger="Disconnect"
-                                        confirmLabel="Disconnect"
-                                        title={`Disconnect ${mailbox.address}?`}
-                                        description="MomCRM stops reading this mailbox and can no longer send from it. Tickets it already opened stay."
-                                    />
+                                    <div className="flex items-center gap-2">
+                                        <Button
+                                            variant="outline"
+                                            disabled={
+                                                mailbox.status !== 'connected'
+                                            }
+                                            onClick={() =>
+                                                router.post(
+                                                    sync.url(mailbox.id),
+                                                    {},
+                                                    { preserveScroll: true },
+                                                )
+                                            }
+                                        >
+                                            Check now
+                                        </Button>
+                                        <ConfirmDelete
+                                            action={destroy.form(mailbox.id)}
+                                            trigger="Disconnect"
+                                            confirmLabel="Disconnect"
+                                            title={`Disconnect ${mailbox.address}?`}
+                                            description="MomCRM stops reading this mailbox and can no longer send from it. Tickets it already opened stay."
+                                        />
+                                    </div>
                                 </div>
                             </li>
                         ))}

@@ -99,3 +99,25 @@ it('lists what links to the ticket', function (): void {
             ->where('drawer.linked_records.0.records.0', ['id' => $van->id, 'title' => 'Van', 'url' => route('records.show', [$vehicles->id, $van->id])]),
         );
 });
+
+it('shows who wrote in on a ticket opened by an email', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $ticket = TicketEloquentModel::factory()->create([
+        'team_id' => $user->current_team_id,
+        'customer_id' => null,
+        'requester_name' => 'Sam Lee',
+        'requester_email' => 'sam@acme.test',
+    ]);
+    $typed = TicketEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
+
+    actingAs($user)
+        ->get(route('tickets.show', $ticket->id))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('drawer.requester', ['name' => 'Sam Lee', 'email' => 'sam@acme.test'])
+            ->where('drawer.customer_name', null));
+
+    actingAs($user)
+        ->get(route('tickets.show', $typed->id))
+        ->assertInertia(fn (Assert $page) => $page->where('drawer.requester', null));
+});

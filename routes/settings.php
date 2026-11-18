@@ -32,6 +32,7 @@ use App\Mailbox\Controllers\ConnectMailboxController;
 use App\Mailbox\Controllers\DeleteMailboxController;
 use App\Mailbox\Controllers\HandleMailboxCallbackController;
 use App\Mailbox\Controllers\ShowEmailSettingsController;
+use App\Mailbox\Controllers\SyncMailboxController;
 use App\Mailbox\Controllers\UpdateMailboxController;
 use App\Team\Controllers\EditTeamController;
 use App\Team\Controllers\UpdateTeamController;
@@ -108,6 +109,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('settings/email/callback', HandleMailboxCallbackController::class)->name('mailboxes.callback');
     Route::put('settings/email/mailboxes/{mailbox}', UpdateMailboxController::class)->whereUuid('mailbox')->name('mailboxes.update');
     Route::delete('settings/email/mailboxes/{mailbox}', DeleteMailboxController::class)->whereUuid('mailbox')->name('mailboxes.destroy');
+    Route::post('settings/email/mailboxes/{mailbox}/sync', SyncMailboxController::class)->whereUuid('mailbox')->name('mailboxes.sync');
 
     Route::get('settings/activity', ListAccountActivityController::class)->name('activity.index');
 

@@ -9,6 +9,8 @@ use Mom\Data\AbstractString;
 
 final class Title extends AbstractString
 {
+    public const int MAX_LENGTH = 255;
+
     public static function getName(): string
     {
         return 'title';
@@ -19,6 +21,6 @@ final class Title extends AbstractString
      */
     public static function getValidationRulesForCreate(FormRequest $request): array
     {
-        return ['required', 'string', 'max:255'];
+        return ['required', 'string', 'max:'.self::MAX_LENGTH];
     }
 }

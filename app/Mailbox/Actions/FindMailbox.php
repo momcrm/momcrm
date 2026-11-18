@@ -7,8 +7,10 @@ namespace App\Mailbox\Actions;
 use App\Mailbox\Mailbox;
 use App\Mailbox\MailboxCollection;
 use App\Mailbox\MailboxEloquentModel;
+use App\Mailbox\MailboxStatusEnum;
 use App\Mailbox\Properties\Address;
 use App\Mailbox\Properties\Id;
+use App\Mailbox\Properties\Status;
 use App\Mailbox\Properties\TeamId;
 use App\Team\Scopes\CurrentTeamScope;
 use Illuminate\Database\Eloquent\Builder;
@@ -40,6 +42,32 @@ final class FindMailbox
                 ->where(TeamId::getDatabaseTableColumnName(), $teamId)
                 ->where(Id::getDatabaseTableColumnName(), $id)
                 ->first(),
+        );
+    }
+
+    /**
+     * A mailbox in any team, for the jobs that read mailboxes with nobody signed in.
+     */
+    public static function byId(?string $id): Mailbox
+    {
+        if ($id === null) {
+            return Mailbox::new();
+        }
+
+        return Mailbox::fromEloquentModel(self::query()->where(Id::getDatabaseTableColumnName(), $id)->first());
+    }
+
+    /**
+     * Every team's mailboxes that can be read right now.
+     */
+    public static function connected(): MailboxCollection
+    {
+        return Mailbox::collect(
+            self::query()
+                ->where(Status::getDatabaseTableColumnName(), MailboxStatusEnum::Connected->value)
+                ->orderBy(Id::getDatabaseTableColumnName())
+                ->get()
+                ->all(),
         );
     }
 

@@ -28,7 +28,8 @@ use Illuminate\Validation\Rules\Exists;
 
 /**
  * Rules shared by opening and editing a ticket. The customer must be in the
- * team, and can be left out only when the ticket belongs to a project; the
+ * team, and can be left out only when the ticket belongs to a project, or was
+ * opened by an email from someone who is not yet anyone's contact; the
  * contact and location must belong to that customer; the project must be one
  * of the team's live projects the person may see (or the one the ticket is
  * already in); the assignee must be a member of the team; the group must be
@@ -45,10 +46,11 @@ final class TicketValidationRules
         $currentProjectId = $current?->getProjectId()->toNullableString();
         $customerId = $request->string(CustomerId::getNameForValidation())->toString();
         $userId = (string) $request->user()?->id;
+        $openedByEmail = $current?->getRequesterEmail()->isNotNull() === true;
 
         return [
             CustomerId::getNameForValidation() => [
-                ...CustomerId::getValidationRulesForCreate($request),
+                ...($openedByEmail ? ['nullable', 'uuid'] : CustomerId::getValidationRulesForCreate($request)),
                 Rule::exists(Table::Customers->value, 'id')->where('team_id', $teamId),
             ],
             ContactId::getNameForValidation() => [

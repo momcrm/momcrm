@@ -22,12 +22,15 @@ use App\Ticket\Properties\GroupId;
 use App\Ticket\Properties\Id;
 use App\Ticket\Properties\Labels;
 use App\Ticket\Properties\LocationId;
+use App\Ticket\Properties\MailboxId;
 use App\Ticket\Properties\Number;
 use App\Ticket\Properties\ParentId;
 use App\Ticket\Properties\Position;
 use App\Ticket\Properties\PriorityId;
 use App\Ticket\Properties\Project;
 use App\Ticket\Properties\ProjectId;
+use App\Ticket\Properties\RequesterEmail;
+use App\Ticket\Properties\RequesterName;
 use App\Ticket\Properties\StartsOn;
 use App\Ticket\Properties\StatusId;
 use App\Ticket\Properties\SubtasksCount;
@@ -62,12 +65,15 @@ final class Ticket extends AbstractData
         public Id $id,
         public Labels $labels,
         public LocationId $locationId,
+        public MailboxId $mailboxId,
         public Number $number,
         public ParentId $parentId,
         public Position $position,
         public PriorityId $priorityId,
         public Project $project,
         public ProjectId $projectId,
+        public RequesterEmail $requesterEmail,
+        public RequesterName $requesterName,
         public StartsOn $startsOn,
         public StatusId $statusId,
         public SubtasksCount $subtasksCount,
@@ -238,6 +244,18 @@ final class Ticket extends AbstractData
         return $this;
     }
 
+    public function getMailboxId(): MailboxId
+    {
+        return $this->mailboxId;
+    }
+
+    public function setMailboxId(mixed $mailboxId): self
+    {
+        $this->mailboxId = new MailboxId($mailboxId instanceof AbstractValue ? $mailboxId->toValue() : $mailboxId);
+
+        return $this;
+    }
+
     public function getNumber(): Number
     {
         return $this->number;
@@ -395,6 +413,30 @@ final class Ticket extends AbstractData
     public function setProjectId(mixed $projectId): self
     {
         $this->projectId = new ProjectId($projectId instanceof AbstractValue ? $projectId->toValue() : $projectId);
+
+        return $this;
+    }
+
+    public function getRequesterEmail(): RequesterEmail
+    {
+        return $this->requesterEmail;
+    }
+
+    public function setRequesterEmail(mixed $requesterEmail): self
+    {
+        $this->requesterEmail = new RequesterEmail($requesterEmail instanceof AbstractValue ? $requesterEmail->toValue() : $requesterEmail);
+
+        return $this;
+    }
+
+    public function getRequesterName(): RequesterName
+    {
+        return $this->requesterName;
+    }
+
+    public function setRequesterName(mixed $requesterName): self
+    {
+        $this->requesterName = new RequesterName($requesterName instanceof AbstractValue ? $requesterName->toValue() : $requesterName);
 
         return $this;
     }

@@ -117,6 +117,10 @@ final class TicketDrawer
                 'email' => $contact->getEmail()->toNullableString(),
                 'phone' => $contact->getWorkPhone()->toNullableString() ?? $contact->getMobilePhone()->toNullableString(),
             ],
+            'requester' => $ticket->getRequesterEmail()->isNull() ? null : [
+                'name' => $ticket->getRequesterName()->toNullableString(),
+                'email' => $ticket->getRequesterEmail()->toString(),
+            ],
             'location_name' => $location->isNull() ? null : $location->getName()->toString(),
             'labels' => Choice::collect($model->labels->all(), 'fromEloquentModel')->toTags(),
             'parent' => $parent instanceof TicketEloquentModel ? ['id' => $parent->id, 'number' => $parent->number, 'title' => $parent->title] : null,

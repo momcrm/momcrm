@@ -8,6 +8,7 @@ use App\Contact\Contact;
 use App\Contact\ContactCollection;
 use App\Contact\ContactEloquentModel;
 use App\Contact\ContactRelationship;
+use App\Contact\Properties\CreatedAt;
 use App\Contact\Properties\CustomerId;
 use App\Contact\Properties\Email;
 use App\Contact\Properties\FirstName;
@@ -28,6 +29,29 @@ final class FindContact
         }
 
         return Contact::fromEloquentModel(self::query($teamId)->where(Id::getDatabaseTableColumnName(), $id)->first());
+    }
+
+    /**
+     * The team's contact with this email address, whatever its letter case.
+     * Addresses are not unique, so when several contacts share one the oldest
+     * is used, and the same contact is found every time. The team's contacts
+     * are narrowed by the team index first, so comparing in lower case is cheap.
+     */
+    public static function byEmailForTeam(?string $email, string $teamId): Contact
+    {
+        $email = mb_strtolower(mb_trim((string) $email));
+
+        if ($email === '') {
+            return Contact::new();
+        }
+
+        return Contact::fromEloquentModel(
+            self::query($teamId)
+                ->whereRaw('LOWER(email) = ?', [$email])
+                ->oldest(CreatedAt::getDatabaseTableColumnName())
+                ->orderBy(Id::getDatabaseTableColumnName())
+                ->first(),
+        );
     }
 
     /**
