@@ -46,6 +46,19 @@ final class FindMailbox
     }
 
     /**
+     * The mailbox a team sends from: the one asked for when it is theirs and
+     * connected, otherwise the first of their connected mailboxes.
+     */
+    public static function toSendFromForTeam(?string $preferredId, string $teamId): Mailbox
+    {
+        $connected = self::allForTeam($teamId)->filter(fn (Mailbox $mailbox): bool => $mailbox->isConnected());
+
+        $preferred = $connected->findById($preferredId);
+
+        return $preferred->isNotNull() ? $preferred : $connected->first();
+    }
+
+    /**
      * A mailbox in any team, for the jobs that read mailboxes with nobody signed in.
      */
     public static function byId(?string $id): Mailbox

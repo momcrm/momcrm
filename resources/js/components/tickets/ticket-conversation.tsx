@@ -1,15 +1,21 @@
-import { router, usePage } from '@inertiajs/react';
+import { router, usePage, usePoll } from '@inertiajs/react';
 import { Trash2 } from 'lucide-react';
-import { Fragment, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import type { KeyboardEvent, ReactNode } from 'react';
 import { toast } from 'sonner';
 import SoftBadge from '@/components/soft-badge';
 import { AssigneeAvatar } from '@/components/tickets/ticket-meta';
 import { Button } from '@/components/ui/button';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { timeAgo } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { destroy as destroyComment } from '@/routes/comments';
-import type { ActivityItem, CustomerOption, TicketComment } from '@/types';
+import type {
+    ActivityItem,
+    CustomerOption,
+    TicketComment,
+    TicketReply,
+} from '@/types';
 
 type Tab = 'comments' | 'activity';
 
@@ -23,6 +29,7 @@ export default function TicketConversation({
     activity,
     members,
     reload,
+    reply,
 }: {
     /** Where a new comment is posted: the ticket's or record's comments. */
     storeUrl: string;
@@ -30,8 +37,30 @@ export default function TicketConversation({
     activity: ActivityItem[];
     members: CustomerOption[];
     reload: string[];
+    /** Who a reply to the customer goes to and where from, on a ticket. */
+    reply?: TicketReply;
 }) {
     const [tab, setTab] = useState<Tab>('comments');
+
+    // A reply being emailed shows as "Sending" until the page hears how it went.
+    const isSending = comments.some(
+        (comment) => comment.delivery?.status === 'pending',
+    );
+    const { start, stop } = usePoll(
+        3000,
+        { only: reload },
+        { autoStart: false },
+    );
+
+    useEffect(() => {
+        if (!isSending) {
+            return;
+        }
+
+        start();
+
+        return stop;
+    }, [isSending, start, stop]);
 
     return (
         <section className="space-y-3">
@@ -84,6 +113,7 @@ export default function TicketConversation({
                                                 </SoftBadge>
                                             </span>
                                         )}
+                                        <Delivery comment={comment} />
                                         <span className="text-xs text-subtle-foreground">
                                             {timeAgo(comment.created_at)}
                                         </span>
@@ -123,6 +153,7 @@ export default function TicketConversation({
                         storeUrl={storeUrl}
                         members={members}
                         reload={reload}
+                        reply={reply}
                     />
                 </>
             ) : activity.length === 0 ? (
@@ -221,16 +252,46 @@ function CommentBody({
     );
 }
 
+/**
+ * How a reply emailed to the customer fared; nothing for internal notes and
+ * for what the customer wrote.
+ */
+function Delivery({ comment }: { comment: TicketComment }) {
+    if (comment.visibility !== 'public' || comment.sender_email) {
+        return null;
+    }
+
+    if (comment.delivery?.status === 'sent') {
+        return <SoftBadge tone="success">Sent to customer</SoftBadge>;
+    }
+
+    if (comment.delivery?.status === 'pending') {
+        return <SoftBadge tone="neutral">Sending</SoftBadge>;
+    }
+
+    return (
+        <span title={comment.delivery?.error ?? undefined}>
+            <SoftBadge tone="destructive">Not sent</SoftBadge>
+        </span>
+    );
+}
+
 function Composer({
     storeUrl,
     members,
     reload,
+    reply,
 }: {
     storeUrl: string;
     members: CustomerOption[];
     reload: string[];
+    reply?: TicketReply;
 }) {
     const { auth } = usePage().props;
+    const canReply = Boolean(reply?.to && reply.from);
+    const [visibility, setVisibility] =
+        useState<TicketComment['visibility']>('internal');
+    const isReply = canReply && visibility === 'public';
     const [body, setBody] = useState('');
     const [mentioned, setMentioned] = useState<CustomerOption[]>([]);
     const [query, setQuery] = useState<string | null>(null);
@@ -290,6 +351,7 @@ function Composer({
                 mentions: mentioned
                     .filter((member) => text.includes(`@${member.name}`))
                     .map((member) => member.id),
+                visibility: isReply ? 'public' : 'internal',
             },
             {
                 only: reload,
@@ -388,15 +450,44 @@ function Composer({
                     ))}
                 </ul>
             )}
-            <div className="flex items-center justify-between border-t px-2 py-1.5">
-                <Hint>⌘ Enter to send</Hint>
+            <div className="flex flex-wrap items-center justify-between gap-2 border-t px-2 py-1.5">
+                {canReply ? (
+                    <div className="flex min-w-0 flex-wrap items-center gap-2">
+                        <ToggleGroup
+                            type="single"
+                            variant="segmented"
+                            value={visibility}
+                            onValueChange={(value) =>
+                                value &&
+                                setVisibility(
+                                    value as TicketComment['visibility'],
+                                )
+                            }
+                            aria-label="Who sees this"
+                        >
+                            <ToggleGroupItem value="internal">
+                                Internal note
+                            </ToggleGroupItem>
+                            <ToggleGroupItem value="public">
+                                Reply to customer
+                            </ToggleGroupItem>
+                        </ToggleGroup>
+                        <Hint>
+                            {isReply
+                                ? `Emailed to ${reply?.to} from ${reply?.from}`
+                                : 'Only your team sees this'}
+                        </Hint>
+                    </div>
+                ) : (
+                    <Hint>⌘ Enter to send</Hint>
+                )}
                 <Button
                     size="sm"
                     className="h-7"
                     disabled={!body.trim() || sending}
                     onClick={send}
                 >
-                    Comment
+                    {isReply ? 'Send reply' : 'Comment'}
                 </Button>
             </div>
         </div>

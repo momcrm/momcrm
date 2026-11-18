@@ -37,6 +37,7 @@ final class FindComments
                 'author_name' => $comment->author->name ?? $comment->sender_name ?? $comment->sender_email,
                 'sender_email' => $comment->sender_email,
                 'visibility' => $comment->visibility,
+                'delivery' => null,
                 'mentions' => $comment->mentions ?? [],
                 'created_at' => $comment->created_at?->toIso8601String(),
                 'can_delete' => $comment->user_id === $viewer->id

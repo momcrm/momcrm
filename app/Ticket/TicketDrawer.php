@@ -31,6 +31,8 @@ use App\Favorite\Actions\FindFavorite;
 use App\Favorite\FavoritableTypeEnum;
 use App\Group\Actions\FindGroup;
 use App\Location\Actions\FindLocation;
+use App\MailboxMessage\Actions\FindMailboxMessage;
+use App\MailboxMessage\TicketReplyRoute;
 use App\Project\Actions\FindProject;
 use App\Shared\MorphMapKeyEnum;
 use App\Team\Scopes\CurrentTeamScope;
@@ -102,6 +104,8 @@ final class TicketDrawer
         $contact = FindContact::byIdForTeam($ticket->getContactId()->toNullableString(), $teamId);
         $location = FindLocation::byIdForTeam($ticket->getLocationId()->toNullableString(), $teamId);
 
+        $deliveries = FindMailboxMessage::deliveriesForTicket($model->id, $teamId);
+
         return [
             ...$ticket->toSummary(),
             'custom_field_labels' => CustomFieldRelationLabels::for($teamId, CustomFieldTargetEnum::Ticket, $ticket->getCustomFields()->toValues()),
@@ -117,6 +121,7 @@ final class TicketDrawer
                 'email' => $contact->getEmail()->toNullableString(),
                 'phone' => $contact->getWorkPhone()->toNullableString() ?? $contact->getMobilePhone()->toNullableString(),
             ],
+            'reply' => TicketReplyRoute::forTicket($ticket)->toArray(),
             'requester' => $ticket->getRequesterEmail()->isNull() ? null : [
                 'name' => $ticket->getRequesterName()->toNullableString(),
                 'email' => $ticket->getRequesterEmail()->toString(),
@@ -142,6 +147,7 @@ final class TicketDrawer
                     'author_name' => $comment->author->name ?? $comment->sender_name ?? $comment->sender_email,
                     'sender_email' => $comment->sender_email,
                     'visibility' => $comment->visibility,
+                    'delivery' => $deliveries[$comment->id] ?? null,
                     'mentions' => $comment->mentions ?? [],
                     'created_at' => $comment->created_at?->toIso8601String(),
                     'can_delete' => $comment->user_id === $userId

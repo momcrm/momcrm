@@ -11,6 +11,8 @@ use App\CustomField\CustomFieldEloquentModel;
 use App\CustomField\CustomFieldRelationEnum;
 use App\CustomObject\CustomObjectEloquentModel;
 use App\Location\LocationEloquentModel;
+use App\Mailbox\MailboxEloquentModel;
+use App\MailboxMessage\MailboxMessageEloquentModel;
 use App\Project\ProjectEloquentModel;
 use App\Record\RecordEloquentModel;
 use App\TeamUser\TeamUserEloquentModel;
@@ -151,4 +153,25 @@ it('shows a reply that arrived by email as part of the conversation, under its s
             ->where('drawer.comments.1.visibility', 'public')
             ->where('drawer.comments.1.can_delete', false)
             ->where('drawer.activity.0.actor', 'Sam Lee'));
+});
+
+it('shows who a reply would go to and how the replies already sent fared', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $mailbox = MailboxEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'address' => 'support@helpdesk.test']);
+    $ticket = TicketEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'mailbox_id' => $mailbox->id, 'requester_email' => 'sam@acme.test']);
+    $note = CommentEloquentModel::factory()->create(['ticket_id' => $ticket->id, 'user_id' => $user->id, 'created_at' => now()->subMinutes(3)]);
+    $sent = CommentEloquentModel::factory()->public()->create(['ticket_id' => $ticket->id, 'user_id' => $user->id, 'created_at' => now()->subMinutes(2)]);
+    $failed = CommentEloquentModel::factory()->public()->create(['ticket_id' => $ticket->id, 'user_id' => $user->id, 'created_at' => now()->subMinute()]);
+    MailboxMessageEloquentModel::factory()->outbound()->create(['mailbox_id' => $mailbox->id, 'ticket_id' => $ticket->id, 'comment_id' => $sent->id]);
+    MailboxMessageEloquentModel::factory()->outbound()->create(['mailbox_id' => $mailbox->id, 'ticket_id' => $ticket->id, 'comment_id' => $failed->id, 'status' => 'failed', 'error' => 'Access is denied.']);
+
+    actingAs($user)
+        ->get(route('tickets.show', $ticket->id))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('drawer.reply', ['to' => 'sam@acme.test', 'from' => 'support@helpdesk.test'])
+            ->where('drawer.comments.0.id', $note->id)
+            ->where('drawer.comments.0.delivery', null)
+            ->where('drawer.comments.1.delivery', ['status' => 'sent', 'error' => null])
+            ->where('drawer.comments.2.delivery', ['status' => 'failed', 'error' => 'Access is denied.']));
 });
