@@ -6,9 +6,6 @@ namespace App\Connector\Types\Imap;
 
 use App\Connector\Exceptions\CouldNotReachConnector;
 use App\Connector\Sdk\PublicHost;
-use App\Connector\Types\Imap\ImapInbox;
-use App\Connector\Types\Imap\MailServers;
-use App\Connector\Types\Imap\MailServerSettings;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport;
 use Symfony\Component\Mailer\Transport\Smtp\Stream\SocketStream;

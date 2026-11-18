@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Connector\Types\Imap;
 
 use App\Connector\Exceptions\CouldNotReachConnector;
-use App\Connector\Types\Imap\ImapInbox;
 use Carbon\CarbonImmutable;
 use Throwable;
 use Webklex\PHPIMAP\Attachment;

@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 use App\Attachment\AttachmentEloquentModel;
 use App\Connector\ConnectorEloquentModel;
-use App\Connector\Types\Imap\ImapConnector;
 use App\Connector\Exceptions\CouldNotReachConnector;
+use App\Connector\Types\Imap\ImapConnector;
+use App\Connector\Types\Imap\MailServers;
 use App\Mailbox\Actions\ResolveMailClient;
 use App\Mailbox\Actions\SyncMailbox;
-use App\Connector\Types\Imap\MailServers;
 use App\Mailbox\Mailbox;
 use App\Mailbox\MailboxEloquentModel;
 use App\Mailbox\OutgoingMail;
