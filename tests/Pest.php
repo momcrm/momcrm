@@ -2,7 +2,9 @@
 
 use App\Choice\Actions\FindChoice;
 use App\Choice\ChoiceListEnum;
+use App\Environment\EnvironmentFile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\File;
 use Tests\TestCase;
 
 /*
@@ -90,4 +92,20 @@ function graphMessage(array $overrides = []): array
         ],
         ...$overrides,
     ];
+}
+
+/**
+ * An EnvironmentFile over a throwaway `.env` with the given contents, bound in
+ * the container so the environment pages edit it instead of the real one.
+ */
+function temporaryEnvironmentFile(string $contents, int $backupsKept = 20): EnvironmentFile
+{
+    $directory = sys_get_temp_dir().'/momcrm-environment-'.bin2hex(random_bytes(4));
+    File::ensureDirectoryExists($directory);
+    file_put_contents($directory.'/.env', $contents);
+
+    $file = new EnvironmentFile(path: $directory.'/.env', backupDirectory: $directory.'/backups', backupsKept: $backupsKept);
+    app()->instance(EnvironmentFile::class, $file);
+
+    return $file;
 }

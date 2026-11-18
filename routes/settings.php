@@ -28,6 +28,12 @@ use App\CustomObject\Controllers\ShowCustomObjectsController;
 use App\CustomObject\Controllers\ShowObjectFieldsController;
 use App\CustomObject\Controllers\StoreCustomObjectController;
 use App\CustomObject\Controllers\UpdateCustomObjectController;
+use App\Environment\Controllers\ApplyEnvironmentController;
+use App\Environment\Controllers\DeleteEnvironmentVariableController;
+use App\Environment\Controllers\RevealEnvironmentVariableController;
+use App\Environment\Controllers\ShowEnvironmentController;
+use App\Environment\Controllers\StoreEnvironmentVariableController;
+use App\Environment\Controllers\UpdateEnvironmentVariableController;
 use App\Mailbox\Controllers\ConnectMailboxController;
 use App\Mailbox\Controllers\DeleteMailboxController;
 use App\Mailbox\Controllers\HandleMailboxCallbackController;
@@ -110,6 +116,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('settings/email/mailboxes/{mailbox}', UpdateMailboxController::class)->whereUuid('mailbox')->name('mailboxes.update');
     Route::delete('settings/email/mailboxes/{mailbox}', DeleteMailboxController::class)->whereUuid('mailbox')->name('mailboxes.destroy');
     Route::post('settings/email/mailboxes/{mailbox}/sync', SyncMailboxController::class)->whereUuid('mailbox')->name('mailboxes.sync');
+
+    Route::get('settings/environment', ShowEnvironmentController::class)->name('environment.edit');
+    Route::post('settings/environment/apply', ApplyEnvironmentController::class)->name('environment.apply');
+    Route::post('settings/environment/variables', StoreEnvironmentVariableController::class)->name('environment.variables.store');
+    Route::patch('settings/environment/variables/{variable}', UpdateEnvironmentVariableController::class)->where('variable', '[A-Za-z_][A-Za-z0-9_.]*')->name('environment.variables.update');
+    Route::delete('settings/environment/variables/{variable}', DeleteEnvironmentVariableController::class)->where('variable', '[A-Za-z_][A-Za-z0-9_.]*')->name('environment.variables.destroy');
+    Route::post('settings/environment/variables/{variable}/reveal', RevealEnvironmentVariableController::class)->where('variable', '[A-Za-z_][A-Za-z0-9_.]*')->name('environment.variables.reveal');
 
     Route::get('settings/activity', ListAccountActivityController::class)->name('activity.index');
 

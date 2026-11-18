@@ -7,6 +7,7 @@ use App\Choice\ChoiceListEnum;
 use App\CustomField\Actions\FindCustomField;
 use App\CustomField\CustomFieldTargetEnum;
 use App\CustomObject\Actions\FindCustomObject;
+use App\Environment\EnvironmentVariables;
 use App\Favorite\Actions\FindFavorite;
 use App\Favorite\FavoritableTypeEnum;
 use App\Group\Actions\FindGroup;
@@ -68,6 +69,8 @@ class HandleInertiaRequests extends Middleware
             'canManageCustomObjects' => fn (): bool => $this->allowsOnCurrentTeam($request, 'manageCustomObjects'),
             'canManageEmail' => fn (): bool => $this->allowsOnCurrentTeam($request, 'manageEmail'),
             'canManageWorkflow' => fn (): bool => $this->allowsOnCurrentTeam($request, 'manageWorkflow'),
+            'canManageEnvironment' => fn (): bool => $request->user() instanceof UserEloquentModel
+                && Gate::forUser($request->user())->allows('manage', EnvironmentVariables::class),
             'sidebarCounts' => fn (): ?array => $this->sidebarCounts($request),
             'choices' => fn (): ?array => $this->choices($request),
             'customFields' => fn (): ?array => $this->customFields($request),

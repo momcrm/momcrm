@@ -4,6 +4,7 @@ use App\Activity\ActivityEloquentModel;
 use App\AuditLog\AuditLogEloquentModel;
 use App\Mailbox\Actions\SyncMailboxes;
 use App\Ticket\Actions\RemindDueTickets;
+use App\User\Actions\SetPlatformAdmin;
 use Illuminate\Console\Command;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -49,3 +50,21 @@ Artisan::command('mailboxes:sync', function (): int {
 })->purpose('Read new mail from every connected mailbox');
 
 Schedule::command('mailboxes:sync')->everyFiveMinutes()->withoutOverlapping(10);
+
+// Platform admins look after the installation itself, such as its `.env`.
+// There is no page for this, so no team owner can make themselves one.
+Artisan::command('users:platform-admin {email} {--revoke : Stop them being a platform admin}', function (string $email): int {
+    $isPlatformAdmin = ! $this->option('revoke');
+
+    if (SetPlatformAdmin::forEmail($email, $isPlatformAdmin)->isNull()) {
+        $this->components->error(__('Nobody has the email address :email.', ['email' => $email]));
+
+        return Command::FAILURE;
+    }
+
+    $this->components->info($isPlatformAdmin
+        ? __(':email is now a platform admin.', ['email' => $email])
+        : __(':email is no longer a platform admin.', ['email' => $email]));
+
+    return Command::SUCCESS;
+})->purpose('Make someone a platform admin, who can manage the environment');

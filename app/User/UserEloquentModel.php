@@ -17,6 +17,7 @@ use App\User\Properties\CurrentTeamId;
 use App\User\Properties\EmailVerifiedAt;
 use App\User\Properties\GettingStartedDismissedAt;
 use App\User\Properties\Id;
+use App\User\Properties\IsPlatformAdmin;
 use App\User\Properties\OnboardedAt;
 use App\User\Properties\Password;
 use Carbon\CarbonImmutable;
@@ -39,6 +40,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property string $name
  * @property string|null $job_title
  * @property string|null $timezone
+ * @property bool $is_platform_admin
  * @property string $email
  * @property CarbonImmutable|null $email_verified_at
  * @property string|null $current_team_id
@@ -155,6 +157,7 @@ final class UserEloquentModel extends Authenticatable implements Auditable, Must
         return [
             EmailVerifiedAt::getDatabaseTableColumnName() => 'datetime',
             GettingStartedDismissedAt::getDatabaseTableColumnName() => 'datetime',
+            IsPlatformAdmin::getDatabaseTableColumnName() => 'boolean',
             OnboardedAt::getDatabaseTableColumnName() => 'datetime',
             Password::getDatabaseTableColumnName() => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
