@@ -5,6 +5,8 @@ use App\Choice\ChoiceListEnum;
 use App\Connector\Actions\FindConnector;
 use App\Connector\Actions\GetConnectorAccessToken;
 use App\Environment\EnvironmentFile;
+use App\Mailbox\Actions\ResolveMailClient;
+use App\Mailbox\Contracts\MailClient;
 use App\Mailbox\Mailbox;
 use App\Mailbox\MailboxEloquentModel;
 use App\Mailbox\MicrosoftGraph;
@@ -90,7 +92,18 @@ function graphWithToken(): MicrosoftGraph
     $mailbox = MailboxEloquentModel::factory()->create();
     rememberMailboxToken($mailbox);
 
-    return MicrosoftGraph::forMailbox(Mailbox::fromEloquentModel($mailbox));
+    return MicrosoftGraph::forConnector(FindConnector::byId($mailbox->connector_id));
+}
+
+/**
+ * The mail client of a new mailbox whose connector already has a token.
+ */
+function mailClientWithToken(): MailClient
+{
+    $mailbox = MailboxEloquentModel::factory()->create();
+    rememberMailboxToken($mailbox);
+
+    return ResolveMailClient::forMailbox(Mailbox::fromEloquentModel($mailbox));
 }
 
 /**

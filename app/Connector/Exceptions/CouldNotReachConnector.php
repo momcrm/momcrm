@@ -20,14 +20,22 @@ final class CouldNotReachConnector extends RuntimeException
     public bool $isTemporary = false;
 
     /**
+     * The kind of connector that could not be reached, when it is known.
+     */
+    public ?ConnectorTypeEnum $type = null;
+
+    /**
      * What we have stored is gone or no longer accepted, so only connecting
      * the account again will fix it.
      */
     public static function needsReconnect(ConnectorTypeEnum $type): self
     {
-        return new self((string) __(':company no longer accepts the sign-in for this connector. Connect it again.', [
+        $exception = new self((string) __(':company no longer accepts the sign-in for this connector. Connect it again.', [
             'company' => $type->company(),
         ]));
+        $exception->type = $type;
+
+        return $exception;
     }
 
     /**
@@ -39,6 +47,7 @@ final class CouldNotReachConnector extends RuntimeException
             'company' => $type->company(),
         ]), previous: $previous);
         $exception->isTemporary = true;
+        $exception->type = $type;
 
         return $exception;
     }

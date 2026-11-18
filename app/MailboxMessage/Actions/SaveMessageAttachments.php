@@ -6,7 +6,7 @@ namespace App\MailboxMessage\Actions;
 
 use App\Attachment\Actions\CreateAttachment;
 use App\Connector\Exceptions\CouldNotReachConnector;
-use App\Mailbox\MicrosoftGraph;
+use App\Mailbox\Contracts\MailClient;
 use App\MailboxMessage\MailboxMessage;
 use App\Ticket\TicketEloquentModel;
 
@@ -23,7 +23,7 @@ final readonly class SaveMessageAttachments
     public const int MAX_BYTES = 20 * 1024 * 1024;
 
     public function __construct(
-        private MicrosoftGraph $graph,
+        private MailClient $client,
         private MailboxMessage $message,
     ) {}
 
@@ -44,7 +44,7 @@ final readonly class SaveMessageAttachments
         $sender = $this->message->getFromName()->toNullableString() ?? $this->message->getFromAddress()->toNullableString();
         $saved = 0;
 
-        foreach ($this->graph->attachments($externalId) as $attachment) {
+        foreach ($this->client->attachments($externalId) as $attachment) {
             if ($saved >= self::MAX_FILES) {
                 break;
             }
@@ -55,7 +55,7 @@ final readonly class SaveMessageAttachments
 
             CreateAttachment::fromContents(
                 $attachment['name'],
-                $this->graph->attachmentContents($externalId, $attachment['id']),
+                $this->client->attachmentContents($externalId, $attachment['id']),
                 $attachment['content_type'],
                 $ticket,
                 $sender,
@@ -70,9 +70,9 @@ final readonly class SaveMessageAttachments
     /**
      * @throws CouldNotReachConnector
      */
-    public static function fromMessage(MicrosoftGraph $graph, MailboxMessage $message): int
+    public static function fromMessage(MailClient $client, MailboxMessage $message): int
     {
-        return new self($graph, $message)->handle();
+        return new self($client, $message)->handle();
     }
 
     /**

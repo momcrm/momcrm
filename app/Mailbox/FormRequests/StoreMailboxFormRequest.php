@@ -10,8 +10,8 @@ use App\Connector\ConnectorCapabilityEnum;
 use App\Connector\Exceptions\CouldNotReachConnector;
 use App\Mailbox\Actions\CreateMailbox;
 use App\Mailbox\Actions\FindMailbox;
+use App\Mailbox\Actions\ResolveMailClient;
 use App\Mailbox\Mailbox;
-use App\Mailbox\MicrosoftGraph;
 use App\Team\Actions\FindTeam;
 use App\Team\Exceptions\CouldNotViewTeam;
 use App\Team\Team;
@@ -95,7 +95,7 @@ final class StoreMailboxFormRequest extends FormRequest
         }
 
         try {
-            MicrosoftGraph::forConnector($connector, $sharedAddress)->inbox();
+            ResolveMailClient::forConnector($connector, $sharedAddress)->checkInbox();
         } catch (CouldNotReachConnector) {
             throw ValidationException::withMessages([
                 'address' => $sharedAddress === null

@@ -13,6 +13,7 @@ use App\MailboxMessage\Properties\Error;
 use App\MailboxMessage\Properties\ExternalId;
 use App\MailboxMessage\Properties\FromAddress;
 use App\MailboxMessage\Properties\FromName;
+use App\MailboxMessage\Properties\HasAttachments;
 use App\MailboxMessage\Properties\Id;
 use App\MailboxMessage\Properties\InReplyTo;
 use App\MailboxMessage\Properties\InternetMessageId;
@@ -48,6 +49,7 @@ final class MailboxMessage extends AbstractData
         public Error $error,
         public FromAddress $fromAddress,
         public FromName $fromName,
+        public HasAttachments $hasAttachments,
         public Id $id,
         public InReplyTo $inReplyTo,
         public InternetMessageId $internetMessageId,
@@ -205,6 +207,18 @@ final class MailboxMessage extends AbstractData
     public function setFromName(mixed $fromName): self
     {
         $this->fromName = new FromName($fromName instanceof AbstractValue ? $fromName->toValue() : $fromName);
+
+        return $this;
+    }
+
+    public function getHasAttachments(): HasAttachments
+    {
+        return $this->hasAttachments;
+    }
+
+    public function setHasAttachments(mixed $hasAttachments): self
+    {
+        $this->hasAttachments = new HasAttachments($hasAttachments instanceof AbstractValue ? $hasAttachments->toValue() : $hasAttachments);
 
         return $this;
     }
