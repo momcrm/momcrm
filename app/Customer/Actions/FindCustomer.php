@@ -21,6 +21,7 @@ use App\Customer\Properties\TypeId;
 use App\CustomField\Actions\FindCustomField;
 use App\CustomField\CustomFieldQuery;
 use App\CustomField\CustomFieldTargetEnum;
+use App\Service\Properties\ArchivedAt as ServiceArchivedAt;
 use App\Team\Scopes\CurrentTeamScope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -72,7 +73,7 @@ final class FindCustomer
                     }
                 }
             })
-            ->withCount([CustomerRelationship::Contacts->value, CustomerRelationship::Services->value])
+            ->withCount([CustomerRelationship::Contacts->value, CustomerRelationship::Services->value => fn (Builder $query) => $query->whereNull(ServiceArchivedAt::getDatabaseTableColumnName())])
             ->orderBy(Name::getDatabaseTableColumnName())
             ->paginate($perPage)
             ->withQueryString()
