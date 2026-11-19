@@ -79,9 +79,10 @@ function useLeaveGuard(isOn: boolean) {
 }
 
 /**
- * A dark pill that floats at the foot of a form while it has unsaved
- * changes, saying how many and offering to reset or save them. It sits
- * inside the form, so its Save button submits it.
+ * A dark pill fixed to the foot of the window while a form has unsaved
+ * changes, saying how many and offering to reset or save them. It takes no
+ * room in the page, and it sits inside the form, so its Save button
+ * submits it.
  */
 export default function UnsavedChangesBar({
     count,
@@ -99,7 +100,7 @@ export default function UnsavedChangesBar({
             <div
                 role="status"
                 aria-live="polite"
-                className="pointer-events-none sticky bottom-6 z-20 flex justify-center"
+                className="pointer-events-none fixed bottom-6 left-1/2 z-40 flex -translate-x-1/2 justify-center"
             >
                 {count > 0 && (
                     <div className="pointer-events-auto flex animate-in items-center gap-6 rounded-xl bg-foreground py-2 pr-2 pl-4 text-sm text-background shadow-pop duration-200 fade-in slide-in-from-bottom-2">
