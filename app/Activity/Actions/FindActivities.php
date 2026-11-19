@@ -9,8 +9,11 @@ use App\Activity\ActivityEloquentModel;
 use App\Activity\ActivityRelationship;
 use App\Activity\Properties\CreatedAt;
 use App\Activity\Properties\Id;
+use App\Activity\Properties\SubjectId;
+use App\Activity\Properties\SubjectType;
 use App\Activity\Properties\TeamId;
 use App\Activity\Properties\UserId;
+use App\Shared\MorphMapKeyEnum;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -42,6 +45,22 @@ final class FindActivities
             ActivityEloquentModel::query()
                 ->where(UserId::getDatabaseTableColumnName(), $userId)
                 ->whereNull(TeamId::getDatabaseTableColumnName()),
+            $pageName,
+        );
+    }
+
+    /**
+     * One record's rows within a team, such as a service's, newest first.
+     *
+     * @return LengthAwarePaginator<int, Activity>
+     */
+    public static function forSubject(string $teamId, MorphMapKeyEnum $subjectType, string $subjectId, string $pageName = 'page'): LengthAwarePaginator
+    {
+        return self::newestFirst(
+            ActivityEloquentModel::query()
+                ->where(TeamId::getDatabaseTableColumnName(), $teamId)
+                ->where(SubjectType::getDatabaseTableColumnName(), $subjectType->value)
+                ->where(SubjectId::getDatabaseTableColumnName(), $subjectId),
             $pageName,
         );
     }

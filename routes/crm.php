@@ -106,8 +106,12 @@ use App\Service\Controllers\CreateServiceController;
 use App\Service\Controllers\DeactivateServiceController;
 use App\Service\Controllers\DeleteServiceController;
 use App\Service\Controllers\EditServiceController;
+use App\Service\Controllers\ListServiceActivityController;
+use App\Service\Controllers\ListServiceInvoicesController;
+use App\Service\Controllers\ListServiceLinkedRecordsController;
 use App\Service\Controllers\RestoreServiceController;
 use App\Service\Controllers\SetServiceAutoRenewController;
+use App\Service\Controllers\ShowServiceController;
 use App\Service\Controllers\StoreServiceController;
 use App\Service\Controllers\UpdateServiceController;
 use App\TeamUser\Controllers\ListMembersController;
@@ -187,7 +191,11 @@ Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function 
 
     Route::get('customers/{customer}/services/create', CreateServiceController::class)->whereUuid('customer')->name('services.create');
     Route::post('customers/{customer}/services', StoreServiceController::class)->whereUuid('customer')->name('services.store');
-    Route::get('services/{service}/edit', EditServiceController::class)->whereUuid('service')->name('services.edit');
+    Route::get('services/{service}', ShowServiceController::class)->whereUuid('service')->name('services.show');
+    Route::get('services/{service}/linked', ListServiceLinkedRecordsController::class)->whereUuid('service')->name('services.linked');
+    Route::get('services/{service}/invoices', ListServiceInvoicesController::class)->whereUuid('service')->name('services.invoices');
+    Route::get('services/{service}/activity', ListServiceActivityController::class)->whereUuid('service')->name('services.activity');
+    Route::get('services/{service}/settings', EditServiceController::class)->whereUuid('service')->name('services.edit');
     Route::put('services/{service}', UpdateServiceController::class)->whereUuid('service')->name('services.update');
     Route::delete('services/{service}', DeleteServiceController::class)->whereUuid('service')->name('services.destroy');
     Route::post('services/{service}/activate', ActivateServiceController::class)->whereUuid('service')->name('services.activate');

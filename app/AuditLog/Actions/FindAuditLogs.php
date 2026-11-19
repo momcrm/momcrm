@@ -7,10 +7,13 @@ namespace App\AuditLog\Actions;
 use App\AuditLog\AuditLog;
 use App\AuditLog\AuditLogEloquentModel;
 use App\AuditLog\AuditLogRelationship;
+use App\AuditLog\Properties\AuditableId;
+use App\AuditLog\Properties\AuditableType;
 use App\AuditLog\Properties\CreatedAt;
 use App\AuditLog\Properties\Id;
 use App\AuditLog\Properties\TeamId;
 use App\AuditLog\Properties\UserId;
+use App\Shared\MorphMapKeyEnum;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -42,6 +45,22 @@ final class FindAuditLogs
             AuditLogEloquentModel::query()
                 ->where(UserId::getDatabaseTableColumnName(), $userId)
                 ->whereNull(TeamId::getDatabaseTableColumnName()),
+            $pageName,
+        );
+    }
+
+    /**
+     * The changes to one record within a team, such as a service, newest first.
+     *
+     * @return LengthAwarePaginator<int, AuditLog>
+     */
+    public static function forAuditable(string $teamId, MorphMapKeyEnum $auditableType, string $auditableId, string $pageName = 'page'): LengthAwarePaginator
+    {
+        return self::newestFirst(
+            AuditLogEloquentModel::query()
+                ->where(TeamId::getDatabaseTableColumnName(), $teamId)
+                ->where(AuditableType::getDatabaseTableColumnName(), $auditableType->value)
+                ->where(AuditableId::getDatabaseTableColumnName(), $auditableId),
             $pageName,
         );
     }
