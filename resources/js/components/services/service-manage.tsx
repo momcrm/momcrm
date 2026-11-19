@@ -9,9 +9,8 @@ import DeleteServiceController from '@/actions/App/Service/Controllers/DeleteSer
 import RestoreServiceController from '@/actions/App/Service/Controllers/RestoreServiceController';
 import SetServiceAutoRenewController from '@/actions/App/Service/Controllers/SetServiceAutoRenewController';
 import ConfirmDelete from '@/components/confirm-delete';
-import InputError from '@/components/input-error';
 import NativeSelect from '@/components/native-select';
-import { SettingsSection } from '@/components/settings-section';
+import { SettingsRow, SettingsSection } from '@/components/settings-section';
 import { Button } from '@/components/ui/button';
 import { formatCents } from '@/lib/money';
 import type { Abilities, Rate, Service } from '@/types';
@@ -59,23 +58,27 @@ export function ChangeRateSection({
     return (
         <SettingsSection
             title="Rate"
-            description={
-                service.rate
-                    ? `On ${service.rate.name}${service.rate.is_archived ? ' (archived)' : ''}. A new rate applies from the next invoice.`
-                    : 'Not on a rate yet, so it is not billed.'
-            }
+            description="What the service is priced from. A new rate applies from the next invoice."
         >
             <Form
                 {...ChangeServiceRateController.form(service.id)}
                 options={keepScroll}
-                className="flex flex-wrap items-start gap-2 px-4 py-3.5"
             >
                 {({ errors, processing }) => (
-                    <>
-                        <div className="min-w-0 flex-1 basis-64">
+                    <SettingsRow
+                        label="Rate"
+                        htmlFor="rate_id"
+                        description={
+                            service.rate
+                                ? `On ${service.rate.name}${service.rate.is_archived ? ', which is archived' : ''}.`
+                                : 'Not on a rate yet, so it is not billed.'
+                        }
+                        error={errors.rate_id}
+                    >
+                        <div className="flex gap-2">
                             <NativeSelect
+                                id="rate_id"
                                 name="rate_id"
-                                aria-label="Rate"
                                 defaultValue={
                                     service.rate?.is_archived
                                         ? ''
@@ -94,15 +97,15 @@ export function ChangeRateSection({
                                     </option>
                                 ))}
                             </NativeSelect>
-                            <InputError
-                                message={errors.rate_id}
-                                className="mt-1.5"
-                            />
+                            <Button
+                                variant="outline"
+                                className="shrink-0"
+                                disabled={processing}
+                            >
+                                Change rate
+                            </Button>
                         </div>
-                        <Button variant="outline" disabled={processing}>
-                            Change rate
-                        </Button>
-                    </>
+                    </SettingsRow>
                 )}
             </Form>
         </SettingsSection>
