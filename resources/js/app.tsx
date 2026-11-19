@@ -7,6 +7,7 @@ import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
 import CustomerLayout from '@/layouts/customer/layout';
 import OnboardingLayout from '@/layouts/onboarding-layout';
+import ServiceLayout from '@/layouts/service/layout';
 import SettingsLayout from '@/layouts/settings/layout';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
@@ -29,6 +30,8 @@ void createInertiaApp({
                 return [AppLayout, SettingsLayout];
             case name.startsWith('customers/workspace/'):
                 return [AppLayout, CustomerLayout];
+            case name.startsWith('services/workspace/'):
+                return [AppLayout, ServiceLayout];
             default:
                 return AppLayout;
         }

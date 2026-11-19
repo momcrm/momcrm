@@ -28,18 +28,18 @@ it('shows the edit form for a service, with its rate, what it costs and the rate
     actingAs($user)
         ->get(route('services.edit', $service->id))
         ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page->component('services/edit')
-            ->where('service.id', $service->id)
-            ->where('service.rate.name', 'Old support')
-            ->where('service.effective_billing_period_in_months', 3)
-            ->where('service.unit_price_in_cents', 3000)
-            ->where('service.rental_in_cents', 6000)
-            ->where('customer.id', $customer->id)
+        ->assertInertia(fn (Assert $page) => $page->component('services/workspace/settings')
+            ->where('workspace.service.id', $service->id)
+            ->where('workspace.service.rate.name', 'Old support')
+            ->where('workspace.service.effective_billing_period_in_months', 3)
+            ->where('workspace.service.unit_price_in_cents', 3000)
+            ->where('workspace.service.rental_in_cents', 6000)
+            ->where('workspace.customer.id', $customer->id)
             ->where('rates.0.name', 'Old support')
             ->where('rates.1.name', 'Support')
             ->has('rates', 2)
             ->where('billingPeriods', [1, 3, 6, 12, 24, 36])
-            ->where('can.archive', true));
+            ->where('workspace.can.archive', true));
 });
 
 it("returns not found for another team's service", function (): void {
@@ -48,7 +48,7 @@ it("returns not found for another team's service", function (): void {
         ->assertNotFound();
 });
 
-it('sends the service its custom field values, the names they link to, and what links to it', function (): void {
+it('sends the service its custom field values, the names they link to, and how many records link to it', function (): void {
     $user = UserEloquentModel::factory()->withPersonalTeam()->create(['onboarded_at' => now()]);
     $team = ['team_id' => $user->current_team_id];
     $customer = CustomerEloquentModel::factory()->create([...$team, 'name' => 'Acme']);
@@ -61,10 +61,8 @@ it('sends the service its custom field values, the names they link to, and what 
     Pest\Laravel\actingAs($user)
         ->get(route('services.edit', $service->id))
         ->assertInertia(fn (AssertableInertia $page) => $page
-            ->where("service.custom_fields.{$supplier->id}", $customer->id)
+            ->where("workspace.service.custom_fields.{$supplier->id}", $customer->id)
             ->where('customFieldLabels', [$customer->id => 'Acme'])
-            ->where('linkedRecords.0.source', 'Vehicles')
-            ->where('linkedRecords.0.field', 'Kept at')
-            ->where('linkedRecords.0.records.0.title', 'Van'),
+            ->where('workspace.counts.linked', 1),
         );
 });

@@ -31,7 +31,7 @@ import {
     tickets,
 } from '@/routes/customers';
 import { show as showInvoice } from '@/routes/invoices';
-import { edit as editService } from '@/routes/services';
+import { show as showService } from '@/routes/services';
 import { show as showTicket } from '@/routes/tickets';
 import type {
     ContractItem,
@@ -191,7 +191,7 @@ function ServiceRow({ service }: { service: Service }) {
     return (
         <li>
             <Link
-                href={editService(service.id)}
+                href={showService(service.id)}
                 className="-mx-2 flex h-9 items-center gap-2.5 rounded-md px-2 text-sm hover:bg-accent/50"
             >
                 <span className="min-w-0 flex-1 truncate">

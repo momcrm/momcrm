@@ -283,7 +283,7 @@ enum StandardObjectEnum: string
             self::Project => route('projects.show', $id),
             self::Asset => route('assets.edit', $id),
             self::Location => route('locations.edit', $id),
-            self::Service => route('services.edit', $id),
+            self::Service => route('services.show', $id),
             self::Contract => route('customers.contracts', ['customer' => $record->getAttribute('customer_id'), 'contract' => $id]),
             self::Invoice => route('invoices.show', $id),
             self::Milestone => route('projects.show', $record->getAttribute('project_id')),

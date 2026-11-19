@@ -4,21 +4,19 @@ declare(strict_types=1);
 
 namespace App\Service\Controllers;
 
-use App\AccessRule\AccessResourceEnum;
-use App\AccessRule\Engine\AccessAbilities;
-use App\Customer\Actions\FindCustomer;
-use App\CustomField\Actions\FindLinkedRecords;
-use App\CustomField\CustomFieldRelationEnum;
 use App\CustomField\CustomFieldRelationLabels;
 use App\CustomField\CustomFieldTargetEnum;
-use App\Service\Actions\FindService;
 use App\Service\Exceptions\CouldNotFindService;
-use App\Service\ServiceCollection;
 use App\Service\ServiceFormOptions;
+use App\Service\ServiceWorkspace;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * A service's settings: its details, its rate, turning it on or off, and
+ * archiving or deleting it.
+ */
 final class EditServiceController
 {
     /**
@@ -26,22 +24,12 @@ final class EditServiceController
      */
     public function __invoke(Request $request, string $service): Response
     {
-        $teamId = $request->user()?->current_team_id;
-        $found = FindService::byIdForTeam($service, $teamId);
+        $workspace = ServiceWorkspace::open($request, $service);
 
-        if ($found->isNull()) {
-            throw CouldNotFindService::notFound();
-        }
-
-        $customer = FindCustomer::byIdForTeam($found->getCustomerId()->toString(), $teamId);
-
-        return Inertia::render('services/edit', [
-            'service' => ServiceCollection::make([$found])->toSummaries()[0],
-            'customer' => $customer->toSummary(),
-            ...ServiceFormOptions::for($customer->getId()->toString(), $customer->getTeamId()->toString(), $found),
-            'customFieldLabels' => CustomFieldRelationLabels::for($found->getTeamId()->toString(), CustomFieldTargetEnum::Service, $found->getCustomFields()->toValues()),
-            'linkedRecords' => FindLinkedRecords::to($found->getTeamId()->toString(), (string) $request->user()?->id, CustomFieldRelationEnum::Service, $found->getId()->toString()),
-            'can' => AccessAbilities::for($request->user(), AccessResourceEnum::Service, $found),
+        return Inertia::render('services/workspace/settings', [
+            ...$workspace->props($request),
+            ...ServiceFormOptions::for($workspace->customer->getId()->toString(), $workspace->teamId, $workspace->service),
+            'customFieldLabels' => CustomFieldRelationLabels::for($workspace->teamId, CustomFieldTargetEnum::Service, $workspace->service->getCustomFields()->toValues()),
         ]);
     }
 }

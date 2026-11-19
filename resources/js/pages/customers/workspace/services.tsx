@@ -9,7 +9,7 @@ import {
 import SoftBadge from '@/components/soft-badge';
 import { useWorkspaceBreadcrumbs } from '@/layouts/customer/layout';
 import { services as servicesTab } from '@/routes/customers';
-import { create, edit } from '@/routes/services';
+import { create, show } from '@/routes/services';
 import type { CustomerWorkspace, Service } from '@/types';
 
 export default function CustomerServices({
@@ -54,7 +54,7 @@ export default function CustomerServices({
                     <RecordList
                         items={services.map((service) => ({
                             id: service.id,
-                            href: edit(service.id).url,
+                            href: show(service.id).url,
                             title: service.name,
                             detail: [
                                 service.short_name,

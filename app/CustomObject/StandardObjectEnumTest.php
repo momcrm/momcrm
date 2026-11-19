@@ -37,7 +37,7 @@ function standardRecord(StandardObjectEnum $object, string $teamId): array
         StandardObjectEnum::Contract => [$record = ContractEloquentModel::factory()->create([...$team, 'customer_id' => $customerId = $customer()->id, 'title' => 'Managed services']), 'Managed services', route('customers.contracts', ['customer' => $customerId, 'contract' => $record->id])],
         StandardObjectEnum::Invoice => [$record = InvoiceEloquentModel::factory()->create([...$team, 'customer_id' => $customer()->id, 'number' => 42]), 'INV-0042', route('invoices.show', $record->id)],
         StandardObjectEnum::Milestone => [$record = MilestoneEloquentModel::factory()->create([...$team, 'project_id' => $projectId = ProjectEloquentModel::factory()->create($team)->id, 'name' => 'Go live']), 'Go live', route('projects.show', $projectId)],
-        StandardObjectEnum::Service => [$record = ServiceEloquentModel::factory()->create([...$team, 'customer_id' => $customer()->id, 'name' => 'Managed IT']), 'Managed IT', route('services.edit', $record->id)],
+        StandardObjectEnum::Service => [$record = ServiceEloquentModel::factory()->create([...$team, 'customer_id' => $customer()->id, 'name' => 'Managed IT']), 'Managed IT', route('services.show', $record->id)],
     };
 }
 

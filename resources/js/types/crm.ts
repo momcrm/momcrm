@@ -199,6 +199,36 @@ export type Service = {
 };
 
 /**
+ * A service opened on its own page: the record and what every section shares.
+ */
+export type ServiceWorkspace = {
+    service: Service;
+    customer: CustomerOption;
+    location: CustomerOption | null;
+    contact: CustomerOption | null;
+    can: Abilities;
+    counts: { linked: number; invoices: number };
+};
+
+/**
+ * An invoice line that billed a service, with the invoice it is on.
+ */
+export type ServiceInvoiceLine = {
+    id: string;
+    description: string;
+    quantity: number;
+    unit_price_in_cents: number;
+    line_total_in_cents: number;
+    invoice: {
+        id: string;
+        number: number;
+        reference: string;
+        status: string;
+        issued_on: string | null;
+    };
+};
+
+/**
  * What the service form offers: the team's rates, the customer's locations
  * and contacts, and the billing periods.
  */

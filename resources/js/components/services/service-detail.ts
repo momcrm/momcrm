@@ -21,3 +21,18 @@ export function serviceDetail(service: Service): string {
         ? `${service.quantity} × ${formatCents(service.unit_price_in_cents)} per ${period}`
         : `Quantity ${service.quantity}`;
 }
+
+const dayFormatter = new Intl.DateTimeFormat(undefined, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+});
+
+/**
+ * A calendar day such as "2026-12-01" as "1 Dec 2026", or a dash.
+ */
+export function formatDay(day: string | null): string {
+    return day
+        ? dayFormatter.format(new Date(`${day.slice(0, 10)}T00:00:00`))
+        : '—';
+}
