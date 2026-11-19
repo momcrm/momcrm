@@ -1,34 +1,46 @@
 import { Head, Link } from '@inertiajs/react';
+import { Plus } from 'lucide-react';
+import { useState } from 'react';
 import RecordList from '@/components/customers/record-list';
-import { AddLink, TabHeader } from '@/components/customers/workspace-tab';
+import { TabHeader } from '@/components/customers/workspace-tab';
 import EmptyState from '@/components/empty-state';
+import AddServiceDialog from '@/components/services/add-service-dialog';
 import {
     serviceDetail,
     serviceLifecycleLabels,
 } from '@/components/services/service-detail';
 import SoftBadge from '@/components/soft-badge';
+import { Button } from '@/components/ui/button';
 import { useWorkspaceBreadcrumbs } from '@/layouts/customer/layout';
 import { services as servicesTab } from '@/routes/customers';
-import { create, show } from '@/routes/services';
-import type { CustomerWorkspace, Service } from '@/types';
+import { show } from '@/routes/services';
+import type { CustomerWorkspace, Service, ServiceFormOptions } from '@/types';
 
 export default function CustomerServices({
     workspace,
     services,
     archivedCount,
     showsArchived,
+    serviceForm,
 }: {
     workspace: CustomerWorkspace;
     services: Service[];
     archivedCount: number;
     showsArchived: boolean;
+    serviceForm: ServiceFormOptions;
 }) {
     const { customer } = workspace;
     useWorkspaceBreadcrumbs(customer, {
         title: 'Services',
         href: servicesTab(customer.id),
     });
-    const add = <AddLink href={create(customer.id).url} label="Add service" />;
+    const [isAdding, setIsAdding] = useState(false);
+    const add = (
+        <Button variant="outline" size="sm" onClick={() => setIsAdding(true)}>
+            <Plus />
+            Add service
+        </Button>
+    );
     const archiveToggle = archivedCount > 0 && (
         <Link
             href={servicesTab(customer.id, {
@@ -90,6 +102,12 @@ export default function CustomerServices({
                     }
                 />
             )}
+            <AddServiceDialog
+                customer={{ id: customer.id, name: customer.name }}
+                options={serviceForm}
+                open={isAdding}
+                onOpenChange={setIsAdding}
+            />
         </>
     );
 }

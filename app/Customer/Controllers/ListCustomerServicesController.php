@@ -8,13 +8,14 @@ use App\Customer\CustomerWorkspace;
 use App\Customer\Exceptions\CouldNotFindCustomer;
 use App\Service\Actions\FindService;
 use App\Service\Service;
+use App\Service\ServiceFormOptions;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * The customer's services tab. Archived services are left out unless
- * `?archived=1` asks for them.
+ * The customer's services tab, with what the Add service dialog offers.
+ * Archived services are left out unless `?archived=1` asks for them.
  */
 final class ListCustomerServicesController
 {
@@ -32,6 +33,7 @@ final class ListCustomerServicesController
             'services' => ($showsArchived ? $services : $services->withoutArchived())->toSummaries(),
             'archivedCount' => $services->filter(fn (Service $service): bool => $service->isArchived())->count(),
             'showsArchived' => $showsArchived,
+            'serviceForm' => ServiceFormOptions::for($workspace->customerId(), $workspace->teamId),
         ]);
     }
 }

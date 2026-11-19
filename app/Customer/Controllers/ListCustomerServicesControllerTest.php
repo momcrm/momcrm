@@ -30,7 +30,9 @@ it("lists the customer's services with what they cost, leaving archived ones out
             ->where('services.0.rental_in_cents', 9990)
             ->where('archivedCount', 1)
             ->where('showsArchived', false)
-            ->where('workspace.counts.services', 1),
+            ->where('workspace.counts.services', 1)
+            ->where('serviceForm.rates', fn ($rates): bool => collect($rates)->pluck('id')->contains($rate->id))
+            ->where('serviceForm.billingPeriods', [1, 3, 6, 12, 24, 36]),
         );
 
     actingAs($user)

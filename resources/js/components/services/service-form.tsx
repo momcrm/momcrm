@@ -1,4 +1,4 @@
-import { Form, Link } from '@inertiajs/react';
+import { Form } from '@inertiajs/react';
 import { useState } from 'react';
 import CustomFieldsFormFields from '@/components/custom-fields/custom-fields-form';
 import FormField from '@/components/form-field';
@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { formatCents } from '@/lib/money';
+import { cn } from '@/lib/utils';
 import type { Rate, Service, ServiceFormOptions } from '@/types';
 
 type Action = { action: string; method: 'post' | 'put' };
@@ -31,13 +32,18 @@ export default function ServiceForm({
     service,
     options,
     submitLabel,
-    cancelHref,
+    onCancel,
+    onSuccess,
+    className = 'max-w-2xl',
 }: {
     action: Action;
     service?: Service;
     options: ServiceFormOptions;
     submitLabel: string;
-    cancelHref?: string;
+    /** Shows a Cancel button that calls this, as in a dialog. */
+    onCancel?: () => void;
+    onSuccess?: () => void;
+    className?: string;
 }) {
     const isNew = service === undefined;
     const [rateId, setRateId] = useState(
@@ -47,7 +53,12 @@ export default function ServiceForm({
     const rate = options.rates.find((option) => option.id === rateId);
 
     return (
-        <Form {...action} className="max-w-2xl space-y-6">
+        <Form
+            {...action}
+            options={{ preserveScroll: true }}
+            onSuccess={onSuccess}
+            className={cn('space-y-6', className)}
+        >
             {({ processing, errors }) => (
                 <>
                     <div className="grid gap-6 sm:grid-cols-2">
@@ -288,7 +299,12 @@ export default function ServiceForm({
                         />
                     </FormField>
 
-                    <div className="flex items-center gap-2">
+                    <div
+                        className={cn(
+                            'flex items-center gap-2',
+                            onCancel && 'flex-row-reverse justify-start',
+                        )}
+                    >
                         <Button
                             disabled={processing}
                             data-test="save-service-button"
@@ -296,9 +312,13 @@ export default function ServiceForm({
                             {processing && <Spinner />}
                             {submitLabel}
                         </Button>
-                        {cancelHref && (
-                            <Button variant="ghost" asChild>
-                                <Link href={cancelHref}>Cancel</Link>
+                        {onCancel && (
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                onClick={onCancel}
+                            >
+                                Cancel
                             </Button>
                         )}
                     </div>
