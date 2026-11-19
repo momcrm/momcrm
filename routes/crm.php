@@ -104,7 +104,6 @@ use App\Service\Controllers\ArchiveServiceController;
 use App\Service\Controllers\BulkChangeServicesController;
 use App\Service\Controllers\BulkUpdateServicesController;
 use App\Service\Controllers\ChangeServiceRateController;
-use App\Service\Controllers\CreateServiceController;
 use App\Service\Controllers\DeactivateServiceController;
 use App\Service\Controllers\DeleteServiceController;
 use App\Service\Controllers\EditServiceController;
@@ -195,7 +194,6 @@ Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function 
     Route::get('services', ListServicesController::class)->name('services.index');
     Route::patch('services/bulk', BulkUpdateServicesController::class)->name('services.bulk.update');
     Route::post('services/bulk/change', BulkChangeServicesController::class)->name('services.bulk.change');
-    Route::get('customers/{customer}/services/create', CreateServiceController::class)->whereUuid('customer')->name('services.create');
     Route::post('customers/{customer}/services', StoreServiceController::class)->whereUuid('customer')->name('services.store');
     Route::get('services/{service}', ShowServiceController::class)->whereUuid('service')->name('services.show');
     Route::get('services/{service}/linked', ListServiceLinkedRecordsController::class)->whereUuid('service')->name('services.linked');

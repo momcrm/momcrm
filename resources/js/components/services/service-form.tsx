@@ -1,4 +1,4 @@
-import { Form, Link } from '@inertiajs/react';
+import { Form } from '@inertiajs/react';
 import { useState } from 'react';
 import CustomFieldsFormFields from '@/components/custom-fields/custom-fields-form';
 import FormField from '@/components/form-field';
@@ -32,7 +32,6 @@ export default function ServiceForm({
     service,
     options,
     submitLabel,
-    cancelHref,
     onCancel,
     onSuccess,
     className = 'max-w-2xl',
@@ -41,7 +40,6 @@ export default function ServiceForm({
     service?: Service;
     options: ServiceFormOptions;
     submitLabel: string;
-    cancelHref?: string;
     /** Shows a Cancel button that calls this, as in a dialog. */
     onCancel?: () => void;
     onSuccess?: () => void;
@@ -321,11 +319,6 @@ export default function ServiceForm({
                                 onClick={onCancel}
                             >
                                 Cancel
-                            </Button>
-                        )}
-                        {cancelHref && !onCancel && (
-                            <Button variant="ghost" asChild>
-                                <Link href={cancelHref}>Cancel</Link>
                             </Button>
                         )}
                     </div>
