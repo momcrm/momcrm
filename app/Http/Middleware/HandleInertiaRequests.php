@@ -69,6 +69,7 @@ class HandleInertiaRequests extends Middleware
             'canManageCustomFields' => fn (): bool => $this->allowsOnCurrentTeam($request, 'manageCustomFields'),
             'canManageCustomObjects' => fn (): bool => $this->allowsOnCurrentTeam($request, 'manageCustomObjects'),
             'canManageEmail' => fn (): bool => $this->allowsOnCurrentTeam($request, 'manageEmail'),
+            'canManageRates' => fn (): bool => $this->allowsOnCurrentTeam($request, 'manageRates'),
             'canManageWorkflow' => fn (): bool => $this->allowsOnCurrentTeam($request, 'manageWorkflow'),
             'canManageEnvironment' => fn (): bool => $request->user() instanceof UserEloquentModel
                 && Gate::forUser($request->user())->allows('manage', EnvironmentVariables::class),

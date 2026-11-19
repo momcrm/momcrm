@@ -44,6 +44,11 @@ use App\Mailbox\Controllers\ShowEmailSettingsController;
 use App\Mailbox\Controllers\StoreMailboxController;
 use App\Mailbox\Controllers\SyncMailboxController;
 use App\Mailbox\Controllers\UpdateMailboxController;
+use App\Rate\Controllers\ArchiveRateController;
+use App\Rate\Controllers\ListRatesController;
+use App\Rate\Controllers\RestoreRateController;
+use App\Rate\Controllers\StoreRateController;
+use App\Rate\Controllers\UpdateRateController;
 use App\Team\Controllers\EditTeamController;
 use App\Team\Controllers\UpdateTeamController;
 use App\TeamInvitation\Controllers\DeleteTeamInvitationController;
@@ -96,6 +101,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('settings/choices/{choice}/archive', ArchiveChoiceController::class)->whereUuid('choice')->name('choices.archive');
     Route::post('settings/choices/{choice}/restore', RestoreChoiceController::class)->whereUuid('choice')->name('choices.restore');
     Route::delete('settings/choices/{choice}', DeleteChoiceController::class)->whereUuid('choice')->name('choices.destroy');
+
+    Route::get('settings/rates', ListRatesController::class)->name('rates.index');
+    Route::post('settings/rates', StoreRateController::class)->name('rates.store');
+    Route::put('settings/rates/{rate}', UpdateRateController::class)->whereUuid('rate')->name('rates.update');
+    Route::post('settings/rates/{rate}/archive', ArchiveRateController::class)->whereUuid('rate')->name('rates.archive');
+    Route::post('settings/rates/{rate}/restore', RestoreRateController::class)->whereUuid('rate')->name('rates.restore');
 
     Route::get('settings/custom-fields', ShowCustomFieldsController::class)->name('custom-fields.edit');
     Route::post('settings/custom-fields', StoreCustomFieldController::class)->name('custom-fields.store');

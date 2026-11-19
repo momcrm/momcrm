@@ -21,6 +21,7 @@ declare module '@inertiajs/core' {
             canManageCustomObjects?: boolean;
             canManageEmail?: boolean;
             canManageEnvironment?: boolean;
+            canManageRates?: boolean;
             canManageWorkflow?: boolean;
             sidebarCounts?: {
                 openTickets: number;

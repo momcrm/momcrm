@@ -148,6 +148,20 @@ export type Asset = {
     custom_fields: CustomFieldValues;
 };
 
+/**
+ * One entry in the team's price list. The price is per unit per month.
+ */
+export type Rate = {
+    id: string;
+    name: string;
+    description: string | null;
+    price_in_cents: number;
+    cost_in_cents: number | null;
+    billing_period_in_months: number;
+    prorates_first_month: boolean;
+    is_archived: boolean;
+};
+
 export type Service = {
     id: string;
     customer_id: string;
