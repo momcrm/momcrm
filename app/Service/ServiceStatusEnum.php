@@ -7,21 +7,22 @@ namespace App\Service;
 use App\Shared\Traits\Enum;
 use App\Shared\Traits\EnumOptions;
 
+/**
+ * Whether a service is on. Only active services are billed.
+ */
 enum ServiceStatusEnum: string
 {
     use Enum;
     use EnumOptions;
 
     case Active = 'active';
-    case Cancelled = 'cancelled';
-    case Pending = 'pending';
+    case Inactive = 'inactive';
 
     public function label(): string
     {
         return match ($this) {
             self::Active => 'Active',
-            self::Cancelled => 'Cancelled',
-            self::Pending => 'Pending',
+            self::Inactive => 'Inactive',
         };
     }
 }

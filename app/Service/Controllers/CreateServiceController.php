@@ -6,8 +6,7 @@ namespace App\Service\Controllers;
 
 use App\Customer\Actions\FindCustomer;
 use App\Customer\Exceptions\CouldNotFindCustomer;
-use App\Location\Actions\FindLocation;
-use App\Service\ServiceStatusEnum;
+use App\Service\ServiceFormOptions;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -27,8 +26,7 @@ final class CreateServiceController
 
         return Inertia::render('services/create', [
             'customer' => $found->toSummary(),
-            'statuses' => ServiceStatusEnum::options(),
-            'locations' => FindLocation::optionsForCustomer($found->getId()->toString(), $found->getTeamId()->toString()),
+            ...ServiceFormOptions::for($found->getId()->toString(), $found->getTeamId()->toString()),
         ]);
     }
 }

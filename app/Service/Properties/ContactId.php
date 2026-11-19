@@ -4,14 +4,17 @@ declare(strict_types=1);
 
 namespace App\Service\Properties;
 
+use App\Shared\Abstracts\AbstractUuid;
 use Illuminate\Foundation\Http\FormRequest;
-use Mom\Data\AbstractInteger;
 
-final class UnitPriceInCents extends AbstractInteger
+/**
+ * The customer's contact for this service, if there is one.
+ */
+final class ContactId extends AbstractUuid
 {
     public static function getName(): string
     {
-        return 'unit_price_in_cents';
+        return 'contact_id';
     }
 
     /**
@@ -19,6 +22,6 @@ final class UnitPriceInCents extends AbstractInteger
      */
     public static function getValidationRulesForCreate(FormRequest $request): array
     {
-        return ['nullable', 'integer', 'min:0', 'max:100000000'];
+        return ['nullable', 'uuid'];
     }
 }

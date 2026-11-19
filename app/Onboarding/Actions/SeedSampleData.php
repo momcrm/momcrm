@@ -33,6 +33,9 @@ use App\Project\Actions\CreateProject;
 use App\Project\Project;
 use App\Project\ProjectStatusEnum;
 use App\Project\ProjectVisibilityEnum;
+use App\Rate\Actions\CreateRate;
+use App\Rate\Actions\FindRate;
+use App\Rate\Rate;
 use App\Service\Actions\CreateService;
 use App\Service\Service;
 use App\Service\ServiceStatusEnum;
@@ -248,6 +251,29 @@ final readonly class SeedSampleData
     }
 
     /**
+     * The team's rate for a sample service, added to the price list the first
+     * time. Rates are the team's own, so they stay when the sample data goes.
+     *
+     * @param  array{name: string, quantity: int, cents: int}  $service
+     */
+    private function rateFor(array $service): Rate
+    {
+        $existing = FindRate::listForTeam($this->teamId, withArchived: true)
+            ->first(fn (Rate $rate): bool => $rate->getName()->toString() === $service['name']);
+
+        if ($existing->isNotNull()) {
+            return $existing;
+        }
+
+        return CreateRate::fromRate(Rate::new()
+            ->setTeamId($this->teamId)
+            ->setName($service['name'])
+            ->setPriceInCents($service['cents'])
+            ->setBillingPeriodInMonths(1)
+            ->setProratesFirstMonth(true));
+    }
+
+    /**
      * @param  array{name: string, email: string, phone: string, location: array{name: string, suburb: string, postcode: string}, contacts: array<int, array{first: string, last: string, position: string, email: string}>, assets: array<int, array{name: string, serial: string}>, service: array{name: string, quantity: int, cents: int}, tickets: array<int, array{title: string, status: string, priority: string, due?: int, labels?: array<int, string>, project?: string}>}  $sample
      * @return array{customer: string, contact: string, location: string}
      */
@@ -298,11 +324,11 @@ final readonly class SeedSampleData
             ->setTeamId($this->teamId)
             ->setCustomerId($customer->getId())
             ->setLocationId($location->getId())
+            ->setContactId($contacts[0]->getId())
+            ->setRateId($this->rateFor($sample['service'])->getId())
             ->setName($sample['service']['name'])
             ->setQuantity($sample['service']['quantity'])
-            ->setUnitPriceInCents($sample['service']['cents'])
-            ->setBillingPeriodInMonths(1)
-            ->setStartsOn(CarbonImmutable::today()->startOfMonth())
+            ->setBillingStartsOn(CarbonImmutable::today()->startOfMonth())
             ->setStatus(ServiceStatusEnum::Active));
 
         if ($sendsInvoice) {

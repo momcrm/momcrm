@@ -99,9 +99,15 @@ use App\Secret\Controllers\DeleteSecretController;
 use App\Secret\Controllers\RevealSecretController;
 use App\Secret\Controllers\StoreSecretController;
 use App\Secret\Controllers\UpdateSecretController;
+use App\Service\Controllers\ActivateServiceController;
+use App\Service\Controllers\ArchiveServiceController;
+use App\Service\Controllers\ChangeServiceRateController;
 use App\Service\Controllers\CreateServiceController;
+use App\Service\Controllers\DeactivateServiceController;
 use App\Service\Controllers\DeleteServiceController;
 use App\Service\Controllers\EditServiceController;
+use App\Service\Controllers\RestoreServiceController;
+use App\Service\Controllers\SetServiceAutoRenewController;
 use App\Service\Controllers\StoreServiceController;
 use App\Service\Controllers\UpdateServiceController;
 use App\TeamUser\Controllers\ListMembersController;
@@ -184,6 +190,12 @@ Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function 
     Route::get('services/{service}/edit', EditServiceController::class)->whereUuid('service')->name('services.edit');
     Route::put('services/{service}', UpdateServiceController::class)->whereUuid('service')->name('services.update');
     Route::delete('services/{service}', DeleteServiceController::class)->whereUuid('service')->name('services.destroy');
+    Route::post('services/{service}/activate', ActivateServiceController::class)->whereUuid('service')->name('services.activate');
+    Route::post('services/{service}/deactivate', DeactivateServiceController::class)->whereUuid('service')->name('services.deactivate');
+    Route::post('services/{service}/archive', ArchiveServiceController::class)->whereUuid('service')->name('services.archive');
+    Route::post('services/{service}/restore', RestoreServiceController::class)->whereUuid('service')->name('services.restore');
+    Route::put('services/{service}/auto-renew', SetServiceAutoRenewController::class)->whereUuid('service')->name('services.auto-renew');
+    Route::put('services/{service}/rate', ChangeServiceRateController::class)->whereUuid('service')->name('services.rate');
 
     Route::get('tickets', ListTicketsController::class)->name('tickets.index');
     Route::get('my-tickets', ListMyTicketsController::class)->name('tickets.mine');

@@ -88,7 +88,7 @@ final readonly class CustomerWorkspace
             'contacts' => FindContact::forCustomer($customerId, $this->teamId)->count(),
             'locations' => FindLocation::forCustomer($customerId, $this->teamId)->count(),
             'assets' => FindAsset::forCustomer($customerId, $this->teamId)->count(),
-            'services' => FindService::forCustomer($customerId, $this->teamId)->count(),
+            'services' => FindService::forCustomer($customerId, $this->teamId)->withoutArchived()->count(),
             'files' => FindAttachment::countForCustomer($customerId),
             'contracts' => FindContract::countForCustomer($customerId, $this->teamId),
             'secrets' => FindSecret::countForCustomer($customerId, $this->teamId),

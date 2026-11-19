@@ -1,22 +1,23 @@
+import { billingPeriodLabel } from '@/components/rates/billing-period';
 import { formatCents } from '@/lib/money';
-import type { Service } from '@/types';
+import type { Service, ServiceLifecycle } from '@/types';
 
-function billingPeriod(months: number | null): string {
-    switch (months) {
-        case 1:
-            return 'month';
-        case 12:
-            return 'year';
-        default:
-            return `${months} months`;
-    }
-}
+export const serviceLifecycleLabels: Record<ServiceLifecycle, string> = {
+    active: 'Active',
+    inactive: 'Inactive',
+    archived: 'Archived',
+};
 
 /**
- * A service's quantity and price per billing period, such as "2 × $49.95 per month".
+ * What a service costs per billing period, such as "2 × $49.95 per month", or
+ * just its quantity when it has no rate.
  */
 export function serviceDetail(service: Service): string {
+    const period = billingPeriodLabel(
+        service.effective_billing_period_in_months,
+    );
+
     return service.unit_price_in_cents != null
-        ? `${service.quantity} × ${formatCents(service.unit_price_in_cents)} per ${billingPeriod(service.billing_period_in_months)}`
+        ? `${service.quantity} × ${formatCents(service.unit_price_in_cents)} per ${period}`
         : `Quantity ${service.quantity}`;
 }

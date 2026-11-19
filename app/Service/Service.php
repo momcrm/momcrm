@@ -5,8 +5,13 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\CustomField\Properties\CustomFieldValues;
+use App\Rate\Rate;
 use App\Service\Factories\ServiceFactory;
+use App\Service\Properties\ArchivedAt;
+use App\Service\Properties\AutoRenew;
 use App\Service\Properties\BillingPeriodInMonths;
+use App\Service\Properties\BillingStartsOn;
+use App\Service\Properties\ContactId;
 use App\Service\Properties\CreatedAt;
 use App\Service\Properties\CustomerId;
 use App\Service\Properties\EndsOn;
@@ -15,23 +20,31 @@ use App\Service\Properties\LocationId;
 use App\Service\Properties\Name;
 use App\Service\Properties\Note;
 use App\Service\Properties\Quantity;
-use App\Service\Properties\StartsOn;
+use App\Service\Properties\RateId;
+use App\Service\Properties\ShortName;
 use App\Service\Properties\Status;
 use App\Service\Properties\TeamId;
-use App\Service\Properties\UnitPriceInCents;
 use App\Service\Properties\UpdatedAt;
 use Illuminate\Support\Collection;
 use Mom\Data\AbstractData;
 use Mom\Data\AbstractValue;
 
 /**
+ * Something a customer gets from the team and is billed for, priced from a
+ * rate: the rate's monthly price, times the quantity, times the months billed
+ * at once.
+ *
  * @extends AbstractData<ServiceEloquentModel>
  */
 final class Service extends AbstractData
 {
     public function __construct(
         public CustomFieldValues $customFields,
+        public ArchivedAt $archivedAt,
+        public AutoRenew $autoRenew,
         public BillingPeriodInMonths $billingPeriodInMonths,
+        public BillingStartsOn $billingStartsOn,
+        public ContactId $contactId,
         public CreatedAt $createdAt,
         public CustomerId $customerId,
         public EndsOn $endsOn,
@@ -40,10 +53,10 @@ final class Service extends AbstractData
         public Name $name,
         public Note $note,
         public Quantity $quantity,
-        public StartsOn $startsOn,
+        public RateId $rateId,
+        public ShortName $shortName,
         public Status $status,
         public TeamId $teamId,
-        public UnitPriceInCents $unitPriceInCents,
         public UpdatedAt $updatedAt,
     ) {}
 
@@ -70,26 +83,93 @@ final class Service extends AbstractData
     }
 
     /**
-     * The fields the service pages show.
+     * The fields the service pages show, with what it costs when its rate is given.
      *
-     * @return array{id: string, customer_id: string, name: ?string, status: string, quantity: ?int, unit_price_in_cents: ?int, billing_period_in_months: ?int, starts_on: ?string, ends_on: ?string, location_id: ?string, note: ?string, custom_fields: array<string, mixed>}
+     * @return array{id: string, customer_id: string, name: ?string, short_name: ?string, status: string, lifecycle: string, auto_renew: bool, quantity: ?int, rate_id: ?string, rate: ?array{id: string, name: string, price_in_cents: int, billing_period_in_months: int, is_archived: bool}, billing_period_in_months: ?int, effective_billing_period_in_months: ?int, unit_price_in_cents: ?int, rental_in_cents: ?int, billing_starts_on: ?string, ends_on: ?string, location_id: ?string, contact_id: ?string, note: ?string, archived_at: ?string, custom_fields: array<string, mixed>}
      */
-    public function toSummary(): array
+    public function toSummary(?Rate $rate = null): array
     {
+        $rate = $rate !== null && $rate->isNotNull() && $rate->getId()->toString() === $this->getRateId()->toNullableString() ? $rate : null;
+
         return [
             'id' => $this->getId()->toString(),
             'customer_id' => $this->getCustomerId()->toString(),
             'name' => $this->getName()->toNullableString(),
-            'status' => $this->getStatus()->toString(),
+            'short_name' => $this->getShortName()->toNullableString(),
+            'status' => $this->getStatus()->toEnum()->value,
+            'lifecycle' => $this->lifecycle()->value,
+            'auto_renew' => $this->getAutoRenew()->toBoolean(),
             'quantity' => $this->getQuantity()->toNullableInteger(),
-            'unit_price_in_cents' => $this->getUnitPriceInCents()->toNullableInteger(),
+            'rate_id' => $this->getRateId()->toNullableString(),
+            'rate' => $rate === null ? null : [
+                'id' => $rate->getId()->toString(),
+                'name' => $rate->getName()->toString(),
+                'price_in_cents' => $rate->getPriceInCents()->toInteger(),
+                'billing_period_in_months' => $rate->getBillingPeriodInMonths()->toInteger(),
+                'is_archived' => $rate->isArchived(),
+            ],
             'billing_period_in_months' => $this->getBillingPeriodInMonths()->toNullableInteger(),
-            'starts_on' => $this->getStartsOn()->toNullableCarbon()?->toDateString(),
+            'effective_billing_period_in_months' => $rate === null ? $this->getBillingPeriodInMonths()->toNullableInteger() : $this->billingPeriodInMonthsOn($rate),
+            'unit_price_in_cents' => $rate === null ? null : $this->unitPriceForPeriodInCents($rate),
+            'rental_in_cents' => $rate === null ? null : $this->rentalInCents($rate),
+            'billing_starts_on' => $this->getBillingStartsOn()->toNullableCarbon()?->toDateString(),
             'ends_on' => $this->getEndsOn()->toNullableCarbon()?->toDateString(),
             'location_id' => $this->getLocationId()->toNullableString(),
+            'contact_id' => $this->getContactId()->toNullableString(),
             'note' => $this->getNote()->toNullableString(),
+            'archived_at' => $this->getArchivedAt()->toNullableCarbon()?->toIso8601String(),
             'custom_fields' => $this->getCustomFields()->toValues(),
         ];
+    }
+
+    /**
+     * Active, inactive, or archived, which outranks both.
+     */
+    public function lifecycle(): ServiceLifecycleEnum
+    {
+        if ($this->isArchived()) {
+            return ServiceLifecycleEnum::Archived;
+        }
+
+        return $this->isActive() ? ServiceLifecycleEnum::Active : ServiceLifecycleEnum::Inactive;
+    }
+
+    public function isActive(): bool
+    {
+        return $this->getStatus()->toEnum() === ServiceStatusEnum::Active;
+    }
+
+    public function isArchived(): bool
+    {
+        return $this->getArchivedAt()->isNotNull();
+    }
+
+    /**
+     * How many months the service is billed for at a time: its own period, or
+     * else its rate's.
+     */
+    public function billingPeriodInMonthsOn(Rate $rate): int
+    {
+        return $this->getBillingPeriodInMonths()->toNullableInteger()
+            ?? $rate->getBillingPeriodInMonths()->toNullableInteger()
+            ?? 1;
+    }
+
+    /**
+     * What one unit costs for a whole billing period: the rate's monthly price
+     * times the months billed at once.
+     */
+    public function unitPriceForPeriodInCents(Rate $rate): int
+    {
+        return $rate->getPriceInCents()->toInteger() * $this->billingPeriodInMonthsOn($rate);
+    }
+
+    /**
+     * What the service costs for a whole billing period, before tax.
+     */
+    public function rentalInCents(Rate $rate): int
+    {
+        return $this->unitPriceForPeriodInCents($rate) * ($this->getQuantity()->toNullableInteger() ?? 1);
     }
 
     public function getCustomFields(): CustomFieldValues
@@ -104,6 +184,30 @@ final class Service extends AbstractData
         return $this;
     }
 
+    public function getArchivedAt(): ArchivedAt
+    {
+        return $this->archivedAt;
+    }
+
+    public function setArchivedAt(mixed $archivedAt): self
+    {
+        $this->archivedAt = new ArchivedAt($archivedAt instanceof AbstractValue ? $archivedAt->toValue() : $archivedAt);
+
+        return $this;
+    }
+
+    public function getAutoRenew(): AutoRenew
+    {
+        return $this->autoRenew;
+    }
+
+    public function setAutoRenew(mixed $autoRenew): self
+    {
+        $this->autoRenew = new AutoRenew($autoRenew instanceof AbstractValue ? $autoRenew->toValue() : $autoRenew);
+
+        return $this;
+    }
+
     public function getBillingPeriodInMonths(): BillingPeriodInMonths
     {
         return $this->billingPeriodInMonths;
@@ -112,6 +216,30 @@ final class Service extends AbstractData
     public function setBillingPeriodInMonths(mixed $billingPeriodInMonths): self
     {
         $this->billingPeriodInMonths = new BillingPeriodInMonths($billingPeriodInMonths instanceof AbstractValue ? $billingPeriodInMonths->toValue() : $billingPeriodInMonths);
+
+        return $this;
+    }
+
+    public function getBillingStartsOn(): BillingStartsOn
+    {
+        return $this->billingStartsOn;
+    }
+
+    public function setBillingStartsOn(mixed $billingStartsOn): self
+    {
+        $this->billingStartsOn = new BillingStartsOn($billingStartsOn instanceof AbstractValue ? $billingStartsOn->toValue() : $billingStartsOn);
+
+        return $this;
+    }
+
+    public function getContactId(): ContactId
+    {
+        return $this->contactId;
+    }
+
+    public function setContactId(mixed $contactId): self
+    {
+        $this->contactId = new ContactId($contactId instanceof AbstractValue ? $contactId->toValue() : $contactId);
 
         return $this;
     }
@@ -205,14 +333,26 @@ final class Service extends AbstractData
         return $this;
     }
 
-    public function getStartsOn(): StartsOn
+    public function getRateId(): RateId
     {
-        return $this->startsOn;
+        return $this->rateId;
     }
 
-    public function setStartsOn(mixed $startsOn): self
+    public function setRateId(mixed $rateId): self
     {
-        $this->startsOn = new StartsOn($startsOn instanceof AbstractValue ? $startsOn->toValue() : $startsOn);
+        $this->rateId = new RateId($rateId instanceof AbstractValue ? $rateId->toValue() : $rateId);
+
+        return $this;
+    }
+
+    public function getShortName(): ShortName
+    {
+        return $this->shortName;
+    }
+
+    public function setShortName(mixed $shortName): self
+    {
+        $this->shortName = new ShortName($shortName instanceof AbstractValue ? $shortName->toValue() : $shortName);
 
         return $this;
     }
@@ -237,18 +377,6 @@ final class Service extends AbstractData
     public function setTeamId(mixed $teamId): self
     {
         $this->teamId = new TeamId($teamId instanceof AbstractValue ? $teamId->toValue() : $teamId);
-
-        return $this;
-    }
-
-    public function getUnitPriceInCents(): UnitPriceInCents
-    {
-        return $this->unitPriceInCents;
-    }
-
-    public function setUnitPriceInCents(mixed $unitPriceInCents): self
-    {
-        $this->unitPriceInCents = new UnitPriceInCents($unitPriceInCents instanceof AbstractValue ? $unitPriceInCents->toValue() : $unitPriceInCents);
 
         return $this;
     }

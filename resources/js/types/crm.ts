@@ -162,19 +162,52 @@ export type Rate = {
     is_archived: boolean;
 };
 
+export type ServiceLifecycle = 'active' | 'inactive' | 'archived';
+
 export type Service = {
     id: string;
     customer_id: string;
     name: string;
-    status: 'active' | 'pending' | 'cancelled';
+    short_name: string | null;
+    status: 'active' | 'inactive';
+    lifecycle: ServiceLifecycle;
+    auto_renew: boolean;
     quantity: number | null;
-    unit_price_in_cents: number | null;
+    rate_id: string | null;
+    rate: Pick<
+        Rate,
+        | 'id'
+        | 'name'
+        | 'price_in_cents'
+        | 'billing_period_in_months'
+        | 'is_archived'
+    > | null;
+    /** The service's own billing period; null follows the rate's. */
     billing_period_in_months: number | null;
-    starts_on: string | null;
+    effective_billing_period_in_months: number | null;
+    /** One unit for a whole billing period, from the rate. */
+    unit_price_in_cents: number | null;
+    /** The whole service for a billing period, before tax. */
+    rental_in_cents: number | null;
+    billing_starts_on: string | null;
     ends_on: string | null;
     location_id: string | null;
+    contact_id: string | null;
     note: string | null;
+    archived_at: string | null;
     custom_fields: CustomFieldValues;
+};
+
+/**
+ * What the service form offers: the team's rates, the customer's locations
+ * and contacts, and the billing periods.
+ */
+export type ServiceFormOptions = {
+    rates: Rate[];
+    locations: CustomerOption[];
+    contacts: CustomerOption[];
+    statuses: Option[];
+    billingPeriods: number[];
 };
 
 /**

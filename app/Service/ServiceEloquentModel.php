@@ -6,18 +6,23 @@ namespace App\Service;
 
 use App\AuditLog\AuditObserver;
 use App\AuditLog\Contracts\Auditable;
+use App\Contact\ContactEloquentModel;
 use App\Customer\CustomerEloquentModel;
 use App\CustomField\Properties\CustomFieldValues;
 use App\Location\LocationEloquentModel;
+use App\Rate\RateEloquentModel;
 use App\Service\Factories\ServiceFactory;
+use App\Service\Properties\ArchivedAt;
+use App\Service\Properties\AutoRenew;
 use App\Service\Properties\BillingPeriodInMonths;
+use App\Service\Properties\BillingStartsOn;
+use App\Service\Properties\ContactId;
 use App\Service\Properties\CustomerId;
 use App\Service\Properties\EndsOn;
 use App\Service\Properties\Id;
 use App\Service\Properties\LocationId;
 use App\Service\Properties\Quantity;
-use App\Service\Properties\StartsOn;
-use App\Service\Properties\UnitPriceInCents;
+use App\Service\Properties\RateId;
 use App\Shared\Table;
 use App\Team\Scopes\CurrentTeamScope;
 use Carbon\CarbonImmutable;
@@ -29,7 +34,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * @property int $billing_period_in_months
+ * @property CarbonImmutable|null $archived_at
+ * @property bool $auto_renew
+ * @property int|null $billing_period_in_months
+ * @property CarbonImmutable|null $billing_starts_on
+ * @property string|null $contact_id
  * @property CarbonImmutable|null $created_at
  * @property string $customer_id
  * @property CarbonImmutable|null $ends_on
@@ -38,10 +47,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $name
  * @property string|null $note
  * @property int $quantity
- * @property CarbonImmutable|null $starts_on
+ * @property string|null $rate_id
+ * @property string|null $short_name
  * @property string $status
  * @property string $team_id
- * @property int|null $unit_price_in_cents
  * @property CarbonImmutable|null $updated_at
  */
 #[ObservedBy(AuditObserver::class)]
@@ -95,6 +104,30 @@ final class ServiceEloquentModel extends Model implements Auditable
     }
 
     /**
+     * @return BelongsTo<RateEloquentModel, $this>
+     */
+    public function rate(): BelongsTo
+    {
+        return $this->belongsTo(
+            related: RateEloquentModel::class,
+            foreignKey: RateId::getDatabaseTableColumnName(),
+            relation: ServiceRelationship::Rate->value,
+        );
+    }
+
+    /**
+     * @return BelongsTo<ContactEloquentModel, $this>
+     */
+    public function contact(): BelongsTo
+    {
+        return $this->belongsTo(
+            related: ContactEloquentModel::class,
+            foreignKey: ContactId::getDatabaseTableColumnName(),
+            relation: ServiceRelationship::Contact->value,
+        );
+    }
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array
@@ -102,10 +135,11 @@ final class ServiceEloquentModel extends Model implements Auditable
         return [
             CustomFieldValues::getDatabaseTableColumnName() => 'array',
             Quantity::getDatabaseTableColumnName() => 'integer',
-            UnitPriceInCents::getDatabaseTableColumnName() => 'integer',
             BillingPeriodInMonths::getDatabaseTableColumnName() => 'integer',
-            StartsOn::getDatabaseTableColumnName() => 'immutable_date',
+            BillingStartsOn::getDatabaseTableColumnName() => 'immutable_date',
             EndsOn::getDatabaseTableColumnName() => 'immutable_date',
+            AutoRenew::getDatabaseTableColumnName() => 'boolean',
+            ArchivedAt::getDatabaseTableColumnName() => 'immutable_datetime',
         ];
     }
 

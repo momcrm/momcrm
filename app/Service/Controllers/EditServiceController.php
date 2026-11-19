@@ -11,10 +11,10 @@ use App\CustomField\Actions\FindLinkedRecords;
 use App\CustomField\CustomFieldRelationEnum;
 use App\CustomField\CustomFieldRelationLabels;
 use App\CustomField\CustomFieldTargetEnum;
-use App\Location\Actions\FindLocation;
 use App\Service\Actions\FindService;
 use App\Service\Exceptions\CouldNotFindService;
-use App\Service\ServiceStatusEnum;
+use App\Service\ServiceCollection;
+use App\Service\ServiceFormOptions;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -36,10 +36,9 @@ final class EditServiceController
         $customer = FindCustomer::byIdForTeam($found->getCustomerId()->toString(), $teamId);
 
         return Inertia::render('services/edit', [
-            'service' => $found->toSummary(),
+            'service' => ServiceCollection::make([$found])->toSummaries()[0],
             'customer' => $customer->toSummary(),
-            'statuses' => ServiceStatusEnum::options(),
-            'locations' => FindLocation::optionsForCustomer($customer->getId()->toString(), (string) $customer->getTeamId()->toString()),
+            ...ServiceFormOptions::for($customer->getId()->toString(), $customer->getTeamId()->toString(), $found),
             'customFieldLabels' => CustomFieldRelationLabels::for($found->getTeamId()->toString(), CustomFieldTargetEnum::Service, $found->getCustomFields()->toValues()),
             'linkedRecords' => FindLinkedRecords::to($found->getTeamId()->toString(), (string) $request->user()?->id, CustomFieldRelationEnum::Service, $found->getId()->toString()),
             'can' => AccessAbilities::for($request->user(), AccessResourceEnum::Service, $found),

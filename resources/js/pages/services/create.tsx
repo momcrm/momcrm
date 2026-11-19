@@ -1,21 +1,18 @@
 import { Head, setLayoutProps } from '@inertiajs/react';
+import StoreServiceController from '@/actions/App/Service/Controllers/StoreServiceController';
 import PageHeader from '@/components/page-header';
 import ServiceForm from '@/components/services/service-form';
-import StoreServiceController from '@/actions/App/Service/Controllers/StoreServiceController';
 import {
     index as customersIndex,
     show as showCustomer,
 } from '@/routes/customers';
-import type { Customer, CustomerOption, Option } from '@/types';
+import type { Customer, ServiceFormOptions } from '@/types';
 
 export default function CreateService({
     customer,
-    statuses,
-    locations,
-}: {
+    ...options
+}: ServiceFormOptions & {
     customer: Customer;
-    statuses: Option[];
-    locations: CustomerOption[];
 }) {
     setLayoutProps({
         breadcrumbs: [
@@ -36,8 +33,7 @@ export default function CreateService({
                 />
                 <ServiceForm
                     action={StoreServiceController.form(customer.id)}
-                    statuses={statuses}
-                    locations={locations}
+                    options={options}
                     submitLabel="Add service"
                     cancelHref={showCustomer(customer.id).url}
                 />

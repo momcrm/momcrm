@@ -9,6 +9,9 @@ use App\Service\Service;
 use App\Service\ServiceEloquentModel;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Adds a service, giving it a short name from its name when it has none.
+ */
 final readonly class CreateService
 {
     public function __construct(
@@ -20,6 +23,10 @@ final readonly class CreateService
         return DB::transaction(function (): Service {
             if ($this->service->getId()->isNull()) {
                 $this->service->setId(Id::generate());
+            }
+
+            if (blank($this->service->getShortName()->toNullableString())) {
+                $this->service->setShortName(MakeServiceShortName::for($this->service->getName()->toString(), $this->service->getCustomerId()->toString()));
             }
 
             $model = ServiceEloquentModel::query()->create($this->service->forDatabaseCreate());
