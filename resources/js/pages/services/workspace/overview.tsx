@@ -71,6 +71,14 @@ export default function ServiceOverview({
             value: formatDay(service.billing_starts_on),
         },
         {
+            label: 'Next invoice',
+            value: service.next_invoice
+                ? `${formatDay(service.next_invoice.starts_on)} – ${formatDay(service.next_invoice.ends_on)} · ${formatCents(service.next_invoice.total_in_cents)}`
+                : service.lifecycle === 'active'
+                  ? null
+                  : 'Not billed while it is off',
+        },
+        {
             label: 'Billed',
             value:
                 service.billing_period_in_months == null

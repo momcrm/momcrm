@@ -3,7 +3,10 @@ import { useMemo } from 'react';
 import DataTable, { dataTableColumns } from '@/components/data-table';
 import type { DataTableSort } from '@/components/data-table';
 import { billingPeriodLabel } from '@/components/rates/billing-period';
-import { serviceLifecycleLabels } from '@/components/services/service-detail';
+import {
+    formatDay,
+    serviceLifecycleLabels,
+} from '@/components/services/service-detail';
 import StatusPill from '@/components/status-pill';
 import { SelectCheckbox } from '@/components/tickets/ticket-bulk';
 import type { TicketSelection } from '@/components/tickets/ticket-bulk';
@@ -127,6 +130,19 @@ function buildColumns(selection: TicketSelection, rowIds: string[]) {
             cell: (info) =>
                 info.getValue() ? (
                     <span className="text-muted-foreground">Yes</span>
+                ) : (
+                    dash
+                ),
+        }),
+        column.accessor((service) => service.next_invoice?.starts_on, {
+            id: 'next_invoice',
+            header: 'Next invoice',
+            meta: { className: 'hidden lg:table-cell w-28' },
+            cell: (info) =>
+                info.getValue() ? (
+                    <span className="text-muted-foreground">
+                        {formatDay(info.getValue() ?? null)}
+                    </span>
                 ) : (
                     dash
                 ),

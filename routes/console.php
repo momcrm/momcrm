@@ -3,8 +3,10 @@
 use App\Activity\ActivityEloquentModel;
 use App\AuditLog\AuditLogEloquentModel;
 use App\Mailbox\Actions\SyncMailboxes;
+use App\Service\Actions\RunServiceInvoices;
 use App\Ticket\Actions\RemindDueTickets;
 use App\User\Actions\SetPlatformAdmin;
+use Carbon\CarbonImmutable;
 use Illuminate\Console\Command;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -50,6 +52,23 @@ Artisan::command('mailboxes:sync', function (): int {
 })->purpose('Read new mail from every connected mailbox');
 
 Schedule::command('mailboxes:sync')->everyFiveMinutes()->withoutOverlapping(10);
+
+// Drafts the month's invoices from customers' services, as Amphora's monthly
+// invoice run does. Safe to run again: periods already invoiced are skipped.
+Artisan::command('services:invoice {--date= : Bill as if it were this day, YYYY-MM-DD} {--team= : Only this team}', function (): int {
+    $date = $this->option('date');
+    $team = $this->option('team');
+    $count = RunServiceInvoices::on(
+        is_string($date) && $date !== '' ? CarbonImmutable::parse($date) : CarbonImmutable::today(),
+        is_string($team) && $team !== '' ? $team : null,
+    );
+
+    $this->components->info(trans_choice('{0} No invoices to draft.|{1} 1 invoice drafted.|[2,*] :count invoices drafted.', $count));
+
+    return Command::SUCCESS;
+})->purpose("Draft invoices for customers' services that are due");
+
+Schedule::command('services:invoice')->monthlyOn(2, '00:00');
 
 // Platform admins look after the installation itself, such as its `.env`.
 // There is no page for this, so no team owner can make themselves one.

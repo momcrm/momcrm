@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\DB;
 final readonly class UpdateInvoice
 {
     /**
-     * @param  array<int, array{description: string, quantity: int, unit_price_in_cents: int, service_id?: ?string}>|null  $items
+     * @param  array<int, array{description: string, quantity: int, unit_price_in_cents: int, service_id?: ?string, rental_starts_on?: ?string, rental_ends_on?: ?string}>|null  $items
      */
     public function __construct(
         private Invoice $invoice,
@@ -39,7 +39,7 @@ final readonly class UpdateInvoice
     }
 
     /**
-     * @param  array<int, array{description: string, quantity: int, unit_price_in_cents: int, service_id?: ?string}>|null  $items
+     * @param  array<int, array{description: string, quantity: int, unit_price_in_cents: int, service_id?: ?string, rental_starts_on?: ?string, rental_ends_on?: ?string}>|null  $items
      */
     public static function fromInvoice(Invoice $invoice, ?array $items = null): Invoice
     {

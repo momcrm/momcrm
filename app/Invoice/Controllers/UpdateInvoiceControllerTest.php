@@ -7,6 +7,7 @@ use App\CustomField\CustomFieldTargetEnum;
 use App\Invoice\InvoiceEloquentModel;
 use App\Invoice\InvoiceStatusEnum;
 use App\InvoiceItem\InvoiceItemEloquentModel;
+use App\Service\ServiceEloquentModel;
 use App\User\UserEloquentModel;
 
 use function Pest\Laravel\actingAs;
@@ -34,6 +35,23 @@ it('replaces the line items of a draft', function (): void {
         ->tax_rate_basis_points->toBe(0)
         ->and($invoice->fresh()->due_on->toDateString())->toBe('2026-12-14');
     expect(InvoiceItemEloquentModel::query()->pluck('description')->all())->toBe(['Replacement line']);
+});
+
+it("keeps the days a line bills its service for, so the service isn't billed for them again", function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $invoice = InvoiceEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
+    $service = ServiceEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'customer_id' => $invoice->customer_id]);
+
+    actingAs($user)
+        ->put(route('invoices.update', $invoice->id), [...draftPayload(), 'items' => [
+            ['description' => 'Backup', 'quantity' => '1', 'unit_price' => '30', 'service_id' => $service->id, 'rental_starts_on' => '2026-12-01', 'rental_ends_on' => '2026-12-31'],
+            ['description' => 'Labour', 'quantity' => '1', 'unit_price' => '90', 'rental_starts_on' => '2026-12-01', 'rental_ends_on' => '2026-12-31'],
+        ]])
+        ->assertSessionHasNoErrors();
+
+    $lines = InvoiceItemEloquentModel::query()->orderBy('position')->get();
+    expect($lines->first()->rental_ends_on->toDateString())->toBe('2026-12-31')
+        ->and($lines->last()->rental_ends_on)->toBeNull();
 });
 
 it('forbids editing an invoice that has been sent', function (): void {

@@ -12,6 +12,8 @@ use App\InvoiceItem\Properties\Id;
 use App\InvoiceItem\Properties\InvoiceId;
 use App\InvoiceItem\Properties\Position;
 use App\InvoiceItem\Properties\Quantity;
+use App\InvoiceItem\Properties\RentalEndsOn;
+use App\InvoiceItem\Properties\RentalStartsOn;
 use App\InvoiceItem\Properties\UnitPriceInCents;
 use App\Shared\Table;
 use App\Team\Scopes\CurrentTeamScope;
@@ -30,6 +32,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $invoice_id
  * @property int $position
  * @property int $quantity
+ * @property CarbonImmutable|null $rental_ends_on
+ * @property CarbonImmutable|null $rental_starts_on
  * @property string|null $service_id
  * @property string $team_id
  * @property int $unit_price_in_cents
@@ -82,6 +86,8 @@ final class InvoiceItemEloquentModel extends Model implements Auditable
             Position::getDatabaseTableColumnName() => 'integer',
             Quantity::getDatabaseTableColumnName() => 'integer',
             UnitPriceInCents::getDatabaseTableColumnName() => 'integer',
+            RentalStartsOn::getDatabaseTableColumnName() => 'immutable_date',
+            RentalEndsOn::getDatabaseTableColumnName() => 'immutable_date',
         ];
     }
 

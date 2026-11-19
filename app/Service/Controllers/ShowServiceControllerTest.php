@@ -19,7 +19,7 @@ it("shows a service's overview with its billing, customer, location and contact"
     $location = LocationEloquentModel::factory()->create([...$team, 'customer_id' => $customer->id, 'name' => 'Head office']);
     $contact = ContactEloquentModel::factory()->create([...$team, 'customer_id' => $customer->id, 'first_name' => 'Pat', 'last_name' => 'Lee']);
     $rate = RateEloquentModel::factory()->create([...$team, 'name' => 'Support', 'price_in_cents' => 9500]);
-    $service = ServiceEloquentModel::factory()->create([...$team, 'customer_id' => $customer->id, 'rate_id' => $rate->id, 'location_id' => $location->id, 'contact_id' => $contact->id, 'quantity' => 4]);
+    $service = ServiceEloquentModel::factory()->create([...$team, 'customer_id' => $customer->id, 'rate_id' => $rate->id, 'location_id' => $location->id, 'contact_id' => $contact->id, 'quantity' => 4, 'billing_starts_on' => '2026-12-01']);
 
     actingAs($user)
         ->get(route('services.show', $service->id))
@@ -27,6 +27,7 @@ it("shows a service's overview with its billing, customer, location and contact"
         ->assertInertia(fn (Assert $page) => $page
             ->component('services/workspace/overview')
             ->where('workspace.service.rental_in_cents', 38000)
+            ->where('workspace.service.next_invoice', ['starts_on' => '2026-12-01', 'ends_on' => '2026-12-31', 'unit_price_in_cents' => 9500, 'total_in_cents' => 38000])
             ->where('workspace.customer', ['id' => $customer->id, 'name' => 'Acme'])
             ->where('workspace.location', ['id' => $location->id, 'name' => 'Head office'])
             ->where('workspace.contact', ['id' => $contact->id, 'name' => 'Pat Lee'])
