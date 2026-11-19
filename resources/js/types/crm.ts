@@ -199,6 +199,16 @@ export type Service = {
 };
 
 /**
+ * A row of the services list: the service with its customer's and
+ * location's names.
+ */
+export type ServiceListItem = Service & {
+    customer_name: string | null;
+    location_name: string | null;
+    updated_at: string | null;
+};
+
+/**
  * A service opened on its own page: the record and what every section shares.
  */
 export type ServiceWorkspace = {

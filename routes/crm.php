@@ -101,6 +101,8 @@ use App\Secret\Controllers\StoreSecretController;
 use App\Secret\Controllers\UpdateSecretController;
 use App\Service\Controllers\ActivateServiceController;
 use App\Service\Controllers\ArchiveServiceController;
+use App\Service\Controllers\BulkChangeServicesController;
+use App\Service\Controllers\BulkUpdateServicesController;
 use App\Service\Controllers\ChangeServiceRateController;
 use App\Service\Controllers\CreateServiceController;
 use App\Service\Controllers\DeactivateServiceController;
@@ -109,6 +111,7 @@ use App\Service\Controllers\EditServiceController;
 use App\Service\Controllers\ListServiceActivityController;
 use App\Service\Controllers\ListServiceInvoicesController;
 use App\Service\Controllers\ListServiceLinkedRecordsController;
+use App\Service\Controllers\ListServicesController;
 use App\Service\Controllers\RestoreServiceController;
 use App\Service\Controllers\SetServiceAutoRenewController;
 use App\Service\Controllers\ShowServiceController;
@@ -189,6 +192,9 @@ Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function 
     Route::put('assets/{asset}', UpdateAssetController::class)->whereUuid('asset')->name('assets.update');
     Route::delete('assets/{asset}', DeleteAssetController::class)->whereUuid('asset')->name('assets.destroy');
 
+    Route::get('services', ListServicesController::class)->name('services.index');
+    Route::patch('services/bulk', BulkUpdateServicesController::class)->name('services.bulk.update');
+    Route::post('services/bulk/change', BulkChangeServicesController::class)->name('services.bulk.change');
     Route::get('customers/{customer}/services/create', CreateServiceController::class)->whereUuid('customer')->name('services.create');
     Route::post('customers/{customer}/services', StoreServiceController::class)->whereUuid('customer')->name('services.store');
     Route::get('services/{service}', ShowServiceController::class)->whereUuid('service')->name('services.show');

@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Customer\CustomerEloquentModel;
+use App\Location\LocationEloquentModel;
 use App\Rate\Actions\FindRate;
 use App\Rate\Rate;
 use App\Shared\Abstracts\AbstractDataCollection;
+use App\Shared\Types;
 
 /**
  * @extends AbstractDataCollection<int, Service>
@@ -29,6 +32,32 @@ final class ServiceCollection extends AbstractDataCollection
         $rates = FindRate::byIds(array_values(array_unique(array_filter($this->map(fn (Service $service): ?string => $service->getRateId()->toNullableString())->all()))));
 
         return array_values($this->map(fn (Service $service): array => $service->toSummary($rates[$service->getRateId()->toString()] ?? Rate::new()))->all());
+    }
+
+    /**
+     * Each service as a row of the services list: its summary with the names
+     * of its customer and location, reading each kind of name in one query.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function toListItems(): array
+    {
+        $customerNames = CustomerEloquentModel::query()
+            ->withoutGlobalScopes()
+            ->whereKey($this->map(fn (Service $service): string => $service->getCustomerId()->toString())->unique()->all())
+            ->pluck('name', 'id');
+        $locationNames = LocationEloquentModel::query()
+            ->withoutGlobalScopes()
+            ->whereKey($this->map(fn (Service $service): ?string => $service->getLocationId()->toNullableString())->filter()->unique()->all())
+            ->pluck('name', 'id');
+        $summaries = $this->toSummaries();
+
+        return array_values($this->values()->map(fn (Service $service, int $index): array => [
+            ...$summaries[$index],
+            'customer_name' => Types::nullableString($customerNames->get($service->getCustomerId()->toString())),
+            'location_name' => Types::nullableString($locationNames->get($service->getLocationId()->toString())),
+            'updated_at' => $service->getUpdatedAt()->toNullableISOString(),
+        ])->all());
     }
 
     /**

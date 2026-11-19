@@ -13,6 +13,7 @@ import {
     Star,
     Palette,
     Receipt,
+    Server,
     Settings,
     Ticket,
     Users,
@@ -34,6 +35,7 @@ import { index as favoritesIndex } from '@/routes/favorites';
 import { index as invoicesIndex } from '@/routes/invoices';
 import { edit as profileEdit } from '@/routes/profile';
 import { index as projectsIndex } from '@/routes/projects';
+import { index as servicesIndex } from '@/routes/services';
 import { mine as myTickets, index as ticketsIndex } from '@/routes/tickets';
 import type { NavItem } from '@/types';
 
@@ -156,6 +158,12 @@ export function workspaceNavigation(
                     href: contactsIndex(),
                     icon: Users,
                     shortcut: 'o',
+                },
+                {
+                    title: 'Services',
+                    href: servicesIndex(),
+                    icon: Server,
+                    shortcut: 'e',
                 },
                 {
                     title: 'Invoices',
