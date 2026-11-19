@@ -25,6 +25,7 @@ use App\Service\Properties\ShortName;
 use App\Service\Properties\Status;
 use App\Service\Properties\TeamId;
 use App\Service\Properties\UpdatedAt;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 use Mom\Data\AbstractData;
 use Mom\Data\AbstractValue;
@@ -83,11 +84,12 @@ final class Service extends AbstractData
     }
 
     /**
-     * The fields the service pages show, with what it costs when its rate is given.
+     * The fields the service pages show, with what it costs when its rate is
+     * given, and the period it is billed for next when it is billed at all.
      *
-     * @return array{id: string, customer_id: string, name: ?string, short_name: ?string, status: string, lifecycle: string, auto_renew: bool, quantity: ?int, rate_id: ?string, rate: ?array{id: string, name: string, price_in_cents: int, billing_period_in_months: int, is_archived: bool}, billing_period_in_months: ?int, effective_billing_period_in_months: ?int, unit_price_in_cents: ?int, rental_in_cents: ?int, billing_starts_on: ?string, ends_on: ?string, location_id: ?string, contact_id: ?string, note: ?string, archived_at: ?string, custom_fields: array<string, mixed>}
+     * @return array{id: string, customer_id: string, name: ?string, short_name: ?string, status: string, lifecycle: string, auto_renew: bool, quantity: ?int, rate_id: ?string, rate: ?array{id: string, name: string, price_in_cents: int, billing_period_in_months: int, is_archived: bool}, billing_period_in_months: ?int, effective_billing_period_in_months: ?int, unit_price_in_cents: ?int, rental_in_cents: ?int, next_invoice: ?array{starts_on: string, ends_on: string, unit_price_in_cents: int, total_in_cents: int}, billing_starts_on: ?string, ends_on: ?string, location_id: ?string, contact_id: ?string, note: ?string, archived_at: ?string, custom_fields: array<string, mixed>}
      */
-    public function toSummary(?Rate $rate = null): array
+    public function toSummary(?Rate $rate = null, ?CarbonImmutable $billedThrough = null): array
     {
         $rate = $rate !== null && $rate->isNotNull() && $rate->getId()->toString() === $this->getRateId()->toNullableString() ? $rate : null;
 
@@ -112,6 +114,7 @@ final class Service extends AbstractData
             'effective_billing_period_in_months' => $rate === null ? $this->getBillingPeriodInMonths()->toNullableInteger() : $this->billingPeriodInMonthsOn($rate),
             'unit_price_in_cents' => $rate === null ? null : $this->unitPriceForPeriodInCents($rate),
             'rental_in_cents' => $rate === null ? null : $this->rentalInCents($rate),
+            'next_invoice' => $rate === null || ! $this->isBilled() ? null : $this->nextInvoice($rate, $billedThrough),
             'billing_starts_on' => $this->getBillingStartsOn()->toNullableCarbon()?->toDateString(),
             'ends_on' => $this->getEndsOn()->toNullableCarbon()?->toDateString(),
             'location_id' => $this->getLocationId()->toNullableString(),
@@ -132,6 +135,27 @@ final class Service extends AbstractData
         }
 
         return $this->isActive() ? ServiceLifecycleEnum::Active : ServiceLifecycleEnum::Inactive;
+    }
+
+    /**
+     * Whether the service is billed: on, and not archived.
+     */
+    public function isBilled(): bool
+    {
+        return $this->isActive() && ! $this->isArchived();
+    }
+
+    /**
+     * @return array{starts_on: string, ends_on: string, unit_price_in_cents: int, total_in_cents: int}
+     */
+    private function nextInvoice(Rate $rate, ?CarbonImmutable $billedThrough): array
+    {
+        $period = ServiceBillingPeriod::next($this, $rate, $billedThrough);
+
+        return [
+            ...$period->toArray(),
+            'total_in_cents' => $period->unitPriceInCents * ($this->getQuantity()->toNullableInteger() ?? 1),
+        ];
     }
 
     public function isActive(): bool

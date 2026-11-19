@@ -189,6 +189,13 @@ export type Service = {
     unit_price_in_cents: number | null;
     /** The whole service for a billing period, before tax. */
     rental_in_cents: number | null;
+    /** The period it is billed for next, when it is billed at all. */
+    next_invoice: {
+        starts_on: string;
+        ends_on: string;
+        unit_price_in_cents: number;
+        total_in_cents: number;
+    } | null;
     billing_starts_on: string | null;
     ends_on: string | null;
     location_id: string | null;
@@ -697,6 +704,8 @@ export type InvoiceItem = {
     quantity: number;
     unit_price_in_cents: number;
     line_total_in_cents: number;
+    rental_starts_on: string | null;
+    rental_ends_on: string | null;
 };
 
 export type CalendarWindow = {

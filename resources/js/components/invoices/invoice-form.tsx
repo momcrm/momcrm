@@ -20,6 +20,9 @@ type Row = {
     description: string;
     quantity: string;
     unit_price: string;
+    /** The days the line bills its service for, kept while the service is. */
+    rental_starts_on: string | null;
+    rental_ends_on: string | null;
 };
 
 let nextKey = 0;
@@ -31,6 +34,8 @@ function emptyRow(): Row {
         description: '',
         quantity: '1',
         unit_price: '',
+        rental_starts_on: null,
+        rental_ends_on: null,
     };
 }
 
@@ -41,6 +46,8 @@ function toRow(item: InvoiceItem): Row {
         description: item.description,
         quantity: String(item.quantity),
         unit_price: (item.unit_price_in_cents / 100).toFixed(2),
+        rental_starts_on: item.rental_starts_on,
+        rental_ends_on: item.rental_ends_on,
     };
 }
 
@@ -106,6 +113,8 @@ export default function InvoiceForm({
 
         updateRow(key, {
             service_id: serviceId,
+            rental_starts_on: null,
+            rental_ends_on: null,
             ...(service && {
                 description: service.name,
                 quantity: String(service.quantity ?? 1),
@@ -206,6 +215,25 @@ export default function InvoiceForm({
                                     className="grid gap-2 rounded-lg border p-3 sm:grid-cols-[1fr_5rem_7rem_6rem_auto] sm:items-start"
                                 >
                                     <div className="grid gap-2">
+                                        {row.rental_starts_on &&
+                                            row.rental_ends_on && (
+                                                <>
+                                                    <input
+                                                        type="hidden"
+                                                        name={`items[${index}][rental_starts_on]`}
+                                                        value={
+                                                            row.rental_starts_on
+                                                        }
+                                                    />
+                                                    <input
+                                                        type="hidden"
+                                                        name={`items[${index}][rental_ends_on]`}
+                                                        value={
+                                                            row.rental_ends_on
+                                                        }
+                                                    />
+                                                </>
+                                            )}
                                         {customerServices.length > 0 && (
                                             <NativeSelect
                                                 aria-label="Fill from a service"

@@ -11,6 +11,8 @@ use App\InvoiceItem\Properties\Id;
 use App\InvoiceItem\Properties\InvoiceId;
 use App\InvoiceItem\Properties\Position;
 use App\InvoiceItem\Properties\Quantity;
+use App\InvoiceItem\Properties\RentalEndsOn;
+use App\InvoiceItem\Properties\RentalStartsOn;
 use App\InvoiceItem\Properties\ServiceId;
 use App\InvoiceItem\Properties\TeamId;
 use App\InvoiceItem\Properties\UnitPriceInCents;
@@ -31,6 +33,8 @@ final class InvoiceItem extends AbstractData
         public InvoiceId $invoiceId,
         public Position $position,
         public Quantity $quantity,
+        public RentalEndsOn $rentalEndsOn,
+        public RentalStartsOn $rentalStartsOn,
         public ServiceId $serviceId,
         public TeamId $teamId,
         public UnitPriceInCents $unitPriceInCents,
@@ -65,7 +69,7 @@ final class InvoiceItem extends AbstractData
     }
 
     /**
-     * @return array{id: string, service_id: ?string, description: string, quantity: int, unit_price_in_cents: int, line_total_in_cents: int}
+     * @return array{id: string, service_id: ?string, description: string, quantity: int, unit_price_in_cents: int, line_total_in_cents: int, rental_starts_on: ?string, rental_ends_on: ?string}
      */
     public function toSummary(): array
     {
@@ -76,6 +80,8 @@ final class InvoiceItem extends AbstractData
             'quantity' => $this->getQuantity()->toInteger(),
             'unit_price_in_cents' => $this->getUnitPriceInCents()->toInteger(),
             'line_total_in_cents' => $this->getLineTotalInCents(),
+            'rental_starts_on' => $this->getRentalStartsOn()->toNullableCarbon()?->toDateString(),
+            'rental_ends_on' => $this->getRentalEndsOn()->toNullableCarbon()?->toDateString(),
         ];
     }
 
@@ -140,6 +146,30 @@ final class InvoiceItem extends AbstractData
     public function setQuantity(mixed $quantity): self
     {
         $this->quantity = new Quantity($quantity instanceof AbstractValue ? $quantity->toValue() : $quantity);
+
+        return $this;
+    }
+
+    public function getRentalEndsOn(): RentalEndsOn
+    {
+        return $this->rentalEndsOn;
+    }
+
+    public function setRentalEndsOn(mixed $rentalEndsOn): self
+    {
+        $this->rentalEndsOn = new RentalEndsOn($rentalEndsOn instanceof AbstractValue ? $rentalEndsOn->toValue() : $rentalEndsOn);
+
+        return $this;
+    }
+
+    public function getRentalStartsOn(): RentalStartsOn
+    {
+        return $this->rentalStartsOn;
+    }
+
+    public function setRentalStartsOn(mixed $rentalStartsOn): self
+    {
+        $this->rentalStartsOn = new RentalStartsOn($rentalStartsOn instanceof AbstractValue ? $rentalStartsOn->toValue() : $rentalStartsOn);
 
         return $this;
     }

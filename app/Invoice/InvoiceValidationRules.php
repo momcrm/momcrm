@@ -39,6 +39,8 @@ final class InvoiceValidationRules
             'items.*.quantity' => ['required', 'integer', 'min:1', 'max:100000'],
             'items.*.unit_price_in_cents' => ['required', 'integer', 'min:0', 'max:100000000'],
             'items.*.service_id' => ['nullable', 'uuid', Rule::exists(Table::Services->value, 'id')->where('customer_id', $customerId)],
+            'items.*.rental_starts_on' => ['nullable', 'date', 'required_with:items.*.rental_ends_on'],
+            'items.*.rental_ends_on' => ['nullable', 'date', 'required_with:items.*.rental_starts_on', 'after_or_equal:items.*.rental_starts_on'],
         ];
     }
 
@@ -82,7 +84,7 @@ final class InvoiceValidationRules
 
     /**
      * @param  array<string, mixed>  $validated
-     * @return array<int, array{description: string, quantity: int, unit_price_in_cents: int, service_id: ?string}>
+     * @return array<int, array{description: string, quantity: int, unit_price_in_cents: int, service_id: ?string, rental_starts_on: ?string, rental_ends_on: ?string}>
      */
     public static function items(array $validated): array
     {
@@ -94,6 +96,8 @@ final class InvoiceValidationRules
             'quantity' => Types::int($item['quantity']),
             'unit_price_in_cents' => Types::int($item['unit_price_in_cents']),
             'service_id' => Types::nullableString($item['service_id'] ?? null),
+            'rental_starts_on' => isset($item['service_id']) ? Types::nullableString($item['rental_starts_on'] ?? null) : null,
+            'rental_ends_on' => isset($item['service_id']) ? Types::nullableString($item['rental_ends_on'] ?? null) : null,
         ], $items));
     }
 }
