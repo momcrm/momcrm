@@ -37,6 +37,7 @@ enum Table: string
     case Passkeys = 'passkeys';
     case ProjectUser = 'project_user';
     case Projects = 'projects';
+    case Rates = 'rates';
     case Records = 'records';
     case Secrets = 'secrets';
     case Services = 'services';

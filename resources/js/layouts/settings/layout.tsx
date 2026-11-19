@@ -7,6 +7,7 @@ import {
     Mail,
     Palette,
     Plug,
+    Receipt,
     Shield,
     UserRound,
     UsersRound,
@@ -23,6 +24,7 @@ import { edit as editCustomObjects } from '@/routes/custom-objects';
 import { edit as editEnvironment } from '@/routes/environment';
 import { index as mailboxesIndex } from '@/routes/mailboxes';
 import { edit } from '@/routes/profile';
+import { index as ratesIndex } from '@/routes/rates';
 import { edit as editSecurity } from '@/routes/security';
 import { edit as editTeam } from '@/routes/team';
 import { edit as editWorkflow } from '@/routes/workflow';
@@ -50,6 +52,12 @@ const connectorsItem: NavItem = {
     title: 'Connectors',
     href: connectorsIndex(),
     icon: Plug,
+};
+
+const ratesItem: NavItem = {
+    title: 'Rates',
+    href: ratesIndex(),
+    icon: Receipt,
 };
 
 const emailItem: NavItem = {
@@ -99,6 +107,7 @@ export default function SettingsLayout({
         canManageCustomObjects,
         canManageEmail,
         canManageEnvironment,
+        canManageRates,
         canManageWorkflow,
     } = usePage().props;
     const visibleSections = [
@@ -115,6 +124,7 @@ export default function SettingsLayout({
                       ...section.items,
                       ...(canManageWorkflow ? [workflowItem] : []),
                       ...(canManageCustomObjects ? [customObjectsItem] : []),
+                      ...(canManageRates ? [ratesItem] : []),
                       ...(canManageEmail ? [emailItem] : []),
                       ...(canManageConnectors ? [connectorsItem] : []),
                       ...(canManageAccessRules ? [accessRulesItem] : []),

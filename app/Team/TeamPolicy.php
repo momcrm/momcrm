@@ -76,6 +76,16 @@ final class TeamPolicy
     }
 
     /**
+     * Owners and admins keep the team's price list, which services are billed from.
+     */
+    public function manageRates(UserEloquentModel $user, Team $team): Response
+    {
+        return $this->isOwnerOrAdmin($user, $team)
+            ? Response::allow()
+            : Response::deny('Only team owners and admins can change rates.');
+    }
+
+    /**
      * Owners and admins define the fields the team adds to its records.
      */
     public function manageCustomFields(UserEloquentModel $user, Team $team): Response
