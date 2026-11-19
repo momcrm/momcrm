@@ -10,6 +10,8 @@ use App\Invoice\InvoiceEloquentModel;
 use App\Milestone\MilestoneEloquentModel;
 use App\Onboarding\Actions\SeedSampleData;
 use App\Project\ProjectEloquentModel;
+use App\Rate\RateEloquentModel;
+use App\Service\ServiceEloquentModel;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
 
@@ -27,6 +29,19 @@ it('adds sample customers with contacts, tickets and an invoice to the team', fu
     expect(InvoiceEloquentModel::query()->withoutGlobalScopes()->sole())
         ->status->toBe('sent')
         ->customer_id->toBe($customers->first()->id);
+});
+
+it('prices the sample services from rates added to the price list, reusing ones it already added', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    RateEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'name' => 'Cloud backup', 'price_in_cents' => 9900]);
+
+    SeedSampleData::forTeam(teamId: $user->current_team_id, userId: $user->id);
+
+    $rates = RateEloquentModel::query()->withoutGlobalScopes()->orderBy('name')->get();
+    expect($rates->pluck('name')->all())->toBe(['Cloud backup', 'Managed IT support', 'Microsoft 365 Business Standard'])
+        ->and($rates->firstWhere('name', 'Managed IT support')->price_in_cents)->toBe(4500)
+        ->and(ServiceEloquentModel::query()->withoutGlobalScopes()->whereNull('rate_id')->exists())->toBeFalse()
+        ->and(ServiceEloquentModel::query()->withoutGlobalScopes()->where('name', 'Cloud backup')->sole()->rate_id)->toBe($rates->first()->id);
 });
 
 it('adds sample projects with milestones, labelled tickets with due dates and a group', function (): void {

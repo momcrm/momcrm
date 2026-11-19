@@ -82,6 +82,7 @@ final class ListWorkspaceActivityController
                     'url' => match ($model->getAttribute(SubjectType::getDatabaseTableColumnName())) {
                         MorphMapKeyEnum::Ticket->value => route('tickets.index', ['ticket' => Types::string($model->getAttribute(SubjectId::getDatabaseTableColumnName()))]),
                         MorphMapKeyEnum::Project->value => route('projects.show', Types::string($model->getAttribute(SubjectId::getDatabaseTableColumnName()))),
+                        MorphMapKeyEnum::Service->value => route('services.edit', Types::string($model->getAttribute(SubjectId::getDatabaseTableColumnName()))),
                         MorphMapKeyEnum::Customer->value => route('customers.files', Types::string($model->getAttribute(SubjectId::getDatabaseTableColumnName()))),
                         MorphMapKeyEnum::Record->value => $objectIds->has(Types::string($model->getAttribute(SubjectId::getDatabaseTableColumnName())))
                             ? route('records.show', [Types::string($objectIds->get(Types::string($model->getAttribute(SubjectId::getDatabaseTableColumnName())))), Types::string($model->getAttribute(SubjectId::getDatabaseTableColumnName()))])

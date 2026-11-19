@@ -15,7 +15,6 @@ use App\Invoice\Invoice;
 use App\Invoice\InvoiceStatusEnum;
 use App\Service\Actions\FindService;
 use App\Service\Service;
-use App\Service\ServiceStatusEnum;
 use App\Ticket\Actions\FindTicket;
 use App\Ticket\Controllers\ListTicketsController;
 use App\Ticket\Ticket;
@@ -57,14 +56,14 @@ final class ShowCustomerController
                 ->map(fn (Invoice $invoice): array => FindInvoice::listItem($invoice))
                 ->all(),
             'expiringServices' => FindService::forCustomer($customerId, $workspace->teamId)
-                ->filter(fn (Service $service): bool => $service->getStatus()->toEnum() === ServiceStatusEnum::Active
+                ->filter(fn (Service $service): bool => $service->isActive()
+                    && ! $service->isArchived()
                     && $service->getEndsOn()->isNotNull()
                     && $service->getEndsOn()->toCarbon()->betweenIncluded($today, $today->addDays(self::EXPIRING_WITHIN_DAYS)))
                 ->sortBy(fn (Service $service): string => $service->getEndsOn()->toCarbon()->toDateString())
                 ->take(self::CARD_ROWS)
-                ->map(fn (Service $service): array => $service->toSummary())
                 ->values()
-                ->all(),
+                ->toSummaries(),
             'expiringContracts' => FindContract::endingSoonForCustomer($customerId, $workspace->teamId, self::EXPIRING_WITHIN_DAYS)
                 ->take(self::CARD_ROWS)
                 ->map(fn (Contract $contract): array => $contract->toSummary())

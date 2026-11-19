@@ -7,6 +7,7 @@ use App\CustomField\CustomFieldEloquentModel;
 use App\CustomField\CustomFieldRelationEnum;
 use App\CustomField\CustomFieldTargetEnum;
 use App\CustomObject\CustomObjectEloquentModel;
+use App\Rate\RateEloquentModel;
 use App\Record\RecordEloquentModel;
 use App\Service\ServiceEloquentModel;
 use App\User\UserEloquentModel;
@@ -15,15 +16,30 @@ use Inertia\Testing\AssertableInertia as Assert;
 
 use function Pest\Laravel\actingAs;
 
-it('shows the edit form for a service', function (): void {
+it('shows the edit form for a service, with its rate, what it costs and the rates to choose from', function (): void {
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
-    $customer = CustomerEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
-    $service = ServiceEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'customer_id' => $customer->id]);
+    $team = ['team_id' => $user->current_team_id];
+    $customer = CustomerEloquentModel::factory()->create($team);
+    $rate = RateEloquentModel::factory()->archived()->create([...$team, 'name' => 'Old support', 'price_in_cents' => 1000, 'billing_period_in_months' => 3]);
+    RateEloquentModel::factory()->archived()->create([...$team, 'name' => 'Another old one']);
+    RateEloquentModel::factory()->create([...$team, 'name' => 'Support']);
+    $service = ServiceEloquentModel::factory()->create([...$team, 'customer_id' => $customer->id, 'rate_id' => $rate->id, 'quantity' => 2]);
 
     actingAs($user)
         ->get(route('services.edit', $service->id))
         ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page->component('services/edit')->where('service.id', $service->id)->where('customer.id', $customer->id));
+        ->assertInertia(fn (Assert $page) => $page->component('services/edit')
+            ->where('service.id', $service->id)
+            ->where('service.rate.name', 'Old support')
+            ->where('service.effective_billing_period_in_months', 3)
+            ->where('service.unit_price_in_cents', 3000)
+            ->where('service.rental_in_cents', 6000)
+            ->where('customer.id', $customer->id)
+            ->where('rates.0.name', 'Old support')
+            ->where('rates.1.name', 'Support')
+            ->has('rates', 2)
+            ->where('billingPeriods', [1, 3, 6, 12, 24, 36])
+            ->where('can.archive', true));
 });
 
 it("returns not found for another team's service", function (): void {

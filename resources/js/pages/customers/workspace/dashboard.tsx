@@ -201,7 +201,7 @@ function ServiceRow({ service }: { service: Service }) {
                     </span>
                 </span>
                 <span className="text-xs text-warning tabular-nums">
-                    Ends {formatDate(service.ends_on)}
+                    Expires {formatDate(service.ends_on)}
                 </span>
             </Link>
         </li>

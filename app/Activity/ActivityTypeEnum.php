@@ -31,6 +31,11 @@ enum ActivityTypeEnum: string
     case RecoveryCodesRegenerated = 'recovery_codes_regenerated';
     case Registered = 'registered';
     case SampleDataAdded = 'sample_data_added';
+    case ServiceActivated = 'service_activated';
+    case ServiceArchived = 'service_archived';
+    case ServiceDeactivated = 'service_deactivated';
+    case ServiceRateChanged = 'service_rate_changed';
+    case ServiceRestored = 'service_restored';
     case SampleDataRemoved = 'sample_data_removed';
     case SignedIn = 'signed_in';
     case SignedOut = 'signed_out';
@@ -61,6 +66,7 @@ enum ActivityTypeEnum: string
             self::TicketAssigned, self::TicketCommented, self::TicketArchived, self::TicketRestored,
             self::ProjectCreated, self::ProjectStatusChanged, self::ProjectArchived, self::ProjectRestored,
             self::RecordCreated, self::RecordUpdated, self::RecordCommented,
+            self::ServiceActivated, self::ServiceDeactivated, self::ServiceArchived, self::ServiceRestored, self::ServiceRateChanged,
             self::AttachmentAdded, self::CustomersImported,
         ];
     }
@@ -93,6 +99,11 @@ enum ActivityTypeEnum: string
             self::Registered => 'Created account',
             self::SampleDataAdded => 'Added sample data',
             self::SampleDataRemoved => 'Removed the sample data',
+            self::ServiceActivated => 'Turned a service on',
+            self::ServiceArchived => 'Archived a service',
+            self::ServiceDeactivated => 'Turned a service off',
+            self::ServiceRateChanged => 'Changed a service\'s rate',
+            self::ServiceRestored => 'Restored a service',
             self::SignedIn => 'Signed in',
             self::SignedOut => 'Signed out',
             self::TeamRenamed => 'Renamed the team',

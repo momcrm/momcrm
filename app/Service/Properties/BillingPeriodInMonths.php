@@ -4,9 +4,14 @@ declare(strict_types=1);
 
 namespace App\Service\Properties;
 
+use App\Rate\Properties\BillingPeriodInMonths as RateBillingPeriodInMonths;
 use Illuminate\Foundation\Http\FormRequest;
 use Mom\Data\AbstractInteger;
 
+/**
+ * How many months the service is billed for at a time, or empty to follow
+ * its rate.
+ */
 final class BillingPeriodInMonths extends AbstractInteger
 {
     public static function getName(): string
@@ -19,6 +24,6 @@ final class BillingPeriodInMonths extends AbstractInteger
      */
     public static function getValidationRulesForCreate(FormRequest $request): array
     {
-        return ['required', 'integer', 'in:1,3,6,12'];
+        return ['nullable', 'integer', 'in:'.implode(',', RateBillingPeriodInMonths::ALLOWED)];
     }
 }

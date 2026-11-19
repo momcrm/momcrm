@@ -60,7 +60,14 @@ enum AccessResourceEnum: string
     public function actions(): array
     {
         return match ($this) {
-            self::Asset, self::Contact, self::Contract, self::Location, self::Service, self::Milestone, self::Record => [
+            self::Service => [
+                AccessActionEnum::Create,
+                AccessActionEnum::Update,
+                AccessActionEnum::Archive,
+                AccessActionEnum::Restore,
+                AccessActionEnum::Delete,
+            ],
+            self::Asset, self::Contact, self::Contract, self::Location, self::Milestone, self::Record => [
                 AccessActionEnum::Create,
                 AccessActionEnum::Update,
                 AccessActionEnum::Delete,

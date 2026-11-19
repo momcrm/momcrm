@@ -33,6 +33,27 @@ final class FindRate
     }
 
     /**
+     * Rates by id, keyed by id, whichever team they belong to; for showing the
+     * rates of services already read for a team.
+     *
+     * @param  list<string>  $ids
+     * @return array<string, Rate>
+     */
+    public static function byIds(array $ids): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+
+        return RateEloquentModel::query()
+            ->withoutGlobalScopes()
+            ->whereKey($ids)
+            ->get()
+            ->mapWithKeys(fn (RateEloquentModel $model): array => [$model->id => Rate::fromEloquentModel($model)])
+            ->all();
+    }
+
+    /**
      * One of a team's rates by id, archived or not; empty if it isn't the team's.
      */
     public static function byIdForTeam(?string $id, string $teamId): Rate

@@ -13,7 +13,8 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * The customer's services tab.
+ * The customer's services tab. Archived services are left out unless
+ * `?archived=1` asks for them.
  */
 final class ListCustomerServicesController
 {
@@ -23,13 +24,14 @@ final class ListCustomerServicesController
     public function __invoke(Request $request, string $customer): Response
     {
         $workspace = CustomerWorkspace::open($request, $customer);
+        $services = FindService::forCustomer($workspace->customerId(), $workspace->teamId);
+        $showsArchived = $request->boolean('archived');
 
         return Inertia::render('customers/workspace/services', [
             ...$workspace->props($request),
-            'services' => FindService::forCustomer($workspace->customerId(), $workspace->teamId)
-                ->map(fn (Service $service): array => $service->toSummary())
-                ->values()
-                ->all(),
+            'services' => ($showsArchived ? $services : $services->withoutArchived())->toSummaries(),
+            'archivedCount' => $services->filter(fn (Service $service): bool => $service->isArchived())->count(),
+            'showsArchived' => $showsArchived,
         ]);
     }
 }

@@ -52,7 +52,7 @@ it('lists open tickets and active services that end within 30 days', function ()
     $service = fn (array $attributes) => ServiceEloquentModel::factory()->create([...$attributes, 'team_id' => $user->current_team_id, 'customer_id' => $customer->id]);
     $service(['name' => 'Ending soon', 'status' => 'active', 'ends_on' => now()->addDays(10)->toDateString()]);
     $service(['name' => 'Ends later', 'status' => 'active', 'ends_on' => now()->addDays(60)->toDateString()]);
-    $service(['name' => 'Already cancelled', 'status' => 'cancelled', 'ends_on' => now()->addDays(10)->toDateString()]);
+    $service(['name' => 'Already cancelled', 'status' => 'inactive', 'ends_on' => now()->addDays(10)->toDateString()]);
     $service(['name' => 'No end', 'status' => 'active', 'ends_on' => null]);
 
     actingAs($user)
@@ -77,7 +77,7 @@ it('lists active contracts that end within 30 days', function (): void {
     $contract = fn (array $attributes) => ContractEloquentModel::factory()->create([...$attributes, 'team_id' => $user->current_team_id, 'customer_id' => $customer->id]);
     $contract(['title' => 'Ending soon', 'status' => 'active', 'ends_on' => now()->addDays(20)->toDateString()]);
     $contract(['title' => 'Ends later', 'status' => 'active', 'ends_on' => now()->addDays(90)->toDateString()]);
-    $contract(['title' => 'Cancelled', 'status' => 'cancelled', 'ends_on' => now()->addDays(20)->toDateString()]);
+    $contract(['title' => 'Cancelled', 'status' => 'inactive', 'ends_on' => now()->addDays(20)->toDateString()]);
 
     actingAs($user)
         ->get(route('customers.show', $customer->id))

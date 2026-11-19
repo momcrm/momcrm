@@ -10,6 +10,8 @@ enum ServiceRelationship: string
 {
     use Enum;
 
+    case Contact = 'contact';
     case Customer = 'customer';
     case Location = 'location';
+    case Rate = 'rate';
 }
