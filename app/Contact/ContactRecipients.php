@@ -9,15 +9,15 @@ use App\Shared\Types;
 use Illuminate\Validation\Validator;
 
 /**
- * The customer's contacts a document (a receipt, a statement) can be
- * emailed to: those with an email address, the primary contact first.
+ * The customer's contacts a document (a receipt, a statement, an invoice)
+ * can be emailed to: those with an email address, the primary contact first.
  */
 final class ContactRecipients
 {
     public const string FIELD = 'contact_ids';
 
     /**
-     * @return list<array{id: string, name: string, email: string, is_primary: bool}>
+     * @return list<array{id: string, name: string, email: string, is_primary: bool, receives_invoices: bool}>
      */
     public static function optionsFor(string $customerId, string $teamId): array
     {
@@ -28,6 +28,7 @@ final class ContactRecipients
                 'name' => $contact->getFullName(),
                 'email' => $contact->getEmail()->toString(),
                 'is_primary' => $contact->getIsPrimary()->toBoolean(),
+                'receives_invoices' => $contact->getReceivesInvoices()->toBoolean(),
             ])
             ->all());
     }
@@ -83,5 +84,24 @@ final class ContactRecipients
         $emails = array_column(self::optionsFor($customerId, $teamId), 'email', 'id');
 
         return array_values(array_filter(array_map(fn (string $id): ?string => $emails[$id] ?? null, $contactIds)));
+    }
+
+    /**
+     * Who an invoice goes to unless someone chooses: the contacts ticked to
+     * get invoices, or else the primary contact. Empty when neither has an
+     * email address.
+     *
+     * @return list<string>
+     */
+    public static function invoiceEmails(string $customerId, string $teamId): array
+    {
+        $options = self::optionsFor($customerId, $teamId);
+        $chosen = array_filter($options, fn (array $option): bool => $option['receives_invoices']);
+
+        if ($chosen === []) {
+            $chosen = array_filter($options, fn (array $option): bool => $option['is_primary']);
+        }
+
+        return array_column($chosen, 'email');
     }
 }

@@ -11,6 +11,7 @@ use App\Invoice\Properties\Currency;
 use App\Invoice\Properties\Customer;
 use App\Invoice\Properties\CustomerId;
 use App\Invoice\Properties\DueOn;
+use App\Invoice\Properties\EmailedAt;
 use App\Invoice\Properties\Id;
 use App\Invoice\Properties\IssuedOn;
 use App\Invoice\Properties\Items;
@@ -51,6 +52,7 @@ final class Invoice extends AbstractData
         public Prefix $prefix,
         public PurchaseOrder $purchaseOrder,
         public SentAt $sentAt,
+        public EmailedAt $emailedAt,
         public Status $status,
         public TaxRateBasisPoints $taxRateBasisPoints,
         public TeamId $teamId,
@@ -138,7 +140,7 @@ final class Invoice extends AbstractData
     }
 
     /**
-     * @return array{id: string, number: int, reference: string, customer_id: string, issued_on: ?string, due_on: ?string, status: string, currency: string, is_overdue: bool, tax_rate_basis_points: int, purchase_order: ?string, notes: ?string, sent_at: ?string, paid_at: ?string, paid_in_cents: int, custom_fields: array<string, mixed>}
+     * @return array{id: string, number: int, reference: string, customer_id: string, issued_on: ?string, due_on: ?string, status: string, currency: string, is_overdue: bool, tax_rate_basis_points: int, purchase_order: ?string, notes: ?string, sent_at: ?string, emailed_at: ?string, paid_at: ?string, paid_in_cents: int, custom_fields: array<string, mixed>}
      */
     public function toSummary(): array
     {
@@ -156,6 +158,7 @@ final class Invoice extends AbstractData
             'purchase_order' => $this->getPurchaseOrder()->toNullableString(),
             'notes' => $this->getNotes()->toNullableString(),
             'sent_at' => $this->getSentAt()->toNullableISOString(),
+            'emailed_at' => $this->getEmailedAt()->toNullableISOString(),
             'paid_at' => $this->getPaidAt()->toNullableISOString(),
             'paid_in_cents' => $this->getPaidInCents()->toInteger(),
             'custom_fields' => $this->getCustomFields()->toValues(),
@@ -302,6 +305,11 @@ final class Invoice extends AbstractData
         $this->purchaseOrder = new PurchaseOrder($purchaseOrder instanceof AbstractValue ? $purchaseOrder->toValue() : $purchaseOrder);
 
         return $this;
+    }
+
+    public function getEmailedAt(): EmailedAt
+    {
+        return $this->emailedAt;
     }
 
     public function getSentAt(): SentAt

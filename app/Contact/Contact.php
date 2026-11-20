@@ -15,6 +15,7 @@ use App\Contact\Properties\IsPrimary;
 use App\Contact\Properties\LastName;
 use App\Contact\Properties\MobilePhone;
 use App\Contact\Properties\Position;
+use App\Contact\Properties\ReceivesInvoices;
 use App\Contact\Properties\TeamId;
 use App\Contact\Properties\UpdatedAt;
 use App\Contact\Properties\WorkPhone;
@@ -37,6 +38,7 @@ final class Contact extends AbstractData
         public FirstName $firstName,
         public Id $id,
         public IsPrimary $isPrimary,
+        public ReceivesInvoices $receivesInvoices,
         public LastName $lastName,
         public MobilePhone $mobilePhone,
         public Position $position,
@@ -75,7 +77,7 @@ final class Contact extends AbstractData
     /**
      * The fields the contact pages show.
      *
-     * @return array{id: string, customer_id: string, first_name: string, last_name: ?string, full_name: string, email: ?string, position: ?string, work_phone: ?string, mobile_phone: ?string, is_primary: bool, custom_fields: array<string, mixed>}
+     * @return array{id: string, customer_id: string, first_name: string, last_name: ?string, full_name: string, email: ?string, position: ?string, work_phone: ?string, mobile_phone: ?string, is_primary: bool, receives_invoices: bool, custom_fields: array<string, mixed>}
      */
     public function toSummary(): array
     {
@@ -90,6 +92,7 @@ final class Contact extends AbstractData
             'work_phone' => $this->getWorkPhone()->toNullableString(),
             'mobile_phone' => $this->getMobilePhone()->toNullableString(),
             'is_primary' => $this->getIsPrimary()->toBoolean(),
+            'receives_invoices' => $this->getReceivesInvoices()->toBoolean(),
             'custom_fields' => $this->getCustomFields()->toValues(),
         ];
     }
@@ -167,6 +170,18 @@ final class Contact extends AbstractData
     public function setIsPrimary(mixed $isPrimary): self
     {
         $this->isPrimary = new IsPrimary($isPrimary instanceof AbstractValue ? $isPrimary->toValue() : $isPrimary);
+
+        return $this;
+    }
+
+    public function getReceivesInvoices(): ReceivesInvoices
+    {
+        return $this->receivesInvoices;
+    }
+
+    public function setReceivesInvoices(mixed $receivesInvoices): self
+    {
+        $this->receivesInvoices = new ReceivesInvoices($receivesInvoices instanceof AbstractValue ? $receivesInvoices->toValue() : $receivesInvoices);
 
         return $this;
     }

@@ -159,6 +159,18 @@ export default function ContactForm({
                         </Label>
                     </div>
 
+                    <div className="flex items-center gap-2">
+                        <Checkbox
+                            id="contact-receives_invoices"
+                            name="receives_invoices"
+                            value="1"
+                            defaultChecked={contact?.receives_invoices}
+                        />
+                        <Label htmlFor="contact-receives_invoices">
+                            Gets invoices by email
+                        </Label>
+                    </div>
+
                     {onCancel ? (
                         <DialogFooter>
                             <Button

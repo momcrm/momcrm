@@ -127,6 +127,7 @@ export type Contact = {
     work_phone: string | null;
     mobile_phone: string | null;
     is_primary: boolean;
+    receives_invoices: boolean;
     custom_fields: CustomFieldValues;
 };
 
@@ -715,6 +716,8 @@ export type Invoice = {
     purchase_order: string | null;
     notes: string | null;
     sent_at: string | null;
+    /** When it was last emailed to the customer. */
+    emailed_at: string | null;
     paid_at: string | null;
     /** The sum of the payments applied to the invoice. */
     paid_in_cents: number;
@@ -746,6 +749,8 @@ export type InvoiceDocument = {
     payments: PaymentAllocation[];
     /** How to pay by BPAY, when the team has a biller code. */
     bpay: { biller_code: string; reference: string } | null;
+    /** The customer's contacts it can be emailed to. */
+    recipients: ContactRecipient[];
 };
 
 /** The business details a team prints on its invoices. */
@@ -849,6 +854,8 @@ export type ContactRecipient = {
     name: string;
     email: string;
     is_primary: boolean;
+    /** Whether invoices go to them unless someone chooses otherwise. */
+    receives_invoices: boolean;
 };
 
 /** What the payment dialog fetches. */

@@ -1,9 +1,11 @@
 import { Head, Link } from '@inertiajs/react';
 import EmptyState from '@/components/empty-state';
+import { InvoiceBulkBar } from '@/components/invoices/invoice-bulk';
 import InvoiceTable from '@/components/invoices/invoice-table';
 import PageHeader from '@/components/page-header';
 import Pager from '@/components/pager';
 import SearchInput from '@/components/search-input';
+import { useTicketSelection } from '@/components/tickets/ticket-bulk';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { create, index } from '@/routes/invoices';
@@ -19,6 +21,9 @@ export default function InvoicesIndex({
     statuses: Option[];
 }) {
     const tabs = [{ value: null, label: 'All' }, ...statuses];
+    const selection = useTicketSelection(
+        invoices.data.map((invoice) => invoice.id),
+    );
 
     return (
         <>
@@ -81,11 +86,16 @@ export default function InvoicesIndex({
                     )
                 ) : (
                     <>
-                        <InvoiceTable invoices={invoices.data} />
+                        <InvoiceTable
+                            invoices={invoices.data}
+                            selection={selection}
+                        />
                         <Pager page={invoices} only="invoices" />
                     </>
                 )}
             </div>
+
+            <InvoiceBulkBar selection={selection} />
         </>
     );
 }

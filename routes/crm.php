@@ -79,6 +79,8 @@ use App\Invoice\Controllers\DownloadInvoicePdfController;
 use App\Invoice\Controllers\EditInvoiceController;
 use App\Invoice\Controllers\ListInvoicesController;
 use App\Invoice\Controllers\MarkInvoiceSentController;
+use App\Invoice\Controllers\SendInvoiceController;
+use App\Invoice\Controllers\SendInvoicesController;
 use App\Invoice\Controllers\ShowInvoiceController;
 use App\Invoice\Controllers\ShowInvoiceDetailsController;
 use App\Invoice\Controllers\StoreInvoiceController;
@@ -315,6 +317,8 @@ Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function 
     Route::put('invoices/{invoice}', UpdateInvoiceController::class)->whereUuid('invoice')->name('invoices.update');
     Route::post('invoices/{invoice}/sent', MarkInvoiceSentController::class)->whereUuid('invoice')->name('invoices.sent');
     Route::post('invoices/{invoice}/void', VoidInvoiceController::class)->whereUuid('invoice')->name('invoices.void');
+    Route::post('invoices/{invoice}/send', SendInvoiceController::class)->whereUuid('invoice')->name('invoices.send');
+    Route::post('invoices/send', SendInvoicesController::class)->name('invoices.send-many');
 
     Route::get('payments', ListPaymentsController::class)->name('payments.index');
     Route::get('payments/export', ExportPaymentsController::class)->name('payments.export');

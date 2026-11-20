@@ -22,6 +22,7 @@ it("adds a contact to a customer and returns to the customer's page", function (
             'email' => 'sam@acme.test',
             'position' => 'Office manager',
             'is_primary' => '1',
+            'receives_invoices' => '1',
         ])
         ->assertRedirectToRoute('customers.contacts', $customer->id);
 
@@ -29,7 +30,8 @@ it("adds a contact to a customer and returns to the customer's page", function (
         ->team_id->toBe($user->current_team_id)
         ->customer_id->toBe($customer->id)
         ->first_name->toBe('Sam')
-        ->is_primary->toBeTrue();
+        ->is_primary->toBeTrue()
+        ->receives_invoices->toBeTrue();
 });
 
 it('keeps one primary contact per customer', function (): void {

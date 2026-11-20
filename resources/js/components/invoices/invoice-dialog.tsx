@@ -127,13 +127,22 @@ export default function InvoiceDialog() {
                             {shown?.invoice.reference ?? 'Invoice'}
                         </DialogTitle>
                         <DialogDescription className="truncate text-xs">
-                            {shown ? shown.customer.name : 'Loading…'}
+                            {shown
+                                ? [
+                                      shown.customer.name,
+                                      shown.invoice.emailed_at &&
+                                          `emailed ${new Date(shown.invoice.emailed_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}`,
+                                  ]
+                                      .filter(Boolean)
+                                      .join(' · ')
+                                : 'Loading…'}
                         </DialogDescription>
                     </div>
                     {shown && (
                         <>
                             <InvoiceActions
                                 invoice={shown.invoice}
+                                recipients={shown.recipients}
                                 creditInCents={shown.customer_credit_in_cents}
                                 onChanged={() => load(shown.invoice.id)}
                             />

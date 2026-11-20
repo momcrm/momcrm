@@ -44,6 +44,7 @@ export default function ShowInvoice({
                     actions={
                         <InvoiceActions
                             invoice={invoice}
+                            recipients={document.recipients}
                             creditInCents={document.customer_credit_in_cents}
                         />
                     }
