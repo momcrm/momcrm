@@ -8,6 +8,7 @@ use App\CustomField\CustomFieldTargetEnum;
 use App\CustomField\CustomFieldTypeEnum;
 use App\Invoice\InvoiceEloquentModel;
 use App\InvoiceItem\InvoiceItemEloquentModel;
+use App\Team\TeamEloquentModel;
 use App\User\UserEloquentModel;
 
 use function Pest\Laravel\actingAs;
@@ -57,6 +58,21 @@ it("puts the invoice in the customer's currency", function (): void {
     actingAs($user)->post(route('invoices.store'), invoicePayload($customer->id))->assertSessionHasNoErrors();
 
     expect(InvoiceEloquentModel::query()->sole()->currency)->toBe('SGD');
+});
+
+it("numbers the invoice with the team's prefix, which it keeps when the prefix changes", function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    TeamEloquentModel::query()->findOrFail($user->current_team_id)->update(['invoice_prefix' => 'CEB-']);
+    $customer = CustomerEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
+
+    actingAs($user)
+        ->post(route('invoices.store'), invoicePayload($customer->id))
+        ->assertInertiaFlash('toast', ['type' => 'success', 'message' => 'CEB-0001 saved as a draft.']);
+
+    TeamEloquentModel::query()->findOrFail($user->current_team_id)->update(['invoice_prefix' => '']);
+    actingAs($user)->post(route('invoices.store'), invoicePayload($customer->id));
+
+    expect(InvoiceEloquentModel::query()->orderBy('number')->pluck('prefix')->all())->toBe(['CEB-', '']);
 });
 
 it('requires at least one line item', function (): void {

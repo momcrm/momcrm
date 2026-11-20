@@ -11,10 +11,13 @@ use App\Invoice\Properties\Id;
 use App\Shared\Actions\NextTeamNumber;
 use App\Shared\CurrencyEnum;
 use App\Shared\Table;
+use App\Team\Actions\FindTeam;
+use App\Team\Properties\InvoicePrefix;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Creates a draft invoice, numbered within its team, with its line items.
+ * Creates a draft invoice, numbered within its team and with the team's
+ * invoice prefix, with its line items.
  */
 final readonly class CreateInvoice
 {
@@ -38,6 +41,7 @@ final readonly class CreateInvoice
             }
 
             $this->invoice
+                ->setPrefix(FindTeam::byId($this->invoice->getTeamId()->toString())->getInvoicePrefix()->toNullableString() ?? InvoicePrefix::DEFAULT)
                 ->setStatus(InvoiceStatusEnum::Draft)
                 ->setNumber(NextTeamNumber::for(Table::Invoices, $this->invoice->getTeamId()->toString()));
 

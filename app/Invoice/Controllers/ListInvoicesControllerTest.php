@@ -44,6 +44,10 @@ it('filters by status and finds by number', function (): void {
     actingAs($user)
         ->get(route('invoices.index', ['search' => 'INV-0012']))
         ->assertInertia(fn (Assert $page) => $page->where('invoices.total', 1)->where('invoices.data.0.number', 12));
+
+    actingAs($user)
+        ->get(route('invoices.index', ['search' => 'CEB2026-0012']))
+        ->assertInertia(fn (Assert $page) => $page->where('invoices.total', 1)->where('invoices.data.0.number', 12));
 });
 
 it('leaves the open invoice out of the page links, keeping the filters', function (): void {

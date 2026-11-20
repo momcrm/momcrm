@@ -12,6 +12,7 @@ use App\Team\Properties\BillingName;
 use App\Team\Properties\BillingPhone;
 use App\Team\Properties\CreatedAt;
 use App\Team\Properties\Id;
+use App\Team\Properties\InvoicePrefix;
 use App\Team\Properties\IsPersonal;
 use App\Team\Properties\Name;
 use App\Team\Properties\OwnerId;
@@ -38,6 +39,7 @@ final class Team extends AbstractData
         public BillingPhone $billingPhone,
         public BillingAddress $billingAddress,
         public PaymentDetails $paymentDetails,
+        public InvoicePrefix $invoicePrefix,
         public CreatedAt $createdAt,
         public Id $id,
         public IsPersonal $isPersonal,
@@ -271,6 +273,23 @@ final class Team extends AbstractData
         return $this;
     }
 
+    public function getInvoicePrefix(): InvoicePrefix
+    {
+        return $this->invoicePrefix;
+    }
+
+    /**
+     * An empty prefix is kept as an empty string: no prefix, rather than
+     * the default.
+     */
+    public function setInvoicePrefix(mixed $invoicePrefix): self
+    {
+        $value = $invoicePrefix instanceof AbstractValue ? $invoicePrefix->toValue() : $invoicePrefix;
+        $this->invoicePrefix = new InvoicePrefix($value ?? '');
+
+        return $this;
+    }
+
     /**
      * The name invoices are issued under: the billing name, or else the team's name.
      */
@@ -282,7 +301,7 @@ final class Team extends AbstractData
     /**
      * What the team prints on its invoices, for the billing settings and the invoice itself.
      *
-     * @return array{name: string, billing_name: ?string, tax_id_label: ?string, tax_id: ?string, billing_email: ?string, billing_phone: ?string, billing_address: ?string, payment_details: ?string}
+     * @return array{name: string, billing_name: ?string, tax_id_label: ?string, tax_id: ?string, billing_email: ?string, billing_phone: ?string, billing_address: ?string, payment_details: ?string, invoice_prefix: string}
      */
     public function toBillingSummary(): array
     {
@@ -295,6 +314,7 @@ final class Team extends AbstractData
             'billing_phone' => $this->getBillingPhone()->toNullableString(),
             'billing_address' => $this->getBillingAddress()->toNullableString(),
             'payment_details' => $this->getPaymentDetails()->toNullableString(),
+            'invoice_prefix' => $this->getInvoicePrefix()->toNullableString() ?? InvoicePrefix::DEFAULT,
         ];
     }
 }

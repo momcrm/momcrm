@@ -756,6 +756,8 @@ export type TeamBilling = {
     billing_phone: string | null;
     billing_address: string | null;
     payment_details: string | null;
+    /** What invoice numbers start with, e.g. INV-; empty for none. */
+    invoice_prefix: string;
 };
 
 export type InvoiceListItem = Invoice &

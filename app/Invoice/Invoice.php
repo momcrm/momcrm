@@ -18,6 +18,7 @@ use App\Invoice\Properties\Notes;
 use App\Invoice\Properties\Number;
 use App\Invoice\Properties\PaidAt;
 use App\Invoice\Properties\PaidInCents;
+use App\Invoice\Properties\Prefix;
 use App\Invoice\Properties\PurchaseOrder;
 use App\Invoice\Properties\SentAt;
 use App\Invoice\Properties\Status;
@@ -47,6 +48,7 @@ final class Invoice extends AbstractData
         public Number $number,
         public PaidAt $paidAt,
         public PaidInCents $paidInCents,
+        public Prefix $prefix,
         public PurchaseOrder $purchaseOrder,
         public SentAt $sentAt,
         public Status $status,
@@ -78,11 +80,22 @@ final class Invoice extends AbstractData
     }
 
     /**
-     * The number as shown on the invoice, e.g. INV-0042.
+     * The number as shown on the invoice, with its team's prefix when it was
+     * drafted, e.g. INV-0042.
      */
     public function getReference(): string
     {
-        return 'INV-'.str_pad((string) $this->getNumber()->toInteger(), 4, '0', STR_PAD_LEFT);
+        return ($this->getPrefix()->toNullableString() ?? '').str_pad((string) $this->getNumber()->toInteger(), 4, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * The invoice number someone searched for: the last run of digits, so a
+     * prefix with digits in it (INV2026-0042) still finds number 42. Null
+     * when there are no digits.
+     */
+    public static function numberIn(string $search): ?int
+    {
+        return preg_match('/(\d+)\D*$/', $search, $matches) === 1 ? (int) $matches[1] : null;
     }
 
     public function isDraft(): bool
@@ -147,6 +160,18 @@ final class Invoice extends AbstractData
             'paid_in_cents' => $this->getPaidInCents()->toInteger(),
             'custom_fields' => $this->getCustomFields()->toValues(),
         ];
+    }
+
+    public function getPrefix(): Prefix
+    {
+        return $this->prefix;
+    }
+
+    public function setPrefix(mixed $prefix): self
+    {
+        $this->prefix = new Prefix($prefix instanceof AbstractValue ? $prefix->toValue() : $prefix);
+
+        return $this;
     }
 
     public function getPaidInCents(): PaidInCents

@@ -21,6 +21,7 @@ it('saves the details printed on invoices', function (): void {
             'billing_phone' => '08 9000 0000',
             'billing_address' => "1 Hay St\nPerth WA 6000",
             'payment_details' => 'BSB 000-000, account 12345678',
+            'invoice_prefix' => 'CEB-',
         ])
         ->assertSessionHasNoErrors()
         ->assertRedirectToRoute('billing.edit');
@@ -32,8 +33,22 @@ it('saves the details printed on invoices', function (): void {
         ->billing_email->toBe('accounts@cebugle.example')
         ->billing_phone->toBe('08 9000 0000')
         ->billing_address->toBe("1 Hay St\nPerth WA 6000")
-        ->payment_details->toBe('BSB 000-000, account 12345678');
+        ->payment_details->toBe('BSB 000-000, account 12345678')
+        ->invoice_prefix->toBe('CEB-');
 });
+
+it('numbers invoices plainly when the prefix is left blank, and refuses spaces in it', function (string $prefix, ?string $error, string $stored): void {
+    $team = TeamEloquentModel::factory()->create();
+    $admin = UserEloquentModel::factory()->inTeam($team->id, TeamRoleEnum::Admin)->create();
+
+    $response = actingAs($admin)->patch(route('billing.update'), ['invoice_prefix' => $prefix]);
+
+    $error === null ? $response->assertSessionHasNoErrors() : $response->assertSessionHasErrors(['invoice_prefix' => $error]);
+    expect($team->refresh()->invoice_prefix)->toBe($stored);
+})->with([
+    'blank' => ['', null, ''],
+    'with a space' => ['INV 2026', 'Use letters, numbers and - / _ . # only, with no spaces.', 'INV-'],
+]);
 
 it('clears details left blank', function (): void {
     $team = TeamEloquentModel::factory()->create(['billing_name' => 'Old Name Pty Ltd', 'tax_id_label' => 'VAT', 'tax_id' => 'GB123456789']);

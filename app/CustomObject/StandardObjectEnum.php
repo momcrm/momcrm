@@ -213,10 +213,10 @@ enum StandardObjectEnum: string
 
         if ($this === self::Invoice) {
             // An invoice has no name, only its number: "INV-0042", "42".
-            $number = preg_replace('/\D/', '', $search);
+            $number = Invoice::numberIn($search);
 
             if ($search !== '') {
-                $number === '' ? $query->whereRaw('1 = 0') : $query->where('number', (int) $number);
+                $number === null ? $query->whereRaw('1 = 0') : $query->where('number', $number);
             }
 
             $query->orderByDesc('number');
