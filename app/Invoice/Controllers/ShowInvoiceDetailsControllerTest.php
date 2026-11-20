@@ -5,6 +5,8 @@ declare(strict_types=1);
 use App\Customer\CustomerEloquentModel;
 use App\Invoice\InvoiceEloquentModel;
 use App\InvoiceItem\InvoiceItemEloquentModel;
+use App\Payment\PaymentEloquentModel;
+use App\PaymentAllocation\PaymentAllocationEloquentModel;
 use App\User\UserEloquentModel;
 
 use function Pest\Laravel\actingAs;
@@ -24,6 +26,22 @@ it('sends the invoice dialog the invoice, its lines, totals, customer and team',
         ->assertJsonPath('totals', ['subtotal_in_cents' => 5000, 'tax_in_cents' => 500, 'total_in_cents' => 5500])
         ->assertJsonPath('customer.name', 'Acme')
         ->assertJsonPath('from.name', $user->currentTeam->name);
+});
+
+it('lists the payments applied to the invoice with what was paid', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $team = ['team_id' => $user->current_team_id];
+    $invoice = InvoiceEloquentModel::factory()->create([...$team, 'status' => 'sent']);
+    $payment = PaymentEloquentModel::factory()->create([...$team, 'customer_id' => $invoice->customer_id, 'number' => 8, 'paid_on' => '2026-11-03', 'method' => 'cash']);
+    PaymentAllocationEloquentModel::factory()->create([...$team, 'payment_id' => $payment->id, 'invoice_id' => $invoice->id, 'amount_in_cents' => 1500]);
+
+    actingAs($user)
+        ->getJson(route('invoices.details', $invoice->id))
+        ->assertJsonPath('invoice.paid_in_cents', 1500)
+        ->assertJsonPath('payments.0.payment_reference_number', 'PAY-0008')
+        ->assertJsonPath('payments.0.paid_on', '2026-11-03')
+        ->assertJsonPath('payments.0.method_label', 'Cash')
+        ->assertJsonPath('payments.0.amount_in_cents', 1500);
 });
 
 it("returns not found for another team's invoice", function (): void {

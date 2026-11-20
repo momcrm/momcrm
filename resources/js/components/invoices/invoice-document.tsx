@@ -3,6 +3,7 @@ import InvoiceStatusBadge from '@/components/invoices/invoice-status-badge';
 import { formatCents } from '@/lib/money';
 import { cn } from '@/lib/utils';
 import { show as showCustomer } from '@/routes/customers';
+import { index as paymentsIndex } from '@/routes/payments';
 import type { InvoiceDocument as InvoiceDocumentData } from '@/types';
 
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
@@ -47,7 +48,7 @@ function MetaRow({ label, value }: { label: string; value: string }) {
  * the same layout.
  */
 export default function InvoiceDocument({
-    document: { title, invoice, items, totals, customer, from },
+    document: { title, invoice, items, totals, customer, from, payments },
     className,
 }: {
     document: InvoiceDocumentData;
@@ -271,6 +272,38 @@ export default function InvoiceDocument({
                         </>
                     )}
                 </dl>
+
+                {payments.length > 0 && (
+                    <section>
+                        <Eyebrow>Payments</Eyebrow>
+                        <ul className="mt-2 divide-y rounded-lg border text-sm">
+                            {payments.map((payment) => (
+                                <li
+                                    key={payment.id}
+                                    className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-3 py-2"
+                                >
+                                    <Link
+                                        href={paymentsIndex({
+                                            query: {
+                                                payment: payment.payment_id,
+                                            },
+                                        })}
+                                        className="font-mono underline-offset-4 hover:underline"
+                                    >
+                                        {payment.payment_reference_number}
+                                    </Link>
+                                    <span className="text-muted-foreground">
+                                        {formatDate(payment.paid_on)} ·{' '}
+                                        {payment.method_label}
+                                    </span>
+                                    <span className="ml-auto tabular-nums">
+                                        {money(payment.amount_in_cents)}
+                                    </span>
+                                </li>
+                            ))}
+                        </ul>
+                    </section>
+                )}
 
                 {showsPaymentDetails && (
                     <section className="rounded-lg border border-l-[3px] border-l-primary px-4 py-3">

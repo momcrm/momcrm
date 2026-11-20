@@ -16,6 +16,7 @@ use App\CustomField\CustomFieldRelationLabels;
 use App\CustomField\CustomFieldTargetEnum;
 use App\Invoice\Actions\FindInvoice;
 use App\Location\Actions\FindLocation;
+use App\Payment\Actions\FindPayment;
 use App\Project\Actions\FindProject;
 use App\Secret\Actions\FindSecret;
 use App\Service\Actions\FindService;
@@ -93,6 +94,7 @@ final readonly class CustomerWorkspace
             'contracts' => FindContract::countForCustomer($customerId, $this->teamId),
             'secrets' => FindSecret::countForCustomer($customerId, $this->teamId),
             'invoices' => FindInvoice::paginateForTeam($this->teamId, customerId: $customerId, perPage: 1)->total(),
+            'payments' => FindPayment::countForCustomer($customerId, $this->teamId),
         ];
     }
 }

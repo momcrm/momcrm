@@ -1,6 +1,7 @@
 import { Link, setLayoutProps, usePage } from '@inertiajs/react';
 import type { InertiaLinkProps } from '@inertiajs/react';
 import {
+    Banknote,
     Boxes,
     FileSignature,
     FileStack,
@@ -33,6 +34,7 @@ import {
     index,
     invoices,
     locations,
+    payments,
     projects,
     secrets,
     services,
@@ -120,6 +122,12 @@ function links(workspace: CustomerWorkspace): WorkspaceLink[] {
             href: invoices(id),
             icon: Receipt,
             count: counts.invoices,
+        },
+        {
+            title: 'Payments',
+            href: payments(id),
+            icon: Banknote,
+            count: counts.payments,
         },
         { title: 'Settings', href: edit(id), icon: Settings },
     ];

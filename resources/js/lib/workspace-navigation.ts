@@ -1,6 +1,7 @@
 import {
     Activity,
     Archive,
+    Banknote,
     CalendarDays,
     GanttChart,
     Inbox,
@@ -33,6 +34,7 @@ import { index as contactsIndex } from '@/routes/contacts';
 import { index as customersIndex } from '@/routes/customers';
 import { index as favoritesIndex } from '@/routes/favorites';
 import { index as invoicesIndex } from '@/routes/invoices';
+import { index as paymentsIndex } from '@/routes/payments';
 import { edit as profileEdit } from '@/routes/profile';
 import { index as projectsIndex } from '@/routes/projects';
 import { index as servicesIndex } from '@/routes/services';
@@ -170,6 +172,12 @@ export function workspaceNavigation(
                     href: invoicesIndex(),
                     icon: Receipt,
                     shortcut: 'v',
+                },
+                {
+                    title: 'Payments',
+                    href: paymentsIndex(),
+                    icon: Banknote,
+                    shortcut: 'b',
                 },
             ],
         },
