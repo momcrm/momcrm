@@ -18,6 +18,7 @@ enum AccessResourceEnum: string
     case Asset = 'asset';
     case Attachment = 'attachment';
     case BankTransaction = 'bank_transaction';
+    case Charge = 'charge';
     case Comment = 'comment';
     case Contact = 'contact';
     case Contract = 'contract';
@@ -39,6 +40,7 @@ enum AccessResourceEnum: string
             self::Asset => 'Assets',
             self::Attachment => 'Files',
             self::BankTransaction => 'Bank feeds',
+            self::Charge => 'One-off charges',
             self::Comment => 'Comments',
             self::Contact => 'Contacts',
             self::Contract => 'Contracts',
@@ -71,7 +73,7 @@ enum AccessResourceEnum: string
                 AccessActionEnum::Restore,
                 AccessActionEnum::Delete,
             ],
-            self::Asset, self::Contact, self::Contract, self::Location, self::Milestone, self::Payment, self::Record => [
+            self::Asset, self::Charge, self::Contact, self::Contract, self::Location, self::Milestone, self::Payment, self::Record => [
                 AccessActionEnum::Create,
                 AccessActionEnum::Update,
                 AccessActionEnum::Delete,

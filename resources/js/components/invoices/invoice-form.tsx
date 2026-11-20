@@ -17,6 +17,8 @@ type Action = { action: string; method: 'post' | 'put' };
 type Row = {
     key: number;
     service_id: string;
+    /** The one-off charge the line bills, kept while the line is. */
+    charge_id: string | null;
     description: string;
     quantity: string;
     unit_price: string;
@@ -31,6 +33,7 @@ function emptyRow(): Row {
     return {
         key: nextKey++,
         service_id: '',
+        charge_id: null,
         description: '',
         quantity: '1',
         unit_price: '',
@@ -43,6 +46,7 @@ function toRow(item: InvoiceItem): Row {
     return {
         key: nextKey++,
         service_id: item.service_id ?? '',
+        charge_id: item.charge_id,
         description: item.description,
         quantity: String(item.quantity),
         unit_price: (item.unit_price_in_cents / 100).toFixed(2),
@@ -147,6 +151,7 @@ export default function InvoiceForm({
 
         updateRow(key, {
             service_id: serviceId,
+            charge_id: null,
             rental_starts_on: null,
             rental_ends_on: null,
             ...(service && {
@@ -260,6 +265,13 @@ export default function InvoiceForm({
                                     className="grid gap-2 rounded-lg border p-3 sm:grid-cols-[1fr_5rem_7rem_6rem_auto] sm:items-start"
                                 >
                                     <div className="grid gap-2">
+                                        {row.charge_id && (
+                                            <input
+                                                type="hidden"
+                                                name={`items[${index}][charge_id]`}
+                                                value={row.charge_id}
+                                            />
+                                        )}
                                         {row.rental_starts_on &&
                                             row.rental_ends_on && (
                                                 <>

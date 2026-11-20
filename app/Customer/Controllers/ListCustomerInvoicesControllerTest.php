@@ -2,8 +2,11 @@
 
 declare(strict_types=1);
 
+use App\Charge\ChargeEloquentModel;
 use App\Customer\CustomerEloquentModel;
 use App\Invoice\InvoiceEloquentModel;
+use App\InvoiceItem\InvoiceItemEloquentModel;
+use App\Product\ProductEloquentModel;
 use App\User\UserEloquentModel;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -38,4 +41,24 @@ it("returns not found for another team's customer", function (): void {
     actingAs(UserEloquentModel::factory()->withPersonalTeam()->create())
         ->get(route('customers.invoices', CustomerEloquentModel::factory()->create()->id))
         ->assertNotFound();
+});
+
+it("lists the customer's waiting charges first, with the invoice billed ones are on, and the products to charge from", function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $customer = CustomerEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
+    $billed = ChargeEloquentModel::factory()->forCustomer($customer)->create(['description' => 'Billed', 'charged_on' => now()->subDay()->toDateString()]);
+    ChargeEloquentModel::factory()->forCustomer($customer)->create(['description' => 'Waiting', 'charged_on' => now()->subDays(5)->toDateString()]);
+    $invoice = InvoiceEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'customer_id' => $customer->id, 'number' => 12]);
+    InvoiceItemEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'invoice_id' => $invoice->id, 'charge_id' => $billed->id]);
+    ProductEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'name' => 'Laptop setup']);
+
+    actingAs($user)
+        ->get(route('customers.invoices', $customer->id))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('charges.0.description', 'Waiting')
+            ->where('charges.0.invoice', null)
+            ->where('charges.1.description', 'Billed')
+            ->where('charges.1.invoice', ['id' => $invoice->id, 'reference' => 'INV-0012'])
+            ->where('products.0.name', 'Laptop setup')
+            ->where('canCharge', true));
 });

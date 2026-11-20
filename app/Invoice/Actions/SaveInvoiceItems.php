@@ -17,7 +17,7 @@ use App\Team\Scopes\CurrentTeamScope;
 final readonly class SaveInvoiceItems
 {
     /**
-     * @param  array<int, array{description: string, quantity: int, unit_price_in_cents: int, service_id?: ?string, rental_starts_on?: ?string, rental_ends_on?: ?string}>  $items
+     * @param  array<int, array{description: string, quantity: int, unit_price_in_cents: int, service_id?: ?string, charge_id?: ?string, rental_starts_on?: ?string, rental_ends_on?: ?string}>  $items
      */
     public function __construct(
         private Invoice $invoice,
@@ -38,6 +38,7 @@ final readonly class SaveInvoiceItems
                 ->setTeamId($this->invoice->getTeamId())
                 ->setInvoiceId($this->invoice->getId())
                 ->setServiceId($item['service_id'] ?? null)
+                ->setChargeId($item['charge_id'] ?? null)
                 ->setPosition($position)
                 ->setDescription($item['description'])
                 ->setQuantity($item['quantity'])
@@ -50,7 +51,7 @@ final readonly class SaveInvoiceItems
     }
 
     /**
-     * @param  array<int, array{description: string, quantity: int, unit_price_in_cents: int, service_id?: ?string, rental_starts_on?: ?string, rental_ends_on?: ?string}>  $items
+     * @param  array<int, array{description: string, quantity: int, unit_price_in_cents: int, service_id?: ?string, charge_id?: ?string, rental_starts_on?: ?string, rental_ends_on?: ?string}>  $items
      */
     public static function forInvoice(Invoice $invoice, array $items): void
     {

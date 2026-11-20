@@ -55,7 +55,7 @@ final class UpdateInvoiceFormRequest extends FormRequest
     public function rules(): array
     {
         return [
-            ...InvoiceValidationRules::for($this, $this->invoice->getCustomerId()->toString()),
+            ...InvoiceValidationRules::for($this, $this->invoice->getCustomerId()->toString(), $this->invoice->getId()->toString()),
             ...CustomFieldValueRules::for($this->invoice->getTeamId()->toString(), CustomFieldTargetEnum::Invoice, $this->invoice->getCustomFields()),
         ];
     }
