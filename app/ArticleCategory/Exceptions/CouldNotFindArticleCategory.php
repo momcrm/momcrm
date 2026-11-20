@@ -1,0 +1,18 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\ArticleCategory\Exceptions;
+
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+
+final class CouldNotFindArticleCategory extends NotFoundHttpException
+{
+    /**
+     * A 404 rather than a 403, so another team's categories are not revealed.
+     */
+    public static function notFound(): self
+    {
+        return new self('Category not found.');
+    }
+}

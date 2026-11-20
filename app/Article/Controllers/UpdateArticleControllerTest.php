@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use App\Article\ArticleClassificationEnum;
 use App\Article\ArticleEloquentModel;
+use App\ArticleCategory\ArticleCategoryEloquentModel;
+use App\Choice\ChoiceEloquentModel;
 use App\TeamUser\TeamRoleEnum;
 use App\User\UserEloquentModel;
 
@@ -84,4 +86,37 @@ it("returns not found for an article the person can't read", function (): void {
     $article = ArticleEloquentModel::factory()->classified(ArticleClassificationEnum::Confidential)->create(['team_id' => $owner->current_team_id]);
 
     actingAs($member)->put(route('articles.update', $article->id), articleForm())->assertNotFound();
+});
+
+it('files the article, labels it and sets its next review, with no new version', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $team = ['team_id' => $user->current_team_id];
+    $category = ArticleCategoryEloquentModel::factory()->create($team);
+    $label = ChoiceEloquentModel::factory()->label()->create($team);
+    $article = ArticleEloquentModel::factory()->published()->create([
+        ...$team, 'version_major' => 1, 'title' => 'Reset a router', 'summary' => 'When the internet drops', 'body' => '<h2>Steps</h2><p>Hold <strong>reset</strong>.</p>',
+    ]);
+
+    actingAs($user)
+        ->put(route('articles.update', $article->id), articleForm(['status' => 'published', 'category_id' => $category->id, 'label_ids' => [$label->id], 'next_review_on' => '2027-01-31']))
+        ->assertSessionDoesntHaveErrors();
+
+    expect($article->refresh())
+        ->category_id->toBe($category->id)
+        ->next_review_on->toBe('2027-01-31')
+        ->version_minor->toBe(0)
+        ->and($article->labels()->pluck('choices.id')->all())->toBe([$label->id]);
+
+    actingAs($user)->put(route('articles.update', $article->id), articleForm(['status' => 'published', 'label_ids' => [], 'labels_sent' => '1']));
+
+    expect($article->labels()->count())->toBe(0);
+});
+
+it("won't file an article in another team's category", function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $article = ArticleEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
+
+    actingAs($user)
+        ->put(route('articles.update', $article->id), articleForm(['category_id' => ArticleCategoryEloquentModel::factory()->create()->id]))
+        ->assertSessionHasErrors(['category_id' => 'Choose one of your categories.']);
 });

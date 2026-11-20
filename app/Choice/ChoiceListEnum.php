@@ -44,7 +44,7 @@ enum ChoiceListEnum: string
     {
         return match ($this) {
             self::CustomerType => 'What kind of customer someone is, for sorting and filtering the customer list.',
-            self::Label => 'Tags for sorting and finding tickets, projects and assets. Each can have several.',
+            self::Label => 'Tags for sorting and finding tickets, projects, assets and articles. Each can have several.',
             self::TicketPriority => 'How urgent a ticket is, most urgent first.',
             self::TicketStatus => 'Where a ticket is in its life, grouped by whether it is still open.',
             self::TicketType => 'What kind of request a ticket is.',

@@ -34,6 +34,7 @@ enum LabelTargetEnum: string
      */
     public const string SENT_FIELD = 'labels_sent';
 
+    case Article = 'article';
     case Asset = 'asset';
     case Project = 'project';
     case Ticket = 'ticket';
@@ -44,6 +45,7 @@ enum LabelTargetEnum: string
     public function table(): Table
     {
         return match ($this) {
+            self::Article => Table::LabelArticle,
             self::Asset => Table::LabelAsset,
             self::Project => Table::LabelProject,
             self::Ticket => Table::LabelTicket,

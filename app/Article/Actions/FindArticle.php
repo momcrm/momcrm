@@ -12,14 +12,17 @@ use App\Article\ArticleStatusEnum;
 use App\Article\ArticleVisibility;
 use App\Article\Properties\ArchivedAt;
 use App\Article\Properties\BodyText;
+use App\Article\Properties\CategoryId;
 use App\Article\Properties\Classification;
 use App\Article\Properties\Id;
+use App\Article\Properties\NextReviewOn;
 use App\Article\Properties\Status;
 use App\Article\Properties\Summary;
 use App\Article\Properties\TeamId;
 use App\Article\Properties\Title;
 use App\Article\Properties\UpdatedAt;
 use App\Team\Scopes\CurrentTeamScope;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -46,7 +49,7 @@ final class FindArticle
 
         return Article::fromEloquentModel(
             self::visible($teamId, $userId)
-                ->with([ArticleRelationship::Author->value, ArticleRelationship::EditedBy->value])
+                ->with([ArticleRelationship::Author->value, ArticleRelationship::EditedBy->value, ArticleRelationship::Labels->value])
                 ->where(Id::getDatabaseTableColumnName(), $id)
                 ->first(),
         );
@@ -55,6 +58,7 @@ final class FindArticle
     /**
      * The articles list. Archived articles show only under their own filter.
      *
+     * @param  list<string>|null  $categoryIds  a category and the ones under it
      * @return LengthAwarePaginator<int, Article>
      */
     public static function paginateVisible(
@@ -63,6 +67,9 @@ final class FindArticle
         ?string $search = null,
         ?string $status = null,
         ?string $classification = null,
+        ?array $categoryIds = null,
+        ?string $labelId = null,
+        bool $isReviewDue = false,
         string $sort = 'updated',
         string $direction = 'desc',
         int $perPage = 25,
@@ -70,7 +77,7 @@ final class FindArticle
         $direction = $direction === 'asc' ? 'asc' : 'desc';
 
         return self::visible($teamId, $userId)
-            ->with(ArticleRelationship::Author->value)
+            ->with([ArticleRelationship::Author->value, ArticleRelationship::Labels->value])
             ->when(
                 $status === self::ARCHIVED,
                 fn (Builder $query) => $query->whereNotNull(ArchivedAt::getDatabaseTableColumnName()),
@@ -79,6 +86,9 @@ final class FindArticle
             ->when(ArticleStatusEnum::tryFrom((string) $status), fn (Builder $query, ArticleStatusEnum $status) => $query->where(Status::getDatabaseTableColumnName(), $status->value))
             ->when($classification, fn (Builder $query, string $classification) => $query->where(Classification::getDatabaseTableColumnName(), $classification))
             ->when($search, fn (Builder $query, string $search) => self::matching($query, $search))
+            ->when($categoryIds, fn (Builder $query, array $categoryIds) => $query->whereIn(CategoryId::getDatabaseTableColumnName(), $categoryIds))
+            ->when($labelId, fn (Builder $query, string $labelId) => $query->whereHas(ArticleRelationship::Labels->value, fn (Builder $query) => $query->whereKey($labelId)))
+            ->when($isReviewDue, fn (Builder $query) => $query->whereDate(NextReviewOn::getDatabaseTableColumnName(), '<=', CarbonImmutable::today()))
             ->when(
                 $sort === 'title',
                 fn (Builder $query) => $query->orderBy(Title::getDatabaseTableColumnName(), $direction),

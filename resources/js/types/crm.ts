@@ -1198,6 +1198,11 @@ export type ArticleListItem = {
     classification: ArticleClassification;
     /** Such as "1.2"; null until first published. */
     version: string | null;
+    category_id: string | null;
+    labels: LabelTag[];
+    next_review_on: string | null;
+    last_reviewed_on: string | null;
+    is_review_due: boolean;
     author_name: string | null;
     published_at: string | null;
     updated_at: string | null;
@@ -1220,4 +1225,14 @@ export type ArticleVersionItem = {
     edited_by_name: string | null;
     saved_at: string | null;
     is_current: boolean;
+};
+
+/** A knowledge base category, in tree order. */
+export type ArticleCategory = {
+    id: string;
+    parent_id: string | null;
+    name: string;
+    depth: number;
+    /** Such as "Networking › Routers". */
+    path: string;
 };

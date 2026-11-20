@@ -7,7 +7,9 @@ namespace App\Article\Controllers;
 use App\AccessRule\AccessResourceEnum;
 use App\AccessRule\Engine\AccessAbilities;
 use App\Article\Actions\FindArticle;
+use App\Article\Article;
 use App\Article\Exceptions\CouldNotFindArticle;
+use App\ArticleCategory\Actions\FindArticleCategory;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -27,7 +29,28 @@ final class ShowArticleController
 
         return Inertia::render('articles/show', [
             'article' => $found->toDetail(),
+            'categoryPath' => self::categoryPath($found),
             'can' => AccessAbilities::for($request->user(), AccessResourceEnum::Article, $found),
         ]);
+    }
+
+    /**
+     * The article's category with the ones above it, e.g. "Networking › Routers".
+     */
+    private static function categoryPath(Article $article): ?string
+    {
+        $categoryId = $article->getCategoryId()->toNullableString();
+
+        if ($categoryId === null) {
+            return null;
+        }
+
+        foreach (FindArticleCategory::listForTeam($article->getTeamId()->toString())->toSummaries() as $category) {
+            if ($category['id'] === $categoryId) {
+                return $category['path'];
+            }
+        }
+
+        return null;
     }
 }

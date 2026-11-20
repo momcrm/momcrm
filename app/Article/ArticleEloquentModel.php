@@ -7,11 +7,15 @@ namespace App\Article;
 use App\Article\Factories\ArticleFactory;
 use App\Article\Properties\ArchivedAt;
 use App\Article\Properties\AuthorId;
+use App\Article\Properties\CategoryId;
 use App\Article\Properties\EditedById;
 use App\Article\Properties\Id;
 use App\Article\Properties\PublishedAt;
+use App\ArticleCategory\ArticleCategoryEloquentModel;
 use App\AuditLog\AuditObserver;
 use App\AuditLog\Contracts\Auditable;
+use App\Choice\HasLabels;
+use App\Choice\LabelTargetEnum;
 use App\Shared\Table;
 use App\Team\Scopes\CurrentTeamScope;
 use App\User\UserEloquentModel;
@@ -27,12 +31,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property CarbonImmutable|null $archived_at
  * @property string|null $author_id
  * @property string|null $body
+ * @property string|null $category_id
  * @property string|null $body_text
  * @property string|null $change_note
  * @property string $classification
  * @property CarbonImmutable|null $created_at
  * @property string|null $edited_by_id
  * @property string $id
+ * @property string|null $last_reviewed_on
+ * @property string|null $next_review_on
  * @property CarbonImmutable|null $published_at
  * @property string $status
  * @property string|null $summary
@@ -49,6 +56,7 @@ final class ArticleEloquentModel extends Model implements Auditable
     /** @use HasFactory<ArticleFactory> */
     use HasFactory;
 
+    use HasLabels;
     use HasUuids;
 
     protected $guarded = [];
@@ -60,6 +68,11 @@ final class ArticleEloquentModel extends Model implements Auditable
      * @var list<string>
      */
     protected $hidden = ['body', 'body_text'];
+
+    public static function labelTarget(): LabelTargetEnum
+    {
+        return LabelTargetEnum::Article;
+    }
 
     public function auditTeamId(): string
     {
@@ -85,6 +98,18 @@ final class ArticleEloquentModel extends Model implements Auditable
             related: UserEloquentModel::class,
             foreignKey: AuthorId::getDatabaseTableColumnName(),
             relation: ArticleRelationship::Author->value,
+        );
+    }
+
+    /**
+     * @return BelongsTo<ArticleCategoryEloquentModel, $this>
+     */
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(
+            related: ArticleCategoryEloquentModel::class,
+            foreignKey: CategoryId::getDatabaseTableColumnName(),
+            relation: ArticleRelationship::Category->value,
         );
     }
 

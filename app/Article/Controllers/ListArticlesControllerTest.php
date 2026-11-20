@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use App\Article\ArticleClassificationEnum;
 use App\Article\ArticleEloquentModel;
+use App\ArticleCategory\ArticleCategoryEloquentModel;
+use App\Choice\ChoiceEloquentModel;
 use App\TeamUser\TeamRoleEnum;
 use App\User\UserEloquentModel;
 use Inertia\Testing\AssertableInertia;
@@ -57,4 +59,24 @@ it('shows archived articles only under the archived filter', function (): void {
 
     actingAs($owner)->get(route('articles.index', ['status' => 'archived']))
         ->assertInertia(fn (AssertableInertia $page) => $page->has('articles.data', 1)->where('articles.data.0.title', 'Old'));
+});
+
+it('filters by a category and the ones under it, by label and by review due', function (): void {
+    $this->travelTo('2026-11-20 09:00');
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $team = ['team_id' => $owner->current_team_id];
+    $networking = ArticleCategoryEloquentModel::factory()->create($team);
+    $routers = ArticleCategoryEloquentModel::factory()->under($networking)->create();
+    $label = ChoiceEloquentModel::factory()->label()->create($team);
+    ArticleEloquentModel::factory()->create([...$team, 'title' => 'Networking basics', 'category_id' => $networking->id]);
+    ArticleEloquentModel::factory()->create([...$team, 'title' => 'Router reset', 'category_id' => $routers->id, 'next_review_on' => '2026-11-20'])->labels()->attach($label->id);
+    ArticleEloquentModel::factory()->create([...$team, 'title' => 'Payroll', 'next_review_on' => '2026-12-01']);
+
+    $titles = fn (array $query): array => collect(actingAs($owner)->get(route('articles.index', [...$query, 'sort' => 'title', 'direction' => 'asc']))
+        ->viewData('page')['props']['articles']['data'])->pluck('title')->all();
+
+    expect($titles(['category' => $networking->id]))->toBe(['Networking basics', 'Router reset'])
+        ->and($titles(['category' => $routers->id]))->toBe(['Router reset'])
+        ->and($titles(['label' => $label->id]))->toBe(['Router reset'])
+        ->and($titles(['review' => 'due']))->toBe(['Router reset']);
 });

@@ -8,6 +8,7 @@ enum Table: string
 {
     case AccessRules = 'access_rules';
     case Activities = 'activities';
+    case ArticleCategories = 'article_categories';
     case ArticleVersions = 'article_versions';
     case Articles = 'articles';
     case Assets = 'assets';
@@ -31,6 +32,7 @@ enum Table: string
     case GroupUser = 'group_user';
     case Groups = 'groups';
     case InvoiceItems = 'invoice_items';
+    case LabelArticle = 'label_article';
     case Invoices = 'invoices';
     case LabelAsset = 'label_asset';
     case LabelProject = 'label_project';

@@ -69,7 +69,7 @@ const categoryHints: Record<string, string> = {
 
 /**
  * What a list's choices are used by, for counts and messages: labels are
- * shared by tickets, projects and assets, so they count records.
+ * shared by tickets, projects, assets and articles, so they count records.
  */
 const UsageNoun = createContext({ one: 'ticket', many: 'tickets' });
 
@@ -135,7 +135,7 @@ export default function Workflow({
                     <Heading
                         variant="small"
                         title="Workflow"
-                        description="The lists your team's tickets, projects and assets choose from. Changes apply straight away."
+                        description="The lists your team's tickets, projects, assets and articles choose from. Changes apply straight away."
                     />
 
                     <ul className="divide-y rounded-lg border bg-card shadow-xs">

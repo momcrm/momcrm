@@ -5,9 +5,12 @@ import {
     ClassificationBadge,
 } from '@/components/articles/article-badges';
 import ArticleBody from '@/components/articles/article-body';
+import MarkReviewedDialog from '@/components/articles/mark-reviewed-dialog';
 import ConfirmDelete from '@/components/confirm-delete';
 import EmptyState from '@/components/empty-state';
+import { LabelChips } from '@/components/labels';
 import PageHeader from '@/components/page-header';
+import SoftBadge from '@/components/soft-badge';
 import { Button } from '@/components/ui/button';
 import { timeAgo } from '@/lib/format';
 import {
@@ -21,9 +24,12 @@ import {
 } from '@/routes/articles';
 import type { Abilities, Article } from '@/types';
 
+/** A timestamp or a YYYY-MM-DD day, such as "20 Nov 2026". */
 function formatDate(iso: string | null): string {
     return iso
-        ? new Date(iso).toLocaleDateString(undefined, {
+        ? new Date(
+              iso.length === 10 ? `${iso}T00:00:00` : iso,
+          ).toLocaleDateString(undefined, {
               day: 'numeric',
               month: 'short',
               year: 'numeric',
@@ -33,9 +39,11 @@ function formatDate(iso: string | null): string {
 
 export default function ArticleShow({
     article,
+    categoryPath,
     can,
 }: {
     article: Article;
+    categoryPath: string | null;
     can: Abilities;
 }) {
     setLayoutProps({
@@ -70,6 +78,9 @@ export default function ArticleShow({
                                         Edit
                                     </Link>
                                 </Button>
+                            )}
+                            {can.update && !article.is_archived && (
+                                <MarkReviewedDialog articleId={article.id} />
                             )}
                             {can.archive && !article.is_archived && (
                                 <Form {...archive.form(article.id)}>
@@ -130,6 +141,34 @@ export default function ArticleShow({
                     )}
                     <span>· Updated {timeAgo(article.updated_at)}</span>
                 </div>
+
+                {(categoryPath ||
+                    article.labels.length > 0 ||
+                    article.next_review_on ||
+                    article.last_reviewed_on) && (
+                    <div className="-mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[13px] text-muted-foreground">
+                        {categoryPath && <span>{categoryPath}</span>}
+                        <LabelChips labels={article.labels} />
+                        {article.is_review_due ? (
+                            <SoftBadge tone="warning">
+                                Review due {formatDate(article.next_review_on)}
+                            </SoftBadge>
+                        ) : (
+                            article.next_review_on && (
+                                <span>
+                                    Next review{' '}
+                                    {formatDate(article.next_review_on)}
+                                </span>
+                            )
+                        )}
+                        {article.last_reviewed_on && (
+                            <span>
+                                Last reviewed{' '}
+                                {formatDate(article.last_reviewed_on)}
+                            </span>
+                        )}
+                    </div>
+                )}
 
                 {article.body ? (
                     <ArticleBody html={article.body} />

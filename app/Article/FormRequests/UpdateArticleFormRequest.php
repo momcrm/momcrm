@@ -7,14 +7,18 @@ namespace App\Article\FormRequests;
 use App\Article\Actions\FindArticle;
 use App\Article\Actions\UpdateArticle;
 use App\Article\Article;
+use App\Article\ArticleEloquentModel;
 use App\Article\ArticleValidationRules;
 use App\Article\Exceptions\CouldNotFindArticle;
 use App\Article\Properties\Body;
+use App\Article\Properties\CategoryId;
 use App\Article\Properties\ChangeNote;
 use App\Article\Properties\Classification;
+use App\Article\Properties\NextReviewOn;
 use App\Article\Properties\Status;
 use App\Article\Properties\Summary;
 use App\Article\Properties\Title;
+use App\Choice\LabelTargetEnum;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
@@ -51,12 +55,17 @@ final class UpdateArticleFormRequest extends FormRequest
         return Gate::authorize('update', $this->article);
     }
 
+    protected function prepareForValidation(): void
+    {
+        $this->merge(LabelTargetEnum::sentEmpty($this));
+    }
+
     /**
      * @return array<string, array<int, mixed>>
      */
     public function rules(): array
     {
-        return ArticleValidationRules::forUpdate($this, $this->article->getTeamId()->toString(), (string) $this->user()?->id);
+        return ArticleValidationRules::forUpdate($this, $this->article->getTeamId()->toString(), (string) $this->user()?->id, $this->article->getId()->toString());
     }
 
     /**
@@ -77,10 +86,14 @@ final class UpdateArticleFormRequest extends FormRequest
                 ->setBody($this->input(Body::getNameForValidation()))
                 ->setClassification($this->string(Classification::getNameForValidation())->toString())
                 ->setStatus($this->string(Status::getNameForValidation())->toString())
-                ->setChangeNote($this->string(ChangeNote::getNameForValidation())->trim()->toString() ?: null),
+                ->setChangeNote($this->string(ChangeNote::getNameForValidation())->trim()->toString() ?: null)
+                ->setCategoryId($this->input(CategoryId::getNameForValidation()) ?: null)
+                ->setNextReviewOn($this->input(NextReviewOn::getNameForValidation()) ?: null),
             $this->user()?->id,
             $this->boolean('is_major'),
         );
+
+        LabelTargetEnum::syncFrom($this->validated(), ArticleEloquentModel::query()->withoutGlobalScopes()->findOrFail($article->getId()->toString())->labels());
 
         $message = $article->isPublished() && ! $wasPublished ? ':title published.' : ':title saved.';
         Inertia::flash('toast', ['type' => 'success', 'message' => __($message, ['title' => $article->getTitle()->toString()])]);
