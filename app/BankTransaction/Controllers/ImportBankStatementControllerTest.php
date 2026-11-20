@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\AccessRule\AccessRuleEloquentModel;
 use App\BankAccount\BankAccountEloquentModel;
 use App\BankTransaction\BankTransactionEloquentModel;
+use App\Customer\CustomerEloquentModel;
 use App\TeamUser\TeamRoleEnum;
 use App\User\UserEloquentModel;
 use Illuminate\Http\UploadedFile;
@@ -129,4 +130,19 @@ it('imports an OFX statement, whatever the file is called', function (): void {
     expect(BankTransactionEloquentModel::query()->sole())
         ->external_id->toBe('ofx:F1')
         ->description->toBe('HARBOUR DENTAL');
+});
+
+it('works out the customer of each deposit it imports', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $account = BankAccountEloquentModel::factory()->create(['team_id' => $owner->current_team_id]);
+    $customer = CustomerEloquentModel::factory()->create(['team_id' => $owner->current_team_id, 'name' => 'Harbour Dental']);
+
+    actingAs($owner)->post(route('bank-feeds.import'), ['bank_account_id' => $account->id, 'files' => [
+        bank_statement("Date,Description,Amount\n13/11/2025,Direct Credit 062000 HARBOUR DENTAL,250.00\n14/11/2025,Direct Credit 062000 SOMEONE ELSE,40.00\n"),
+    ]]);
+
+    expect(BankTransactionEloquentModel::query()->orderBy('posted_on')->get(['customer_id', 'matched_by'])->toArray())->toBe([
+        ['customer_id' => $customer->id, 'matched_by' => 'name'],
+        ['customer_id' => null, 'matched_by' => null],
+    ]);
 });
