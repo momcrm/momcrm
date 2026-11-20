@@ -116,3 +116,17 @@ it('lets members import by default, and refuses them when a rule says so', funct
         ->post(route('bank-feeds.import'), ['bank_account_id' => $account->id, 'files' => [bank_statement("Date,Description,Amount\n14/11/2025,Deposit,10.00\n")]])
         ->assertForbidden();
 });
+
+it('imports an OFX statement, whatever the file is called', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $account = BankAccountEloquentModel::factory()->create(['team_id' => $owner->current_team_id]);
+    $ofx = "OFXHEADER:100\n<OFX><CURDEF>AUD\n<STMTTRN>\n<DTPOSTED>20251113\n<TRNAMT>250.00\n<FITID>F1\n<NAME>HARBOUR DENTAL\n</STMTTRN></OFX>";
+
+    actingAs($owner)
+        ->post(route('bank-feeds.import'), ['bank_account_id' => $account->id, 'files' => [bank_statement($ofx, 'export.qfx')]])
+        ->assertInertiaFlash('toast', ['type' => 'success', 'message' => '1 new deposit imported.']);
+
+    expect(BankTransactionEloquentModel::query()->sole())
+        ->external_id->toBe('ofx:F1')
+        ->description->toBe('HARBOUR DENTAL');
+});
