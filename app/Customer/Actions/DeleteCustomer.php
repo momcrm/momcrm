@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Customer\Actions;
 
+use App\AccessRule\Actions\PruneDeletedRecordsFromAccessRules;
 use App\Attachment\Actions\DeleteAttachments;
 use App\Contract\Actions\FindContract;
 use App\Contract\Contract;
@@ -16,6 +17,7 @@ use App\Team\Scopes\CurrentTeamScope;
  * Deletes a customer. Its contacts and other records go with it through the
  * database's cascading foreign keys; its files and its contracts' documents,
  * which no foreign key holds, are deleted first along with their stored copies.
+ * Access rules that named the customer or its contacts are tidied afterwards.
  */
 final readonly class DeleteCustomer
 {
@@ -36,6 +38,8 @@ final readonly class DeleteCustomer
             ->withoutGlobalScope(CurrentTeamScope::class)
             ->find($this->customer->getId()->toString())
             ?->delete();
+
+        PruneDeletedRecordsFromAccessRules::forTeam($this->customer->getTeamId()->toString());
     }
 
     public static function fromCustomer(Customer $customer): void

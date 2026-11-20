@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\AccessRule\Factories;
 
+use App\AccessRule\AccessAudienceEnum;
 use App\AccessRule\AccessEffectEnum;
 use App\AccessRule\AccessRuleEloquentModel;
 use App\AccessRule\Properties\Actions;
+use App\AccessRule\Properties\Audience;
 use App\AccessRule\Properties\Conditions;
 use App\AccessRule\Properties\Effect;
 use App\AccessRule\Properties\IsEnabled;
@@ -31,6 +33,7 @@ final class AccessRuleFactory extends Factory
         return [
             TeamId::getDatabaseTableColumnName() => TeamEloquentModel::factory(),
             Name::getDatabaseTableColumnName() => fake()->sentence(3),
+            Audience::getDatabaseTableColumnName() => AccessAudienceEnum::Staff->value,
             Resources::getDatabaseTableColumnName() => [],
             Actions::getDatabaseTableColumnName() => [],
             Effect::getDatabaseTableColumnName() => AccessEffectEnum::Allow->value,
@@ -42,6 +45,14 @@ final class AccessRuleFactory extends Factory
     public function deny(): static
     {
         return $this->state([Effect::getDatabaseTableColumnName() => AccessEffectEnum::Deny->value]);
+    }
+
+    /**
+     * A rule about customer contacts signed in to the portal.
+     */
+    public function forContacts(): static
+    {
+        return $this->state([Audience::getDatabaseTableColumnName() => AccessAudienceEnum::Contact->value]);
     }
 
     public function disabled(): static

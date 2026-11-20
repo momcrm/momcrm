@@ -7,6 +7,7 @@ namespace App\AccessRule\FormRequests;
 use App\AccessRule\AccessRule;
 use App\AccessRule\Actions\DeleteAccessRule;
 use App\AccessRule\Actions\FindAccessRules;
+use App\AccessRule\Controllers\ListAccessRulesController;
 use App\AccessRule\Exceptions\CouldNotFindAccessRule;
 use App\Team\Actions\FindTeam;
 use App\Team\Exceptions\CouldNotViewTeam;
@@ -65,6 +66,6 @@ final class DeleteAccessRuleFormRequest extends FormRequest
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __(':name deleted.', ['name' => $this->accessRule->getName()->toString()])]);
 
-        return to_route('access-rules.index');
+        return ListAccessRulesController::redirectTo($this->accessRule->getAudience()->toEnum());
     }
 }

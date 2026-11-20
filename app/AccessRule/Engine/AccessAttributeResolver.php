@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\AccessRule\Engine;
 
 use App\AccessRule\AccessAttributeEnum;
+use App\AccessRule\AccessAudienceEnum;
 use App\Asset\Asset;
 use App\Choice\LabelTargetEnum;
 use App\Customer\Customer;
@@ -28,38 +29,37 @@ use Mom\Data\AbstractData;
 final class AccessAttributeResolver
 {
     /**
+     * Attributes about the other audience's kind of person read as nothing,
+     * so their conditions never hold.
+     *
      * @param  AbstractData<covariant Model>|null  $record
      * @return string|array<int, string>|bool|null
      */
-    public static function resolve(AccessAttributeEnum $attribute, AccessSubject $subject, ?AbstractData $record): string|array|bool|null
+    public static function resolve(AccessAttributeEnum $attribute, AccessSubject|ContactAccessSubject $subject, ?AbstractData $record): string|array|bool|null
     {
+        if ($subject instanceof ContactAccessSubject) {
+            return self::resolveForContact($attribute, $subject, $record);
+        }
+
+        if ($attribute->audience() === AccessAudienceEnum::Contact) {
+            return null;
+        }
+
         return match ($attribute) {
             AccessAttributeEnum::SubjectTeamRole => $subject->role?->value,
             AccessAttributeEnum::SubjectUser => $subject->userId,
             AccessAttributeEnum::SubjectGroup => $subject->groupIds,
             AccessAttributeEnum::SubjectLeadsGroup => $subject->leadGroupIds,
 
-            AccessAttributeEnum::ProjectStatus => $record instanceof Project ? $record->getStatus()->toNullableString() : null,
-            AccessAttributeEnum::ProjectVisibility => $record instanceof Project ? $record->getVisibility()->toNullableString() : null,
-            AccessAttributeEnum::ProjectGroup => $record instanceof Project ? $record->getGroupId()->toNullableString() : null,
-            AccessAttributeEnum::ProjectLabel => $record instanceof Project ? self::labelIds(LabelTargetEnum::Project, $record->getId()->toString()) : null,
-            AccessAttributeEnum::ProjectIsArchived => $record instanceof Project ? $record->getArchivedAt()->isNotNull() : null,
             AccessAttributeEnum::ProjectSubjectIsLead => $record instanceof Project ? $record->getLeadId()->equalsTo($subject->userId) : null,
             AccessAttributeEnum::ProjectSubjectIsMember => $record instanceof Project ? self::isProjectMember($record->getId()->toString(), $subject->userId) : null,
 
-            AccessAttributeEnum::TicketStatus => $record instanceof Ticket ? $record->getStatusId()->toNullableString() : null,
-            AccessAttributeEnum::TicketPriority => $record instanceof Ticket ? $record->getPriorityId()->toNullableString() : null,
-            AccessAttributeEnum::TicketType => $record instanceof Ticket ? $record->getTypeId()->toNullableString() : null,
-            AccessAttributeEnum::TicketGroup => $record instanceof Ticket ? $record->getGroupId()->toNullableString() : null,
             AccessAttributeEnum::TicketSubjectIsGroupLead => $record instanceof Ticket
                 ? $record->getGroupId()->isNotNull() && self::groupRole($record->getGroupId()->toString(), $subject->userId) === GroupRoleEnum::Lead->value
                 : null,
             AccessAttributeEnum::TicketSubjectIsGroupMember => $record instanceof Ticket
                 ? $record->getGroupId()->isNotNull() && self::groupRole($record->getGroupId()->toString(), $subject->userId) !== null
                 : null,
-            AccessAttributeEnum::TicketProject => $record instanceof Ticket ? $record->getProjectId()->toNullableString() : null,
-            AccessAttributeEnum::TicketLabel => $record instanceof Ticket ? self::labelIds(LabelTargetEnum::Ticket, $record->getId()->toString()) : null,
-            AccessAttributeEnum::TicketIsArchived => $record instanceof Ticket ? $record->getArchivedAt()->isNotNull() : null,
             AccessAttributeEnum::TicketSubjectIsAssignee => $record instanceof Ticket ? $record->getAssigneeId()->equalsTo($subject->userId) : null,
             AccessAttributeEnum::TicketSubjectIsProjectLead => $record instanceof Ticket
                 ? $record->getProjectId()->isNotNull() && self::projectLeadId($record->getProjectId()->toString()) === $subject->userId
@@ -68,13 +68,61 @@ final class AccessAttributeResolver
                 ? $record->getProjectId()->isNotNull() && self::isProjectMember($record->getProjectId()->toString(), $subject->userId)
                 : null,
 
+            AccessAttributeEnum::GroupSubjectIsLead => $record instanceof Group ? self::groupRole($record->getId()->toString(), $subject->userId) === GroupRoleEnum::Lead->value : null,
+            AccessAttributeEnum::GroupSubjectIsMember => $record instanceof Group ? self::groupRole($record->getId()->toString(), $subject->userId) !== null : null,
+            default => self::resolveRecord($attribute, $record),
+        };
+    }
+
+    /**
+     * @param  AbstractData<covariant Model>|null  $record
+     * @return string|array<int, string>|bool|null
+     */
+    private static function resolveForContact(AccessAttributeEnum $attribute, ContactAccessSubject $subject, ?AbstractData $record): string|array|bool|null
+    {
+        if ($attribute->audience() === AccessAudienceEnum::Staff) {
+            return null;
+        }
+
+        return match ($attribute) {
+            AccessAttributeEnum::ContactCustomer => $subject->customerId,
+            AccessAttributeEnum::ContactCustomerStatus => $subject->customerStatus,
+            AccessAttributeEnum::ContactCustomerType => $subject->customerTypeId,
+            AccessAttributeEnum::ContactIs => $subject->contactId,
+            AccessAttributeEnum::ContactIsPrimary => $subject->isPrimary,
+            AccessAttributeEnum::ContactReceivesInvoices => $subject->receivesInvoices,
+            AccessAttributeEnum::ContactRole => $subject->roleId,
+            AccessAttributeEnum::TicketSubjectIsRequester => $record instanceof Ticket ? $record->getContactId()->equalsTo($subject->contactId) : null,
+            default => self::resolveRecord($attribute, $record),
+        };
+    }
+
+    /**
+     * Attributes of the record alone, the same whoever is acting.
+     *
+     * @param  AbstractData<covariant Model>|null  $record
+     * @return string|array<int, string>|bool|null
+     */
+    private static function resolveRecord(AccessAttributeEnum $attribute, ?AbstractData $record): string|array|bool|null
+    {
+        return match ($attribute) {
+            AccessAttributeEnum::ProjectStatus => $record instanceof Project ? $record->getStatus()->toNullableString() : null,
+            AccessAttributeEnum::ProjectVisibility => $record instanceof Project ? $record->getVisibility()->toNullableString() : null,
+            AccessAttributeEnum::ProjectGroup => $record instanceof Project ? $record->getGroupId()->toNullableString() : null,
+            AccessAttributeEnum::ProjectLabel => $record instanceof Project ? self::labelIds(LabelTargetEnum::Project, $record->getId()->toString()) : null,
+            AccessAttributeEnum::ProjectIsArchived => $record instanceof Project ? $record->getArchivedAt()->isNotNull() : null,
+            AccessAttributeEnum::TicketStatus => $record instanceof Ticket ? $record->getStatusId()->toNullableString() : null,
+            AccessAttributeEnum::TicketPriority => $record instanceof Ticket ? $record->getPriorityId()->toNullableString() : null,
+            AccessAttributeEnum::TicketType => $record instanceof Ticket ? $record->getTypeId()->toNullableString() : null,
+            AccessAttributeEnum::TicketGroup => $record instanceof Ticket ? $record->getGroupId()->toNullableString() : null,
+            AccessAttributeEnum::TicketProject => $record instanceof Ticket ? $record->getProjectId()->toNullableString() : null,
+            AccessAttributeEnum::TicketLabel => $record instanceof Ticket ? self::labelIds(LabelTargetEnum::Ticket, $record->getId()->toString()) : null,
+            AccessAttributeEnum::TicketIsArchived => $record instanceof Ticket ? $record->getArchivedAt()->isNotNull() : null,
             AccessAttributeEnum::AssetLabel => $record instanceof Asset ? self::labelIds(LabelTargetEnum::Asset, $record->getId()->toString()) : null,
             AccessAttributeEnum::CustomerStatus => $record instanceof Customer ? $record->getStatus()->toNullableString() : null,
             AccessAttributeEnum::InvoiceStatus => $record instanceof Invoice ? $record->getStatus()->toNullableString() : null,
             AccessAttributeEnum::RecordObject => $record instanceof Record ? $record->getObjectId()->toNullableString() : null,
-
-            AccessAttributeEnum::GroupSubjectIsLead => $record instanceof Group ? self::groupRole($record->getId()->toString(), $subject->userId) === GroupRoleEnum::Lead->value : null,
-            AccessAttributeEnum::GroupSubjectIsMember => $record instanceof Group ? self::groupRole($record->getId()->toString(), $subject->userId) !== null : null,
+            default => null,
         };
     }
 

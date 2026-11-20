@@ -28,7 +28,7 @@ final class ShowWorkflowController
         ChoiceAccess::authorize($request);
         $teamId = ChoiceAccess::team($request)->getId()->toString();
 
-        $lists = [ChoiceListEnum::TicketStatus, ChoiceListEnum::TicketPriority, ChoiceListEnum::TicketType, ChoiceListEnum::Label];
+        $lists = [ChoiceListEnum::TicketStatus, ChoiceListEnum::TicketPriority, ChoiceListEnum::TicketType, ChoiceListEnum::Label, ChoiceListEnum::ContactRole];
         $current = ChoiceListEnum::tryFrom($request->string('list')->toString());
 
         return Inertia::render('settings/workflow', [

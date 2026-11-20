@@ -20,6 +20,7 @@ enum ChoiceListEnum: string
     use Enum;
     use EnumOptions;
 
+    case ContactRole = 'contact_role';
     case CustomerType = 'customer_type';
     case Label = 'label';
     case TicketPriority = 'ticket_priority';
@@ -29,6 +30,7 @@ enum ChoiceListEnum: string
     public function label(): string
     {
         return match ($this) {
+            self::ContactRole => 'Contact roles',
             self::CustomerType => 'Customer types',
             self::Label => 'Labels',
             self::TicketPriority => 'Ticket priorities',
@@ -43,6 +45,7 @@ enum ChoiceListEnum: string
     public function description(): string
     {
         return match ($this) {
+            self::ContactRole => "What a customer's contact looks after, so portal access rules can give each role its own access.",
             self::CustomerType => 'What kind of customer someone is, for sorting and filtering the customer list.',
             self::Label => 'Tags for sorting and finding tickets, projects, assets and articles. Each can have several.',
             self::TicketPriority => 'How urgent a ticket is, most urgent first.',
@@ -60,7 +63,7 @@ enum ChoiceListEnum: string
     public function categoryEnum(): ?string
     {
         return match ($this) {
-            self::CustomerType, self::Label, self::TicketPriority, self::TicketType => null,
+            self::ContactRole, self::CustomerType, self::Label, self::TicketPriority, self::TicketType => null,
             self::TicketStatus => TicketStatusCategoryEnum::class,
         };
     }
@@ -73,7 +76,7 @@ enum ChoiceListEnum: string
     public function categoryOptions(): array
     {
         return match ($this) {
-            self::CustomerType, self::Label, self::TicketPriority, self::TicketType => [],
+            self::ContactRole, self::CustomerType, self::Label, self::TicketPriority, self::TicketType => [],
             self::TicketStatus => TicketStatusCategoryEnum::options(),
         };
     }
@@ -87,7 +90,7 @@ enum ChoiceListEnum: string
     {
         return match ($this) {
             self::TicketPriority => ['chevrons-up', 'chevron-up', 'equal', 'chevron-down', 'minus'],
-            self::CustomerType, self::Label, self::TicketStatus, self::TicketType => [],
+            self::ContactRole, self::CustomerType, self::Label, self::TicketStatus, self::TicketType => [],
         };
     }
 
@@ -101,6 +104,7 @@ enum ChoiceListEnum: string
     public function usages(): array
     {
         return match ($this) {
+            self::ContactRole => [['table' => Table::Contacts, 'column' => 'contact_role_id', 'isPivot' => false]],
             self::CustomerType => [['table' => Table::Customers, 'column' => 'type_id', 'isPivot' => false]],
             self::Label => array_values(array_map(
                 fn (LabelTargetEnum $target): array => ['table' => $target->table(), 'column' => 'label_id', 'isPivot' => true],
@@ -121,7 +125,7 @@ enum ChoiceListEnum: string
     public function isOptional(): bool
     {
         return match ($this) {
-            self::CustomerType, self::Label, self::TicketType => true,
+            self::ContactRole, self::CustomerType, self::Label, self::TicketType => true,
             self::TicketPriority, self::TicketStatus => false,
         };
     }
@@ -148,6 +152,11 @@ enum ChoiceListEnum: string
     public function defaults(): array
     {
         return match ($this) {
+            self::ContactRole => [
+                ['name' => 'Admin', 'hue' => HuePalette::VIOLET, 'icon' => null, 'category' => null, 'is_default' => false],
+                ['name' => 'Billing', 'hue' => HuePalette::GREEN, 'icon' => null, 'category' => null, 'is_default' => false],
+                ['name' => 'Technical', 'hue' => HuePalette::BLUE, 'icon' => null, 'category' => null, 'is_default' => false],
+            ],
             self::CustomerType => [
                 ['name' => 'Business', 'hue' => HuePalette::BLUE, 'icon' => null, 'category' => null, 'is_default' => false],
                 ['name' => 'Residential', 'hue' => HuePalette::GREEN, 'icon' => null, 'category' => null, 'is_default' => false],

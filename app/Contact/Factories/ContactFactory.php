@@ -11,6 +11,7 @@ use App\Contact\Properties\FirstName;
 use App\Contact\Properties\IsPrimary;
 use App\Contact\Properties\LastName;
 use App\Contact\Properties\MobilePhone;
+use App\Contact\Properties\PortalAccess;
 use App\Contact\Properties\Position;
 use App\Contact\Properties\TeamId;
 use App\Contact\Properties\WorkPhone;
@@ -40,6 +41,15 @@ final class ContactFactory extends Factory
             WorkPhone::getDatabaseTableColumnName() => fake()->phoneNumber(),
             MobilePhone::getDatabaseTableColumnName() => null,
             IsPrimary::getDatabaseTableColumnName() => false,
+            PortalAccess::getDatabaseTableColumnName() => false,
         ];
+    }
+
+    /**
+     * A contact who may sign in to the customer portal.
+     */
+    public function withPortalAccess(): static
+    {
+        return $this->state([PortalAccess::getDatabaseTableColumnName() => true]);
     }
 }

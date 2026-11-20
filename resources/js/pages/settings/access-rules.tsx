@@ -8,12 +8,15 @@ import SoftBadge from '@/components/soft-badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { cn } from '@/lib/utils';
 import { destroy, update } from '@/routes/access-rules';
 import type {
+    AccessAudience,
     AccessCondition,
     AccessRuleItem,
     AccessRuleOptions,
+    Option,
 } from '@/types';
 
 function labelFor(choices: { value: string; label: string }[], value: string) {
@@ -67,14 +70,32 @@ function describeCondition(
         .join(' ');
 }
 
+const descriptions: Record<AccessAudience, string> = {
+    staff: 'Decide who may change what. The team owner can always act; otherwise a matching deny rule refuses, a matching allow rule permits, and anything no rule allows is refused.',
+    contact:
+        "Decide what customers' contacts can see and do in the customer portal. Only contacts with portal access can sign in; a matching deny rule refuses, a matching allow rule permits, and anything no rule allows is refused.",
+};
+
+const emptyMessages: Record<AccessAudience, string> = {
+    staff: 'No rules yet, so only the team owner can make changes.',
+    contact: 'No rules yet, so contacts who sign in to the portal see nothing.',
+};
+
 export default function AccessRules({
-    rules,
-    options,
+    rules: allRules,
+    options: optionsByAudience,
+    audience: initialAudience,
+    audiences,
 }: {
     rules: AccessRuleItem[];
-    options: AccessRuleOptions;
+    options: Record<AccessAudience, AccessRuleOptions>;
+    audience: AccessAudience;
+    audiences: Option[];
 }) {
     const [editing, setEditing] = useState<AccessRuleItem | 'new' | null>(null);
+    const [audience, setAudience] = useState<AccessAudience>(initialAudience);
+    const options = optionsByAudience[audience];
+    const rules = allRules.filter((rule) => rule.audience === audience);
 
     const toggle = (rule: AccessRuleItem) =>
         router.put(
@@ -94,7 +115,7 @@ export default function AccessRules({
                     <Heading
                         variant="small"
                         title="Access rules"
-                        description="Decide who may change what. The team owner can always act; otherwise a matching deny rule refuses, a matching allow rule permits, and anything no rule allows is refused."
+                        description={descriptions[audience]}
                     />
                     <Button
                         size="sm"
@@ -106,9 +127,27 @@ export default function AccessRules({
                     </Button>
                 </div>
 
+                <ToggleGroup
+                    type="single"
+                    variant="segmented"
+                    value={audience}
+                    onValueChange={(value) =>
+                        value && setAudience(value as AccessAudience)
+                    }
+                >
+                    {audiences.map((option) => (
+                        <ToggleGroupItem
+                            key={option.value}
+                            value={option.value}
+                        >
+                            {option.label}
+                        </ToggleGroupItem>
+                    ))}
+                </ToggleGroup>
+
                 {rules.length === 0 ? (
                     <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
-                        No rules yet, so only the team owner can make changes.
+                        {emptyMessages[audience]}
                     </p>
                 ) : (
                     <ul className="space-y-2">
@@ -200,11 +239,12 @@ export default function AccessRules({
                     editing === null
                         ? 'closed'
                         : editing === 'new'
-                          ? 'new'
+                          ? `new-${audience}`
                           : editing.id
                 }
                 open={editing !== null}
                 onOpenChange={(open) => !open && setEditing(null)}
+                audience={audience}
                 options={options}
                 rule={
                     editing === null || editing === 'new' ? undefined : editing

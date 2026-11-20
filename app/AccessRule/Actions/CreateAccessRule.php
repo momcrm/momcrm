@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\AccessRule\Actions;
 
+use App\AccessRule\AccessAudienceEnum;
 use App\AccessRule\AccessRule;
 use App\AccessRule\AccessRuleEloquentModel;
 use App\AccessRule\Properties\Id;
@@ -18,6 +19,10 @@ final readonly class CreateAccessRule
     {
         if ($this->accessRule->getId()->isNull()) {
             $this->accessRule->setId(Id::generate());
+        }
+
+        if ($this->accessRule->getAudience()->isNull()) {
+            $this->accessRule->setAudience(AccessAudienceEnum::Staff->value);
         }
 
         if ($this->accessRule->getIsEnabled()->isNull()) {

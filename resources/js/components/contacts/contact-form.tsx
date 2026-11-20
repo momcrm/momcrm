@@ -1,4 +1,4 @@
-import { Form, Link } from '@inertiajs/react';
+import { Form, Link, usePage } from '@inertiajs/react';
 import CustomFieldsFormFields from '@/components/custom-fields/custom-fields-form';
 import FormField from '@/components/form-field';
 import NativeSelect from '@/components/native-select';
@@ -8,6 +8,7 @@ import { DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { liveOrInUse } from '@/components/tickets/ticket-meta';
 import type { Contact, CustomerOption } from '@/types';
 
 type Action = { action: string; method: 'post' | 'put' };
@@ -32,6 +33,11 @@ export default function ContactForm({
     onCancel?: () => void;
     onSuccess?: () => void;
 }) {
+    const contactRoles = liveOrInUse(
+        usePage().props.choices?.contact_role ?? [],
+        [contact?.contact_role_id],
+    );
+
     return (
         <Form
             {...action}
@@ -137,6 +143,24 @@ export default function ContactForm({
                                 defaultValue={contact?.mobile_phone ?? ''}
                             />
                         </FormField>
+                        <FormField
+                            id="contact-contact_role_id"
+                            label="Contact role"
+                            error={errors.contact_role_id}
+                        >
+                            <NativeSelect
+                                id="contact-contact_role_id"
+                                name="contact_role_id"
+                                defaultValue={contact?.contact_role_id ?? ''}
+                            >
+                                <option value="">No role</option>
+                                {contactRoles.map((role) => (
+                                    <option key={role.id} value={role.id}>
+                                        {role.name}
+                                    </option>
+                                ))}
+                            </NativeSelect>
+                        </FormField>
                     </div>
 
                     <div className="grid gap-6 empty:hidden sm:grid-cols-2">
@@ -169,6 +193,25 @@ export default function ContactForm({
                         <Label htmlFor="contact-receives_invoices">
                             Gets invoices by email
                         </Label>
+                    </div>
+
+                    <div className="flex items-start gap-2">
+                        <Checkbox
+                            id="contact-portal_access"
+                            name="portal_access"
+                            value="1"
+                            defaultChecked={contact?.portal_access}
+                            className="mt-0.5"
+                        />
+                        <div className="grid gap-1">
+                            <Label htmlFor="contact-portal_access">
+                                Can sign in to the customer portal
+                            </Label>
+                            <p className="text-xs text-muted-foreground">
+                                What they see there is set by the customer
+                                contact access rules.
+                            </p>
+                        </div>
                     </div>
 
                     {onCancel ? (

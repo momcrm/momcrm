@@ -8,6 +8,7 @@ use App\AccessRule\AccessRule;
 use App\AccessRule\AccessRuleValidationRules;
 use App\AccessRule\Actions\FindAccessRules;
 use App\AccessRule\Actions\UpdateAccessRule;
+use App\AccessRule\Controllers\ListAccessRulesController;
 use App\AccessRule\Exceptions\CouldNotFindAccessRule;
 use App\AccessRule\Properties\Conditions;
 use App\Shared\Types;
@@ -62,7 +63,7 @@ final class UpdateAccessRuleFormRequest extends FormRequest
      */
     public function rules(): array
     {
-        return AccessRuleValidationRules::for($this);
+        return AccessRuleValidationRules::for($this, isNew: false);
     }
 
     /**
@@ -82,6 +83,7 @@ final class UpdateAccessRuleFormRequest extends FormRequest
             $validator,
             (string) $this->user()?->current_team_id,
             (string) $this->user()?->id,
+            $this->accessRule->getAudience()->toEnum(),
         )];
     }
 
@@ -97,6 +99,6 @@ final class UpdateAccessRuleFormRequest extends FormRequest
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Access rule saved.')]);
 
-        return to_route('access-rules.index');
+        return ListAccessRulesController::redirectTo($this->accessRule->getAudience()->toEnum());
     }
 }

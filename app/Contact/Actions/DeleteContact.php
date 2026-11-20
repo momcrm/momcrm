@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Contact\Actions;
 
+use App\AccessRule\Actions\PruneDeletedRecordsFromAccessRules;
 use App\Contact\Contact;
 use App\Contact\ContactEloquentModel;
 use App\Team\Scopes\CurrentTeamScope;
@@ -20,6 +21,8 @@ final readonly class DeleteContact
             ->withoutGlobalScope(CurrentTeamScope::class)
             ->find($this->contact->getId()->toString())
             ?->delete();
+
+        PruneDeletedRecordsFromAccessRules::forTeam($this->contact->getTeamId()->toString());
     }
 
     public static function fromContact(Contact $contact): void

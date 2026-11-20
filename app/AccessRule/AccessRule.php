@@ -6,6 +6,7 @@ namespace App\AccessRule;
 
 use App\AccessRule\Factories\AccessRuleFactory;
 use App\AccessRule\Properties\Actions;
+use App\AccessRule\Properties\Audience;
 use App\AccessRule\Properties\Conditions;
 use App\AccessRule\Properties\CreatedAt;
 use App\AccessRule\Properties\CreatedById;
@@ -31,6 +32,7 @@ final class AccessRule extends AbstractData
 {
     public function __construct(
         public Actions $actions,
+        public Audience $audience,
         public Conditions $conditions,
         public CreatedAt $createdAt,
         public CreatedById $createdById,
@@ -73,6 +75,18 @@ final class AccessRule extends AbstractData
     public function setActions(mixed $actions): self
     {
         $this->actions = new Actions($actions instanceof AbstractValue ? $actions->toValue() : $actions);
+
+        return $this;
+    }
+
+    public function getAudience(): Audience
+    {
+        return $this->audience;
+    }
+
+    public function setAudience(mixed $audience): self
+    {
+        $this->audience = new Audience($audience instanceof AbstractValue ? $audience->toValue() : $audience);
 
         return $this;
     }
@@ -184,13 +198,14 @@ final class AccessRule extends AbstractData
     }
 
     /**
-     * @return array{id: string, name: string, resources: array<int, string>, actions: array<int, string>, effect: string, conditions: array<int, array{attribute: ?string, operator: ?string, value: string|array<int, string>|null}>, is_enabled: bool}
+     * @return array{id: string, name: string, audience: string, resources: array<int, string>, actions: array<int, string>, effect: string, conditions: array<int, array{attribute: ?string, operator: ?string, value: string|array<int, string>|null}>, is_enabled: bool}
      */
     public function toListItem(): array
     {
         return [
             'id' => $this->getId()->toString(),
             'name' => $this->getName()->toString(),
+            'audience' => $this->getAudience()->toEnum()->value,
             'resources' => Types::stringList($this->getResources()->toArray()),
             'actions' => Types::stringList($this->getActions()->toArray()),
             'effect' => $this->getEffect()->toEnum()->value,
