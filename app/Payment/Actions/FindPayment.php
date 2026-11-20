@@ -81,6 +81,22 @@ final class FindPayment
     }
 
     /**
+     * Every payment a customer has made, oldest paid first.
+     */
+    public static function forCustomer(string $customerId, string $teamId): PaymentCollection
+    {
+        return Payment::collect(
+            self::query($teamId)
+                ->where(CustomerId::getDatabaseTableColumnName(), $customerId)
+                ->orderBy(PaidOn::getDatabaseTableColumnName())
+                ->orderBy(Number::getDatabaseTableColumnName())
+                ->get()
+                ->all(),
+            'fromEloquentModel',
+        );
+    }
+
+    /**
      * How many payments a customer has made.
      */
     public static function countForCustomer(string $customerId, string $teamId): int

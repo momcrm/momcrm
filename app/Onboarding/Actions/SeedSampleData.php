@@ -23,12 +23,16 @@ use App\Group\Actions\FindGroup;
 use App\Group\Group;
 use App\Invoice\Actions\ChangeInvoiceStatus;
 use App\Invoice\Actions\CreateInvoice;
+use App\Invoice\Actions\FindInvoice;
 use App\Invoice\Invoice;
 use App\Invoice\InvoiceStatusEnum;
 use App\Location\Actions\CreateLocation;
 use App\Location\Location;
 use App\Milestone\Actions\CreateMilestone;
 use App\Milestone\Milestone;
+use App\Payment\Actions\RecordPayment;
+use App\Payment\Payment;
+use App\Payment\PaymentMethodEnum;
 use App\Project\Actions\CreateProject;
 use App\Project\Project;
 use App\Project\ProjectStatusEnum;
@@ -349,7 +353,24 @@ final readonly class SeedSampleData
                 ]],
             );
 
-            ChangeInvoiceStatus::to($invoice, InvoiceStatusEnum::Sent);
+            $invoice = ChangeInvoiceStatus::to($invoice, InvoiceStatusEnum::Sent);
+
+            // Half paid, so the invoice shows what's still owing and the
+            // customer has a payment to open.
+            $invoiceId = $invoice->getId()->toString();
+            $half = intdiv(FindInvoice::byIdsForTeam([$invoiceId], $this->teamId)[$invoiceId]->totals()->totalInCents, 2);
+
+            RecordPayment::fromPayment(
+                Payment::new()
+                    ->setTeamId($this->teamId)
+                    ->setCustomerId($customer->getId())
+                    ->setCurrency($invoice->getCurrency()->toEnum()->value)
+                    ->setPaidOn(CarbonImmutable::today())
+                    ->setMethod(PaymentMethodEnum::BankTransfer)
+                    ->setReference('EFT 1042')
+                    ->setAmountInCents($half),
+                [$invoiceId => $half],
+            );
         }
 
         return [

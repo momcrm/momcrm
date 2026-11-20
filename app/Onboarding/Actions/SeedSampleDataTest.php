@@ -9,13 +9,15 @@ use App\Group\GroupEloquentModel;
 use App\Invoice\InvoiceEloquentModel;
 use App\Milestone\MilestoneEloquentModel;
 use App\Onboarding\Actions\SeedSampleData;
+use App\Payment\PaymentEloquentModel;
+use App\PaymentAllocation\PaymentAllocationEloquentModel;
 use App\Project\ProjectEloquentModel;
 use App\Rate\RateEloquentModel;
 use App\Service\ServiceEloquentModel;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
 
-it('adds sample customers with contacts, tickets and an invoice to the team', function (): void {
+it('adds sample customers with contacts, tickets and a half-paid invoice to the team', function (): void {
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
 
     SeedSampleData::forTeam(teamId: $user->current_team_id, userId: $user->id);
@@ -26,9 +28,13 @@ it('adds sample customers with contacts, tickets and an invoice to the team', fu
     expect(ContactEloquentModel::query()->withoutGlobalScopes()->count())->toBe(4);
     expect(TicketEloquentModel::query()->withoutGlobalScopes()->whereNotNull('customer_id')->whereNull('project_id')->orderBy('number')->pluck('status_id')->all())
         ->toBe([ticketStatusId($user->current_team_id, 'In progress'), ticketStatusId($user->current_team_id, 'Closed')]);
-    expect(InvoiceEloquentModel::query()->withoutGlobalScopes()->sole())
+    $invoice = InvoiceEloquentModel::query()->withoutGlobalScopes()->sole();
+    expect($invoice)
         ->status->toBe('sent')
         ->customer_id->toBe($customers->first()->id);
+    expect(PaymentEloquentModel::query()->withoutGlobalScopes()->sole())
+        ->customer_id->toBe($customers->first()->id)
+        ->amount_in_cents->toBe(PaymentAllocationEloquentModel::query()->withoutGlobalScopes()->where('invoice_id', $invoice->id)->sole()->amount_in_cents);
 });
 
 it('prices the sample services from rates added to the price list, reusing ones it already added', function (): void {
