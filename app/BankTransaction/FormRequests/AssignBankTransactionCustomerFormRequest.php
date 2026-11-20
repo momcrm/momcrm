@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace App\BankTransaction\FormRequests;
 
+use App\BankAccount\BankAccountAccess;
+use App\BankRule\Actions\CreateBankRule;
+use App\BankRule\BankRule;
+use App\BankRule\BankRuleKindEnum;
+use App\BankRule\Properties\Contains;
 use App\BankTransaction\Actions\AssignBankTransactionCustomer;
 use App\BankTransaction\Actions\FindBankTransaction;
 use App\BankTransaction\BankTransaction;
@@ -16,9 +21,12 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Validator;
+use Inertia\Inertia;
 
 /**
  * Picks the customer a pending bank feed line is from, by hand, or clears it.
+ * Owners and admins can also have it remembered (`remember`): a match rule
+ * for the text given, so later deposits like it find the customer alone.
  */
 final class AssignBankTransactionCustomerFormRequest extends FormRequest
 {
@@ -52,6 +60,7 @@ final class AssignBankTransactionCustomerFormRequest extends FormRequest
     {
         return [
             'customer_id' => ['present', 'nullable', 'uuid'],
+            'remember' => ['sometimes', 'nullable', ...array_slice(Contains::getValidationRulesForCreate($this), 1)],
         ];
     }
 
@@ -76,6 +85,10 @@ final class AssignBankTransactionCustomerFormRequest extends FormRequest
 
             $customerId = Types::nullableString($this->input('customer_id'));
 
+            if ($this->filled('remember') && ($customerId === null || Gate::denies('manageBankFeeds', BankAccountAccess::team($this)))) {
+                $validator->errors()->add('remember', __('Only team owners and admins can add bank feed rules.'));
+            }
+
             if ($customerId === null) {
                 return;
             }
@@ -97,7 +110,21 @@ final class AssignBankTransactionCustomerFormRequest extends FormRequest
 
     public function process(): RedirectResponse
     {
-        AssignBankTransactionCustomer::to($this->transaction, Types::nullableString($this->input('customer_id')));
+        $customerId = Types::nullableString($this->input('customer_id'));
+
+        AssignBankTransactionCustomer::to($this->transaction, $customerId);
+
+        if ($this->filled('remember')) {
+            CreateBankRule::fromBankRule(
+                BankRule::new()
+                    ->setTeamId((string) $this->user()?->current_team_id)
+                    ->setKind(BankRuleKindEnum::Match->value)
+                    ->setContains($this->string('remember')->squish()->toString())
+                    ->setCustomerId($customerId),
+            );
+
+            Inertia::flash('toast', ['type' => 'success', 'message' => __('Deposits containing “:text” will be matched to this customer.', ['text' => $this->string('remember')->squish()->toString()])]);
+        }
 
         return back();
     }

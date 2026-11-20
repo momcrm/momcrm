@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\BankAccount\BankAccount;
 use App\BankAccount\BankAccountEloquentModel;
+use App\BankRule\BankRuleEloquentModel;
 use App\BankTransaction\Matching\CustomerMatcher;
 use App\Customer\CustomerEloquentModel;
 use App\Invoice\InvoiceEloquentModel;
@@ -106,4 +107,16 @@ it('only considers active customers billed in the account currency', function ()
         matcher_customer($teamId, 'Harbour Dental', ['currency' => 'NZD']);
         matcher_customer($teamId, 'Harbour Dental Group', ['status' => 'inactive']);
     }))->toBeNull();
+});
+
+it("puts the team's match rules before anything it would work out", function (): void {
+    $expected = null;
+
+    $found = match_customer('Direct Credit 062000 J CITIZEN INV-0042', function (string $teamId) use (&$expected): void {
+        matcher_invoice($teamId, matcher_customer($teamId, 'Harbour Dental'), 42);
+        $expected = matcher_customer($teamId, 'Coastal Logistics');
+        BankRuleEloquentModel::factory()->create(['team_id' => $teamId, 'kind' => 'match', 'contains' => 'j citizen', 'customer_id' => $expected]);
+    });
+
+    expect($found)->toBe($expected);
 });

@@ -23,5 +23,8 @@ it("lists the team's bank accounts by name", function (): void {
             ->where('accounts.0.currency', 'NZD')
             ->where('accounts.1.name', 'Westpac')
             ->has('currencies')
-            ->has('kinds', 1));
+            ->has('kinds', 1)
+            ->has('rules', 0)
+            ->has('ruleKinds', 2)
+            ->has('customers'));
 });

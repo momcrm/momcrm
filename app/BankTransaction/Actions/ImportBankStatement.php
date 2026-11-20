@@ -6,6 +6,7 @@ namespace App\BankTransaction\Actions;
 
 use App\BankAccount\Actions\UpdateBankAccount;
 use App\BankAccount\BankAccount;
+use App\BankRule\Actions\FindBankRule;
 use App\BankTransaction\BankTransactionEloquentModel;
 use App\BankTransaction\Matching\CustomerMatch;
 use App\BankTransaction\Matching\CustomerMatcher;
@@ -16,6 +17,7 @@ use App\BankTransaction\Properties\Crn;
 use App\BankTransaction\Properties\CustomerId;
 use App\BankTransaction\Properties\Description;
 use App\BankTransaction\Properties\ExternalId;
+use App\BankTransaction\Properties\HiddenAt;
 use App\BankTransaction\Properties\Id;
 use App\BankTransaction\Properties\MatchedBy;
 use App\BankTransaction\Properties\PayerName;
@@ -34,8 +36,9 @@ use Illuminate\Support\Facades\DB;
 /**
  * Imports statement files into a bank account as bank feed lines. Only money
  * in is kept: money out is counted and skipped. A line already imported,
- * from this file or an earlier one, is skipped too. Each new line's customer
- * is worked out from its description when it can be (CustomerMatcher).
+ * from this file or an earlier one, is skipped too. A line a hide rule
+ * applies to comes in hidden; each other new line's customer is worked out
+ * from its description when it can be (CustomerMatcher).
  *
  * Every file is read before anything is saved, so a file that can't be read
  * leaves the account as it was.
@@ -67,14 +70,17 @@ final readonly class ImportBankStatement
         return DB::transaction(function () use ($statements): ImportedStatement {
             $lines = array_merge(...array_map(fn (ReadStatement $statement): array => $statement->lines, $statements));
             $moneyIn = array_values(array_filter($lines, fn (StatementLine $line): bool => $line->isMoneyIn()));
-            $matcher = $moneyIn === [] ? null : CustomerMatcher::forAccount($this->account);
+            $rules = FindBankRule::listForTeam($this->account->getTeamId()->toString());
+            $matcher = $moneyIn === [] ? null : CustomerMatcher::forAccount($this->account, $rules);
             $imported = 0;
 
             foreach (array_chunk($moneyIn, self::CHUNK) as $chunk) {
                 $imported += BankTransactionEloquentModel::query()
                     ->withoutGlobalScopes()
                     ->insertOrIgnore(array_map(
-                        fn (StatementLine $line): array => $this->row($line, $matcher?->match($line->description)),
+                        fn (StatementLine $line): array => $rules->hides($line->description)
+                            ? $this->row($line, null, isHidden: true)
+                            : $this->row($line, $matcher?->match($line->description)),
                         $chunk,
                     ));
             }
@@ -128,9 +134,12 @@ final readonly class ImportBankStatement
     }
 
     /**
+     * The line as a row to insert. Every row has the same columns, as they
+     * are inserted together.
+     *
      * @return array<string, mixed>
      */
-    private function row(StatementLine $line, ?CustomerMatch $match): array
+    private function row(StatementLine $line, ?CustomerMatch $match, bool $isHidden = false): array
     {
         $now = now();
 
@@ -146,6 +155,7 @@ final readonly class ImportBankStatement
             PayerName::getDatabaseTableColumnName() => $line->payerName === null ? null : mb_substr($line->payerName, 0, 255),
             CustomerId::getDatabaseTableColumnName() => $match?->customerId,
             MatchedBy::getDatabaseTableColumnName() => $match?->matchedBy->value,
+            HiddenAt::getDatabaseTableColumnName() => $isHidden ? $now : null,
             CreatedAt::getDatabaseTableColumnName() => $now,
             UpdatedAt::getDatabaseTableColumnName() => $now,
         ];

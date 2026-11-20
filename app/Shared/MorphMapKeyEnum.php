@@ -10,6 +10,7 @@ use App\Asset\AssetEloquentModel;
 use App\Attachment\AttachmentEloquentModel;
 use App\AuditLog\AuditLogEloquentModel;
 use App\BankAccount\BankAccountEloquentModel;
+use App\BankRule\BankRuleEloquentModel;
 use App\BankTransaction\BankTransactionEloquentModel;
 use App\Choice\ChoiceEloquentModel;
 use App\Comment\CommentEloquentModel;
@@ -63,6 +64,7 @@ enum MorphMapKeyEnum: string
     case Attachment = 'attachment';
     case AuditLog = 'audit_log';
     case BankAccount = 'bank_account';
+    case BankRule = 'bank_rule';
     case BankTransaction = 'bank_transaction';
     case Choice = 'choice';
     case Comment = 'comment';
@@ -129,6 +131,7 @@ enum MorphMapKeyEnum: string
             self::Attachment => AttachmentEloquentModel::class,
             self::AuditLog => AuditLogEloquentModel::class,
             self::BankAccount => BankAccountEloquentModel::class,
+            self::BankRule => BankRuleEloquentModel::class,
             self::BankTransaction => BankTransactionEloquentModel::class,
             self::Choice => ChoiceEloquentModel::class,
             self::Comment => CommentEloquentModel::class,

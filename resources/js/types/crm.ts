@@ -1088,3 +1088,12 @@ export type StatementColumnsRequest = {
 
 /** A customer to pick for a bank feed line, with the currency they pay in. */
 export type BankFeedCustomer = { id: string; name: string; currency: string };
+
+/** A team's rule for bank feed deposits whose description contains its text. */
+export type BankRule = {
+    id: string;
+    kind: 'match' | 'hide';
+    contains: string;
+    customer_id: string | null;
+    customer_name: string | null;
+};

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\AccessRule\AccessRuleEloquentModel;
 use App\BankAccount\BankAccountEloquentModel;
+use App\BankRule\BankRuleEloquentModel;
 use App\BankTransaction\BankTransactionEloquentModel;
 use App\Customer\CustomerEloquentModel;
 use App\TeamUser\TeamRoleEnum;
@@ -145,4 +146,16 @@ it('works out the customer of each deposit it imports', function (): void {
         ['customer_id' => $customer->id, 'matched_by' => 'name'],
         ['customer_id' => null, 'matched_by' => null],
     ]);
+});
+
+it('imports a deposit a hide rule applies to as hidden', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $account = BankAccountEloquentModel::factory()->create(['team_id' => $owner->current_team_id]);
+    BankRuleEloquentModel::factory()->create(['team_id' => $owner->current_team_id, 'kind' => 'hide', 'contains' => 'transfer from savings']);
+
+    actingAs($owner)->post(route('bank-feeds.import'), ['bank_account_id' => $account->id, 'files' => [
+        bank_statement("Date,Description,Amount\n13/11/2025,TRANSFER FROM SAVINGS 1234,500.00\n14/11/2025,Deposit,40.00\n"),
+    ]]);
+
+    expect(BankTransactionEloquentModel::query()->whereNotNull('hidden_at')->pluck('description')->all())->toBe(['TRANSFER FROM SAVINGS 1234']);
 });

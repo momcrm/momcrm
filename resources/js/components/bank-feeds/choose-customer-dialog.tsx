@@ -10,7 +10,9 @@ import {
     DialogFooter,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 import { formatCents } from '@/lib/money';
@@ -19,8 +21,22 @@ import { customer as assignCustomer } from '@/routes/bank-feeds';
 import type { BankFeedCustomer, BankTransaction } from '@/types';
 
 /**
+ * Text to remember a deposit by: its description without the numbers and
+ * dates that change each time, or the bank's "Direct Credit" lead-in.
+ */
+function ruleText(description: string): string {
+    return description
+        .replace(/^\s*direct\s+credit\b/i, ' ')
+        .replace(/[\d/.:#-]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 100);
+}
+
+/**
  * Picks the customer a deposit is from, among those billed in its account's
- * currency. The customers are loaded when it opens.
+ * currency. The customers are loaded when it opens. Owners and admins can
+ * have later deposits like it matched to the customer by a rule.
  */
 export default function ChooseCustomerDialog({
     line,
@@ -32,11 +48,14 @@ export default function ChooseCustomerDialog({
     /** Called with the line once its customer is saved. */
     onChosen?: (line: BankTransaction, customer: BankFeedCustomer) => void;
 }) {
-    const customers = usePage<{ customers?: BankFeedCustomer[] }>().props
-        .customers;
+    const { customers, canManageBankFeeds } = usePage<{
+        customers?: BankFeedCustomer[];
+    }>().props;
+    const [isRemembering, setIsRemembering] = useState(false);
+    const [remember, setRemember] = useState('');
     const [search, setSearch] = useState('');
     const [picked, setPicked] = useState<string | null>(null);
-    const [error, setError] = useState<string | undefined>();
+    const [error, setError] = useState<Record<string, string>>({});
     const [processing, setProcessing] = useState(false);
 
     useEffect(() => {
@@ -46,7 +65,9 @@ export default function ChooseCustomerDialog({
 
         setSearch('');
         setPicked(line.customer_id);
-        setError(undefined);
+        setError({});
+        setIsRemembering(false);
+        setRemember(ruleText(line.description));
 
         if (customers === undefined) {
             router.reload({ only: ['customers'] });
@@ -71,13 +92,16 @@ export default function ChooseCustomerDialog({
 
         router.patch(
             assignCustomer.url(line.id),
-            { customer_id: picked },
+            {
+                customer_id: picked,
+                remember: isRemembering ? remember : null,
+            },
             {
                 preserveScroll: true,
                 preserveState: true,
                 onStart: () => setProcessing(true),
                 onFinish: () => setProcessing(false),
-                onError: (errors) => setError(errors.customer_id),
+                onError: setError,
                 onSuccess: () => {
                     const chosen = customers?.find(
                         (option) => option.id === picked,
@@ -150,7 +174,31 @@ export default function ChooseCustomerDialog({
                         ))}
                     </ul>
                 )}
-                <InputError message={error} />
+                <InputError message={error.customer_id} />
+                {canManageBankFeeds && (
+                    <div className="space-y-2">
+                        <Label className="flex items-center gap-2 font-normal">
+                            <Checkbox
+                                checked={isRemembering}
+                                onCheckedChange={(isOn) =>
+                                    setIsRemembering(isOn === true)
+                                }
+                            />
+                            Remember: deposits containing this text are from
+                            them
+                        </Label>
+                        {isRemembering && (
+                            <Input
+                                aria-label="Text to remember"
+                                value={remember}
+                                onChange={(event) =>
+                                    setRemember(event.target.value)
+                                }
+                            />
+                        )}
+                        <InputError message={error.remember} />
+                    </div>
+                )}
                 <DialogFooter>
                     <Button disabled={!picked || processing} onClick={save}>
                         {processing && <Spinner />}

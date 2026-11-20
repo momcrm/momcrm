@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\BankTransaction\Actions;
 
+use App\BankRule\Actions\FindBankRule;
 use App\BankTransaction\BankTransactionCollection;
 use App\BankTransaction\Matching\CustomerMatcher;
 
 /**
- * Works out the customer of pending lines that have none yet, as an import
- * does, such as after the customer who paid has been added.
+ * Applies the team's rules and works out the customer of pending lines that
+ * have none yet, as an import does: such as after a rule or the customer
+ * who paid has been added. A line a hide rule applies to is hidden.
  */
 final readonly class MatchBankTransactions
 {
@@ -18,12 +20,14 @@ final readonly class MatchBankTransactions
     ) {}
 
     /**
-     * @return int how many lines were matched
+     * @return array{matched: int, hidden: int}
      */
-    public function __invoke(): int
+    public function __invoke(): array
     {
         $matchers = [];
+        $rules = null;
         $matched = 0;
+        $hidden = [];
 
         foreach ($this->transactions as $transaction) {
             if (! $transaction->isPending() || $transaction->getCustomerId()->isNotNull()) {
@@ -31,8 +35,17 @@ final readonly class MatchBankTransactions
             }
 
             $account = $transaction->getBankAccount()->toData();
-            $matcher = $matchers[$account->getId()->toString()] ??= CustomerMatcher::forAccount($account);
-            $match = $matcher->match($transaction->getDescription()->toString());
+            $rules ??= FindBankRule::listForTeam($account->getTeamId()->toString());
+            $description = $transaction->getDescription()->toString();
+
+            if ($rules->hides($description)) {
+                $hidden[] = $transaction;
+
+                continue;
+            }
+
+            $matcher = $matchers[$account->getId()->toString()] ??= CustomerMatcher::forAccount($account, $rules);
+            $match = $matcher->match($description);
 
             if ($match !== null) {
                 AssignBankTransactionCustomer::to($transaction, $match->customerId, $match->matchedBy);
@@ -40,20 +53,31 @@ final readonly class MatchBankTransactions
             }
         }
 
-        return $matched;
+        HideBankTransactions::lines(new BankTransactionCollection($hidden), true);
+
+        return ['matched' => $matched, 'hidden' => count($hidden)];
     }
 
-    public static function lines(BankTransactionCollection $transactions): int
+    /**
+     * @return array{matched: int, hidden: int}
+     */
+    public static function lines(BankTransactionCollection $transactions): array
     {
         return new self($transactions)->handle();
     }
 
-    public function handle(): int
+    /**
+     * @return array{matched: int, hidden: int}
+     */
+    public function handle(): array
     {
         return $this->__invoke();
     }
 
-    public function execute(): int
+    /**
+     * @return array{matched: int, hidden: int}
+     */
+    public function execute(): array
     {
         return $this->__invoke();
     }
