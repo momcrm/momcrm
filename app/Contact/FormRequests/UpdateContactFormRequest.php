@@ -15,6 +15,7 @@ use App\Contact\Properties\IsPrimary;
 use App\Contact\Properties\LastName;
 use App\Contact\Properties\MobilePhone;
 use App\Contact\Properties\Position;
+use App\Contact\Properties\ReceivesInvoices;
 use App\Contact\Properties\WorkPhone;
 use App\CustomField\CustomFieldTargetEnum;
 use App\CustomField\CustomFieldValueRules;
@@ -71,6 +72,7 @@ final class UpdateContactFormRequest extends FormRequest
             WorkPhone::getNameForValidation() => WorkPhone::getValidationRulesForUpdate($this),
             MobilePhone::getNameForValidation() => MobilePhone::getValidationRulesForUpdate($this),
             IsPrimary::getNameForValidation() => IsPrimary::getValidationRulesForUpdate($this),
+            ReceivesInvoices::getNameForValidation() => ReceivesInvoices::getValidationRulesForUpdate($this),
             ...CustomFieldValueRules::for((string) $this->user()?->current_team_id, CustomFieldTargetEnum::Contact, $this->contact->getCustomFields()),
         ];
     }
@@ -102,7 +104,8 @@ final class UpdateContactFormRequest extends FormRequest
             $this->contact
                 ->setPropertyIfExists(Types::stringKeyed(Arr::except($validated, CustomFieldValues::getNameForValidation())))
                 ->setCustomFields($customFields)
-                ->setIsPrimary($this->boolean(IsPrimary::getNameForValidation())),
+                ->setIsPrimary($this->boolean(IsPrimary::getNameForValidation()))
+                ->setReceivesInvoices($this->boolean(ReceivesInvoices::getNameForValidation())),
         );
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __(':name saved.', ['name' => $contact->getFullName()])]);

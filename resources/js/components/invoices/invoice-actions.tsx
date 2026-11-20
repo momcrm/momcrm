@@ -6,22 +6,44 @@ import ApplyInvoiceCreditController from '@/actions/App/Payment/Controllers/Appl
 import MarkInvoiceSentController from '@/actions/App/Invoice/Controllers/MarkInvoiceSentController';
 import VoidInvoiceController from '@/actions/App/Invoice/Controllers/VoidInvoiceController';
 import RecordPaymentDialog from '@/components/payments/record-payment-dialog';
+import SendToContactsDialog from '@/components/send-to-contacts-dialog';
 import { Button } from '@/components/ui/button';
-import { edit, pdf } from '@/routes/invoices';
-import type { Invoice } from '@/types';
+import { edit, pdf, send } from '@/routes/invoices';
+import type { ContactRecipient, Invoice } from '@/types';
+
+/**
+ * Who an invoice goes to unless someone chooses: the contacts who get
+ * invoices, or else the primary contact.
+ */
+export function invoiceRecipients(
+    contacts: ContactRecipient[],
+): ContactRecipient[] {
+    const chosen = contacts.filter((contact) => contact.receives_invoices);
+
+    return chosen.length > 0
+        ? chosen
+        : contacts.filter((contact) => contact.is_primary);
+}
 
 /**
  * What can be done with an invoice from its page or its dialog: download it
- * as a PDF, edit a draft, mark it sent, void it, and record a payment for
- * it, which makes it paid once nothing is owing. A change stays on the page
+ * as a PDF, email it (which marks a draft sent), edit a draft, mark it sent,
+ * void it, and record a payment for it, which makes it paid once nothing is
+ * owing. A change stays on the page
  * it was made from, then calls onChanged.
  */
 export default function InvoiceActions({
     invoice,
+    recipients,
     creditInCents = 0,
     onChanged,
 }: {
-    invoice: Pick<Invoice, 'id' | 'status' | 'customer_id' | 'paid_in_cents'>;
+    invoice: Pick<
+        Invoice,
+        'id' | 'reference' | 'status' | 'customer_id' | 'paid_in_cents'
+    >;
+    /** The customer's contacts it can be emailed to. */
+    recipients: ContactRecipient[];
     /** The customer's credit, offered to pay a sent invoice. */
     creditInCents?: number;
     onChanged?: () => void;
@@ -60,6 +82,20 @@ export default function InvoiceActions({
                     PDF
                 </a>
             </Button>
+            {invoice.status !== 'void' && (
+                <SendToContactsDialog
+                    url={send.url(invoice.id)}
+                    contacts={recipients}
+                    preselect={invoiceRecipients}
+                    onSent={onChanged}
+                    title={`Send ${invoice.reference}`}
+                    description={
+                        invoice.status === 'draft'
+                            ? 'Email the invoice with its PDF attached. Sending it marks it as sent.'
+                            : 'Email the invoice with its PDF attached.'
+                    }
+                />
+            )}
             {invoice.status === 'draft' && (
                 <Button variant="outline" asChild>
                     <Link href={edit(invoice.id)}>

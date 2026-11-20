@@ -11,6 +11,7 @@ use App\CustomField\Properties\CustomFieldValues;
 use App\Invoice\Factories\InvoiceFactory;
 use App\Invoice\Properties\CustomerId;
 use App\Invoice\Properties\DueOn;
+use App\Invoice\Properties\EmailedAt;
 use App\Invoice\Properties\Id;
 use App\Invoice\Properties\IssuedOn;
 use App\Invoice\Properties\Number;
@@ -44,6 +45,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property CarbonImmutable|null $paid_at
  * @property string|null $purchase_order
  * @property CarbonImmutable|null $sent_at
+ * @property CarbonImmutable|null $emailed_at
  * @property string $status
  * @property int $tax_rate_basis_points
  * @property string $team_id
@@ -120,6 +122,7 @@ final class InvoiceEloquentModel extends Model implements Auditable
             IssuedOn::getDatabaseTableColumnName() => 'immutable_date',
             DueOn::getDatabaseTableColumnName() => 'immutable_date',
             TaxRateBasisPoints::getDatabaseTableColumnName() => 'integer',
+            EmailedAt::getDatabaseTableColumnName() => 'immutable_datetime',
             SentAt::getDatabaseTableColumnName() => 'immutable_datetime',
             PaidAt::getDatabaseTableColumnName() => 'immutable_datetime',
         ];

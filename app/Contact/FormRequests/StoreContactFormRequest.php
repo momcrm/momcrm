@@ -13,6 +13,7 @@ use App\Contact\Properties\IsPrimary;
 use App\Contact\Properties\LastName;
 use App\Contact\Properties\MobilePhone;
 use App\Contact\Properties\Position;
+use App\Contact\Properties\ReceivesInvoices;
 use App\Contact\Properties\WorkPhone;
 use App\CustomField\CustomFieldTargetEnum;
 use App\CustomField\CustomFieldValueRules;
@@ -51,6 +52,7 @@ final class StoreContactFormRequest extends FormRequest
             WorkPhone::getNameForValidation() => WorkPhone::getValidationRulesForCreate($this),
             MobilePhone::getNameForValidation() => MobilePhone::getValidationRulesForCreate($this),
             IsPrimary::getNameForValidation() => IsPrimary::getValidationRulesForCreate($this),
+            ReceivesInvoices::getNameForValidation() => ReceivesInvoices::getValidationRulesForCreate($this),
             ...CustomFieldValueRules::for((string) $this->user()?->current_team_id, CustomFieldTargetEnum::Contact),
         ];
     }
@@ -82,6 +84,7 @@ final class StoreContactFormRequest extends FormRequest
                 ->setPropertyIfExists(Types::stringKeyed(Arr::except($validated, CustomFieldValues::getNameForValidation())))
                 ->setCustomFields(CustomFieldValueRules::merge((string) $this->user()?->current_team_id, CustomFieldTargetEnum::Contact, new CustomFieldValues(null), $validated[CustomFieldValues::getNameForValidation()] ?? []))
                 ->setIsPrimary($this->boolean(IsPrimary::getNameForValidation()))
+                ->setReceivesInvoices($this->boolean(ReceivesInvoices::getNameForValidation()))
                 ->setTeamId($this->user()?->current_team_id),
         );
 

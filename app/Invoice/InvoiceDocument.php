@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Invoice;
 
+use App\Contact\ContactRecipients;
 use App\Customer\Actions\FindCustomer;
 use App\Customer\BpayReference;
 use App\Customer\Customer;
@@ -76,7 +77,7 @@ final readonly class InvoiceDocument
     }
 
     /**
-     * @return array{title: string, invoice: array<string, mixed>, items: array<int, array<string, mixed>>, totals: array{subtotal_in_cents: int, tax_in_cents: int, total_in_cents: int}, customer: array<string, mixed>, from: array<string, int|string|null>, customer_credit_in_cents: int, payments: array<int, array<string, mixed>>, bpay: ?array{biller_code: string, reference: string}}
+     * @return array{title: string, invoice: array<string, mixed>, items: array<int, array<string, mixed>>, totals: array{subtotal_in_cents: int, tax_in_cents: int, total_in_cents: int}, customer: array<string, mixed>, from: array<string, int|string|null>, customer_credit_in_cents: int, payments: array<int, array<string, mixed>>, bpay: ?array{biller_code: string, reference: string}, recipients: list<array{id: string, name: string, email: string, is_primary: bool, receives_invoices: bool}>}
      */
     public function toArray(): array
     {
@@ -92,6 +93,7 @@ final readonly class InvoiceDocument
                 ->map(fn (PaymentAllocation $allocation): array => $allocation->toSummary())
                 ->all()),
             'bpay' => $this->bpay(),
+            'recipients' => ContactRecipients::optionsFor($this->invoice->getCustomerId()->toString(), $this->invoice->getTeamId()->toString()),
         ];
     }
 

@@ -17,8 +17,9 @@ import { Spinner } from '@/components/ui/spinner';
 import type { ContactRecipient } from '@/types';
 
 /**
- * A button that emails a document (a receipt, a statement) to some of a
- * customer's contacts, picked in a dialog with the primary contact ticked.
+ * A button that emails a document (a receipt, a statement, an invoice) to
+ * some of a customer's contacts, picked in a dialog with the primary
+ * contact ticked, or those `preselect` picks.
  */
 export default function SendToContactsDialog({
     url,
@@ -27,6 +28,8 @@ export default function SendToContactsDialog({
     title,
     description,
     trigger = 'Send',
+    preselect,
+    onSent,
 }: {
     /** Where to post the chosen contact_ids. */
     url: string;
@@ -36,6 +39,10 @@ export default function SendToContactsDialog({
     title: string;
     description: string;
     trigger?: string;
+    /** Which contacts start ticked, when not just the primary one. */
+    preselect?: (contacts: ContactRecipient[]) => ContactRecipient[];
+    /** Called once it is sent, such as to reload what sending changed. */
+    onSent?: () => void;
 }) {
     const [open, setOpen] = useState(false);
     const [chosen, setChosen] = useState<string[]>([]);
@@ -44,9 +51,10 @@ export default function SendToContactsDialog({
 
     const start = () => {
         setChosen(
-            contacts
-                .filter((contact) => contact.is_primary)
-                .map((contact) => contact.id),
+            (preselect
+                ? preselect(contacts)
+                : contacts.filter((contact) => contact.is_primary)
+            ).map((contact) => contact.id),
         );
         setError(undefined);
         setOpen(true);
@@ -62,7 +70,10 @@ export default function SendToContactsDialog({
                 onStart: () => setProcessing(true),
                 onFinish: () => setProcessing(false),
                 onError: (errors) => setError(Object.values(errors)[0]),
-                onSuccess: () => setOpen(false),
+                onSuccess: () => {
+                    setOpen(false);
+                    onSent?.();
+                },
             },
         );
 

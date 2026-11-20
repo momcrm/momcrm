@@ -10,6 +10,7 @@ use App\Contact\Factories\ContactFactory;
 use App\Contact\Properties\CustomerId;
 use App\Contact\Properties\Id;
 use App\Contact\Properties\IsPrimary;
+use App\Contact\Properties\ReceivesInvoices;
 use App\Customer\CustomerEloquentModel;
 use App\CustomField\Properties\CustomFieldValues;
 use App\Shared\Table;
@@ -29,6 +30,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $first_name
  * @property string $id
  * @property bool $is_primary
+ * @property bool $receives_invoices
  * @property string|null $last_name
  * @property string|null $mobile_phone
  * @property string|null $position
@@ -82,6 +84,7 @@ final class ContactEloquentModel extends Model implements Auditable
         return [
             CustomFieldValues::getDatabaseTableColumnName() => 'array',
             IsPrimary::getDatabaseTableColumnName() => 'boolean',
+            ReceivesInvoices::getDatabaseTableColumnName() => 'boolean',
         ];
     }
 
