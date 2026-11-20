@@ -6,6 +6,8 @@ namespace App\Article\Actions;
 
 use App\Article\Article;
 use App\Article\ArticleEloquentModel;
+use App\Attachment\Actions\DeleteAttachments;
+use App\Shared\MorphMapKeyEnum;
 use App\Team\Scopes\CurrentTeamScope;
 
 final readonly class DeleteArticle
@@ -14,8 +16,13 @@ final readonly class DeleteArticle
         private Article $article,
     ) {}
 
+    /**
+     * The article's pictures go with it.
+     */
     public function __invoke(): void
     {
+        DeleteAttachments::for(MorphMapKeyEnum::Article, $this->article->getId()->toString());
+
         ArticleEloquentModel::query()
             ->withoutGlobalScope(CurrentTeamScope::class)
             ->find($this->article->getId()->toString())

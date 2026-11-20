@@ -12,7 +12,7 @@ use Symfony\Component\HtmlSanitizer\HtmlSanitizerConfig;
  * An article's body as the editor sends it: HTML, cut down to the elements
  * the editor can make before it is stored, so the page can show it as it
  * is. Anything else (scripts, styles, event handlers, javascript: links,
- * iframes) is dropped.
+ * iframes, pictures from elsewhere) is dropped.
  */
 final class ArticleBody
 {
@@ -39,6 +39,7 @@ final class ArticleBody
         'li' => [],
         'hr' => [],
         'a' => ['href'],
+        'img' => ['src', 'alt'],
         'table' => [],
         'colgroup' => [],
         'col' => [],
@@ -68,9 +69,9 @@ final class ArticleBody
             return '';
         }
 
-        $sanitised = trim(self::sanitizer()->sanitize($html));
+        $sanitised = trim((string) preg_replace('#<img(?![^>]*\ssrc=)[^>]*>#i', '', self::sanitizer()->sanitize($html)));
 
-        return self::text($sanitised) === '' ? '' : $sanitised;
+        return self::text($sanitised) === '' && ! str_contains($sanitised, '<img') ? '' : $sanitised;
     }
 
     /**
@@ -102,6 +103,9 @@ final class ArticleBody
         $config = new HtmlSanitizerConfig()
             ->allowLinkSchemes(['http', 'https', 'mailto'])
             ->allowRelativeLinks(false)
+            ->allowRelativeMedias()
+            ->allowMediaSchemes([])
+            ->withAttributeSanitizer(new ArticleImageSourceSanitizer)
             ->forceAttribute('a', 'rel', 'noopener noreferrer nofollow')
             ->forceAttribute('a', 'target', '_blank')
             ->withMaxInputLength(Body::MAX_LENGTH);

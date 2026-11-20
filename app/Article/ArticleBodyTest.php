@@ -36,3 +36,16 @@ it('turns the body into plain text, a line per block', function (): void {
     expect(ArticleBody::text('<h2>Steps</h2><p>a&nbsp;&amp;&nbsp;b</p><ul><li><p>one</p></li><li><p>two</p></li></ul><table><tr><td>x</td><td>y</td></tr></table>'))
         ->toBe("Steps\na & b\none\ntwo\nx y");
 });
+
+it('keeps pictures only from article image addresses', function (): void {
+    $ours = '/articles/01a1f856-60c1-73f1-b855-5da33d8bd0de/images/01a1f856-60c1-73f1-b855-5da33d8bd0df';
+
+    expect(ArticleBody::sanitise("<p>Lights</p><img src=\"{$ours}\" alt=\"Router lights\" onerror=\"steal()\"><img src=\"https://evil.test/x.png\"><img src=\"data:image/png;base64,AAAA\">"))
+        ->toBe("<p>Lights</p><img src=\"{$ours}\" alt=\"Router lights\" />");
+});
+
+it('keeps a body that is only a picture', function (): void {
+    $ours = '/articles/01a1f856-60c1-73f1-b855-5da33d8bd0de/images/01a1f856-60c1-73f1-b855-5da33d8bd0df';
+
+    expect(ArticleBody::sanitise("<img src=\"{$ours}\">"))->toBe("<img src=\"{$ours}\" />");
+});
