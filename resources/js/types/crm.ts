@@ -54,6 +54,8 @@ export type CustomerWorkspace = {
         files: number;
         secrets: number;
         contracts: number;
+        /** Lines waiting to be invoiced. */
+        waiting_lines: number;
     };
 };
 
@@ -1129,6 +1131,10 @@ export type Charge = {
     id: string;
     customer_id: string;
     product_id: string | null;
+    /** The service whose period it bills, from Single Service Billing. */
+    service_id: string | null;
+    rental_starts_on: string | null;
+    rental_ends_on: string | null;
     description: string;
     quantity: number;
     unit_price_in_cents: number;
@@ -1153,7 +1159,9 @@ export type BillingLine = {
 /** What the "Bill now" dialog fetches for a customer. */
 export type CustomerBilling = {
     customer: { id: string; name: string; currency: string };
-    date: string;
+    /** YYYY-MM: periods starting in or before it are due. */
+    month: string;
+    /** When an invoice drafted today would be due. */
     due_on: string;
     lines: BillingLine[];
 };

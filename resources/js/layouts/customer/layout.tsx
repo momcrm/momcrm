@@ -3,6 +3,7 @@ import type { InertiaLinkProps } from '@inertiajs/react';
 import {
     Banknote,
     Boxes,
+    FilePlus2,
     FileSignature,
     FileStack,
     KeyRound,
@@ -28,6 +29,7 @@ import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn, toUrl } from '@/lib/utils';
 import {
     assets,
+    billing,
     contacts,
     contracts,
     edit,
@@ -124,6 +126,12 @@ function links(workspace: CustomerWorkspace): WorkspaceLink[] {
             href: invoices(id),
             icon: Receipt,
             count: counts.invoices,
+        },
+        {
+            title: 'Billing',
+            href: billing({ customer: id }),
+            icon: FilePlus2,
+            count: counts.waiting_lines,
         },
         {
             title: 'Payments',

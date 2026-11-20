@@ -1,6 +1,4 @@
 import { Head, Link } from '@inertiajs/react';
-import BillNowDialog from '@/components/billing/bill-now-dialog';
-import ChargesCard from '@/components/charges/charges-card';
 import { AddLink, TabHeader } from '@/components/customers/workspace-tab';
 import EmptyState from '@/components/empty-state';
 import InvoiceTable from '@/components/invoices/invoice-table';
@@ -11,12 +9,10 @@ import { cn } from '@/lib/utils';
 import { invoices as invoicesTab } from '@/routes/customers';
 import { create } from '@/routes/invoices';
 import type {
-    Charge,
     CustomerWorkspace,
     InvoiceListItem,
     Option,
     Paginated,
-    Product,
 } from '@/types';
 
 export default function CustomerInvoices({
@@ -24,17 +20,11 @@ export default function CustomerInvoices({
     invoices,
     filters,
     statuses,
-    charges,
-    products,
-    canCharge,
 }: {
     workspace: CustomerWorkspace;
     invoices: Paginated<InvoiceListItem>;
     filters: { status: string | null };
     statuses: Option[];
-    charges: Charge[];
-    products: Product[];
-    canCharge: boolean;
 }) {
     const { customer } = workspace;
     useWorkspaceBreadcrumbs(customer, {
@@ -50,7 +40,6 @@ export default function CustomerInvoices({
     );
     const actions = (
         <div className="flex flex-wrap gap-2">
-            <BillNowDialog customerId={customer.id} />
             <RecordPaymentButton customerId={customer.id} />
             {add}
         </div>
@@ -60,14 +49,6 @@ export default function CustomerInvoices({
         <>
             <Head title={`${customer.name} · Invoices`} />
             <TabHeader title="Invoices" action={actions} />
-
-            <ChargesCard
-                customerId={customer.id}
-                currency={customer.currency}
-                charges={charges}
-                products={products}
-                canCharge={canCharge}
-            />
 
             <nav className="mb-4 flex w-fit gap-1 rounded-lg bg-muted p-1">
                 {tabs.map((tab) => (
