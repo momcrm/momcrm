@@ -4,7 +4,10 @@ import {
     ArticleStatusPill,
     ClassificationBadge,
 } from '@/components/articles/article-badges';
-import DataTable, { dataTableColumns } from '@/components/data-table';
+import DataTable, {
+    dataTableColumns,
+    withoutColumn,
+} from '@/components/data-table';
 import { LabelChips } from '@/components/labels';
 import SoftBadge from '@/components/soft-badge';
 import type { DataTableSort } from '@/components/data-table';
@@ -101,23 +104,24 @@ function buildColumns(categoryPaths: Map<string, string>) {
 export default function ArticleTable({
     articles,
     categories,
+    showsCustomer = true,
     sort,
     onSortChange,
 }: {
     articles: ArticleListItem[];
     categories: ArticleCategory[];
+    /** Off on a customer's own tab. */
+    showsCustomer?: boolean;
     sort: DataTableSort;
     onSortChange: (sort: DataTableSort) => void;
 }) {
-    const columns = useMemo(
-        () =>
-            buildColumns(
-                new Map(
-                    categories.map((category) => [category.id, category.path]),
-                ),
-            ),
-        [categories],
-    );
+    const columns = useMemo(() => {
+        const all = buildColumns(
+            new Map(categories.map((category) => [category.id, category.path])),
+        );
+
+        return showsCustomer ? all : withoutColumn(all, 'customer');
+    }, [categories, showsCustomer]);
 
     return (
         <DataTable

@@ -8,6 +8,7 @@ use App\Article\Properties\Body;
 use App\Article\Properties\CategoryId;
 use App\Article\Properties\ChangeNote;
 use App\Article\Properties\Classification;
+use App\Article\Properties\CustomerId;
 use App\Article\Properties\NextReviewOn;
 use App\Article\Properties\Status;
 use App\Article\Properties\Summary;
@@ -35,6 +36,11 @@ final class ArticleValidationRules
                 'nullable',
                 'uuid',
                 Rule::exists(Table::ArticleCategories->value, 'id')->where('team_id', $teamId),
+            ],
+            CustomerId::getNameForValidation() => [
+                'nullable',
+                'uuid',
+                Rule::exists(Table::Customers->value, 'id')->where('team_id', $teamId),
             ],
         ];
     }
@@ -64,6 +70,7 @@ final class ArticleValidationRules
         return [
             Classification::getNameForValidation().'.in' => __('Choose a classification you can read yourself.'),
             CategoryId::getNameForValidation().'.exists' => __('Choose one of your categories.'),
+            CustomerId::getNameForValidation().'.exists' => __('Choose one of your customers.'),
         ];
     }
 

@@ -13,7 +13,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import { store } from '@/routes/articles';
-import type { ArticleCategory, ArticleClassificationOption } from '@/types';
+import type {
+    ArticleCategory,
+    ArticleClassificationOption,
+    CustomerOption,
+} from '@/types';
 
 /**
  * Starts an article from its title and who may read it, then opens it in
@@ -24,18 +28,26 @@ export default function NewArticleDialog({
     onOpenChange,
     classifications,
     categories,
+    customers = [],
+    customer,
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     classifications: ArticleClassificationOption[];
     categories: ArticleCategory[];
+    /** Customers it could be about; not asked when `customer` is given. */
+    customers?: CustomerOption[];
+    /** The customer it is about, when started from their workspace. */
+    customer?: CustomerOption;
 }) {
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-md">
                 <DialogTitle>New article</DialogTitle>
                 <DialogDescription>
-                    It starts as a draft. Publish it when it's ready.
+                    {customer
+                        ? `About ${customer.name}. It starts as a draft; publish it when it's ready.`
+                        : "It starts as a draft. Publish it when it's ready."}
                 </DialogDescription>
                 <Form {...store.form()} className="space-y-5">
                     {({ errors, processing }) => (
@@ -74,6 +86,39 @@ export default function NewArticleDialog({
                                     ))}
                                 </NativeSelect>
                             </FormField>
+                            {customer ? (
+                                <input
+                                    type="hidden"
+                                    name="customer_id"
+                                    value={customer.id}
+                                />
+                            ) : (
+                                customers.length > 0 && (
+                                    <FormField
+                                        id="article-customer"
+                                        label="About a customer"
+                                        error={errors.customer_id}
+                                    >
+                                        <NativeSelect
+                                            id="article-customer"
+                                            name="customer_id"
+                                            defaultValue=""
+                                        >
+                                            <option value="">
+                                                No, for the whole team
+                                            </option>
+                                            {customers.map((option) => (
+                                                <option
+                                                    key={option.id}
+                                                    value={option.id}
+                                                >
+                                                    {option.name}
+                                                </option>
+                                            ))}
+                                        </NativeSelect>
+                                    </FormField>
+                                )
+                            )}
                             {categories.length > 0 && (
                                 <FormField
                                     id="article-category"

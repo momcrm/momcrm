@@ -8,6 +8,7 @@ use App\Article\Factories\ArticleFactory;
 use App\Article\Properties\ArchivedAt;
 use App\Article\Properties\AuthorId;
 use App\Article\Properties\CategoryId;
+use App\Article\Properties\CustomerId;
 use App\Article\Properties\EditedById;
 use App\Article\Properties\Id;
 use App\Article\Properties\PublishedAt;
@@ -16,6 +17,7 @@ use App\AuditLog\AuditObserver;
 use App\AuditLog\Contracts\Auditable;
 use App\Choice\HasLabels;
 use App\Choice\LabelTargetEnum;
+use App\Customer\CustomerEloquentModel;
 use App\Shared\Table;
 use App\Team\Scopes\CurrentTeamScope;
 use App\User\UserEloquentModel;
@@ -32,6 +34,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $author_id
  * @property string|null $body
  * @property string|null $category_id
+ * @property string|null $customer_id
  * @property string|null $body_text
  * @property string|null $change_note
  * @property string $classification
@@ -110,6 +113,18 @@ final class ArticleEloquentModel extends Model implements Auditable
             related: ArticleCategoryEloquentModel::class,
             foreignKey: CategoryId::getDatabaseTableColumnName(),
             relation: ArticleRelationship::Category->value,
+        );
+    }
+
+    /**
+     * @return BelongsTo<CustomerEloquentModel, $this>
+     */
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(
+            related: CustomerEloquentModel::class,
+            foreignKey: CustomerId::getDatabaseTableColumnName(),
+            relation: ArticleRelationship::Customer->value,
         );
     }
 

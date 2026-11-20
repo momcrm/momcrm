@@ -15,6 +15,8 @@ use App\Article\Properties\CategoryId;
 use App\Article\Properties\ChangeNote;
 use App\Article\Properties\Classification;
 use App\Article\Properties\CreatedAt;
+use App\Article\Properties\Customer;
+use App\Article\Properties\CustomerId;
 use App\Article\Properties\EditedBy;
 use App\Article\Properties\EditedById;
 use App\Article\Properties\Id;
@@ -58,6 +60,8 @@ final class Article extends AbstractData
         public TeamId $teamId,
         public Title $title,
         public UpdatedAt $updatedAt,
+        public Customer $customer,
+        public CustomerId $customerId,
         public Category $category,
         public CategoryId $categoryId,
         public Labels $labels,
@@ -95,7 +99,7 @@ final class Article extends AbstractData
     /**
      * The fields the articles list shows.
      *
-     * @return array{id: string, title: string, summary: ?string, status: string, classification: string, version: ?string, category_id: ?string, labels: list<array{id: string, name: string, hue: ?int}>, next_review_on: ?string, last_reviewed_on: ?string, is_review_due: bool, author_name: ?string, published_at: ?string, updated_at: ?string, is_archived: bool}
+     * @return array{id: string, title: string, summary: ?string, status: string, classification: string, version: ?string, category_id: ?string, customer_id: ?string, customer_name: ?string, labels: list<array{id: string, name: string, hue: ?int}>, next_review_on: ?string, last_reviewed_on: ?string, is_review_due: bool, author_name: ?string, published_at: ?string, updated_at: ?string, is_archived: bool}
      */
     public function toSummary(): array
     {
@@ -107,6 +111,8 @@ final class Article extends AbstractData
             'classification' => $this->getClassification()->toEnum()->value,
             'version' => $this->versionLabel(),
             'category_id' => $this->getCategoryId()->toNullableString(),
+            'customer_id' => $this->getCustomerId()->toNullableString(),
+            'customer_name' => $this->getCustomer()->toNullableData()?->getName()->toString(),
             'labels' => $this->getLabels()->toDataCollection()->toTags(),
             'next_review_on' => $this->getNextReviewOn()->toNullableCarbon()?->toDateString(),
             'last_reviewed_on' => $this->getLastReviewedOn()->toNullableCarbon()?->toDateString(),
@@ -121,7 +127,7 @@ final class Article extends AbstractData
     /**
      * Everything the article's page and editor show.
      *
-     * @return array{id: string, title: string, summary: ?string, status: string, classification: string, version: ?string, category_id: ?string, labels: list<array{id: string, name: string, hue: ?int}>, next_review_on: ?string, last_reviewed_on: ?string, is_review_due: bool, author_name: ?string, published_at: ?string, updated_at: ?string, is_archived: bool, body: string, change_note: ?string, created_at: ?string}
+     * @return array{id: string, title: string, summary: ?string, status: string, classification: string, version: ?string, category_id: ?string, customer_id: ?string, customer_name: ?string, labels: list<array{id: string, name: string, hue: ?int}>, next_review_on: ?string, last_reviewed_on: ?string, is_review_due: bool, author_name: ?string, published_at: ?string, updated_at: ?string, is_archived: bool, body: string, change_note: ?string, created_at: ?string}
      */
     public function toDetail(): array
     {
@@ -414,6 +420,23 @@ final class Article extends AbstractData
     public function setNextReviewOn(mixed $nextReviewOn): self
     {
         $this->nextReviewOn = new NextReviewOn($nextReviewOn instanceof AbstractValue ? $nextReviewOn->toValue() : $nextReviewOn);
+
+        return $this;
+    }
+
+    public function getCustomer(): Customer
+    {
+        return $this->customer;
+    }
+
+    public function getCustomerId(): CustomerId
+    {
+        return $this->customerId;
+    }
+
+    public function setCustomerId(mixed $customerId): self
+    {
+        $this->customerId = new CustomerId($customerId instanceof AbstractValue ? $customerId->toValue() : $customerId);
 
         return $this;
     }

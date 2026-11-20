@@ -14,6 +14,7 @@ use App\Article\Properties\ArchivedAt;
 use App\Article\Properties\BodyText;
 use App\Article\Properties\CategoryId;
 use App\Article\Properties\Classification;
+use App\Article\Properties\CustomerId;
 use App\Article\Properties\Id;
 use App\Article\Properties\NextReviewOn;
 use App\Article\Properties\Status;
@@ -49,7 +50,7 @@ final class FindArticle
 
         return Article::fromEloquentModel(
             self::visible($teamId, $userId)
-                ->with([ArticleRelationship::Author->value, ArticleRelationship::EditedBy->value, ArticleRelationship::Labels->value])
+                ->with([ArticleRelationship::Author->value, ArticleRelationship::Customer->value, ArticleRelationship::EditedBy->value, ArticleRelationship::Labels->value])
                 ->where(Id::getDatabaseTableColumnName(), $id)
                 ->first(),
         );
@@ -70,6 +71,7 @@ final class FindArticle
         ?array $categoryIds = null,
         ?string $labelId = null,
         bool $isReviewDue = false,
+        ?string $customerId = null,
         string $sort = 'updated',
         string $direction = 'desc',
         int $perPage = 25,
@@ -77,7 +79,7 @@ final class FindArticle
         $direction = $direction === 'asc' ? 'asc' : 'desc';
 
         return self::visible($teamId, $userId)
-            ->with([ArticleRelationship::Author->value, ArticleRelationship::Labels->value])
+            ->with([ArticleRelationship::Author->value, ArticleRelationship::Customer->value, ArticleRelationship::Labels->value])
             ->when(
                 $status === self::ARCHIVED,
                 fn (Builder $query) => $query->whereNotNull(ArchivedAt::getDatabaseTableColumnName()),
@@ -88,6 +90,7 @@ final class FindArticle
             ->when($search, fn (Builder $query, string $search) => self::matching($query, $search))
             ->when($categoryIds, fn (Builder $query, array $categoryIds) => $query->whereIn(CategoryId::getDatabaseTableColumnName(), $categoryIds))
             ->when($labelId, fn (Builder $query, string $labelId) => $query->whereHas(ArticleRelationship::Labels->value, fn (Builder $query) => $query->whereKey($labelId)))
+            ->when($customerId, fn (Builder $query, string $customerId) => $query->where(CustomerId::getDatabaseTableColumnName(), $customerId))
             ->when($isReviewDue, fn (Builder $query) => $query->whereDate(NextReviewOn::getDatabaseTableColumnName(), '<=', CarbonImmutable::today()))
             ->when(
                 $sort === 'title',
@@ -98,6 +101,17 @@ final class FindArticle
             ->paginate($perPage)
             ->withQueryString()
             ->through(fn (ArticleEloquentModel $model): Article => Article::fromEloquentModel($model));
+    }
+
+    /**
+     * How many of a customer's articles, not archived, the person may read.
+     */
+    public static function countVisibleForCustomer(string $teamId, string $userId, string $customerId): int
+    {
+        return self::visible($teamId, $userId)
+            ->where(CustomerId::getDatabaseTableColumnName(), $customerId)
+            ->whereNull(ArchivedAt::getDatabaseTableColumnName())
+            ->count();
     }
 
     /**

@@ -14,6 +14,7 @@ use App\Article\Properties\Body;
 use App\Article\Properties\CategoryId;
 use App\Article\Properties\ChangeNote;
 use App\Article\Properties\Classification;
+use App\Article\Properties\CustomerId;
 use App\Article\Properties\NextReviewOn;
 use App\Article\Properties\Status;
 use App\Article\Properties\Summary;
@@ -88,6 +89,7 @@ final class UpdateArticleFormRequest extends FormRequest
                 ->setStatus($this->string(Status::getNameForValidation())->toString())
                 ->setChangeNote($this->string(ChangeNote::getNameForValidation())->trim()->toString() ?: null)
                 ->setCategoryId($this->input(CategoryId::getNameForValidation()) ?: null)
+                ->setCustomerId($this->input(CustomerId::getNameForValidation()) ?: null)
                 ->setNextReviewOn($this->input(NextReviewOn::getNameForValidation()) ?: null),
             $this->user()?->id,
             $this->boolean('is_major'),

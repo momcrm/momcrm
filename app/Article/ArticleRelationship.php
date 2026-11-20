@@ -12,6 +12,7 @@ enum ArticleRelationship: string
 
     case Author = 'author';
     case Category = 'category';
+    case Customer = 'customer';
     case Labels = 'labels';
     case EditedBy = 'editedBy';
 }

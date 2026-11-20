@@ -13,7 +13,9 @@ use App\Article\ArticleStatusEnum;
 use App\Article\ArticleVisibility;
 use App\ArticleCategory\Actions\FindArticleCategory;
 use App\ArticleCategory\ArticleCategory;
+use App\Customer\Actions\FindCustomer;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -40,9 +42,10 @@ final class ListArticlesController
             : null;
         $label = $request->string('label')->toString() ?: null;
         $isReviewDue = $request->string('review')->toString() === 'due';
+        $customer = Str::isUuid($request->string('customer')->toString()) ? $request->string('customer')->toString() : null;
 
         return Inertia::render('articles/index', [
-            'articles' => FindArticle::paginateVisible($teamId, $userId, $search, $status, $classification, $categoryIds, $label, $isReviewDue, $sort, $direction)
+            'articles' => FindArticle::paginateVisible($teamId, $userId, $search, $status, $classification, $categoryIds, $label, $isReviewDue, $customer, $sort, $direction)
                 ->through(fn (Article $article): array => $article->toSummary()),
             'filters' => [
                 'search' => $search,
@@ -51,11 +54,13 @@ final class ListArticlesController
                 'category' => $categoryIds === null ? null : $category,
                 'label' => $label,
                 'review' => $isReviewDue ? 'due' : null,
+                'customer' => $customer,
                 'sort' => $sort,
                 'direction' => $direction,
             ],
             'statuses' => [...ArticleStatusEnum::options(), ['value' => FindArticle::ARCHIVED, 'label' => 'Archived']],
             'categories' => $categories->toSummaries(),
+            'customers' => FindCustomer::optionsForTeam($teamId),
             'classifications' => ArticleClassificationEnum::optionsFor(ArticleVisibility::roleOf($teamId, $userId)),
             'can' => AccessAbilities::for($request->user(), AccessResourceEnum::Article),
         ]);
