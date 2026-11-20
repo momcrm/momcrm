@@ -884,6 +884,8 @@ export type OutstandingInvoices = {
 export type InvoiceItem = {
     id: string;
     service_id: string | null;
+    /** The one-off charge the line bills, if any. */
+    charge_id: string | null;
     description: string;
     quantity: number;
     unit_price_in_cents: number;
@@ -1120,4 +1122,19 @@ export type Product = {
     description: string | null;
     prices: RatePrice[];
     is_archived: boolean;
+};
+
+/** A one-off charge to a customer, waiting for their next invoice or on one. */
+export type Charge = {
+    id: string;
+    customer_id: string;
+    product_id: string | null;
+    description: string;
+    quantity: number;
+    unit_price_in_cents: number;
+    total_in_cents: number;
+    currency: string;
+    charged_on: string | null;
+    /** The invoice it is on, once billed. */
+    invoice: { id: string; reference: string } | null;
 };

@@ -14,6 +14,7 @@ enum Table: string
     case BankAccounts = 'bank_accounts';
     case BankRules = 'bank_rules';
     case BankTransactions = 'bank_transactions';
+    case Charges = 'charges';
     case Choices = 'choices';
     case Comments = 'comments';
     case Connectors = 'connectors';

@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Charge\ChargeEloquentModel;
+use App\Customer\CustomerEloquentModel;
 use App\CustomField\CustomFieldEloquentModel;
 use App\CustomField\CustomFieldTargetEnum;
 use App\Invoice\InvoiceEloquentModel;
@@ -81,4 +83,24 @@ it("changes a draft's custom field value, keeping the ones not sent", function (
         ->assertSessionHasNoErrors();
 
     expect($invoice->fresh()->custom_fields)->toEqual([$kept->id => 'kept', $set->id => 'new']);
+});
+
+it('keeps the one-off charge a line bills, and refuses one billed on another invoice', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $invoice = InvoiceEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
+    $customer = CustomerEloquentModel::query()->findOrFail($invoice->customer_id);
+    $charge = ChargeEloquentModel::factory()->forCustomer($customer)->create();
+    $elsewhere = ChargeEloquentModel::factory()->forCustomer($customer)->create();
+    $other = InvoiceEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'customer_id' => $customer->id, 'number' => 31]);
+    InvoiceItemEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'invoice_id' => $other->id, 'charge_id' => $elsewhere->id]);
+
+    actingAs($user)
+        ->put(route('invoices.update', $invoice->id), [...draftPayload(), 'items' => [['description' => 'Laptop', 'quantity' => '1', 'unit_price' => '350', 'charge_id' => $charge->id]]])
+        ->assertSessionHasNoErrors();
+
+    expect(InvoiceItemEloquentModel::query()->where('invoice_id', $invoice->id)->sole()->charge_id)->toBe($charge->id);
+
+    actingAs($user)
+        ->put(route('invoices.update', $invoice->id), [...draftPayload(), 'items' => [['description' => 'Laptop', 'quantity' => '1', 'unit_price' => '350', 'charge_id' => $elsewhere->id]]])
+        ->assertSessionHasErrors(['items.0.charge_id' => 'That charge is already on INV-0031.']);
 });

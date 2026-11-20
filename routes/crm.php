@@ -22,6 +22,9 @@ use App\BankTransaction\Controllers\HideBankTransactionsController;
 use App\BankTransaction\Controllers\ImportBankStatementController;
 use App\BankTransaction\Controllers\ListBankTransactionsController;
 use App\BankTransaction\Controllers\MatchBankTransactionsController;
+use App\Charge\Controllers\DeleteChargeController;
+use App\Charge\Controllers\StoreChargeController;
+use App\Charge\Controllers\UpdateChargeController;
 use App\Comment\Controllers\DeleteCommentController;
 use App\Comment\Controllers\StoreCommentController;
 use App\Comment\Controllers\StoreRecordCommentController;
@@ -332,6 +335,10 @@ Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function 
     Route::put('payment-allocations/{allocation}', UpdatePaymentAllocationController::class)->whereUuid('allocation')->name('payment-allocations.update');
     Route::delete('payment-allocations/{allocation}', DeletePaymentAllocationController::class)->whereUuid('allocation')->name('payment-allocations.destroy');
     Route::post('invoices/{invoice}/apply-credit', ApplyInvoiceCreditController::class)->whereUuid('invoice')->name('invoices.apply-credit');
+
+    Route::post('charges', StoreChargeController::class)->name('charges.store');
+    Route::put('charges/{charge}', UpdateChargeController::class)->whereUuid('charge')->name('charges.update');
+    Route::delete('charges/{charge}', DeleteChargeController::class)->whereUuid('charge')->name('charges.destroy');
 
     Route::get('bank-feeds', ListBankTransactionsController::class)->name('bank-feeds.index');
     Route::post('bank-feeds/import', ImportBankStatementController::class)->name('bank-feeds.import');

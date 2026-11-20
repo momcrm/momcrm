@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Service\Actions;
 
+use App\Charge\Actions\FindCharge;
 use App\Customer\Actions\FindCustomer;
 use App\Customer\CustomerBillingTypeEnum;
 use App\Customer\CustomerStatusEnum;
@@ -38,7 +39,8 @@ use Illuminate\Support\Facades\DB;
  * Drafts the month's invoices from services, as Amphora's monthly invoice
  * run does: one draft per billable customer, in their currency, with a line
  * for each period of each active service that has started by the day of the
- * run and isn't on an invoice yet. A service whose rate has no price in the
+ * run and isn't on an invoice yet, then a line for each one-off charge made
+ * by that day that isn't on one either. A service whose rate has no price in the
  * customer's currency is left out. Running it again makes nothing new, since
  * a period already on an invoice that wasn't voided counts as billed. Each
  * draft is due by its customer's payment terms.
@@ -61,6 +63,12 @@ final readonly class RunServiceInvoices
         $rates = FindRate::byIds(array_values(array_unique($services->map(fn (Service $service): string => $service->getRateId()->toString())->all())));
         $billedThrough = FindInvoiceItem::billedThroughForServices(array_values($services->map(fn (Service $service): string => $service->getId()->toString())->all()));
         $customers = self::byCustomer($services->all());
+        $teamIds = array_map(fn (array $customerServices): string => $customerServices[0]->getTeamId()->toString(), $customers);
+
+        foreach (FindCharge::customersWithChargesBy($this->day, $this->teamId) as $customerId => $teamId) {
+            $customers[$customerId] ??= [];
+            $teamIds[$customerId] ??= $teamId;
+        }
         $currencies = FindCustomer::currenciesByIds(array_map(strval(...), array_keys($customers)));
         $daysToPay = FindCustomer::daysToPayByIds(array_map(strval(...), array_keys($customers)));
         $teams = [];
@@ -90,18 +98,22 @@ final readonly class RunServiceInvoices
                 }
             }
 
+            foreach (FindCharge::unbilledForCustomers([(string) $customerId], $currency, $this->day)[$customerId] ?? [] as $charge) {
+                $items[] = $charge->toInvoiceItem();
+            }
+
             if ($items === []) {
                 continue;
             }
 
-            $first = $customerServices[0];
-            $team = $teams[$first->getTeamId()->toString()] ??= FindTeam::byId($first->getTeamId()->toString());
+            $teamId = $teamIds[$customerId];
+            $team = $teams[$teamId] ??= FindTeam::byId($teamId);
             $days = $daysToPay[$customerId] ?? $team->getDaysToPay()->toNullableInteger() ?? DaysToPay::DEFAULT;
 
             DB::transaction(fn (): Invoice => CreateInvoice::fromInvoice(
                 Invoice::new()
-                    ->setTeamId($first->getTeamId())
-                    ->setCustomerId($first->getCustomerId())
+                    ->setTeamId($teamId)
+                    ->setCustomerId((string) $customerId)
                     ->setCurrency($currency->value)
                     ->setIssuedOn($this->day)
                     ->setDueOn($this->day->addDays($days))

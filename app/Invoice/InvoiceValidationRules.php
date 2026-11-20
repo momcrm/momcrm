@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Invoice;
 
+use App\Charge\Actions\FindCharge;
 use App\Invoice\Properties\DueOn;
 use App\Invoice\Properties\IssuedOn;
 use App\Invoice\Properties\Notes;
@@ -11,6 +12,7 @@ use App\Invoice\Properties\PurchaseOrder;
 use App\Invoice\Properties\TaxRateBasisPoints;
 use App\Shared\Table;
 use App\Shared\Types;
+use Closure;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -26,7 +28,7 @@ final class InvoiceValidationRules
     /**
      * @return array<string, array<int, mixed>>
      */
-    public static function for(FormRequest $request, string $customerId): array
+    public static function for(FormRequest $request, string $customerId, ?string $invoiceId = null): array
     {
         return [
             IssuedOn::getNameForValidation() => IssuedOn::getValidationRulesForCreate($request),
@@ -39,9 +41,31 @@ final class InvoiceValidationRules
             'items.*.quantity' => ['required', 'integer', 'min:1', 'max:100000'],
             'items.*.unit_price_in_cents' => ['required', 'integer', 'min:0', 'max:100000000'],
             'items.*.service_id' => ['nullable', 'uuid', Rule::exists(Table::Services->value, 'id')->where('customer_id', $customerId)],
+            'items.*.charge_id' => ['nullable', 'uuid', 'distinct', Rule::exists(Table::Charges->value, 'id')->where('customer_id', $customerId), self::notBilledElsewhere($invoiceId)],
             'items.*.rental_starts_on' => ['nullable', 'date', 'required_with:items.*.rental_ends_on'],
             'items.*.rental_ends_on' => ['nullable', 'date', 'required_with:items.*.rental_starts_on', 'after_or_equal:items.*.rental_starts_on'],
         ];
+    }
+
+    /**
+     * A one-off charge is billed once: it can't go on this invoice while it
+     * is on another that isn't voided.
+     *
+     * @return Closure(string, mixed, Closure(string): mixed): void
+     */
+    private static function notBilledElsewhere(?string $invoiceId): Closure
+    {
+        return function (string $attribute, mixed $value, Closure $fail) use ($invoiceId): void {
+            if (! is_string($value)) {
+                return;
+            }
+
+            $billedOn = FindCharge::billedInvoices([$value])[$value] ?? null;
+
+            if ($billedOn !== null && $billedOn['id'] !== $invoiceId) {
+                $fail(__('That charge is already on :reference.', ['reference' => $billedOn['reference']]));
+            }
+        };
     }
 
     /**
@@ -84,7 +108,7 @@ final class InvoiceValidationRules
 
     /**
      * @param  array<string, mixed>  $validated
-     * @return array<int, array{description: string, quantity: int, unit_price_in_cents: int, service_id: ?string, rental_starts_on: ?string, rental_ends_on: ?string}>
+     * @return array<int, array{description: string, quantity: int, unit_price_in_cents: int, service_id: ?string, charge_id: ?string, rental_starts_on: ?string, rental_ends_on: ?string}>
      */
     public static function items(array $validated): array
     {
@@ -96,6 +120,7 @@ final class InvoiceValidationRules
             'quantity' => Types::int($item['quantity']),
             'unit_price_in_cents' => Types::int($item['unit_price_in_cents']),
             'service_id' => Types::nullableString($item['service_id'] ?? null),
+            'charge_id' => Types::nullableString($item['charge_id'] ?? null),
             'rental_starts_on' => isset($item['service_id']) ? Types::nullableString($item['rental_starts_on'] ?? null) : null,
             'rental_ends_on' => isset($item['service_id']) ? Types::nullableString($item['rental_ends_on'] ?? null) : null,
         ], $items));

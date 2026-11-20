@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Charge\ChargeEloquentModel;
 use App\Customer\CustomerEloquentModel;
 use App\Invoice\InvoiceEloquentModel;
 use App\InvoiceItem\InvoiceItemEloquentModel;
@@ -112,4 +113,34 @@ it("dues each draft by its customer's payment terms", function (): void {
 
     expect(InvoiceEloquentModel::query()->withoutGlobalScopes()->pluck('due_on', 'customer_id')->map(fn ($due): string => $due->toDateString())->all())
         ->toEqual([$customer->id => '2027-01-01', $quick->id => '2026-12-09']);
+});
+
+it("adds a customer's waiting one-off charges, even with no services, and bills each once", function (): void {
+    [$team, $customer, $rate] = invoiceRunSetup();
+    ServiceEloquentModel::factory()->create(['team_id' => $team->id, 'customer_id' => $customer->id, 'rate_id' => $rate->id, 'name' => 'Backup', 'billing_starts_on' => '2026-12-01']);
+    ChargeEloquentModel::factory()->forCustomer($customer)->create(['description' => 'Laptop setup', 'quantity' => 2, 'unit_price_in_cents' => 35000, 'charged_on' => '2026-11-20']);
+    ChargeEloquentModel::factory()->forCustomer($customer)->create(['description' => 'Next month', 'charged_on' => '2026-12-10']);
+    $chargesOnly = CustomerEloquentModel::factory()->create(['team_id' => $team->id]);
+    ChargeEloquentModel::factory()->forCustomer($chargesOnly)->create(['description' => 'Call-out', 'unit_price_in_cents' => 9500, 'charged_on' => '2026-11-28']);
+    $excluded = CustomerEloquentModel::factory()->create(['team_id' => $team->id, 'billing_type' => 'excluded']);
+    ChargeEloquentModel::factory()->forCustomer($excluded)->create(['charged_on' => '2026-11-28']);
+
+    expect(RunServiceInvoices::on(CarbonImmutable::parse('2026-12-02')))->toBe(2)
+        ->and(RunServiceInvoices::on(CarbonImmutable::parse('2026-12-02')))->toBe(0);
+
+    $lines = InvoiceItemEloquentModel::query()->withoutGlobalScopes()->whereNotNull('charge_id')->orderBy('description')->get(['description', 'quantity', 'unit_price_in_cents']);
+    expect($lines->toArray())->toBe([
+        ['description' => 'Call-out', 'quantity' => 1, 'unit_price_in_cents' => 9500],
+        ['description' => 'Laptop setup', 'quantity' => 2, 'unit_price_in_cents' => 35000],
+    ]);
+});
+
+it('bills a charge again once the invoice it was on is voided', function (): void {
+    [$team, $customer] = invoiceRunSetup();
+    $charge = ChargeEloquentModel::factory()->forCustomer($customer)->create(['charged_on' => '2026-11-20']);
+    RunServiceInvoices::on(CarbonImmutable::parse('2026-12-02'));
+    InvoiceEloquentModel::query()->withoutGlobalScopes()->update(['status' => 'void']);
+
+    expect(RunServiceInvoices::on(CarbonImmutable::parse('2026-12-02')))->toBe(1)
+        ->and(InvoiceItemEloquentModel::query()->withoutGlobalScopes()->where('charge_id', $charge->id)->count())->toBe(2);
 });

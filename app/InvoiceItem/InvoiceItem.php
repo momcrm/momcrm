@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\InvoiceItem;
 
 use App\InvoiceItem\Factories\InvoiceItemFactory;
+use App\InvoiceItem\Properties\ChargeId;
 use App\InvoiceItem\Properties\CreatedAt;
 use App\InvoiceItem\Properties\Description;
 use App\InvoiceItem\Properties\Id;
@@ -36,6 +37,7 @@ final class InvoiceItem extends AbstractData
         public RentalEndsOn $rentalEndsOn,
         public RentalStartsOn $rentalStartsOn,
         public ServiceId $serviceId,
+        public ChargeId $chargeId,
         public TeamId $teamId,
         public UnitPriceInCents $unitPriceInCents,
         public UpdatedAt $updatedAt,
@@ -69,13 +71,14 @@ final class InvoiceItem extends AbstractData
     }
 
     /**
-     * @return array{id: string, service_id: ?string, description: string, quantity: int, unit_price_in_cents: int, line_total_in_cents: int, rental_starts_on: ?string, rental_ends_on: ?string}
+     * @return array{id: string, service_id: ?string, charge_id: ?string, description: string, quantity: int, unit_price_in_cents: int, line_total_in_cents: int, rental_starts_on: ?string, rental_ends_on: ?string}
      */
     public function toSummary(): array
     {
         return [
             'id' => $this->getId()->toString(),
             'service_id' => $this->getServiceId()->toNullableString(),
+            'charge_id' => $this->getChargeId()->toNullableString(),
             'description' => $this->getDescription()->toString(),
             'quantity' => $this->getQuantity()->toInteger(),
             'unit_price_in_cents' => $this->getUnitPriceInCents()->toInteger(),
@@ -170,6 +173,18 @@ final class InvoiceItem extends AbstractData
     public function setRentalStartsOn(mixed $rentalStartsOn): self
     {
         $this->rentalStartsOn = new RentalStartsOn($rentalStartsOn instanceof AbstractValue ? $rentalStartsOn->toValue() : $rentalStartsOn);
+
+        return $this;
+    }
+
+    public function getChargeId(): ChargeId
+    {
+        return $this->chargeId;
+    }
+
+    public function setChargeId(mixed $chargeId): self
+    {
+        $this->chargeId = new ChargeId($chargeId instanceof AbstractValue ? $chargeId->toValue() : $chargeId);
 
         return $this;
     }
