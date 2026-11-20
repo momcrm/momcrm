@@ -1,14 +1,20 @@
 import { Head, usePage } from '@inertiajs/react';
 import { Upload } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { BankFeedBulkBar } from '@/components/bank-feeds/bank-feed-bulk';
 import BankFeedFilters from '@/components/bank-feeds/bank-feed-filters';
 import type { BankFeedListFilters } from '@/components/bank-feeds/bank-feed-filters';
 import BankFeedTable from '@/components/bank-feeds/bank-feed-table';
+import type { BankFeedTableActions } from '@/components/bank-feeds/bank-feed-table';
+import ChooseCustomerDialog from '@/components/bank-feeds/choose-customer-dialog';
 import ImportStatementDialog from '@/components/bank-feeds/import-statement-dialog';
 import EmptyState from '@/components/empty-state';
 import PageHeader from '@/components/page-header';
 import Pager from '@/components/pager';
+import PaymentDialog, {
+    usePaymentDialog,
+} from '@/components/payments/payment-dialog';
+import RecordPaymentDialog from '@/components/payments/record-payment-dialog';
 import { useTicketSelection } from '@/components/tickets/ticket-bulk';
 import { Button } from '@/components/ui/button';
 import { visitWithQuery } from '@/lib/query';
@@ -30,10 +36,22 @@ export default function BankFeedsIndex({
     accounts: BankAccount[];
     statuses: Option[];
     limits: { files: number; rows: number };
-    can: { import: boolean };
+    can: { import: boolean; apply: boolean };
 }) {
     const { canManageBankFeeds } = usePage().props;
     const [isImporting, setIsImporting] = useState(false);
+    const [choosing, setChoosing] = useState<BankTransaction | null>(null);
+    const [recording, setRecording] = useState<BankTransaction | null>(null);
+    const { openPayment } = usePaymentDialog();
+    const actions = useMemo<BankFeedTableActions>(
+        () => ({
+            onChooseCustomer: setChoosing,
+            onApply: setRecording,
+            onOpenPayment: openPayment,
+            canApply: can.apply,
+        }),
+        [openPayment, can.apply],
+    );
     const selection = useTicketSelection(
         transactions.data.map((line) => line.id),
     );
@@ -48,7 +66,7 @@ export default function BankFeedsIndex({
             <div className="flex flex-col gap-6 p-4 md:p-6">
                 <PageHeader
                     title="Bank feeds"
-                    description="Deposits from your bank statements. Import a statement, then match each deposit to the customer who paid it."
+                    description="Deposits from your bank statements. Import a statement, choose who paid each deposit, and record it as their payment."
                     actions={
                         can.import &&
                         accounts.length > 0 && (
@@ -98,6 +116,7 @@ export default function BankFeedsIndex({
                                 <BankFeedTable
                                     transactions={transactions.data}
                                     selection={selection}
+                                    actions={actions}
                                     sort={{
                                         column: filters.sort,
                                         direction: filters.direction,
@@ -119,7 +138,24 @@ export default function BankFeedsIndex({
                 )}
             </div>
 
-            <BankFeedBulkBar selection={selection} />
+            <BankFeedBulkBar selection={selection} canApply={can.apply} />
+
+            <ChooseCustomerDialog
+                line={choosing}
+                onOpenChange={(open) => !open && setChoosing(null)}
+            />
+
+            {recording?.customer_id && (
+                <RecordPaymentDialog
+                    key={recording.id}
+                    customerId={recording.customer_id}
+                    bankLine={recording}
+                    open
+                    onOpenChange={(open) => !open && setRecording(null)}
+                />
+            )}
+
+            <PaymentDialog />
 
             {accounts.length > 0 && (
                 <ImportStatementDialog

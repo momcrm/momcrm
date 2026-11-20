@@ -1,5 +1,12 @@
 import { router } from '@inertiajs/react';
-import { EyeOff, MoreHorizontal, RotateCcw, Trash2 } from 'lucide-react';
+import {
+    Banknote,
+    EyeOff,
+    MoreHorizontal,
+    RotateCcw,
+    Trash2,
+    UserRound,
+} from 'lucide-react';
 import { useMemo } from 'react';
 import DataTable, { dataTableColumns } from '@/components/data-table';
 import type { DataTableSort } from '@/components/data-table';
@@ -11,6 +18,7 @@ import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
+    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { formatCents } from '@/lib/money';
@@ -43,7 +51,22 @@ export function deleteLines(ids: string[], onSuccess?: () => void) {
     });
 }
 
-function LineActions({ line }: { line: BankTransaction }) {
+export type BankFeedTableActions = {
+    onChooseCustomer: (line: BankTransaction) => void;
+    onApply: (line: BankTransaction) => void;
+    onOpenPayment: (paymentId: string) => void;
+    canApply: boolean;
+};
+
+function LineActions({
+    line,
+    actions,
+}: {
+    line: BankTransaction;
+    actions: BankFeedTableActions;
+}) {
+    const isPending = line.status === 'pending';
+
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -56,7 +79,32 @@ function LineActions({ line }: { line: BankTransaction }) {
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-                {line.status === 'hidden' ? (
+                {isPending && actions.canApply && line.customer_id && (
+                    <DropdownMenuItem onSelect={() => actions.onApply(line)}>
+                        <Banknote />
+                        Record as payment…
+                    </DropdownMenuItem>
+                )}
+                {isPending && (
+                    <DropdownMenuItem
+                        onSelect={() => actions.onChooseCustomer(line)}
+                    >
+                        <UserRound />
+                        {line.customer_id
+                            ? 'Change customer…'
+                            : 'Choose customer…'}
+                    </DropdownMenuItem>
+                )}
+                {line.payment_id && (
+                    <DropdownMenuItem
+                        onSelect={() => actions.onOpenPayment(line.payment_id!)}
+                    >
+                        <Banknote />
+                        Open {line.payment_reference_number}
+                    </DropdownMenuItem>
+                )}
+                {isPending && <DropdownMenuSeparator />}
+                {line.status === 'applied' ? null : line.status === 'hidden' ? (
                     <DropdownMenuItem
                         onSelect={() => hideLines([line.id], false)}
                     >
@@ -83,7 +131,54 @@ function LineActions({ line }: { line: BankTransaction }) {
     );
 }
 
-function buildColumns(selection: TicketSelection, rowIds: string[]) {
+function CustomerCell({
+    line,
+    actions,
+}: {
+    line: BankTransaction;
+    actions: BankFeedTableActions;
+}) {
+    if (line.status !== 'pending') {
+        return line.customer_name ? (
+            <span className="truncate">{line.customer_name}</span>
+        ) : (
+            <span className="text-subtle-foreground">—</span>
+        );
+    }
+
+    return (
+        <div className="flex min-w-0 items-center gap-1.5">
+            <button
+                type="button"
+                onClick={() => actions.onChooseCustomer(line)}
+                className={
+                    line.customer_name
+                        ? 'min-w-0 truncate text-left underline-offset-4 hover:underline'
+                        : 'text-left text-primary underline-offset-4 hover:underline'
+                }
+                title={line.matched_by_label ?? undefined}
+            >
+                {line.customer_name ?? 'Choose…'}
+            </button>
+            {line.customer_id && actions.canApply && (
+                <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-6 shrink-0 px-2 text-xs"
+                    onClick={() => actions.onApply(line)}
+                >
+                    Record
+                </Button>
+            )}
+        </div>
+    );
+}
+
+function buildColumns(
+    selection: TicketSelection,
+    rowIds: string[],
+    actions: BankFeedTableActions,
+) {
     const pickedCount = rowIds.filter((id) => selection.isSelected(id)).length;
 
     return column.columns([
@@ -149,13 +244,9 @@ function buildColumns(selection: TicketSelection, rowIds: string[]) {
         }),
         column.accessor('customer_name', {
             header: 'Customer',
-            meta: { className: 'hidden md:table-cell w-52' },
+            meta: { className: 'hidden md:table-cell w-64' },
             cell: (info) => (
-                <span className="truncate">
-                    {info.getValue() ?? (
-                        <span className="text-subtle-foreground">—</span>
-                    )}
-                </span>
+                <CustomerCell line={info.row.original} actions={actions} />
             ),
         }),
         column.accessor('amount_in_cents', {
@@ -177,9 +268,11 @@ function buildColumns(selection: TicketSelection, rowIds: string[]) {
             cell: (info) => (
                 <StatusPill
                     tone={
-                        info.row.original.status === 'hidden'
-                            ? 'neutral'
-                            : 'warning'
+                        info.row.original.status === 'applied'
+                            ? 'success'
+                            : info.row.original.status === 'hidden'
+                              ? 'neutral'
+                              : 'warning'
                     }
                 >
                     {info.getValue()}
@@ -189,31 +282,35 @@ function buildColumns(selection: TicketSelection, rowIds: string[]) {
         column.display({
             id: 'actions',
             meta: { className: 'w-10 text-right' },
-            cell: (info) => <LineActions line={info.row.original} />,
+            cell: (info) => (
+                <LineActions line={info.row.original} actions={actions} />
+            ),
         }),
     ]);
 }
 
 /**
- * Bank feed lines as a table, each with a checkbox for bulk changes and a
- * menu to hide or delete it.
+ * Bank feed lines as a table, each with a checkbox for bulk changes, its
+ * customer to pick, and a menu to record, hide or delete it.
  */
 export default function BankFeedTable({
     transactions,
     selection,
     sort,
     onSortChange,
+    actions,
 }: {
     transactions: BankTransaction[];
     selection: TicketSelection;
+    actions: BankFeedTableActions;
     sort: DataTableSort;
     onSortChange: (sort: DataTableSort) => void;
 }) {
     const rowIds = transactions.map((line) => line.id);
     const columns = useMemo(
-        () => buildColumns(selection, rowIds),
+        () => buildColumns(selection, rowIds, actions),
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [selection, rowIds.join(',')],
+        [selection, rowIds.join(','), actions],
     );
 
     return (

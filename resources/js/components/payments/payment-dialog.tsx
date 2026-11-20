@@ -524,6 +524,20 @@ export default function PaymentDialog() {
                                     label="Reference"
                                     value={payment.reference ?? '—'}
                                 />
+                                {shown.bank_transaction && (
+                                    <Detail
+                                        label="From bank feed"
+                                        value={[
+                                            shown.bank_transaction.account,
+                                            formatDate(
+                                                shown.bank_transaction
+                                                    .posted_on,
+                                            ),
+                                        ]
+                                            .filter(Boolean)
+                                            .join(' · ')}
+                                    />
+                                )}
                                 {payment.unallocated_in_cents > 0 && (
                                     <Detail
                                         label="Not applied (credit)"

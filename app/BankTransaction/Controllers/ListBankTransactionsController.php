@@ -11,6 +11,10 @@ use App\BankTransaction\BankTransactionFilters;
 use App\BankTransaction\BankTransactionStatusEnum;
 use App\BankTransaction\FormRequests\ImportBankStatementFormRequest;
 use App\BankTransaction\Statements\CsvStatement;
+use App\Customer\Actions\FindCustomer;
+use App\Payment\Payment;
+use App\Shared\CurrencyEnum;
+use App\Shared\Types;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
@@ -18,7 +22,8 @@ use Inertia\Response;
 
 /**
  * The bank feed: deposits imported from the team's bank statements, pending
- * ones first, as Amphora's bank feed list.
+ * ones first, as Amphora's bank feed list. The customers to pick from are
+ * only sent when asked for.
  */
 final class ListBankTransactionsController
 {
@@ -37,9 +42,27 @@ final class ListBankTransactionsController
                 'files' => ImportBankStatementFormRequest::MAX_FILES,
                 'rows' => CsvStatement::MAX_ROWS,
             ],
+            'customers' => Inertia::optional(fn (): array => self::customers($teamId)),
             'can' => [
                 'import' => Gate::allows('import', BankTransaction::class),
+                'apply' => Gate::allows('create', Payment::class),
             ],
         ]);
+    }
+
+    /**
+     * The team's customers with the currency each is billed in, for picking
+     * who a line is from. Loaded when the picker opens.
+     *
+     * @return list<array{id: string, name: string, currency: string}>
+     */
+    private static function customers(string $teamId): array
+    {
+        $options = FindCustomer::optionsForTeam($teamId);
+        $currencies = FindCustomer::currenciesByIds(Types::stringList($options->pluck('id')->all()));
+
+        return array_values($options
+            ->map(fn (array $option): array => [...$option, 'currency' => ($currencies[$option['id']] ?? CurrencyEnum::default())->value])
+            ->all());
     }
 }

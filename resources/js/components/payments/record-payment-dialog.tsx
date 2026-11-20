@@ -20,7 +20,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { formatCents } from '@/lib/money';
 import { cn } from '@/lib/utils';
 import { outstandingInvoices } from '@/routes/customers';
-import type { InvoiceListItem, OutstandingInvoices, Payment } from '@/types';
+import type {
+    BankTransaction,
+    InvoiceListItem,
+    OutstandingInvoices,
+    Payment,
+} from '@/types';
 
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
     dateStyle: 'medium',
@@ -86,12 +91,15 @@ function spread(
  * invoices, oldest due first, and any line can be changed by hand. What
  * isn't applied is kept as their credit. Opened for an invoice, that
  * invoice is ticked for what is owing on it. Given a payment, it applies
- * what is left of that payment instead of recording a new one.
+ * what is left of that payment instead of recording a new one. Given a bank
+ * feed line, it records that deposit: its amount and date are fixed, and the
+ * line shows as applied.
  */
 export default function RecordPaymentDialog({
     customerId,
     invoiceId,
     payment,
+    bankLine,
     open,
     onOpenChange,
     onRecorded,
@@ -101,6 +109,8 @@ export default function RecordPaymentDialog({
     invoiceId?: string;
     /** A payment whose unapplied money to apply. */
     payment?: Payment;
+    /** A deposit from the bank feed to record. */
+    bankLine?: BankTransaction;
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onRecorded?: () => void;
@@ -125,11 +135,17 @@ export default function RecordPaymentDialog({
 
         setData(null);
         setErrors({});
-        setAmount(payment ? toDollars(payment.unallocated_in_cents) : '');
-        setPaidOn(today());
+        setAmount(
+            payment
+                ? toDollars(payment.unallocated_in_cents)
+                : bankLine
+                  ? toDollars(bankLine.amount_in_cents)
+                  : '',
+        );
+        setPaidOn(bankLine?.posted_on ?? today());
         setMethod('bank_transfer');
         setReference('');
-        setNotes('');
+        setNotes(bankLine?.description ?? '');
         setTyped({});
         setTicked(new Set());
 
@@ -143,7 +159,7 @@ export default function RecordPaymentDialog({
                     (candidate) => candidate.id === invoiceId,
                 );
 
-                if (invoice && !payment) {
+                if (invoice && !payment && !bankLine) {
                     setTicked(new Set([invoice.id]));
                     setAmount(toDollars(invoice.balance_in_cents));
                 }
@@ -222,6 +238,7 @@ export default function RecordPaymentDialog({
                       reference: reference || null,
                       notes: notes || null,
                       allocations,
+                      bank_transaction_id: bankLine?.id ?? null,
                   },
             {
                 preserveScroll: true,
@@ -264,14 +281,18 @@ export default function RecordPaymentDialog({
                 <DialogTitle>
                     {payment
                         ? `Apply ${payment.reference_number}`
-                        : 'Record payment'}
+                        : bankLine
+                          ? 'Record from bank feed'
+                          : 'Record payment'}
                 </DialogTitle>
                 <DialogDescription>
                     {!data
                         ? 'Loading…'
                         : payment
                           ? `${money(payment.unallocated_in_cents)} of it isn't applied yet. Choose the invoices it pays.`
-                          : `Money ${data.customer.name} paid, applied to their invoices still owing. Anything not applied is kept as their credit.`}
+                          : bankLine
+                            ? `${money(bankLine.amount_in_cents)} from ${data.customer.name} came into ${bankLine.bank_account_name ?? 'your account'}. Apply it to their invoices still owing; anything not applied is kept as their credit.`
+                            : `Money ${data.customer.name} paid, applied to their invoices still owing. Anything not applied is kept as their credit.`}
                 </DialogDescription>
 
                 {data === null ? (
@@ -283,6 +304,11 @@ export default function RecordPaymentDialog({
                 ) : (
                     <form onSubmit={submit} className="mt-2 space-y-6">
                         <InputError message={errors.allocations} />
+                        <InputError
+                            message={
+                                errors.bank_transaction_id ?? errors.customer_id
+                            }
+                        />
                         <div
                             className={cn(
                                 'grid gap-4 sm:grid-cols-2',
@@ -304,8 +330,9 @@ export default function RecordPaymentDialog({
                                     onChange={(event) =>
                                         setAmount(event.target.value)
                                     }
+                                    readOnly={bankLine !== undefined}
                                     required
-                                    autoFocus={!isApplying}
+                                    autoFocus={!isApplying && !bankLine}
                                 />
                             </FormField>
                             <FormField
@@ -320,6 +347,7 @@ export default function RecordPaymentDialog({
                                     onChange={(event) =>
                                         setPaidOn(event.target.value)
                                     }
+                                    readOnly={bankLine !== undefined}
                                     required
                                 />
                             </FormField>

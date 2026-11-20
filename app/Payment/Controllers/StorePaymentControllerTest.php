@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\AccessRule\AccessRuleEloquentModel;
+use App\BankAccount\BankAccountEloquentModel;
+use App\BankTransaction\BankTransactionEloquentModel;
 use App\Customer\CustomerEloquentModel;
 use App\Invoice\InvoiceEloquentModel;
 use App\Invoice\InvoiceStatusEnum;
@@ -212,4 +214,51 @@ it('refuses a member an access rule keeps from recording payments', function ():
     actingAs($member)
         ->post(route('payments.store'), paymentPayload($customer->id, [['invoice_id' => $invoice->id, 'amount' => '110']], ['amount' => '110']))
         ->assertForbidden();
+});
+
+it('records a payment from a bank feed line, which then shows as applied', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $customer = CustomerEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
+    $invoice = sentInvoiceFor($customer, ['tax_rate_basis_points' => 0]);
+    $line = BankTransactionEloquentModel::factory()
+        ->forAccount(BankAccountEloquentModel::factory()->create(['team_id' => $user->current_team_id]))
+        ->create(['amount_in_cents' => 15000]);
+
+    actingAs($user)
+        ->post(route('payments.store'), paymentPayload($customer->id, [['invoice_id' => $invoice->id, 'amount' => '100']], ['bank_transaction_id' => $line->id]))
+        ->assertSessionHasNoErrors();
+
+    $payment = PaymentEloquentModel::query()->sole();
+
+    expect($line->fresh())
+        ->payment_id->toBe($payment->id)
+        ->customer_id->toBe($customer->id)
+        ->matched_by->toBe('manual');
+});
+
+it('refuses to record a bank feed line for another amount, another currency, or twice', function (array $line, array $customer, array $payload, string $field): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $payer = CustomerEloquentModel::factory()->create(['team_id' => $user->current_team_id, ...$customer]);
+    $bankLine = BankTransactionEloquentModel::factory()
+        ->forAccount(BankAccountEloquentModel::factory()->create(['team_id' => $user->current_team_id]))
+        ->create(['amount_in_cents' => 15000, ...$line]);
+
+    actingAs($user)
+        ->post(route('payments.store'), paymentPayload($payer->id, [], ['bank_transaction_id' => $bankLine->id, ...$payload]))
+        ->assertSessionHasErrors($field);
+})->with([
+    'another amount' => [[], [], ['amount' => '149.99'], 'amount_in_cents'],
+    'a customer billed in another currency' => [[], ['currency' => 'NZD'], [], 'customer_id'],
+    'a hidden line' => [['hidden_at' => now()], [], [], 'bank_transaction_id'],
+    'an applied line' => [['payment_id' => fn () => PaymentEloquentModel::factory()->create()->id], [], [], 'bank_transaction_id'],
+]);
+
+it("returns not found for another team's bank feed line", function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $customer = CustomerEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
+    $line = BankTransactionEloquentModel::factory()->forAccount(BankAccountEloquentModel::factory()->create())->create(['amount_in_cents' => 15000]);
+
+    actingAs($user)
+        ->post(route('payments.store'), paymentPayload($customer->id, [], ['bank_transaction_id' => $line->id]))
+        ->assertNotFound();
 });
