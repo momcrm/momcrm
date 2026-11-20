@@ -12,4 +12,5 @@ enum BankTransactionRelationship: string
 
     case BankAccount = 'bankAccount';
     case Customer = 'customer';
+    case Payment = 'payment';
 }

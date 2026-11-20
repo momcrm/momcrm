@@ -852,6 +852,12 @@ export type PaymentDetails = {
     methods: Option[];
     /** Who the receipt can be emailed to. */
     contacts: ContactRecipient[];
+    /** The bank feed line it was recorded from, if any. */
+    bank_transaction: {
+        account: string | null;
+        posted_on: string | null;
+        description: string;
+    } | null;
 };
 
 /** What the record payment dialog fetches for a customer. */
@@ -1035,7 +1041,7 @@ export type BankAccount = {
     last_imported_at: string | null;
 };
 
-export type BankTransactionStatus = 'pending' | 'hidden';
+export type BankTransactionStatus = 'pending' | 'applied' | 'hidden';
 
 /** A deposit imported from a bank statement. */
 export type BankTransaction = {
@@ -1053,6 +1059,9 @@ export type BankTransaction = {
     customer_name: string | null;
     matched_by: string | null;
     matched_by_label: string | null;
+    payment_id: string | null;
+    /** e.g. PAY-0042 */
+    payment_reference_number: string | null;
     status: BankTransactionStatus;
     status_label: string;
 };
@@ -1076,3 +1085,6 @@ export type StatementColumnsRequest = {
     rows: string[][];
     guess: StatementColumns;
 };
+
+/** A customer to pick for a bank feed line, with the currency they pay in. */
+export type BankFeedCustomer = { id: string; name: string; currency: string };

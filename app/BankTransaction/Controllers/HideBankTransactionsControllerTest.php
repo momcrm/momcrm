@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\BankAccount\BankAccountEloquentModel;
 use App\BankTransaction\BankTransactionEloquentModel;
+use App\Payment\PaymentEloquentModel;
 use App\User\UserEloquentModel;
 
 use function Pest\Laravel\actingAs;
@@ -38,4 +39,17 @@ it("changes nothing when one of the lines is another team's", function (): void 
         ->assertNotFound();
 
     expect($mine->fresh()->hidden_at)->toBeNull();
+});
+
+it('refuses to hide a line recorded as a payment', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $line = BankTransactionEloquentModel::factory()
+        ->forAccount(BankAccountEloquentModel::factory()->create(['team_id' => $user->current_team_id]))
+        ->create(['payment_id' => PaymentEloquentModel::factory()->create(['team_id' => $user->current_team_id])->id]);
+
+    actingAs($user)
+        ->patch(route('bank-feeds.hide'), ['bank_transaction_ids' => [$line->id], 'hidden' => true])
+        ->assertSessionHasErrors('bank_transaction_ids');
+
+    expect($line->fresh()->hidden_at)->toBeNull();
 });

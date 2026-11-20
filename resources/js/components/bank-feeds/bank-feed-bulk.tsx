@@ -1,5 +1,7 @@
-import { EyeOff, RotateCcw, Trash2, X } from 'lucide-react';
+import { router } from '@inertiajs/react';
+import { Banknote, EyeOff, RotateCcw, Trash2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import {
     deleteLines,
     hideLines,
@@ -14,15 +16,23 @@ import {
     DialogFooter,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { apply } from '@/routes/bank-feeds';
 
 const barButton =
     'flex h-[26px] items-center gap-1.5 rounded-md px-2 opacity-85 transition hover:bg-background/15 hover:opacity-100 disabled:opacity-50';
 
 /**
  * The dark bar that floats at the foot of the bank feed once lines are
- * picked: hide them, bring them back, or delete them.
+ * picked: record them as payments, hide them, bring them back, or delete
+ * them.
  */
-export function BankFeedBulkBar({ selection }: { selection: TicketSelection }) {
+export function BankFeedBulkBar({
+    selection,
+    canApply,
+}: {
+    selection: TicketSelection;
+    canApply: boolean;
+}) {
     const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
     const count = selection.ids.length;
 
@@ -60,6 +70,34 @@ export function BankFeedBulkBar({ selection }: { selection: TicketSelection }) {
                     {count} selected
                 </span>
                 <span className="mx-1 h-[18px] w-px bg-background/20" />
+                {canApply && (
+                    <button
+                        type="button"
+                        className={barButton}
+                        title="Record a payment from each picked line that has a customer, paying their oldest invoices first"
+                        onClick={() =>
+                            router.post(
+                                apply.url(),
+                                { bank_transaction_ids: selection.ids },
+                                {
+                                    preserveScroll: true,
+                                    onSuccess: selection.clear,
+                                    onError: (errors) => {
+                                        const message =
+                                            Object.values(errors)[0];
+
+                                        if (message) {
+                                            toast.error(message);
+                                        }
+                                    },
+                                },
+                            )
+                        }
+                    >
+                        <Banknote className="size-3.5" />
+                        Record payments
+                    </button>
+                )}
                 <button
                     type="button"
                     className={barButton}

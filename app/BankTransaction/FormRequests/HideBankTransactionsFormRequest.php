@@ -8,9 +8,11 @@ use App\BankTransaction\Actions\HideBankTransactions;
 use App\BankTransaction\BankTransactionCollection;
 use App\BankTransaction\BankTransactionSelection;
 use App\BankTransaction\Exceptions\CouldNotFindBankTransaction;
+use Closure;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Validation\Validator;
 use Inertia\Inertia;
 
 /**
@@ -47,6 +49,22 @@ final class HideBankTransactionsFormRequest extends FormRequest
             ...BankTransactionSelection::rules(),
             'hidden' => ['required', 'boolean'],
         ];
+    }
+
+    /**
+     * @return array<int, Closure(Validator): void>
+     */
+    public function after(): array
+    {
+        return [function (Validator $validator): void {
+            foreach ($this->transactions as $transaction) {
+                if ($transaction->getPaymentId()->isNotNull()) {
+                    $validator->errors()->add(BankTransactionSelection::IDS, __('A line recorded as a payment can’t be hidden. Delete the payment first.'));
+
+                    return;
+                }
+            }
+        }];
     }
 
     public function process(): RedirectResponse

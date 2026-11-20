@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\BankAccount\BankAccountEloquentModel;
 use App\BankTransaction\BankTransactionEloquentModel;
 use App\Customer\CustomerEloquentModel;
+use App\Payment\PaymentEloquentModel;
 use App\User\UserEloquentModel;
 use Inertia\Testing\AssertableInertia;
 
@@ -39,6 +40,7 @@ it('shows hidden lines, or all, and searches descriptions, customers and amounts
     $customer = CustomerEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'name' => 'Harbour Dental']);
     BankTransactionEloquentModel::factory()->forAccount($account)->create(['posted_on' => '2025-11-05', 'description' => 'Pending one', 'customer_id' => $customer->id, 'amount_in_cents' => 125000]);
     BankTransactionEloquentModel::factory()->forAccount($account)->hidden()->create(['posted_on' => '2025-11-04', 'description' => 'Hidden one', 'amount_in_cents' => 999]);
+    BankTransactionEloquentModel::factory()->forAccount($account)->create(['posted_on' => '2025-11-03', 'description' => 'Applied one', 'amount_in_cents' => 998, 'payment_id' => PaymentEloquentModel::factory()->create(['team_id' => $user->current_team_id])->id]);
 
     actingAs($user)
         ->get(route('bank-feeds.index', $query))
@@ -46,8 +48,21 @@ it('shows hidden lines, or all, and searches descriptions, customers and amounts
             ->where('transactions.data', fn ($rows): bool => collect($rows)->pluck('description')->all() === $descriptions));
 })->with([
     'hidden' => [['status' => 'hidden'], ['Hidden one']],
-    'all' => [['status' => 'all'], ['Pending one', 'Hidden one']],
+    'applied' => [['status' => 'applied'], ['Applied one']],
+    'all' => [['status' => 'all'], ['Pending one', 'Hidden one', 'Applied one']],
     'by customer' => [['status' => 'all', 'search' => 'harbour'], ['Pending one']],
     'by amount' => [['status' => 'all', 'search' => '$1,250'], ['Pending one']],
-    'by date' => [['status' => 'all', 'to' => '2025-11-04'], ['Hidden one']],
+    'by date' => [['status' => 'all', 'from' => '2025-11-04', 'to' => '2025-11-04'], ['Hidden one']],
 ]);
+
+it('sends the customers to pick from, with their currency, only when asked', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    CustomerEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'name' => 'Harbour Dental', 'currency' => 'NZD']);
+
+    actingAs($user)
+        ->get(route('bank-feeds.index'))
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->missing('customers')
+            ->reloadOnly('customers', fn (AssertableInertia $reload) => $reload
+                ->where('customers', fn ($customers): bool => collect($customers)->contains(fn (array $customer): bool => $customer['name'] === 'Harbour Dental' && $customer['currency'] === 'NZD'))));
+});

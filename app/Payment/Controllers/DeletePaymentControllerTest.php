@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\BankAccount\BankAccountEloquentModel;
+use App\BankTransaction\BankTransactionEloquentModel;
 use App\Invoice\InvoiceEloquentModel;
 use App\Invoice\InvoiceStatusEnum;
 use App\InvoiceItem\InvoiceItemEloquentModel;
@@ -45,4 +47,16 @@ it("returns not found for another team's payment", function (): void {
     actingAs(UserEloquentModel::factory()->withPersonalTeam()->create())
         ->delete(route('payments.destroy', PaymentEloquentModel::factory()->create()->id))
         ->assertNotFound();
+});
+
+it('returns the bank feed line it was recorded from to pending', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $payment = PaymentEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
+    $line = BankTransactionEloquentModel::factory()
+        ->forAccount(BankAccountEloquentModel::factory()->create(['team_id' => $user->current_team_id]))
+        ->create(['payment_id' => $payment->id, 'customer_id' => $payment->customer_id]);
+
+    actingAs($user)->delete(route('payments.destroy', $payment->id))->assertSessionHasNoErrors();
+
+    expect($line->fresh())->payment_id->toBeNull()->customer_id->toBe($payment->customer_id);
 });

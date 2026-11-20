@@ -17,6 +17,7 @@ use App\BankTransaction\Properties\Description;
 use App\BankTransaction\Properties\HiddenAt;
 use App\BankTransaction\Properties\Id;
 use App\BankTransaction\Properties\PayerName;
+use App\BankTransaction\Properties\PaymentId;
 use App\BankTransaction\Properties\PostedOn;
 use App\BankTransaction\Properties\TeamId;
 use App\Customer\Properties\Name as CustomerName;
@@ -44,9 +45,10 @@ final class FindBankTransaction
         $direction = $filters->direction;
 
         return self::query($teamId)
-            ->with([BankTransactionRelationship::BankAccount->value, BankTransactionRelationship::Customer->value])
-            ->when($filters->status === BankTransactionStatusEnum::Pending, fn (Builder $query) => $query->whereNull(HiddenAt::getDatabaseTableColumnName()))
-            ->when($filters->status === BankTransactionStatusEnum::Hidden, fn (Builder $query) => $query->whereNotNull(HiddenAt::getDatabaseTableColumnName()))
+            ->with([BankTransactionRelationship::BankAccount->value, BankTransactionRelationship::Customer->value, BankTransactionRelationship::Payment->value])
+            ->when($filters->status === BankTransactionStatusEnum::Pending, fn (Builder $query) => $query->whereNull(PaymentId::getDatabaseTableColumnName())->whereNull(HiddenAt::getDatabaseTableColumnName()))
+            ->when($filters->status === BankTransactionStatusEnum::Applied, fn (Builder $query) => $query->whereNotNull(PaymentId::getDatabaseTableColumnName()))
+            ->when($filters->status === BankTransactionStatusEnum::Hidden, fn (Builder $query) => $query->whereNull(PaymentId::getDatabaseTableColumnName())->whereNotNull(HiddenAt::getDatabaseTableColumnName()))
             ->when($filters->bankAccountId !== null, fn (Builder $query) => $query->where(BankAccountId::getDatabaseTableColumnName(), $filters->bankAccountId))
             ->when($filters->postedFrom !== null, fn (Builder $query) => $query->whereDate(PostedOn::getDatabaseTableColumnName(), '>=', (string) $filters->postedFrom))
             ->when($filters->postedTo !== null, fn (Builder $query) => $query->whereDate(PostedOn::getDatabaseTableColumnName(), '<=', (string) $filters->postedTo))
@@ -67,6 +69,29 @@ final class FindBankTransaction
             ->through(fn (BankTransactionEloquentModel $model): BankTransaction => BankTransaction::fromEloquentModel($model));
     }
 
+    public static function byIdForTeam(?string $id, ?string $teamId): BankTransaction
+    {
+        if ($id === null || $teamId === null) {
+            return BankTransaction::new();
+        }
+
+        return BankTransaction::fromEloquentModel(self::query($teamId)
+            ->with(BankTransactionRelationship::BankAccount->value)
+            ->where(Id::getDatabaseTableColumnName(), $id)
+            ->first());
+    }
+
+    /**
+     * The line a payment was recorded from, if any.
+     */
+    public static function forPayment(string $paymentId, string $teamId): BankTransaction
+    {
+        return BankTransaction::fromEloquentModel(self::query($teamId)
+            ->with(BankTransactionRelationship::BankAccount->value)
+            ->where(PaymentId::getDatabaseTableColumnName(), $paymentId)
+            ->first());
+    }
+
     /**
      * The team's lines among the ids given, with their account.
      *
@@ -80,7 +105,7 @@ final class FindBankTransaction
 
         return BankTransaction::collect(
             self::query($teamId)
-                ->with(BankTransactionRelationship::BankAccount->value)
+                ->with([BankTransactionRelationship::BankAccount->value, BankTransactionRelationship::Customer->value])
                 ->whereKey($ids)
                 ->get()
                 ->all(),

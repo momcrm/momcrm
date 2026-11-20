@@ -9,7 +9,8 @@ use App\Shared\Traits\EnumOptions;
 
 /**
  * Where a bank feed line is up to. Pending lines are the ones still to deal
- * with; hidden ones were put aside as not a customer's payment.
+ * with; applied ones were recorded as a payment; hidden ones were put aside
+ * as not a customer's payment.
  */
 enum BankTransactionStatusEnum: string
 {
@@ -17,12 +18,14 @@ enum BankTransactionStatusEnum: string
     use EnumOptions;
 
     case Pending = 'pending';
+    case Applied = 'applied';
     case Hidden = 'hidden';
 
     public function label(): string
     {
         return match ($this) {
             self::Pending => 'Pending',
+            self::Applied => 'Applied',
             self::Hidden => 'Hidden',
         };
     }

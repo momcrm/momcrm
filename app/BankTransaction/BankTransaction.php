@@ -18,6 +18,8 @@ use App\BankTransaction\Properties\HiddenAt;
 use App\BankTransaction\Properties\Id;
 use App\BankTransaction\Properties\MatchedBy;
 use App\BankTransaction\Properties\PayerName;
+use App\BankTransaction\Properties\Payment;
+use App\BankTransaction\Properties\PaymentId;
 use App\BankTransaction\Properties\PostedOn;
 use App\BankTransaction\Properties\TeamId;
 use App\BankTransaction\Properties\UpdatedAt;
@@ -47,6 +49,8 @@ final class BankTransaction extends AbstractData
         public Id $id,
         public MatchedBy $matchedBy,
         public PayerName $payerName,
+        public Payment $payment,
+        public PaymentId $paymentId,
         public PostedOn $postedOn,
         public TeamId $teamId,
         public UpdatedAt $updatedAt,
@@ -76,14 +80,23 @@ final class BankTransaction extends AbstractData
 
     public function status(): BankTransactionStatusEnum
     {
-        return $this->getHiddenAt()->isNotNull() ? BankTransactionStatusEnum::Hidden : BankTransactionStatusEnum::Pending;
+        return match (true) {
+            $this->getPaymentId()->isNotNull() => BankTransactionStatusEnum::Applied,
+            $this->getHiddenAt()->isNotNull() => BankTransactionStatusEnum::Hidden,
+            default => BankTransactionStatusEnum::Pending,
+        };
+    }
+
+    public function isPending(): bool
+    {
+        return $this->status() === BankTransactionStatusEnum::Pending;
     }
 
     /**
-     * The fields the bank feed list shows, with its account and customer
-     * when they were loaded.
+     * The fields the bank feed list shows, with its account, customer and
+     * payment when they were loaded.
      *
-     * @return array{id: string, bank_account_id: string, bank_account_name: ?string, currency: ?string, posted_on: ?string, amount_in_cents: int, description: string, crn: ?string, payer_name: ?string, customer_id: ?string, customer_name: ?string, matched_by: ?string, matched_by_label: ?string, status: string, status_label: string}
+     * @return array{id: string, bank_account_id: string, bank_account_name: ?string, currency: ?string, posted_on: ?string, amount_in_cents: int, description: string, crn: ?string, payer_name: ?string, customer_id: ?string, customer_name: ?string, matched_by: ?string, matched_by_label: ?string, payment_id: ?string, payment_reference_number: ?string, status: string, status_label: string}
      */
     public function toSummary(): array
     {
@@ -104,6 +117,8 @@ final class BankTransaction extends AbstractData
             'customer_name' => $this->getCustomer()->toNullableData()?->getName()->toString(),
             'matched_by' => $matchedBy?->value,
             'matched_by_label' => $matchedBy?->label(),
+            'payment_id' => $this->getPaymentId()->toNullableString(),
+            'payment_reference_number' => $this->getPayment()->toNullableData()?->getReferenceNumber(),
             'status' => $this->status()->value,
             'status_label' => $this->status()->label(),
         ];
@@ -240,6 +255,23 @@ final class BankTransaction extends AbstractData
     public function setPayerName(mixed $payerName): self
     {
         $this->payerName = new PayerName($payerName instanceof AbstractValue ? $payerName->toValue() : $payerName);
+
+        return $this;
+    }
+
+    public function getPayment(): Payment
+    {
+        return $this->payment;
+    }
+
+    public function getPaymentId(): PaymentId
+    {
+        return $this->paymentId;
+    }
+
+    public function setPaymentId(mixed $paymentId): self
+    {
+        $this->paymentId = new PaymentId($paymentId instanceof AbstractValue ? $paymentId->toValue() : $paymentId);
 
         return $this;
     }

@@ -13,8 +13,10 @@ use App\BankTransaction\Properties\BankAccountId;
 use App\BankTransaction\Properties\CustomerId;
 use App\BankTransaction\Properties\HiddenAt;
 use App\BankTransaction\Properties\Id;
+use App\BankTransaction\Properties\PaymentId;
 use App\BankTransaction\Properties\PostedOn;
 use App\Customer\CustomerEloquentModel;
+use App\Payment\PaymentEloquentModel;
 use App\Shared\Table;
 use App\Team\Scopes\CurrentTeamScope;
 use Carbon\CarbonImmutable;
@@ -37,6 +39,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $id
  * @property string|null $matched_by
  * @property string|null $payer_name
+ * @property string|null $payment_id
  * @property CarbonImmutable $posted_on
  * @property string $team_id
  * @property CarbonImmutable|null $updated_at
@@ -88,6 +91,18 @@ final class BankTransactionEloquentModel extends Model implements Auditable
             related: CustomerEloquentModel::class,
             foreignKey: CustomerId::getDatabaseTableColumnName(),
             relation: BankTransactionRelationship::Customer->value,
+        );
+    }
+
+    /**
+     * @return BelongsTo<PaymentEloquentModel, $this>
+     */
+    public function payment(): BelongsTo
+    {
+        return $this->belongsTo(
+            related: PaymentEloquentModel::class,
+            foreignKey: PaymentId::getDatabaseTableColumnName(),
+            relation: BankTransactionRelationship::Payment->value,
         );
     }
 

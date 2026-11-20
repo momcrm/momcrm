@@ -15,6 +15,8 @@ use App\Attachment\Controllers\StoreProjectAttachmentController;
 use App\Attachment\Controllers\StoreRecordAttachmentController;
 use App\Attachment\Controllers\StoreTicketAttachmentController;
 use App\Attachment\Controllers\UpdateAttachmentController;
+use App\BankTransaction\Controllers\ApplyBankTransactionsController;
+use App\BankTransaction\Controllers\AssignBankTransactionCustomerController;
 use App\BankTransaction\Controllers\DeleteBankTransactionsController;
 use App\BankTransaction\Controllers\HideBankTransactionsController;
 use App\BankTransaction\Controllers\ImportBankStatementController;
@@ -330,4 +332,6 @@ Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function 
     Route::post('bank-feeds/import', ImportBankStatementController::class)->name('bank-feeds.import');
     Route::patch('bank-feeds/hidden', HideBankTransactionsController::class)->name('bank-feeds.hide');
     Route::delete('bank-feeds', DeleteBankTransactionsController::class)->name('bank-feeds.destroy');
+    Route::post('bank-feeds/apply', ApplyBankTransactionsController::class)->name('bank-feeds.apply');
+    Route::patch('bank-feeds/{bankTransaction}/customer', AssignBankTransactionCustomerController::class)->whereUuid('bankTransaction')->name('bank-feeds.customer');
 });
