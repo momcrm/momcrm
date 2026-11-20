@@ -33,6 +33,8 @@ use App\Milestone\Milestone;
 use App\Milestone\MilestonePolicy;
 use App\Passkey\FormRequests\PasskeyVerificationFormRequest;
 use App\Passkey\PasskeyEloquentModel;
+use App\Payment\Payment;
+use App\Payment\PaymentPolicy;
 use App\Project\Project;
 use App\Project\ProjectPolicy;
 use App\Record\Record;
@@ -187,6 +189,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Invoice::class, InvoicePolicy::class);
         Gate::policy(Location::class, LocationPolicy::class);
         Gate::policy(Milestone::class, MilestonePolicy::class);
+        Gate::policy(Payment::class, PaymentPolicy::class);
         Gate::policy(Project::class, ProjectPolicy::class);
         Gate::policy(Record::class, RecordPolicy::class);
         Gate::policy(Service::class, ServicePolicy::class);

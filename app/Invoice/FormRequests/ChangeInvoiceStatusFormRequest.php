@@ -62,11 +62,16 @@ final class ChangeInvoiceStatusFormRequest extends FormRequest
             ]);
         }
 
+        if ($status === InvoiceStatusEnum::Void && $this->invoice->getPaidInCents()->toInteger() > 0) {
+            throw ValidationException::withMessages([
+                'status' => __('Payments have been applied to :reference, so it cannot be voided.', ['reference' => $this->invoice->getReference()]),
+            ]);
+        }
+
         $invoice = ChangeInvoiceStatus::to($this->invoice, $status);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => match ($status) {
             InvoiceStatusEnum::Sent => __(':reference marked as sent.', ['reference' => $invoice->getReference()]),
-            InvoiceStatusEnum::Paid => __(':reference paid. Nice.', ['reference' => $invoice->getReference()]),
             default => __(':reference voided.', ['reference' => $invoice->getReference()]),
         }]);
 

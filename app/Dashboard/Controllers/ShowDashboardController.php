@@ -51,7 +51,7 @@ final class ShowDashboardController
                 'unpaid_invoices' => $unpaid->count(),
                 'unpaid_totals' => $unpaid
                     ->groupBy('currency')
-                    ->map(fn (Collection $invoices, string $currency): array => ['currency' => $currency, 'total_in_cents' => Types::intOrZero($invoices->sum('total_in_cents'))])
+                    ->map(fn (Collection $invoices, string $currency): array => ['currency' => $currency, 'total_in_cents' => Types::intOrZero($invoices->sum('balance_in_cents'))])
                     ->sortByDesc('total_in_cents')
                     ->values()
                     ->all(),

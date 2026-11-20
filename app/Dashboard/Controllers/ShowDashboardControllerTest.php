@@ -8,6 +8,7 @@ use App\Customer\CustomerEloquentModel;
 use App\Invoice\InvoiceEloquentModel;
 use App\Invoice\InvoiceStatusEnum;
 use App\InvoiceItem\InvoiceItemEloquentModel;
+use App\PaymentAllocation\PaymentAllocationEloquentModel;
 use App\Project\ProjectEloquentModel;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
@@ -30,6 +31,7 @@ it("shows the team's numbers, the user's tickets and the checklist", function ()
         'tax_rate_basis_points' => 0,
     ]);
     InvoiceItemEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'invoice_id' => $overdue->id, 'quantity' => 1, 'unit_price_in_cents' => 12345]);
+    PaymentAllocationEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'invoice_id' => $overdue->id, 'amount_in_cents' => 2345]);
 
     actingAs($user)
         ->get(route('dashboard'))
@@ -45,7 +47,7 @@ it("shows the team's numbers, the user's tickets and the checklist", function ()
                 'overdue_tickets' => 0,
                 'customers' => 1,
                 'unpaid_invoices' => 1,
-                'unpaid_totals' => [['currency' => 'AUD', 'total_in_cents' => 12345]],
+                'unpaid_totals' => [['currency' => 'AUD', 'total_in_cents' => 10000]],
                 'overdue_invoices' => 1,
             ])
             ->has('myTickets', 1)

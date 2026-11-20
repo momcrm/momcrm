@@ -215,7 +215,7 @@
                                 <td class="label" style="vertical-align: bottom; padding-bottom: 4px;">
                                     {{ $status === \App\Invoice\InvoiceStatusEnum::Paid ? 'Amount paid' : 'Amount due' }}
                                 </td>
-                                <td class="amount" style="text-align: right;">{{ $document->money($document->totals->totalInCents) }}</td>
+                                <td class="amount" style="text-align: right;">{{ $document->money($status === \App\Invoice\InvoiceStatusEnum::Paid ? $document->totals->totalInCents : $invoice->balanceAfter($document->totals)) }}</td>
                             </tr>
                         </table>
                     </div>
@@ -266,6 +266,16 @@
                 <td>Total {{ $currency }}</td>
                 <td class="value">{{ $document->money($document->totals->totalInCents) }}</td>
             </tr>
+            @if ($invoice->getPaidInCents()->toInteger() > 0)
+                <tr>
+                    <td class="muted">Paid</td>
+                    <td class="value">&minus;{{ $document->money($invoice->getPaidInCents()->toInteger()) }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Balance due</strong></td>
+                    <td class="value"><strong>{{ $document->money($invoice->balanceAfter($document->totals)) }}</strong></td>
+                </tr>
+            @endif
         </table>
 
         @if ($team->getPaymentDetails()->isNotNull() && $status !== \App\Invoice\InvoiceStatusEnum::Paid && $status !== \App\Invoice\InvoiceStatusEnum::Void)

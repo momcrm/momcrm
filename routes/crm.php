@@ -67,7 +67,6 @@ use App\Invoice\Controllers\CreateInvoiceController;
 use App\Invoice\Controllers\DownloadInvoicePdfController;
 use App\Invoice\Controllers\EditInvoiceController;
 use App\Invoice\Controllers\ListInvoicesController;
-use App\Invoice\Controllers\MarkInvoicePaidController;
 use App\Invoice\Controllers\MarkInvoiceSentController;
 use App\Invoice\Controllers\ShowInvoiceController;
 use App\Invoice\Controllers\ShowInvoiceDetailsController;
@@ -85,6 +84,8 @@ use App\Milestone\Controllers\ToggleMilestoneController;
 use App\Milestone\Controllers\UpdateMilestoneController;
 use App\Onboarding\Controllers\RemoveSampleDataController;
 use App\Onboarding\Middleware\EnsureOnboarded;
+use App\Payment\Controllers\ListOutstandingInvoicesController;
+use App\Payment\Controllers\StorePaymentController;
 use App\Project\Controllers\ArchiveProjectController;
 use App\Project\Controllers\DeleteProjectController;
 use App\Project\Controllers\ListProjectsController;
@@ -170,6 +171,7 @@ Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function 
     Route::delete('contracts/{contract}', DeleteContractController::class)->whereUuid('contract')->name('contracts.destroy');
     Route::post('contracts/{contract}/attachments', StoreContractAttachmentController::class)->whereUuid('contract')->name('contracts.attachments.store');
     Route::get('customers/{customer}/invoices', ListCustomerInvoicesController::class)->whereUuid('customer')->name('customers.invoices');
+    Route::get('customers/{customer}/outstanding-invoices', ListOutstandingInvoicesController::class)->whereUuid('customer')->name('customers.outstanding-invoices');
     Route::get('customers/{customer}/settings', EditCustomerController::class)->whereUuid('customer')->name('customers.edit');
     Route::put('customers/{customer}', UpdateCustomerController::class)->whereUuid('customer')->name('customers.update');
     Route::delete('customers/{customer}', DeleteCustomerController::class)->whereUuid('customer')->name('customers.destroy');
@@ -286,6 +288,7 @@ Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function 
     Route::get('invoices/{invoice}/pdf', DownloadInvoicePdfController::class)->whereUuid('invoice')->name('invoices.pdf');
     Route::put('invoices/{invoice}', UpdateInvoiceController::class)->whereUuid('invoice')->name('invoices.update');
     Route::post('invoices/{invoice}/sent', MarkInvoiceSentController::class)->whereUuid('invoice')->name('invoices.sent');
-    Route::post('invoices/{invoice}/paid', MarkInvoicePaidController::class)->whereUuid('invoice')->name('invoices.paid');
     Route::post('invoices/{invoice}/void', VoidInvoiceController::class)->whereUuid('invoice')->name('invoices.void');
+
+    Route::post('payments', StorePaymentController::class)->name('payments.store');
 });

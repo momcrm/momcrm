@@ -35,6 +35,8 @@ enum Table: string
     case Milestones = 'milestones';
     case Notifications = 'notifications';
     case Passkeys = 'passkeys';
+    case PaymentAllocations = 'payment_allocations';
+    case Payments = 'payments';
     case ProjectUser = 'project_user';
     case Projects = 'projects';
     case Rates = 'rates';

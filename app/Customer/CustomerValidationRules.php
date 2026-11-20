@@ -20,6 +20,8 @@ use App\Invoice\InvoiceEloquentModel;
 use App\Invoice\InvoiceStatusEnum;
 use App\Invoice\Properties\CustomerId as InvoiceCustomerId;
 use App\Invoice\Properties\Status as InvoiceStatus;
+use App\Payment\PaymentEloquentModel;
+use App\Payment\Properties\CustomerId as PaymentCustomerId;
 use App\Rate\Actions\FindRate;
 use App\Service\Actions\FindService;
 use App\Service\Service;
@@ -100,9 +102,9 @@ final class CustomerValidationRules
     }
 
     /**
-     * A customer keeps their currency once they have been invoiced, so their
-     * balance stays in one currency, and can only move to a currency every
-     * one of their services' rates has a price in.
+     * A customer keeps their currency once they have been invoiced or have
+     * paid, so their balance stays in one currency, and can only move to a
+     * currency every one of their services' rates has a price in.
      *
      * @return Closure(string, mixed, Closure(string): mixed): void
      */
@@ -121,10 +123,14 @@ final class CustomerValidationRules
                 ->withoutGlobalScope(CurrentTeamScope::class)
                 ->where(InvoiceCustomerId::getDatabaseTableColumnName(), $customerId)
                 ->whereNot(InvoiceStatus::getDatabaseTableColumnName(), InvoiceStatusEnum::Void->value)
-                ->exists();
+                ->exists()
+                || PaymentEloquentModel::query()
+                    ->withoutGlobalScope(CurrentTeamScope::class)
+                    ->where(PaymentCustomerId::getDatabaseTableColumnName(), $customerId)
+                    ->exists();
 
             if ($isInvoiced) {
-                $fail(__('This customer has been invoiced in :currency, so they stay in it.', ['currency' => $current->getCurrency()->toEnum()->value]));
+                $fail(__('This customer has invoices or payments in :currency, so they stay in it.', ['currency' => $current->getCurrency()->toEnum()->value]));
 
                 return;
             }

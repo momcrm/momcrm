@@ -1,27 +1,29 @@
 import { Link, router } from '@inertiajs/react';
-import { Download, Pencil } from 'lucide-react';
+import { Banknote, Download, Pencil } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import MarkInvoicePaidController from '@/actions/App/Invoice/Controllers/MarkInvoicePaidController';
 import MarkInvoiceSentController from '@/actions/App/Invoice/Controllers/MarkInvoiceSentController';
 import VoidInvoiceController from '@/actions/App/Invoice/Controllers/VoidInvoiceController';
+import RecordPaymentDialog from '@/components/payments/record-payment-dialog';
 import { Button } from '@/components/ui/button';
 import { edit, pdf } from '@/routes/invoices';
 import type { Invoice } from '@/types';
 
 /**
  * What can be done with an invoice from its page or its dialog: download it
- * as a PDF, edit a draft, and move it along from draft to sent to paid. A
- * status change stays on the page it was made from, then calls onChanged.
+ * as a PDF, edit a draft, mark it sent, void it, and record a payment for
+ * it, which makes it paid once nothing is owing. A change stays on the page
+ * it was made from, then calls onChanged.
  */
 export default function InvoiceActions({
     invoice,
     onChanged,
 }: {
-    invoice: Pick<Invoice, 'id' | 'status'>;
+    invoice: Pick<Invoice, 'id' | 'status' | 'customer_id' | 'paid_in_cents'>;
     onChanged?: () => void;
 }) {
     const [processing, setProcessing] = useState(false);
+    const [isPaying, setIsPaying] = useState(false);
 
     const changeStatus = (url: string) => {
         router.post(
@@ -44,7 +46,9 @@ export default function InvoiceActions({
         );
     };
 
-    const isOpen = invoice.status === 'draft' || invoice.status === 'sent';
+    const canVoid =
+        (invoice.status === 'draft' || invoice.status === 'sent') &&
+        invoice.paid_in_cents === 0;
 
     return (
         <div className="flex flex-wrap items-center gap-2">
@@ -62,7 +66,7 @@ export default function InvoiceActions({
                     </Link>
                 </Button>
             )}
-            {isOpen && (
+            {canVoid && (
                 <Button
                     variant="outline"
                     disabled={processing}
@@ -84,14 +88,19 @@ export default function InvoiceActions({
                 </Button>
             )}
             {invoice.status === 'sent' && (
-                <Button
-                    disabled={processing}
-                    onClick={() =>
-                        changeStatus(MarkInvoicePaidController.url(invoice.id))
-                    }
-                >
-                    Mark as paid
-                </Button>
+                <>
+                    <Button onClick={() => setIsPaying(true)}>
+                        <Banknote />
+                        Record payment
+                    </Button>
+                    <RecordPaymentDialog
+                        customerId={invoice.customer_id}
+                        invoiceId={invoice.id}
+                        open={isPaying}
+                        onOpenChange={setIsPaying}
+                        onRecorded={onChanged}
+                    />
+                </>
             )}
         </div>
     );

@@ -19,6 +19,8 @@ use App\Invoice\Properties\SentAt;
 use App\Invoice\Properties\TaxRateBasisPoints;
 use App\InvoiceItem\InvoiceItemEloquentModel;
 use App\InvoiceItem\Properties\InvoiceId;
+use App\PaymentAllocation\PaymentAllocationEloquentModel;
+use App\PaymentAllocation\Properties\InvoiceId as AllocationInvoiceId;
 use App\Shared\Table;
 use App\Team\Scopes\CurrentTeamScope;
 use Carbon\CarbonImmutable;
@@ -93,6 +95,17 @@ final class InvoiceEloquentModel extends Model implements Auditable
         return $this->hasMany(
             related: InvoiceItemEloquentModel::class,
             foreignKey: InvoiceId::getDatabaseTableColumnName(),
+        );
+    }
+
+    /**
+     * @return HasMany<PaymentAllocationEloquentModel, $this>
+     */
+    public function allocations(): HasMany
+    {
+        return $this->hasMany(
+            related: PaymentAllocationEloquentModel::class,
+            foreignKey: AllocationInvoiceId::getDatabaseTableColumnName(),
         );
     }
 

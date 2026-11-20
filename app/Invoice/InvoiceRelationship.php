@@ -10,6 +10,7 @@ enum InvoiceRelationship: string
 {
     use Enum;
 
+    case Allocations = 'allocations';
     case Customer = 'customer';
     case Items = 'items';
 }

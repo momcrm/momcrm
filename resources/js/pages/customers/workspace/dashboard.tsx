@@ -19,6 +19,7 @@ import {
     useTicketStatus,
 } from '@/components/tickets/ticket-meta';
 import { useWorkspaceBreadcrumbs } from '@/layouts/customer/layout';
+import RecordPaymentButton from '@/components/payments/record-payment-button';
 import { formatCents } from '@/lib/money';
 import { cn } from '@/lib/utils';
 import {
@@ -312,7 +313,12 @@ export default function CustomerDashboard({
             <Head title={customer.name} />
 
             <div className="@container flex flex-col gap-4">
-                <MoneyStrip money={money} currency={customer.currency} />
+                <div className="flex flex-col gap-2">
+                    <div className="flex justify-end">
+                        <RecordPaymentButton customerId={customer.id} />
+                    </div>
+                    <MoneyStrip money={money} currency={customer.currency} />
+                </div>
 
                 <div className="grid min-w-0 gap-4 @3xl:grid-cols-2">
                     <Card

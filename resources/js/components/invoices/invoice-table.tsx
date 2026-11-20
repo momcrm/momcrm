@@ -78,12 +78,27 @@ const columns = column.columns([
             </span>
         ),
     }),
+    column.accessor('balance_in_cents', {
+        header: 'Owing',
+        meta: { className: 'hidden sm:table-cell w-32 text-right' },
+        cell: (info) =>
+            info.row.original.status === 'sent' ? (
+                <span className="tabular-nums">
+                    {formatCents(info.getValue(), info.row.original.currency)}
+                </span>
+            ) : (
+                <span className="text-muted-foreground">—</span>
+            ),
+    }),
     column.accessor('status', {
         header: 'Status',
         meta: { className: 'w-28' },
         cell: (info) =>
             info.row.original.is_overdue ? (
                 <StatusPill tone="destructive">Overdue</StatusPill>
+            ) : info.getValue() === 'sent' &&
+              info.row.original.paid_in_cents > 0 ? (
+                <StatusPill tone="info">Part paid</StatusPill>
             ) : (
                 <StatusPill tone={statuses[info.getValue()].tone}>
                     {statuses[info.getValue()].label}

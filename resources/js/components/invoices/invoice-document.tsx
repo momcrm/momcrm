@@ -55,6 +55,7 @@ export default function InvoiceDocument({
 }) {
     const money = (cents: number) => formatCents(cents, invoice.currency);
     const isPaid = invoice.status === 'paid';
+    const balance = Math.max(0, totals.total_in_cents - invoice.paid_in_cents);
     const showsPaymentDetails =
         from.payment_details !== null &&
         (invoice.status === 'draft' || invoice.status === 'sent');
@@ -158,7 +159,9 @@ export default function InvoiceDocument({
                                     invoice.is_overdue && 'text-destructive',
                                 )}
                             >
-                                {money(totals.total_in_cents)}
+                                {money(
+                                    isPaid ? totals.total_in_cents : balance,
+                                )}
                             </div>
                         </div>
                     </div>
@@ -251,6 +254,22 @@ export default function InvoiceDocument({
                             {money(totals.total_in_cents)}
                         </dd>
                     </div>
+                    {invoice.paid_in_cents > 0 && (
+                        <>
+                            <div className="flex justify-between gap-4">
+                                <dt className="text-muted-foreground">Paid</dt>
+                                <dd className="tabular-nums">
+                                    −{money(invoice.paid_in_cents)}
+                                </dd>
+                            </div>
+                            <div className="flex justify-between gap-4 font-semibold">
+                                <dt>Balance due</dt>
+                                <dd className="tabular-nums">
+                                    {money(balance)}
+                                </dd>
+                            </div>
+                        </>
+                    )}
                 </dl>
 
                 {showsPaymentDetails && (

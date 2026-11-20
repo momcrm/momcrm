@@ -9,6 +9,7 @@ use App\CustomField\CustomFieldRelationEnum;
 use App\CustomField\CustomFieldTargetEnum;
 use App\Invoice\InvoiceEloquentModel;
 use App\InvoiceItem\InvoiceItemEloquentModel;
+use App\PaymentAllocation\PaymentAllocationEloquentModel;
 use App\Service\ServiceEloquentModel;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
@@ -16,7 +17,7 @@ use Inertia\Testing\AssertableInertia as Assert;
 
 use function Pest\Laravel\actingAs;
 
-it("opens the customer's dashboard with what they owe, split into current and overdue", function (): void {
+it("opens the customer's dashboard with what they owe after payments, split into current and overdue", function (): void {
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
     $customer = CustomerEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'name' => 'Acme IT']);
     $bill = function (string $status, string $dueOn) use ($user, $customer): InvoiceEloquentModel {
@@ -26,7 +27,8 @@ it("opens the customer's dashboard with what they owe, split into current and ov
         return $invoice;
     };
     $bill('sent', now()->addDays(5)->toDateString());
-    $bill('sent', now()->subDay()->toDateString());
+    $overdue = $bill('sent', now()->subDay()->toDateString());
+    PaymentAllocationEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'invoice_id' => $overdue->id, 'amount_in_cents' => 2500]);
     $draft = $bill('draft', now()->addDays(5)->toDateString());
     $bill('paid', now()->subDay()->toDateString());
 
@@ -37,9 +39,9 @@ it("opens the customer's dashboard with what they owe, split into current and ov
             ->component('customers/workspace/dashboard')
             ->where('workspace.customer.name', 'Acme IT')
             ->where('workspace.counts.invoices', 4)
-            ->where('money.balance_in_cents', 20000)
+            ->where('money.balance_in_cents', 17500)
             ->where('money.current_in_cents', 10000)
-            ->where('money.overdue_in_cents', 10000)
+            ->where('money.overdue_in_cents', 7500)
             ->has('draftInvoices', 1)
             ->where('draftInvoices.0.id', $draft->id),
         );
