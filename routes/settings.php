@@ -10,6 +10,9 @@ use App\BankAccount\Controllers\DeleteBankAccountController;
 use App\BankAccount\Controllers\ListBankAccountsController;
 use App\BankAccount\Controllers\StoreBankAccountController;
 use App\BankAccount\Controllers\UpdateBankAccountController;
+use App\BankRule\Controllers\DeleteBankRuleController;
+use App\BankRule\Controllers\StoreBankRuleController;
+use App\BankRule\Controllers\UpdateBankRuleController;
 use App\Choice\Controllers\ArchiveChoiceController;
 use App\Choice\Controllers\DeleteChoiceController;
 use App\Choice\Controllers\ReorderChoicesController;
@@ -121,6 +124,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('settings/bank-accounts', StoreBankAccountController::class)->name('bank-accounts.store');
     Route::put('settings/bank-accounts/{bankAccount}', UpdateBankAccountController::class)->whereUuid('bankAccount')->name('bank-accounts.update');
     Route::delete('settings/bank-accounts/{bankAccount}', DeleteBankAccountController::class)->whereUuid('bankAccount')->name('bank-accounts.destroy');
+    Route::post('settings/bank-rules', StoreBankRuleController::class)->name('bank-rules.store');
+    Route::put('settings/bank-rules/{bankRule}', UpdateBankRuleController::class)->whereUuid('bankRule')->name('bank-rules.update');
+    Route::delete('settings/bank-rules/{bankRule}', DeleteBankRuleController::class)->whereUuid('bankRule')->name('bank-rules.destroy');
 
     Route::get('settings/custom-fields', ShowCustomFieldsController::class)->name('custom-fields.edit');
     Route::post('settings/custom-fields', StoreCustomFieldController::class)->name('custom-fields.store');

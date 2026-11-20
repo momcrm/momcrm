@@ -7,6 +7,9 @@ namespace App\BankAccount\Controllers;
 use App\BankAccount\Actions\FindBankAccount;
 use App\BankAccount\BankAccountAccess;
 use App\BankAccount\BankAccountKindEnum;
+use App\BankRule\Actions\FindBankRule;
+use App\BankRule\BankRuleKindEnum;
+use App\Customer\Actions\FindCustomer;
 use App\Shared\CurrencyEnum;
 use App\Team\Exceptions\CouldNotViewTeam;
 use Illuminate\Http\Request;
@@ -14,8 +17,8 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * The team's bank accounts, for owners and admins to set up before
- * statements are imported into them.
+ * The team's bank accounts and bank feed rules, for owners and admins to set
+ * up before statements are imported.
  */
 final class ListBankAccountsController
 {
@@ -26,8 +29,13 @@ final class ListBankAccountsController
     {
         BankAccountAccess::authorize($request);
 
+        $teamId = BankAccountAccess::team($request)->getId()->toString();
+
         return Inertia::render('settings/bank-feeds', [
-            'accounts' => FindBankAccount::listForTeam(BankAccountAccess::team($request)->getId()->toString())->toSummaries(),
+            'accounts' => FindBankAccount::listForTeam($teamId)->toSummaries(),
+            'rules' => FindBankRule::listForTeam($teamId)->toSummaries(),
+            'ruleKinds' => BankRuleKindEnum::options(),
+            'customers' => FindCustomer::optionsForTeam($teamId)->values()->all(),
             'kinds' => BankAccountKindEnum::options(),
             'currencies' => CurrencyEnum::options(),
         ]);

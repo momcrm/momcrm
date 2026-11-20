@@ -3,9 +3,11 @@
 declare(strict_types=1);
 
 use App\BankAccount\BankAccountEloquentModel;
+use App\BankRule\BankRuleEloquentModel;
 use App\BankTransaction\BankTransactionEloquentModel;
 use App\Customer\CustomerEloquentModel;
 use App\Payment\PaymentEloquentModel;
+use App\TeamUser\TeamRoleEnum;
 use App\User\UserEloquentModel;
 
 use function Pest\Laravel\actingAs;
@@ -43,3 +45,23 @@ it('refuses a customer billed in another currency, another team\'s customer and 
     'another team' => [['team_id' => fn () => UserEloquentModel::factory()->withPersonalTeam()->create()->current_team_id], []],
     'applied' => [[], ['payment_id' => fn () => PaymentEloquentModel::factory()->create()->id]],
 ]);
+
+it('remembers the customer for later deposits like it, for owners and admins', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $member = UserEloquentModel::factory()->inTeam($owner->current_team_id, TeamRoleEnum::Member)->create();
+    $customer = CustomerEloquentModel::factory()->create(['team_id' => $owner->current_team_id]);
+    $line = BankTransactionEloquentModel::factory()->forAccount(BankAccountEloquentModel::factory()->create(['team_id' => $owner->current_team_id]))->create();
+
+    actingAs($member)
+        ->patch(route('bank-feeds.customer', $line->id), ['customer_id' => $customer->id, 'remember' => 'J CITIZEN'])
+        ->assertSessionHasErrors('remember');
+
+    actingAs($owner)
+        ->patch(route('bank-feeds.customer', $line->id), ['customer_id' => $customer->id, 'remember' => '  J   CITIZEN '])
+        ->assertSessionHasNoErrors();
+
+    expect(BankRuleEloquentModel::query()->sole())
+        ->kind->toBe('match')
+        ->contains->toBe('J CITIZEN')
+        ->customer_id->toBe($customer->id);
+});

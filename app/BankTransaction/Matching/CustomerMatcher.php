@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\BankTransaction\Matching;
 
 use App\BankAccount\BankAccount;
+use App\BankRule\Actions\FindBankRule;
+use App\BankRule\BankRuleCollection;
 use App\BankTransaction\BankTransactionMatchEnum;
 use App\Customer\CustomerEloquentModel;
 use App\Customer\CustomerStatusEnum;
@@ -27,9 +29,9 @@ use App\Team\Team;
 
 /**
  * Works out which customer a deposit is from by its description, as
- * Amphora's bank feed matcher does. Two ways are tried, most certain first:
- * invoice and customer numbers quoted in the description, then the words of
- * customer names. A way that points at more than one customer settles
+ * Amphora's bank feed matcher does. Three ways are tried, most certain
+ * first: the team's match rules, invoice and customer numbers quoted in the
+ * description, then the words of customer names. A way that points at more than one customer settles
  * nothing, and the line is left for someone to pick rather than guessed.
  *
  * Only customers billed in the account's currency are considered, and the
@@ -89,6 +91,7 @@ final class CustomerMatcher
      * @param  list<string>  $teamWords  words of the team's own name, which are in its own transfers
      */
     private function __construct(
+        private readonly BankRuleCollection $rules,
         private readonly array $names,
         private readonly array $customerNumbers,
         private readonly array $customerPrefixes,
@@ -96,7 +99,7 @@ final class CustomerMatcher
         private readonly array $teamWords,
     ) {}
 
-    public static function forAccount(BankAccount $account): self
+    public static function forAccount(BankAccount $account, ?BankRuleCollection $rules = null): self
     {
         $teamId = $account->getTeamId()->toString();
         $customers = CustomerEloquentModel::query()
@@ -121,6 +124,7 @@ final class CustomerMatcher
         $team = FindTeam::byId($teamId);
 
         return new self(
+            rules: $rules ?? FindBankRule::listForTeam($teamId),
             names: $customers->mapWithKeys(fn (CustomerEloquentModel $customer): array => [$customer->id => $customer->name])->all(),
             customerNumbers: $customers->mapWithKeys(fn (CustomerEloquentModel $customer): array => [$customer->number => $customer->id])->all(),
             customerPrefixes: $customers
@@ -141,6 +145,12 @@ final class CustomerMatcher
 
     private function find(string $description): ?CustomerMatch
     {
+        $byRule = $this->rules->customerFor($description, $this->names);
+
+        if ($byRule !== null) {
+            return new CustomerMatch($byRule, BankTransactionMatchEnum::Rule);
+        }
+
         $searchable = self::searchable($description);
         $byNumber = $this->matchByNumber($searchable);
 

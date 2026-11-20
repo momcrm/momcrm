@@ -14,7 +14,8 @@ use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 
 /**
- * Tries again to find the customer of every pending line that has none.
+ * Applies the rules again and tries again to find the customer of every
+ * pending line that has none.
  */
 final class MatchBankTransactionsFormRequest extends FormRequest
 {
@@ -49,11 +50,16 @@ final class MatchBankTransactionsFormRequest extends FormRequest
     public function process(): RedirectResponse
     {
         $count = $this->transactions->count();
-        $matched = MatchBankTransactions::lines($this->transactions);
-
-        Inertia::flash('toast', ['type' => 'success', 'message' => $count === 0
+        $result = MatchBankTransactions::lines($this->transactions);
+        $message = $count === 0
             ? __('Every pending line already has a customer.')
-            : __('Found the customer for :matched of :count lines.', ['matched' => $matched, 'count' => $count])]);
+            : __('Found the customer for :matched of :count lines.', ['matched' => $result['matched'], 'count' => $count]);
+
+        if ($result['hidden'] > 0) {
+            $message .= ' '.trans_choice(':count was hidden by a rule.|:count were hidden by a rule.', $result['hidden']);
+        }
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => $message]);
 
         return back();
     }

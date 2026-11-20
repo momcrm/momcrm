@@ -16,6 +16,7 @@ enum BankTransactionMatchEnum: string
     case Manual = 'manual';
     case Name = 'name';
     case Number = 'number';
+    case Rule = 'rule';
 
     public function label(): string
     {
@@ -23,6 +24,7 @@ enum BankTransactionMatchEnum: string
             self::Manual => 'Picked by hand',
             self::Name => 'Matched by name',
             self::Number => 'Matched by invoice or customer number',
+            self::Rule => 'Matched by a rule',
         };
     }
 }
