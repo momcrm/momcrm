@@ -148,18 +148,24 @@ function CustomerCell({
 
     return (
         <div className="flex min-w-0 items-center gap-1.5">
-            <button
-                type="button"
-                onClick={() => actions.onChooseCustomer(line)}
-                className={
-                    line.customer_name
-                        ? 'min-w-0 truncate text-left underline-offset-4 hover:underline'
-                        : 'text-left text-primary underline-offset-4 hover:underline'
-                }
-                title={line.matched_by_label ?? undefined}
-            >
-                {line.customer_name ?? 'Choose…'}
-            </button>
+            <div className="min-w-0">
+                <button
+                    type="button"
+                    onClick={() => actions.onChooseCustomer(line)}
+                    className={
+                        line.customer_name
+                            ? 'block max-w-full truncate text-left underline-offset-4 hover:underline'
+                            : 'text-left text-primary underline-offset-4 hover:underline'
+                    }
+                >
+                    {line.customer_name ?? 'Choose…'}
+                </button>
+                {line.matched_by && line.matched_by !== 'manual' && (
+                    <p className="truncate text-xs text-muted-foreground">
+                        {line.matched_by_label}
+                    </p>
+                )}
+            </div>
             {line.customer_id && actions.canApply && (
                 <Button
                     variant="outline"

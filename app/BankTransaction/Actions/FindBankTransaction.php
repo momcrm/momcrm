@@ -13,6 +13,7 @@ use App\BankTransaction\BankTransactionStatusEnum;
 use App\BankTransaction\Properties\AmountInCents;
 use App\BankTransaction\Properties\BankAccountId;
 use App\BankTransaction\Properties\Crn;
+use App\BankTransaction\Properties\CustomerId;
 use App\BankTransaction\Properties\Description;
 use App\BankTransaction\Properties\HiddenAt;
 use App\BankTransaction\Properties\Id;
@@ -107,6 +108,23 @@ final class FindBankTransaction
             self::query($teamId)
                 ->with([BankTransactionRelationship::BankAccount->value, BankTransactionRelationship::Customer->value])
                 ->whereKey($ids)
+                ->get()
+                ->all(),
+            'fromEloquentModel',
+        );
+    }
+
+    /**
+     * The team's pending lines with no customer yet, with their account.
+     */
+    public static function unmatchedForTeam(string $teamId): BankTransactionCollection
+    {
+        return BankTransaction::collect(
+            self::query($teamId)
+                ->with(BankTransactionRelationship::BankAccount->value)
+                ->whereNull(PaymentId::getDatabaseTableColumnName())
+                ->whereNull(HiddenAt::getDatabaseTableColumnName())
+                ->whereNull(CustomerId::getDatabaseTableColumnName())
                 ->get()
                 ->all(),
             'fromEloquentModel',

@@ -21,6 +21,7 @@ use App\BankTransaction\Controllers\DeleteBankTransactionsController;
 use App\BankTransaction\Controllers\HideBankTransactionsController;
 use App\BankTransaction\Controllers\ImportBankStatementController;
 use App\BankTransaction\Controllers\ListBankTransactionsController;
+use App\BankTransaction\Controllers\MatchBankTransactionsController;
 use App\Comment\Controllers\DeleteCommentController;
 use App\Comment\Controllers\StoreCommentController;
 use App\Comment\Controllers\StoreRecordCommentController;
@@ -333,5 +334,6 @@ Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function 
     Route::patch('bank-feeds/hidden', HideBankTransactionsController::class)->name('bank-feeds.hide');
     Route::delete('bank-feeds', DeleteBankTransactionsController::class)->name('bank-feeds.destroy');
     Route::post('bank-feeds/apply', ApplyBankTransactionsController::class)->name('bank-feeds.apply');
+    Route::post('bank-feeds/match', MatchBankTransactionsController::class)->name('bank-feeds.match');
     Route::patch('bank-feeds/{bankTransaction}/customer', AssignBankTransactionCustomerController::class)->whereUuid('bankTransaction')->name('bank-feeds.customer');
 });

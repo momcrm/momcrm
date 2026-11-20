@@ -1,5 +1,5 @@
-import { Head, usePage } from '@inertiajs/react';
-import { Upload } from 'lucide-react';
+import { Head, router, usePage } from '@inertiajs/react';
+import { Upload, Wand2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { BankFeedBulkBar } from '@/components/bank-feeds/bank-feed-bulk';
 import BankFeedFilters from '@/components/bank-feeds/bank-feed-filters';
@@ -18,7 +18,7 @@ import RecordPaymentDialog from '@/components/payments/record-payment-dialog';
 import { useTicketSelection } from '@/components/tickets/ticket-bulk';
 import { Button } from '@/components/ui/button';
 import { visitWithQuery } from '@/lib/query';
-import { index } from '@/routes/bank-feeds';
+import { index, match } from '@/routes/bank-feeds';
 import type { BankAccount, BankTransaction, Option, Paginated } from '@/types';
 
 const RELOAD = ['transactions', 'filters'];
@@ -70,13 +70,30 @@ export default function BankFeedsIndex({
                     actions={
                         can.import &&
                         accounts.length > 0 && (
-                            <Button
-                                size="sm"
-                                onClick={() => setIsImporting(true)}
-                            >
-                                <Upload />
-                                Import statement
-                            </Button>
+                            <>
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    title="Look again for the customer of pending lines that have none, such as after adding the customer who paid"
+                                    onClick={() =>
+                                        router.post(
+                                            match.url(),
+                                            {},
+                                            { preserveScroll: true },
+                                        )
+                                    }
+                                >
+                                    <Wand2 />
+                                    Match again
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    onClick={() => setIsImporting(true)}
+                                >
+                                    <Upload />
+                                    Import statement
+                                </Button>
+                            </>
                         )
                     }
                 />

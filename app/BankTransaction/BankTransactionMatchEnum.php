@@ -14,11 +14,15 @@ enum BankTransactionMatchEnum: string
     use Enum;
 
     case Manual = 'manual';
+    case Name = 'name';
+    case Number = 'number';
 
     public function label(): string
     {
         return match ($this) {
             self::Manual => 'Picked by hand',
+            self::Name => 'Matched by name',
+            self::Number => 'Matched by invoice or customer number',
         };
     }
 }
