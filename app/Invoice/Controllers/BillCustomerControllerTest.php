@@ -22,7 +22,7 @@ it('drafts one invoice from the lines picked, priced again, and says which', fun
     $left = ChargeEloquentModel::factory()->forCustomer($customer)->create(['charged_on' => '2026-11-20']);
 
     $response = actingAs($user)
-        ->post(route('customers.bill', $customer->id), ['date' => '2026-12-02', 'line_keys' => ["service:{$service->id}:2026-12-01", "charge:{$picked->id}"]])
+        ->post(route('customers.bill', $customer->id), ['month' => '2026-12', 'line_keys' => ["service:{$service->id}:2026-12-01", "charge:{$picked->id}"]])
         ->assertSessionHasNoErrors();
 
     $invoice = InvoiceEloquentModel::query()->sole();
@@ -30,7 +30,7 @@ it('drafts one invoice from the lines picked, priced again, and says which', fun
         ->assertInertiaFlash('toast', ['type' => 'success', 'message' => 'INV-0001 drafted for Acme.']);
 
     expect($invoice)->status->toBe('draft')->customer_id->toBe($customer->id)
-        ->and($invoice->issued_on->toDateString())->toBe('2026-12-02')
+        ->and($invoice->issued_on->toDateString())->toBe(now()->toDateString())
         ->and(InvoiceItemEloquentModel::query()->orderBy('position')->get(['service_id', 'charge_id', 'unit_price_in_cents'])->toArray())->toBe([
             ['service_id' => $service->id, 'charge_id' => null, 'unit_price_in_cents' => 3000],
             ['service_id' => null, 'charge_id' => $picked->id, 'unit_price_in_cents' => 9500],
@@ -42,14 +42,14 @@ it('refuses lines that are billed or never were', function (): void {
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
     $customer = CustomerEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
     $charge = ChargeEloquentModel::factory()->forCustomer($customer)->create(['charged_on' => '2026-11-20']);
-    actingAs($user)->post(route('customers.bill', $customer->id), ['date' => '2026-12-02', 'line_keys' => ["charge:{$charge->id}"]]);
+    actingAs($user)->post(route('customers.bill', $customer->id), ['month' => '2026-12', 'line_keys' => ["charge:{$charge->id}"]]);
 
     actingAs($user)
-        ->post(route('customers.bill', $customer->id), ['date' => '2026-12-02', 'line_keys' => ["charge:{$charge->id}"]])
+        ->post(route('customers.bill', $customer->id), ['month' => '2026-12', 'line_keys' => ["charge:{$charge->id}"]])
         ->assertSessionHasErrors(['line_keys' => 'Some of those lines were billed or changed since. Look again.']);
 
     actingAs($user)
-        ->post(route('customers.bill', $customer->id), ['date' => '2026-12-02', 'line_keys' => []])
+        ->post(route('customers.bill', $customer->id), ['month' => '2026-12', 'line_keys' => []])
         ->assertSessionHasErrors('line_keys');
 
     expect(InvoiceEloquentModel::query()->count())->toBe(1);
@@ -69,6 +69,6 @@ it('refuses someone an access rule keeps from creating invoices', function (): v
     ]);
 
     actingAs($member)
-        ->post(route('customers.bill', $customer->id), ['date' => '2026-12-02', 'line_keys' => ['charge:x']])
+        ->post(route('customers.bill', $customer->id), ['month' => '2026-12', 'line_keys' => ['charge:x']])
         ->assertForbidden();
 });

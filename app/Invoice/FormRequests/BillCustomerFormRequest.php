@@ -9,6 +9,7 @@ use App\Customer\Customer;
 use App\Customer\Exceptions\CouldNotFindCustomer;
 use App\Invoice\Actions\DraftCustomerInvoice;
 use App\Invoice\Billing\BillingLine;
+use App\Invoice\Billing\BillingMonth;
 use App\Invoice\Billing\CustomerBillingLines;
 use App\Invoice\Invoice;
 use App\Shared\Types;
@@ -23,8 +24,10 @@ use Illuminate\Validation\Validator;
 use Inertia\Inertia;
 
 /**
- * Bills a customer now, as Amphora's company billing does: drafts one
- * invoice from the lines picked out of what they are due by the day given.
+ * Bills a customer now, as Amphora's Multiple Service Billing and Combine do:
+ * drafts one invoice, issued today, from the lines picked out of what they
+ * are due for the month given (periods starting in or before it, and their
+ * waiting lines).
  * Lines are named by their keys and priced again here, so what the page
  * showed isn't trusted. The new invoice's id is flashed as `invoiceId`.
  */
@@ -64,7 +67,7 @@ final class BillCustomerFormRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'date' => ['required', 'date_format:Y-m-d'],
+            'month' => ['required', 'date_format:Y-m'],
             self::LINE_KEYS => ['required', 'array', 'min:1'],
             self::LINE_KEYS.'.*' => ['required', 'string', 'distinct'],
         ];
@@ -92,7 +95,7 @@ final class BillCustomerFormRequest extends FormRequest
             }
 
             $picked = Types::stringList($this->input(self::LINE_KEYS));
-            $due = CustomerBillingLines::forCustomer($this->customer->getId()->toString(), $this->day());
+            $due = CustomerBillingLines::forCustomer($this->customer->getId()->toString(), BillingMonth::fromString($this->string('month')->toString())->lastDay());
             $this->lines = array_values(array_filter($due, fn (BillingLine $line): bool => in_array($line->key, $picked, true)));
 
             if (count($this->lines) !== count($picked)) {
@@ -107,7 +110,7 @@ final class BillCustomerFormRequest extends FormRequest
             $this->customer,
             FindTeam::byId($this->customer->getTeamId()->toString()),
             $this->lines,
-            $this->day(),
+            CarbonImmutable::today(),
         );
 
         Inertia::flash([
@@ -116,10 +119,5 @@ final class BillCustomerFormRequest extends FormRequest
         ]);
 
         return back();
-    }
-
-    private function day(): CarbonImmutable
-    {
-        return CarbonImmutable::parse($this->string('date')->toString())->startOfDay();
     }
 }

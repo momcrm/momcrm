@@ -7,18 +7,21 @@ namespace App\Invoice\Controllers;
 use App\Customer\Actions\FindCustomer;
 use App\Customer\Exceptions\CouldNotFindCustomer;
 use App\Invoice\Billing\BillingLine;
+use App\Invoice\Billing\BillingMonth;
 use App\Invoice\Billing\CustomerBillingLines;
 use App\Invoice\PaymentTerms;
+use App\Shared\Types;
 use App\Team\Actions\FindTeam;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
- * What a customer would be billed if they were billed now: their service
- * periods starting by the day asked (today unless given) and their waiting
- * one-off charges, with the due date their terms give. Fetched by the "Bill
- * now" dialog.
+ * What a customer would be billed for a month (this one unless asked), as
+ * Amphora's Multiple Service Billing verifies it: their service periods
+ * starting in or before it, of the services asked for when given, and their
+ * waiting lines, with the due date their terms give if billed today.
+ * Fetched by the Billing tab.
  */
 final class ShowCustomerBillingController
 {
@@ -34,9 +37,12 @@ final class ShowCustomerBillingController
             throw CouldNotFindCustomer::notFound();
         }
 
-        $day = preg_match('/^\d{4}-\d{2}-\d{2}$/', $request->string('date')->toString()) === 1
-            ? CarbonImmutable::parse($request->string('date')->toString())
-            : CarbonImmutable::today();
+        $month = BillingMonth::fromString($request->string('month')->toString());
+        $services = $request->has('services') ? Types::stringList($request->input('services')) : null;
+        $lines = array_values(array_filter(
+            CustomerBillingLines::forCustomer($found->getId()->toString(), $month->lastDay()),
+            fn (BillingLine $line): bool => $services === null || $line->serviceId === null || $line->chargeId !== null || in_array($line->serviceId, $services, true),
+        ));
 
         return response()->json([
             'customer' => [
@@ -44,9 +50,9 @@ final class ShowCustomerBillingController
                 'name' => $found->getName()->toString(),
                 'currency' => $found->getCurrency()->toEnum()->value,
             ],
-            'date' => $day->toDateString(),
-            'due_on' => PaymentTerms::dueOn($day, $found, FindTeam::byId($teamId))->toDateString(),
-            'lines' => array_map(fn (BillingLine $line): array => $line->toArray(), CustomerBillingLines::forCustomer($found->getId()->toString(), $day)),
+            'month' => $month->toString(),
+            'due_on' => PaymentTerms::dueOn(CarbonImmutable::today(), $found, FindTeam::byId($teamId))->toDateString(),
+            'lines' => array_map(fn (BillingLine $line): array => $line->toArray(), $lines),
         ]);
     }
 }
