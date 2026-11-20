@@ -45,6 +45,7 @@ export type CustomerWorkspace = {
         assets: number;
         services: number;
         invoices: number;
+        payments: number;
         files: number;
         secrets: number;
         contracts: number;
@@ -731,6 +732,8 @@ export type InvoiceDocument = {
     customer: Customer;
     /** The team the invoice is from. */
     from: TeamBilling;
+    /** The payments applied to the invoice, oldest first. */
+    payments: PaymentAllocation[];
 };
 
 /** The business details a team prints on its invoices. */
@@ -761,6 +764,48 @@ export type PaymentMethod =
     | 'cash'
     | 'cheque'
     | 'credit';
+
+/** A payment as lists and the payment dialog show it. */
+export type Payment = {
+    id: string;
+    number: number;
+    /** e.g. PAY-0042 */
+    reference_number: string;
+    customer_id: string;
+    customer_name: string | null;
+    paid_on: string | null;
+    amount_in_cents: number;
+    /** How much of it has been applied to invoices. */
+    allocated_in_cents: number;
+    unallocated_in_cents: number;
+    currency: string;
+    method: PaymentMethod;
+    method_label: string;
+    /** The bank or receipt reference. */
+    reference: string | null;
+    notes: string | null;
+    created_at: string | null;
+};
+
+/** Part of a payment applied to one invoice. */
+export type PaymentAllocation = {
+    id: string;
+    payment_id: string;
+    invoice_id: string;
+    invoice_reference: string | null;
+    payment_reference_number: string | null;
+    paid_on: string | null;
+    method_label: string | null;
+    amount_in_cents: number;
+};
+
+/** What the payment dialog fetches. */
+export type PaymentDetails = {
+    payment: Payment;
+    allocations: PaymentAllocation[];
+    can: Abilities;
+    methods: Option[];
+};
 
 /** What the record payment dialog fetches for a customer. */
 export type OutstandingInvoices = {

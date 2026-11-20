@@ -10,6 +10,7 @@ use App\PaymentAllocation\Properties\CreatedAt;
 use App\PaymentAllocation\Properties\Id;
 use App\PaymentAllocation\Properties\Invoice;
 use App\PaymentAllocation\Properties\InvoiceId;
+use App\PaymentAllocation\Properties\Payment;
 use App\PaymentAllocation\Properties\PaymentId;
 use App\PaymentAllocation\Properties\TeamId;
 use App\PaymentAllocation\Properties\UpdatedAt;
@@ -28,6 +29,7 @@ final class PaymentAllocation extends AbstractData
         public Id $id,
         public Invoice $invoice,
         public InvoiceId $invoiceId,
+        public Payment $payment,
         public PaymentId $paymentId,
         public TeamId $teamId,
         public UpdatedAt $updatedAt,
@@ -56,15 +58,23 @@ final class PaymentAllocation extends AbstractData
     }
 
     /**
-     * @return array{id: string, payment_id: string, invoice_id: string, invoice_reference: ?string, amount_in_cents: int}
+     * With the invoice's reference when the invoice was loaded, and the
+     * payment's number, date and method when the payment was.
+     *
+     * @return array{id: string, payment_id: string, invoice_id: string, invoice_reference: ?string, payment_reference_number: ?string, paid_on: ?string, method_label: ?string, amount_in_cents: int}
      */
     public function toSummary(): array
     {
+        $payment = $this->getPayment()->toNullableData();
+
         return [
             'id' => $this->getId()->toString(),
             'payment_id' => $this->getPaymentId()->toString(),
             'invoice_id' => $this->getInvoiceId()->toString(),
             'invoice_reference' => $this->getInvoice()->toNullableData()?->getReference(),
+            'payment_reference_number' => $payment?->getReferenceNumber(),
+            'paid_on' => $payment?->getPaidOn()->toNullableCarbon()?->toDateString(),
+            'method_label' => $payment?->getMethod()->toEnum()->label(),
             'amount_in_cents' => $this->getAmountInCents()->toInteger(),
         ];
     }
@@ -113,6 +123,11 @@ final class PaymentAllocation extends AbstractData
         $this->invoiceId = new InvoiceId($invoiceId instanceof AbstractValue ? $invoiceId->toValue() : $invoiceId);
 
         return $this;
+    }
+
+    public function getPayment(): Payment
+    {
+        return $this->payment;
     }
 
     public function getPaymentId(): PaymentId
