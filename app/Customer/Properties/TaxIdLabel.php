@@ -7,18 +7,21 @@ namespace App\Customer\Properties;
 use Illuminate\Foundation\Http\FormRequest;
 use Mom\Data\AbstractString;
 
-final class Abn extends AbstractString
+/**
+ * What the customer's country calls their tax ID, e.g. ABN, VAT or GST No.
+ */
+final class TaxIdLabel extends AbstractString
 {
     public static function getName(): string
     {
-        return 'abn';
+        return 'tax_id_label';
     }
 
     /**
-     * @return array<int, mixed>
+     * @return array<int, string>
      */
     public static function getValidationRulesForCreate(FormRequest $request): array
     {
-        return ['nullable', 'string', 'max:20'];
+        return ['nullable', 'string', 'max:20', 'required_with:tax_id'];
     }
 }

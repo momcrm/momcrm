@@ -7,7 +7,6 @@ namespace App\Customer\Factories;
 use App\Customer\CustomerBillingTypeEnum;
 use App\Customer\CustomerEloquentModel;
 use App\Customer\CustomerStatusEnum;
-use App\Customer\Properties\Abn;
 use App\Customer\Properties\BillingType;
 use App\Customer\Properties\Email;
 use App\Customer\Properties\IsSample;
@@ -17,6 +16,8 @@ use App\Customer\Properties\Number;
 use App\Customer\Properties\Phone;
 use App\Customer\Properties\Prefix;
 use App\Customer\Properties\Status;
+use App\Customer\Properties\TaxId;
+use App\Customer\Properties\TaxIdLabel;
 use App\Customer\Properties\TeamId;
 use App\Customer\Properties\Website;
 use App\Team\TeamEloquentModel;
@@ -39,7 +40,8 @@ final class CustomerFactory extends Factory
             Number::getDatabaseTableColumnName() => fake()->unique()->numberBetween(1, 1000000),
             Name::getDatabaseTableColumnName() => fake()->company(),
             Prefix::getDatabaseTableColumnName() => null,
-            Abn::getDatabaseTableColumnName() => null,
+            TaxId::getDatabaseTableColumnName() => null,
+            TaxIdLabel::getDatabaseTableColumnName() => null,
             Email::getDatabaseTableColumnName() => fake()->companyEmail(),
             Phone::getDatabaseTableColumnName() => fake()->phoneNumber(),
             Website::getDatabaseTableColumnName() => null,

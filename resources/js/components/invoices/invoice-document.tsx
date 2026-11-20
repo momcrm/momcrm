@@ -1,5 +1,6 @@
 import { Link } from '@inertiajs/react';
 import InvoiceStatusBadge from '@/components/invoices/invoice-status-badge';
+import { taxIdLine } from '@/components/tax-id-inputs';
 import { formatCents } from '@/lib/money';
 import { cn } from '@/lib/utils';
 import { show as showCustomer } from '@/routes/customers';
@@ -119,7 +120,9 @@ export default function InvoiceDocument({
                             {customer.name}
                         </Link>
                         <div className="mt-1 space-y-0.5 text-sm text-muted-foreground">
-                            {customer.abn && <div>ABN {customer.abn}</div>}
+                            {taxIdLine(customer) && (
+                                <div>{taxIdLine(customer)}</div>
+                            )}
                             {customer.email && (
                                 <div className="truncate">{customer.email}</div>
                             )}

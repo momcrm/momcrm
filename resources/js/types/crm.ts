@@ -12,7 +12,10 @@ export type Customer = {
     id: string;
     number: number;
     name: string;
-    abn: string | null;
+    /** Their business or tax registration number. */
+    tax_id: string | null;
+    /** What their country calls it, e.g. ABN, VAT or GST No. */
+    tax_id_label: string | null;
     email: string | null;
     phone: string | null;
     website: string | null;

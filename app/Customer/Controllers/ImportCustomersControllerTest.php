@@ -39,6 +39,22 @@ it('imports customers and their contacts, matching common headings', function ()
     expect(CustomerEloquentModel::query()->where('name', 'Zeta Pty Ltd')->sole()->email)->toBe('ops@zeta.test');
 });
 
+it('imports tax IDs, naming them from their heading unless a label column says otherwise', function (string $headings, string $row, string $label, string $taxId): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+
+    actingAs($user)
+        ->post(route('customers.import.store'), ['file' => csvFile("{$headings}\n{$row}\n")])
+        ->assertSessionHasNoErrors();
+
+    expect(CustomerEloquentModel::query()->sole())
+        ->tax_id->toBe($taxId)
+        ->tax_id_label->toBe($label);
+})->with([
+    'an ABN column' => ['Name,ABN', 'Acme IT,12 345 678 901', 'ABN', '12 345 678 901'],
+    'a VAT number column' => ['Name,VAT Number', 'Acme Ltd,GB123456789', 'VAT', 'GB123456789'],
+    'a label column' => ['Name,Tax ID,Tax ID label', 'Acme Inc,12-3456789,EIN', 'EIN', '12-3456789'],
+]);
+
 it('imports nothing and names the rows when any row is invalid', function (): void {
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
     $csv = "Name,Email\nAcme IT,hi@acme.test\n,missing@name.test\nZeta,not-an-email\n";

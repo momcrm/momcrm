@@ -10,6 +10,7 @@ import type { ReactNode } from 'react';
 import { useCustomerTypes } from '@/components/customers/customer-meta';
 import CustomFieldsFormFields from '@/components/custom-fields/custom-fields-form';
 import FormField from '@/components/form-field';
+import TaxIdInputs from '@/components/tax-id-inputs';
 import NativeSelect from '@/components/native-select';
 import { Button } from '@/components/ui/button';
 import {
@@ -260,11 +261,17 @@ function CreateCustomerForm({
                             />
                         </FormField>
                         <FormField
-                            id="customer-abn"
-                            label="ABN"
-                            error={errors.abn}
+                            id="customer-tax-id"
+                            label="Tax ID"
+                            error={errors.tax_id_label ?? errors.tax_id}
                         >
-                            <Input id="customer-abn" name="abn" />
+                            <TaxIdInputs
+                                labelInput={{ name: 'tax_id_label' }}
+                                idInput={{
+                                    id: 'customer-tax-id',
+                                    name: 'tax_id',
+                                }}
+                            />
                         </FormField>
                         <FormField
                             id="customer-status"
