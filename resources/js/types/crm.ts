@@ -1157,3 +1157,13 @@ export type CustomerBilling = {
     due_on: string;
     lines: BillingLine[];
 };
+
+/** A customer in a billing run, with what they are due. */
+export type BillingRunCustomer = {
+    id: string;
+    name: string;
+    currency: string;
+    due_on: string;
+    total_in_cents: number;
+    lines: BillingLine[];
+};

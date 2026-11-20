@@ -83,8 +83,10 @@ use App\Invoice\Controllers\DownloadInvoicePdfController;
 use App\Invoice\Controllers\EditInvoiceController;
 use App\Invoice\Controllers\ListInvoicesController;
 use App\Invoice\Controllers\MarkInvoiceSentController;
+use App\Invoice\Controllers\RunBillingController;
 use App\Invoice\Controllers\SendInvoiceController;
 use App\Invoice\Controllers\SendInvoicesController;
+use App\Invoice\Controllers\ShowBillingRunController;
 use App\Invoice\Controllers\ShowCustomerBillingController;
 use App\Invoice\Controllers\ShowInvoiceController;
 use App\Invoice\Controllers\ShowInvoiceDetailsController;
@@ -316,6 +318,8 @@ Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function 
 
     Route::get('invoices', ListInvoicesController::class)->name('invoices.index');
     Route::get('invoices/create', CreateInvoiceController::class)->name('invoices.create');
+    Route::get('invoices/run', ShowBillingRunController::class)->name('invoices.run');
+    Route::post('invoices/run', RunBillingController::class)->name('invoices.run.store');
     Route::post('invoices', StoreInvoiceController::class)->name('invoices.store');
     Route::get('invoices/{invoice}', ShowInvoiceController::class)->whereUuid('invoice')->name('invoices.show');
     Route::get('invoices/{invoice}/edit', EditInvoiceController::class)->whereUuid('invoice')->name('invoices.edit');
