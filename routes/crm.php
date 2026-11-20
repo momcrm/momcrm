@@ -15,6 +15,9 @@ use App\Article\Controllers\ShowArticleImageController;
 use App\Article\Controllers\StoreArticleController;
 use App\Article\Controllers\StoreArticleImageController;
 use App\Article\Controllers\UpdateArticleController;
+use App\ArticleLink\Controllers\DeleteArticleLinkController;
+use App\ArticleLink\Controllers\ListArticleLinkOptionsController;
+use App\ArticleLink\Controllers\StoreArticleLinkController;
 use App\Asset\Controllers\CreateAssetController;
 use App\Asset\Controllers\DeleteAssetController;
 use App\Asset\Controllers\EditAssetController;
@@ -248,6 +251,10 @@ Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function 
     Route::post('articles/{article}/versions/{version}/restore', RestoreArticleVersionController::class)->whereUuid(['article', 'version'])->name('articles.versions.restore');
     Route::post('articles/{article}/review', ReviewArticleController::class)->whereUuid('article')->name('articles.review');
     Route::delete('articles/{article}', DeleteArticleController::class)->whereUuid('article')->name('articles.destroy');
+
+    Route::get('article-links/options', ListArticleLinkOptionsController::class)->name('article-links.options');
+    Route::post('article-links/{target}/{record}', StoreArticleLinkController::class)->whereIn('target', ['ticket', 'asset', 'service'])->whereUuid('record')->name('article-links.store');
+    Route::delete('article-links/{link}', DeleteArticleLinkController::class)->whereUuid('link')->name('article-links.destroy');
 
     Route::get('contacts', ListContactsController::class)->name('contacts.index');
     Route::get('contacts/form-options', ListContactFormOptionsController::class)->name('contacts.form-options');

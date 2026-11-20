@@ -8,6 +8,7 @@ use App\AccessRule\AccessRuleEloquentModel;
 use App\Activity\ActivityEloquentModel;
 use App\Article\ArticleEloquentModel;
 use App\ArticleCategory\ArticleCategoryEloquentModel;
+use App\ArticleLink\ArticleLinkEloquentModel;
 use App\ArticleVersion\ArticleVersionEloquentModel;
 use App\Asset\AssetEloquentModel;
 use App\Attachment\AttachmentEloquentModel;
@@ -67,6 +68,7 @@ enum MorphMapKeyEnum: string
     case Activity = 'activity';
     case Article = 'article';
     case ArticleCategory = 'article_category';
+    case ArticleLink = 'article_link';
     case ArticleVersion = 'article_version';
     case Asset = 'asset';
     case Attachment = 'attachment';
@@ -139,6 +141,7 @@ enum MorphMapKeyEnum: string
             self::Activity => ActivityEloquentModel::class,
             self::Article => ArticleEloquentModel::class,
             self::ArticleCategory => ArticleCategoryEloquentModel::class,
+            self::ArticleLink => ArticleLinkEloquentModel::class,
             self::ArticleVersion => ArticleVersionEloquentModel::class,
             self::Asset => AssetEloquentModel::class,
             self::Attachment => AttachmentEloquentModel::class,

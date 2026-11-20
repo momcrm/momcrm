@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Service\Controllers;
 
+use App\ArticleLink\Actions\FindArticleLink;
+use App\ArticleLink\ArticleLinkTargetEnum;
 use App\CustomField\CustomFieldRelationLabels;
 use App\CustomField\CustomFieldTargetEnum;
 use App\Service\Exceptions\CouldNotFindService;
@@ -28,6 +30,7 @@ final class ShowServiceController
         return Inertia::render('services/workspace/overview', [
             ...$workspace->props($request),
             'customFieldLabels' => CustomFieldRelationLabels::for($workspace->teamId, CustomFieldTargetEnum::Service, $workspace->service->getCustomFields()->toValues()),
+            'articles' => FindArticleLink::articlesFor(ArticleLinkTargetEnum::Service, $workspace->service->getId()->toString(), $workspace->teamId, (string) $request->user()?->id),
             'dates' => [
                 'created_at' => $workspace->service->getCreatedAt()->toNullableISOString(),
                 'updated_at' => $workspace->service->getUpdatedAt()->toNullableISOString(),

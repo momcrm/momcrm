@@ -6,6 +6,8 @@ namespace App\Asset\Controllers;
 
 use App\AccessRule\AccessResourceEnum;
 use App\AccessRule\Engine\AccessAbilities;
+use App\ArticleLink\Actions\FindArticleLink;
+use App\ArticleLink\ArticleLinkTargetEnum;
 use App\Asset\Actions\FindAsset;
 use App\Asset\AssetStatusEnum;
 use App\Asset\Exceptions\CouldNotFindAsset;
@@ -43,6 +45,7 @@ final class EditAssetController
             'locations' => FindLocation::optionsForCustomer($customer->getId()->toString(), (string) $customer->getTeamId()->toString()),
             'statuses' => AssetStatusEnum::options(),
             'customFieldLabels' => CustomFieldRelationLabels::for($found->getTeamId()->toString(), CustomFieldTargetEnum::Asset, $found->getCustomFields()->toValues()),
+            'articles' => FindArticleLink::articlesFor(ArticleLinkTargetEnum::Asset, $found->getId()->toString(), $found->getTeamId()->toString(), (string) $request->user()?->id),
             'linkedRecords' => FindLinkedRecords::to($found->getTeamId()->toString(), (string) $request->user()?->id, CustomFieldRelationEnum::Asset, $found->getId()->toString()),
             'can' => AccessAbilities::for($request->user(), AccessResourceEnum::Asset, $found),
             'secrets' => FindSecret::forCustomer($customer->getId()->toString(), $customer->getTeamId()->toString(), $found->getId()->toString())

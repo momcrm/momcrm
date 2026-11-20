@@ -1,4 +1,5 @@
 import { Head, Link, setLayoutProps } from '@inertiajs/react';
+import LinkedArticles from '@/components/articles/linked-articles';
 import LinkedRecords from '@/components/custom-fields/linked-records';
 import { KeyRound } from 'lucide-react';
 import ConfirmDelete from '@/components/confirm-delete';
@@ -17,12 +18,14 @@ import type {
     Customer,
     CustomerOption,
     LinkedRecordGroup,
+    AttachedArticle,
     Option,
     SecretItem,
 } from '@/types';
 
 export default function EditAsset({
     can,
+    articles,
     linkedRecords,
     asset,
     customer,
@@ -32,6 +35,8 @@ export default function EditAsset({
 }: {
     secrets: SecretItem[];
     can: Abilities;
+    /** Knowledge base articles attached to the asset. */
+    articles: AttachedArticle[];
     /** What points at this record through record-link custom fields. */
     linkedRecords: LinkedRecordGroup[];
     asset: Asset;
@@ -108,7 +113,14 @@ export default function EditAsset({
                         </p>
                     )}
                 </section>
-                <div className="max-w-2xl">
+                <div className="max-w-2xl space-y-6">
+                    <LinkedArticles
+                        target="asset"
+                        recordId={asset.id}
+                        articles={articles}
+                        canEdit={Boolean(can.update)}
+                        reload={['articles']}
+                    />
                     <LinkedRecords groups={linkedRecords} />
                 </div>
             </div>
