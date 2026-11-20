@@ -25,6 +25,7 @@ final class TicketCommentedNotification extends Notification implements ShouldQu
         public readonly ?UserEloquentModel $actor,
         public readonly string $excerpt,
         public readonly ?string $senderName = null,
+        public readonly bool $isFromPortal = false,
     ) {}
 
     /**
@@ -44,7 +45,11 @@ final class TicketCommentedNotification extends Notification implements ShouldQu
             InboxKindEnum::Comment,
             $this->ticket,
             $this->actor,
-            $this->senderName === null ? __('commented') : __('replied by email'),
+            match (true) {
+                $this->senderName === null => __('commented'),
+                $this->isFromPortal => __('replied in the portal'),
+                default => __('replied by email'),
+            },
             $this->excerpt,
             actorName: $this->senderName,
         );

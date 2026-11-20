@@ -29,3 +29,42 @@ export type PortalChoice = {
     customer: string;
     team: string;
 };
+
+/** A ticket's status as the customer sees it. */
+export type PortalTicketStatus = {
+    name: string;
+    hue: number | null;
+    is_closed: boolean;
+};
+
+/** One of the customer's tickets in the portal. */
+export type PortalTicket = {
+    id: string;
+    number: number;
+    title: string;
+    status: PortalTicketStatus;
+    /** Who raised it, when it came from the customer. */
+    raised_by: string | null;
+    created_at: string | null;
+    updated_at: string | null;
+};
+
+/** A message in a ticket's conversation with the customer. */
+export type PortalTicketMessage = {
+    id: string;
+    body: string;
+    author_name: string | null;
+    /** Written by someone at the customer, by email or in the portal. */
+    is_customer: boolean;
+    created_at: string | null;
+};
+
+/** A file shared with the customer. */
+export type PortalFile = {
+    id: string;
+    name: string;
+    size: number;
+    mime_type: string;
+    created_at: string | null;
+    url: string;
+};

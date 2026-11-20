@@ -100,7 +100,7 @@ final class TicketValidationRules
      * One of the team's live choices from the list, or the one the ticket
      * already has.
      */
-    private static function choice(string $teamId, ChoiceListEnum $list, ?string $currentId): Exists
+    public static function choice(string $teamId, ChoiceListEnum $list, ?string $currentId = null): Exists
     {
         return Rule::exists(Table::Choices->value, 'id')
             ->where('team_id', $teamId)

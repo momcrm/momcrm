@@ -8,6 +8,7 @@ use App\AuditLog\AuditEventEnum;
 use App\AuditLog\AuditLog;
 use App\AuditLog\AuditLogEloquentModel;
 use App\AuditLog\Contracts\Auditable;
+use App\Portal\PortalAuth;
 use App\Shared\MorphMapKeyEnum;
 use App\Shared\RequestContext;
 use App\Shared\Types;
@@ -104,8 +105,16 @@ final readonly class RecordAudit
         return [$oldValues, $newValues];
     }
 
+    /**
+     * The staff member making the change; none for a customer's contact in
+     * the portal, who is not one of the team's users.
+     */
     private static function actorId(): ?string
     {
+        if (PortalAuth::isServingPortal()) {
+            return null;
+        }
+
         $id = Auth::id();
 
         return $id === null ? null : (string) $id;

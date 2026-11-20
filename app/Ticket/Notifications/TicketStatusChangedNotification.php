@@ -23,6 +23,7 @@ final class TicketStatusChangedNotification extends Notification implements Shou
         public readonly TicketEloquentModel $ticket,
         public readonly ?UserEloquentModel $actor,
         public readonly string $statusLabel,
+        public readonly ?string $actorName = null,
     ) {}
 
     /**
@@ -38,6 +39,6 @@ final class TicketStatusChangedNotification extends Notification implements Shou
      */
     public function toArray(object $notifiable): array
     {
-        return InboxPayload::forTicket(InboxKindEnum::Update, $this->ticket, $this->actor, __('moved it to :status', ['status' => $this->statusLabel]));
+        return InboxPayload::forTicket(InboxKindEnum::Update, $this->ticket, $this->actor, __('moved it to :status', ['status' => $this->statusLabel]), actorName: $this->actorName);
     }
 }

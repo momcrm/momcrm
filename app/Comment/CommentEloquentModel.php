@@ -25,6 +25,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * @property string $body
+ * @property string|null $contact_id
  * @property CarbonImmutable|null $created_at
  * @property string $id
  * @property array<int, string>|null $mentions

@@ -8,6 +8,7 @@ use App\Attachment\Factories\AttachmentFactory;
 use App\Attachment\Properties\AttachableId;
 use App\Attachment\Properties\AttachableType;
 use App\Attachment\Properties\Id;
+use App\Attachment\Properties\SharedWithCustomer;
 use App\Attachment\Properties\Size;
 use App\Attachment\Properties\UploadedById;
 use App\AuditLog\AuditObserver;
@@ -34,9 +35,11 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
  * @property string $mime_type
  * @property string $name
  * @property string $path
+ * @property bool $shared_with_customer
  * @property int $size
  * @property string $team_id
  * @property CarbonImmutable|null $updated_at
+ * @property string|null $uploaded_by_contact_id
  * @property string|null $uploaded_by_id
  */
 #[ObservedBy(AuditObserver::class)]
@@ -96,6 +99,7 @@ final class AttachmentEloquentModel extends Model implements Auditable
     {
         return [
             Size::getDatabaseTableColumnName() => 'integer',
+            SharedWithCustomer::getDatabaseTableColumnName() => 'boolean',
         ];
     }
 

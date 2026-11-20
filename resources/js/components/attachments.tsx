@@ -1,11 +1,19 @@
 import { router } from '@inertiajs/react';
-import { FileText, Image, Paperclip, Trash2, Upload } from 'lucide-react';
+import {
+    Eye,
+    EyeOff,
+    FileText,
+    Image,
+    Paperclip,
+    Trash2,
+    Upload,
+} from 'lucide-react';
 import { useRef, useState } from 'react';
 import type { DragEvent } from 'react';
 import { toast } from 'sonner';
 import { formatBytes, timeAgo } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import { destroy } from '@/routes/attachments';
+import { destroy, update } from '@/routes/attachments';
 import type { Abilities, AttachmentItem } from '@/types';
 
 /**
@@ -16,12 +24,15 @@ export default function Attachments({
     uploadUrl,
     reload,
     can,
+    canShare = false,
 }: {
     attachments: AttachmentItem[];
     uploadUrl: string;
     reload: string[];
     /** Whether files may be added and deleted, under the team's access rules. */
     can: Abilities;
+    /** Whether each file can be shared with the customer in the portal. */
+    canShare?: boolean;
 }) {
     const input = useRef<HTMLInputElement>(null);
     const [isOver, setIsOver] = useState(false);
@@ -82,6 +93,48 @@ export default function Attachments({
                                 >
                                     {attachment.name}
                                 </a>
+                                {canShare && (
+                                    <button
+                                        type="button"
+                                        aria-pressed={
+                                            attachment.shared_with_customer
+                                        }
+                                        title={
+                                            attachment.shared_with_customer
+                                                ? 'The customer can see this in the portal. Click to hide it.'
+                                                : 'Hidden from the customer. Click to share it in the portal.'
+                                        }
+                                        onClick={() =>
+                                            router.patch(
+                                                update.url(attachment.id),
+                                                {
+                                                    shared_with_customer:
+                                                        !attachment.shared_with_customer,
+                                                },
+                                                {
+                                                    only: reload,
+                                                    preserveScroll: true,
+                                                    preserveState: true,
+                                                },
+                                            )
+                                        }
+                                        className={cn(
+                                            'flex shrink-0 items-center gap-1 rounded px-1 text-xs',
+                                            attachment.shared_with_customer
+                                                ? 'text-info'
+                                                : 'text-subtle-foreground hover:text-foreground',
+                                        )}
+                                    >
+                                        {attachment.shared_with_customer ? (
+                                            <Eye className="size-3.5" />
+                                        ) : (
+                                            <EyeOff className="size-3.5" />
+                                        )}
+                                        {attachment.shared_with_customer
+                                            ? 'Shared'
+                                            : 'Share'}
+                                    </button>
+                                )}
                                 <span className="shrink-0 text-xs text-subtle-foreground">
                                     {formatBytes(attachment.size)}
                                     {attachment.uploaded_by &&

@@ -81,6 +81,32 @@ final readonly class CreateAttachment
         );
     }
 
+    /**
+     * Stores a file a customer's contact added to a ticket in the customer
+     * portal. It is shared with the customer, and the contact is named in the
+     * activity, as there is nobody in the team to name.
+     */
+    public static function fromPortal(UploadedFile $file, Model $attachable, string $contactId, string $contactName): Attachment
+    {
+        $teamId = Types::string($attachable->getAttribute('team_id'));
+        $id = Id::generate();
+        $path = $file->storeAs("attachments/{$teamId}", $id->toString().'.'.($file->guessExtension() ?? 'bin'), self::DISK);
+
+        return self::record(
+            Attachment::new()
+                ->setId($id)
+                ->setTeamId($teamId)
+                ->setUploadedByContactId($contactId)
+                ->setSharedWithCustomer(true)
+                ->setName($file->getClientOriginalName())
+                ->setPath((string) $path)
+                ->setSize($file->getSize())
+                ->setMimeType($file->getMimeType() ?? 'application/octet-stream'),
+            $attachable,
+            $contactName,
+        );
+    }
+
     public static function for(UploadedFile $file, Model $attachable, ?string $uploadedById = null, ?string $folderId = null): Attachment
     {
         return new self($file, $attachable, $uploadedById, $folderId)->handle();

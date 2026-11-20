@@ -501,7 +501,7 @@ export function TicketDetails({
                                         .join(' · ')}
                                 </span>
                                 <SoftBadge tone="info" className="shrink-0">
-                                    via email
+                                    via {ticket.requester.via}
                                 </SoftBadge>
                             </span>
                         </Property>
@@ -596,6 +596,7 @@ export function TicketDetails({
                         uploadUrl={storeAttachment.url(ticket.id)}
                         reload={['drawer']}
                         can={ticket.attachment_can}
+                        canShare={Boolean(ticket.attachment_can.update)}
                     />
                 </section>
 

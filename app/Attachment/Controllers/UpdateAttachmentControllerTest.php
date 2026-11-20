@@ -58,3 +58,22 @@ it('lets members describe and move files under the default rules', function (): 
 
     expect($file->refresh()->description)->toBe('Floor plan');
 });
+
+it("shares a ticket's file with the customer in the portal, but not a customer's file", function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $ticket = TicketEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
+    $customer = CustomerEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
+    $onTicket = AttachmentEloquentModel::factory()->on($ticket)->create();
+    $onCustomer = AttachmentEloquentModel::factory()->on($customer)->create();
+
+    actingAs($user)
+        ->patch(route('attachments.update', $onTicket->id), ['shared_with_customer' => true])
+        ->assertSessionHasNoErrors();
+
+    actingAs($user)
+        ->patch(route('attachments.update', $onCustomer->id), ['shared_with_customer' => true])
+        ->assertSessionHasErrors('shared_with_customer');
+
+    expect($onTicket->refresh()->shared_with_customer)->toBeTrue()
+        ->and($onCustomer->refresh()->shared_with_customer)->toBeFalse();
+});

@@ -4,11 +4,15 @@ use App\Choice\Actions\FindChoice;
 use App\Choice\ChoiceListEnum;
 use App\Connector\Actions\FindConnector;
 use App\Connector\Actions\GetConnectorAccessToken;
+use App\Contact\ContactEloquentModel;
+use App\Customer\CustomerEloquentModel;
 use App\Environment\EnvironmentFile;
 use App\Mailbox\Actions\ResolveMailClient;
 use App\Mailbox\Mailbox;
 use App\Mailbox\MailboxEloquentModel;
 use App\MailboxMessage\MailboxMessage;
+use App\Ticket\TicketEloquentModel;
+use App\User\UserEloquentModel;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
 use Mom\Connectors\Mail\MailClient;
@@ -64,6 +68,37 @@ expect()->extend('toBeOne', function () {
 function something()
 {
     // ..
+}
+
+/**
+ * A contact with portal access at a customer named Coastal Logistics, in a
+ * team of their own with the default access rules.
+ *
+ * @param  array<string, mixed>  $attributes
+ */
+function portalContact(array $attributes = []): ContactEloquentModel
+{
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $customer = CustomerEloquentModel::factory()->create(['team_id' => $owner->current_team_id, 'name' => 'Coastal Logistics']);
+
+    return ContactEloquentModel::factory()->withPortalAccess()->create([
+        'team_id' => $owner->current_team_id,
+        'customer_id' => $customer->id,
+        'first_name' => 'Mark',
+        'last_name' => 'Ellis',
+        'email' => 'mark@coastal.test',
+        ...$attributes,
+    ]);
+}
+
+/**
+ * A ticket at the portal contact's customer.
+ *
+ * @param  array<string, mixed>  $attributes
+ */
+function portalTicket(ContactEloquentModel $contact, array $attributes = []): TicketEloquentModel
+{
+    return TicketEloquentModel::factory()->create(['team_id' => $contact->team_id, 'customer_id' => $contact->customer_id, ...$attributes]);
 }
 
 /**

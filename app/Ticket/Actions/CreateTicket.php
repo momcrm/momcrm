@@ -33,6 +33,7 @@ final readonly class CreateTicket
     public function __construct(
         private Ticket $ticket,
         private ?string $openedById = null,
+        private ?string $openedByName = null,
     ) {}
 
     public function __invoke(): Ticket
@@ -75,7 +76,10 @@ final readonly class CreateTicket
                 userId: $this->openedById,
                 teamId: $this->ticket->getTeamId()->toString(),
                 subject: $model,
-                details: ['number' => $this->ticket->getNumber()->toInteger()],
+                details: array_filter([
+                    'number' => $this->ticket->getNumber()->toInteger(),
+                    'actor_name' => $this->openedById === null ? $this->openedByName : null,
+                ], fn (mixed $value): bool => $value !== null),
             );
 
             $assigneeId = $this->ticket->getAssigneeId()->toNullableString();
@@ -102,9 +106,13 @@ final readonly class CreateTicket
         return is_numeric($highest) ? (int) $highest + 1 : 0;
     }
 
-    public static function fromTicket(Ticket $ticket, ?string $openedById = null): Ticket
+    /**
+     * $openedByName names who opened it when it wasn't someone in the team,
+     * such as a customer's contact in the portal.
+     */
+    public static function fromTicket(Ticket $ticket, ?string $openedById = null, ?string $openedByName = null): Ticket
     {
-        return new self($ticket, $openedById)->handle();
+        return new self($ticket, $openedById, $openedByName)->handle();
     }
 
     public function handle(): Ticket

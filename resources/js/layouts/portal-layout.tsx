@@ -14,6 +14,7 @@ import { useCurrentUrl } from '@/hooks/use-current-url';
 import { useInitials } from '@/hooks/use-initials';
 import { cn } from '@/lib/utils';
 import { choose, home, logout } from '@/routes/portal';
+import { index as tickets } from '@/routes/portal/tickets';
 import type { PortalSection, PortalShared } from '@/types';
 
 /**
@@ -42,6 +43,7 @@ type PortalNavItem = {
  */
 export const portalNavItems: PortalNavItem[] = [
     { title: 'Home', href: home.url(), section: null },
+    { title: 'Tickets', href: tickets.url(), section: 'tickets' },
 ];
 
 /**

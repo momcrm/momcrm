@@ -14,9 +14,11 @@ use App\Attachment\Properties\Id;
 use App\Attachment\Properties\MimeType;
 use App\Attachment\Properties\Name;
 use App\Attachment\Properties\Path;
+use App\Attachment\Properties\SharedWithCustomer;
 use App\Attachment\Properties\Size;
 use App\Attachment\Properties\TeamId;
 use App\Attachment\Properties\UpdatedAt;
+use App\Attachment\Properties\UploadedByContactId;
 use App\Attachment\Properties\UploadedById;
 use App\Attachment\Properties\Uploader;
 use Illuminate\Support\Collection;
@@ -39,9 +41,11 @@ final class Attachment extends AbstractData
         public Name $name,
         public Path $path,
         public Size $size,
+        public SharedWithCustomer $sharedWithCustomer,
         public TeamId $teamId,
         public UpdatedAt $updatedAt,
         public UploadedById $uploadedById,
+        public UploadedByContactId $uploadedByContactId,
         public Uploader $uploader,
     ) {}
 
@@ -87,6 +91,30 @@ final class Attachment extends AbstractData
     public function setAttachableType(mixed $attachableType): self
     {
         $this->attachableType = new AttachableType($attachableType instanceof AbstractValue ? $attachableType->toValue() : $attachableType);
+
+        return $this;
+    }
+
+    public function getSharedWithCustomer(): SharedWithCustomer
+    {
+        return $this->sharedWithCustomer;
+    }
+
+    public function setSharedWithCustomer(mixed $sharedWithCustomer): self
+    {
+        $this->sharedWithCustomer = new SharedWithCustomer($sharedWithCustomer instanceof AbstractValue ? $sharedWithCustomer->toValue() : $sharedWithCustomer);
+
+        return $this;
+    }
+
+    public function getUploadedByContactId(): UploadedByContactId
+    {
+        return $this->uploadedByContactId;
+    }
+
+    public function setUploadedByContactId(mixed $uploadedByContactId): self
+    {
+        $this->uploadedByContactId = new UploadedByContactId($uploadedByContactId instanceof AbstractValue ? $uploadedByContactId->toValue() : $uploadedByContactId);
 
         return $this;
     }
