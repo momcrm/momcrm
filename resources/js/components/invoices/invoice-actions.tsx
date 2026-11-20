@@ -87,6 +87,7 @@ export default function InvoiceActions({
                     url={send.url(invoice.id)}
                     contacts={recipients}
                     preselect={invoiceRecipients}
+                    onSent={onChanged}
                     title={`Send ${invoice.reference}`}
                     description={
                         invoice.status === 'draft'
