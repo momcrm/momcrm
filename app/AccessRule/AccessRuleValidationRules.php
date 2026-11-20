@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\AccessRule;
 
 use App\AccessRule\Properties\Actions;
+use App\AccessRule\Properties\Audience;
 use App\AccessRule\Properties\Conditions;
 use App\AccessRule\Properties\Effect;
 use App\AccessRule\Properties\IsEnabled;
@@ -28,9 +29,10 @@ final class AccessRuleValidationRules
     /**
      * @return array<string, array<int, mixed>>
      */
-    public static function for(FormRequest $request): array
+    public static function for(FormRequest $request, bool $isNew = true): array
     {
         return [
+            ...($isNew ? [Audience::getNameForValidation() => Audience::getValidationRulesForCreate($request)] : []),
             Name::getNameForValidation() => Name::getValidationRulesForCreate($request),
             Effect::getNameForValidation() => Effect::getValidationRulesForCreate($request),
             IsEnabled::getNameForValidation() => ['sometimes', 'boolean'],
@@ -57,25 +59,38 @@ final class AccessRuleValidationRules
     }
 
     /**
-     * Checks that need the rule as a whole, run once the shapes are valid.
+     * Checks that need the rule as a whole, run once the shapes are valid. A
+     * new rule's audience comes from the form; an existing rule keeps its own.
      */
-    public static function after(Validator $validator, string $teamId, string $userId): void
+    public static function after(Validator $validator, string $teamId, string $userId, ?AccessAudienceEnum $audience = null): void
     {
         if ($validator->errors()->isNotEmpty()) {
             return;
         }
 
-        /** @var array{resources: array<int, string>, actions: array<int, string>, conditions: array<int, array{attribute: string, operator: string, value?: mixed}>} $data */
+        /** @var array{audience?: string, resources: array<int, string>, actions: array<int, string>, conditions: array<int, array{attribute: string, operator: string, value?: mixed}>} $data */
         $data = $validator->getData();
+        $audience ??= AccessAudienceEnum::from($data['audience'] ?? AccessAudienceEnum::Staff->value);
         $resources = array_map(AccessResourceEnum::from(...), $data['resources']);
+        $audienceResources = AccessResourceEnum::forAudience($audience);
 
-        if ($resources !== []) {
-            foreach ($data['actions'] as $action) {
-                $action = AccessActionEnum::from($action);
+        foreach ($resources as $resource) {
+            if (! in_array($resource, $audienceResources, true)) {
+                $validator->errors()->add('resources', __('Rules for :audience can\'t cover :resource.', [
+                    'audience' => strtolower($audience->label()),
+                    'resource' => strtolower($resource->label()),
+                ]));
 
-                if (! collect($resources)->contains(fn (AccessResourceEnum $resource): bool => $resource->supports($action))) {
-                    $validator->errors()->add('actions', __('":action" doesn\'t apply to the chosen records.', ['action' => $action->label()]));
-                }
+                return;
+            }
+        }
+
+        foreach ($data['actions'] as $action) {
+            $action = AccessActionEnum::from($action);
+            $candidates = $resources === [] ? $audienceResources : $resources;
+
+            if (! collect($candidates)->contains(fn (AccessResourceEnum $resource): bool => $resource->supports($action, $audience))) {
+                $validator->errors()->add('actions', __('":action" doesn\'t apply to the chosen records.', ['action' => $action->label()]));
             }
         }
 
@@ -83,6 +98,15 @@ final class AccessRuleValidationRules
             $attribute = AccessAttributeEnum::from($condition['attribute']);
             $operator = AccessOperatorEnum::from($condition['operator']);
             $value = $condition['value'] ?? null;
+
+            if (! $attribute->isFor($audience)) {
+                $validator->errors()->add("conditions.{$index}.attribute", __('":attribute" can\'t be used in rules for :audience.', [
+                    'attribute' => $attribute->label(),
+                    'audience' => strtolower($audience->label()),
+                ]));
+
+                continue;
+            }
 
             if (! $attribute->appliesTo($resources)) {
                 $validator->errors()->add("conditions.{$index}.attribute", __('":attribute" can only be used on a rule for :resource alone.', [

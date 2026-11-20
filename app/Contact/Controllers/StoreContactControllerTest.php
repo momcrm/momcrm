@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Choice\Actions\FindChoice;
+use App\Choice\ChoiceListEnum;
 use App\Contact\ContactEloquentModel;
 use App\Customer\CustomerEloquentModel;
 use App\CustomField\CustomFieldEloquentModel;
@@ -32,6 +34,30 @@ it("adds a contact to a customer and returns to the customer's page", function (
         ->first_name->toBe('Sam')
         ->is_primary->toBeTrue()
         ->receives_invoices->toBeTrue();
+});
+
+it('lets a contact into the portal with one of the team\'s contact roles', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $customer = CustomerEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
+    $billing = FindChoice::byNameForTeam((string) $user->current_team_id, ChoiceListEnum::ContactRole, 'Billing')->getId()->toString();
+
+    actingAs($user)
+        ->post(route('contacts.store'), ['customer_id' => $customer->id, 'first_name' => 'Sam', 'contact_role_id' => $billing, 'portal_access' => '1'])
+        ->assertSessionHasNoErrors();
+
+    expect(ContactEloquentModel::query()->sole())
+        ->contact_role_id->toBe($billing)
+        ->portal_access->toBeTrue();
+});
+
+it("rejects another list's choice as a contact role", function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $customer = CustomerEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
+    $label = FindChoice::byNameForTeam((string) $user->current_team_id, ChoiceListEnum::Label, 'Billing')->getId()->toString();
+
+    actingAs($user)
+        ->post(route('contacts.store'), ['customer_id' => $customer->id, 'first_name' => 'Sam', 'contact_role_id' => $label])
+        ->assertSessionHasErrors(['contact_role_id' => "Choose one of your team's contact roles."]);
 });
 
 it('keeps one primary contact per customer', function (): void {

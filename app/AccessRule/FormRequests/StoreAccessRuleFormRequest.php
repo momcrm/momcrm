@@ -7,6 +7,7 @@ namespace App\AccessRule\FormRequests;
 use App\AccessRule\AccessRule;
 use App\AccessRule\AccessRuleValidationRules;
 use App\AccessRule\Actions\CreateAccessRule;
+use App\AccessRule\Controllers\ListAccessRulesController;
 use App\AccessRule\Properties\Conditions;
 use App\Shared\Types;
 use App\Team\Actions\FindTeam;
@@ -81,6 +82,6 @@ final class StoreAccessRuleFormRequest extends FormRequest
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __(':name added.', ['name' => $rule->getName()->toString()])]);
 
-        return to_route('access-rules.index');
+        return ListAccessRulesController::redirectTo($rule->getAudience()->toEnum());
     }
 }

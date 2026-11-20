@@ -62,6 +62,36 @@ it('rejects rules that do not fit together', function (array $overrides, string 
     'an unknown effect' => [['effect' => 'maybe'], 'effect'],
 ]);
 
+it('adds a rule for customer contacts and goes back to their rules', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+
+    actingAs($owner)
+        ->post(route('access-rules.store'), accessRulePayload([
+            'audience' => 'contact',
+            'name' => 'Contacts see their own tickets',
+            'actions' => ['view'],
+            'conditions' => [['attribute' => 'ticket.subject_is_requester', 'operator' => 'is_true']],
+        ]))
+        ->assertSessionHasNoErrors()
+        ->assertRedirectToRoute('access-rules.index', ['audience' => 'contact']);
+
+    expect(AccessRuleEloquentModel::query()->withoutGlobalScopes()->where('name', 'Contacts see their own tickets')->sole()->audience)->toBe('contact');
+});
+
+it("rejects what doesn't suit a rule's audience", function (array $overrides, string $errorKey): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+
+    actingAs($owner)
+        ->post(route('access-rules.store'), accessRulePayload($overrides))
+        ->assertSessionHasErrors($errorKey);
+})->with([
+    'a staff action for contacts' => [['audience' => 'contact', 'conditions' => []], 'actions'],
+    'records contacts never see' => [['audience' => 'contact', 'resources' => ['project'], 'actions' => [], 'conditions' => []], 'resources'],
+    'a staff attribute for contacts' => [['audience' => 'contact', 'actions' => ['view'], 'conditions' => [['attribute' => 'ticket.subject_is_assignee', 'operator' => 'is_true']]], 'conditions.0.attribute'],
+    'a contact attribute for staff' => [['resources' => [], 'actions' => [], 'conditions' => [['attribute' => 'contact.is_primary', 'operator' => 'is_true']]], 'conditions.0.attribute'],
+    'viewing for staff' => [['actions' => ['view'], 'conditions' => []], 'actions'],
+]);
+
 it('forbids members', function (): void {
     $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
     $member = UserEloquentModel::factory()->inTeam($owner->current_team_id)->create();

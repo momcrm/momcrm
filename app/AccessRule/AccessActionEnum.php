@@ -29,6 +29,7 @@ enum AccessActionEnum: string
     case Reveal = 'reveal';
     case Restore = 'restore';
     case Update = 'update';
+    case View = 'view';
 
     public function label(): string
     {
@@ -46,6 +47,7 @@ enum AccessActionEnum: string
             self::Reveal => 'Reveal',
             self::Restore => 'Restore',
             self::Update => 'Edit',
+            self::View => 'View',
         };
     }
 }

@@ -19,6 +19,7 @@ use App\Contact\Properties\TeamId;
 use App\Team\Scopes\CurrentTeamScope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 
 final class FindContact
 {
@@ -84,6 +85,31 @@ final class FindContact
             ->get();
 
         return Contact::collect($contacts->all(), 'fromEloquentModel');
+    }
+
+    /**
+     * Every contact in the team as id/name pairs, named "Name · Customer" so
+     * people with the same name can be told apart, for pickers.
+     *
+     * @return Collection<int, array{id: string, name: string}>
+     */
+    public static function optionsForTeam(string $teamId): Collection
+    {
+        return self::query($teamId)
+            ->with(ContactRelationship::Customer->value)
+            ->orderBy(FirstName::getDatabaseTableColumnName())
+            ->orderBy(LastName::getDatabaseTableColumnName())
+            ->get()
+            ->map(function (ContactEloquentModel $model): array {
+                $contact = Contact::fromEloquentModel($model);
+                $customer = $model->customer?->name;
+
+                return [
+                    'id' => $model->id,
+                    'name' => $customer === null ? $contact->getFullName() : "{$contact->getFullName()} · {$customer}",
+                ];
+            })
+            ->values();
     }
 
     /**

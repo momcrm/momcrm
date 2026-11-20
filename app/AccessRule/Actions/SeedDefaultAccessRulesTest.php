@@ -18,8 +18,12 @@ it('gives every new team the default rules', function (): void {
     $owner = UserEloquentModel::factory()->create();
     $team = CreateTeam::fromTeam(Team::new()->setName('Acme')->setOwnerId($owner->id));
 
-    expect(AccessRuleEloquentModel::query()->withoutGlobalScopes()->where('team_id', $team->getId()->toString())->orderBy('name')->pluck('name')->all())
-        ->toBe(['Everyone can create and edit', 'Everyone can delete comments and files', 'Everyone can reveal secrets', 'Owners and admins can do everything']);
+    $rules = AccessRuleEloquentModel::query()->withoutGlobalScopes()->where('team_id', $team->getId()->toString())->orderBy('name');
+
+    expect((clone $rules)->where('audience', 'staff')->pluck('name')->all())
+        ->toBe(['Everyone can create and edit', 'Everyone can delete comments and files', 'Everyone can reveal secrets', 'Owners and admins can do everything'])
+        ->and((clone $rules)->where('audience', 'contact')->pluck('name')->all())
+        ->toBe(['Contacts can see services, assets and articles', 'Contacts can see, raise and answer their tickets', 'Invoice recipients can see billing', 'Primary contacts can see billing']);
 });
 
 it('lets members create and edit but leaves deleting, archiving and managing access to owners and admins', function (): void {

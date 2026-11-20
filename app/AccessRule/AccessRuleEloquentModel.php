@@ -23,6 +23,7 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * @property array<int, string> $actions
+ * @property string $audience
  * @property array<int, array<string, mixed>> $conditions
  * @property CarbonImmutable|null $created_at
  * @property string|null $created_by_id

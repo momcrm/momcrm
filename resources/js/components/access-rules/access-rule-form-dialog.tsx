@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { store, update } from '@/routes/access-rules';
 import type {
+    AccessAudience,
     AccessCondition,
     AccessRuleItem,
     AccessRuleOptions,
@@ -106,11 +107,14 @@ function blankCondition(attribute: Attribute): AccessCondition {
 export default function AccessRuleFormDialog({
     open,
     onOpenChange,
+    audience,
     options,
     rule,
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
+    /** Who a new rule is about; an existing rule keeps its own. */
+    audience: AccessAudience;
     options: AccessRuleOptions;
     rule?: AccessRuleItem;
 }) {
@@ -169,6 +173,7 @@ export default function AccessRuleFormDialog({
                 <Form
                     {...(rule ? update.form(rule.id) : store.form())}
                     transform={() => ({
+                        ...(rule ? {} : { audience }),
                         name,
                         effect,
                         is_enabled: rule?.is_enabled ?? true,
@@ -197,7 +202,11 @@ export default function AccessRuleFormDialog({
                                     onChange={(event) =>
                                         setName(event.target.value)
                                     }
-                                    placeholder="Leads can archive their project's tickets"
+                                    placeholder={
+                                        audience === 'contact'
+                                            ? 'Billing contacts can see invoices'
+                                            : "Leads can archive their project's tickets"
+                                    }
                                     required
                                 />
                             </FormField>
@@ -266,7 +275,9 @@ export default function AccessRuleFormDialog({
                                 {conditions.length === 0 && (
                                     <p className="text-xs text-muted-foreground">
                                         No conditions: the rule applies to
-                                        everyone.
+                                        {audience === 'contact'
+                                            ? ' every contact with portal access.'
+                                            : ' everyone.'}
                                     </p>
                                 )}
                                 {conditions.map((condition, index) => {

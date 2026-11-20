@@ -5,11 +5,19 @@ declare(strict_types=1);
 use App\AccessRule\AccessActionEnum;
 use App\AccessRule\AccessResourceEnum;
 use App\AccessRule\AccessRuleEloquentModel;
+use App\AccessRule\Actions\FindAccessRules;
 use App\AccessRule\Engine\AccessEvaluator;
+use App\AccessRule\Engine\ContactAccessSubject;
+use App\Choice\Actions\FindChoice;
+use App\Choice\ChoiceListEnum;
+use App\Contact\ContactEloquentModel;
+use App\Customer\CustomerEloquentModel;
 use App\Project\Project;
 use App\Project\ProjectEloquentModel;
 use App\TeamUser\Actions\CreateTeamUser;
 use App\TeamUser\TeamRoleEnum;
+use App\Ticket\Ticket;
+use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
 
 /**
@@ -155,4 +163,98 @@ it('ignores a rule naming only resources the code no longer knows', function ():
     accessRule($teamId, resources: ['spaceship']);
 
     expect(AccessEvaluator::allows($person, AccessResourceEnum::Project, AccessActionEnum::Create))->toBeFalse();
+});
+
+/**
+ * A team with no access rules, one of its customers and a contact there with
+ * portal access.
+ *
+ * @return array{owner: UserEloquentModel, contact: ContactEloquentModel, teamId: string}
+ */
+function contactWithoutRules(array $attributes = []): array
+{
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $teamId = (string) $owner->current_team_id;
+    AccessRuleEloquentModel::query()->withoutGlobalScopes()->where('team_id', $teamId)->delete();
+    $customer = CustomerEloquentModel::factory()->create(['team_id' => $teamId]);
+    $contact = ContactEloquentModel::factory()->withPortalAccess()->create(['team_id' => $teamId, 'customer_id' => $customer->id, ...$attributes]);
+
+    return ['owner' => $owner, 'contact' => $contact, 'teamId' => $teamId];
+}
+
+it('keeps staff rules and contact rules apart', function (): void {
+    ['contact' => $contact, 'teamId' => $teamId] = contactWithoutRules();
+    $member = UserEloquentModel::factory()->inTeam($teamId)->create();
+    accessRule($teamId);
+    AccessRuleEloquentModel::factory()->forContacts()->create(['team_id' => $teamId, 'resources' => ['invoice'], 'actions' => ['view']]);
+
+    expect(AccessEvaluator::allowsContact($contact->id, AccessResourceEnum::Ticket, AccessActionEnum::Create))->toBeFalse()
+        ->and(AccessEvaluator::allowsContact($contact->id, AccessResourceEnum::Invoice, AccessActionEnum::View))->toBeTrue()
+        ->and(AccessEvaluator::allows($member, AccessResourceEnum::Ticket, AccessActionEnum::Create))->toBeTrue()
+        ->and(AccessEvaluator::allows($member, AccessResourceEnum::Invoice, AccessActionEnum::View))->toBeFalse();
+});
+
+it('lets a contact do nothing once their portal access is off, whatever the rules say', function (): void {
+    ['contact' => $contact, 'teamId' => $teamId] = contactWithoutRules(['portal_access' => false]);
+    AccessRuleEloquentModel::factory()->forContacts()->create(['team_id' => $teamId]);
+
+    expect(AccessEvaluator::allowsContact($contact->id, AccessResourceEnum::Ticket, AccessActionEnum::View))->toBeFalse();
+});
+
+it('never lets a contact take actions only staff have, even under a rule covering everything', function (): void {
+    ['contact' => $contact, 'teamId' => $teamId] = contactWithoutRules();
+    AccessRuleEloquentModel::factory()->forContacts()->create(['team_id' => $teamId]);
+
+    expect(AccessEvaluator::allowsContact($contact->id, AccessResourceEnum::Ticket, AccessActionEnum::Delete))->toBeFalse()
+        ->and(AccessEvaluator::allowsContact($contact->id, AccessResourceEnum::Customer, AccessActionEnum::Update))->toBeFalse()
+        ->and(AccessEvaluator::allowsContact($contact->id, AccessResourceEnum::Ticket, AccessActionEnum::Close))->toBeTrue();
+});
+
+it('checks what is known about the contact and whether they raised the ticket', function (): void {
+    ['contact' => $contact, 'teamId' => $teamId] = contactWithoutRules();
+    $billing = FindChoice::byNameForTeam($teamId, ChoiceListEnum::ContactRole, 'Billing');
+    AccessRuleEloquentModel::factory()->forContacts()->create([
+        'team_id' => $teamId,
+        'resources' => ['invoice'],
+        'actions' => ['view'],
+        'conditions' => [['attribute' => 'contact.role', 'operator' => 'equals', 'value' => $billing->getId()->toString()]],
+    ]);
+    AccessRuleEloquentModel::factory()->forContacts()->create([
+        'team_id' => $teamId,
+        'resources' => ['ticket'],
+        'actions' => ['view'],
+        'conditions' => [['attribute' => 'ticket.subject_is_requester', 'operator' => 'is_true']],
+    ]);
+    $theirs = Ticket::fromEloquentModel(TicketEloquentModel::factory()->create(['team_id' => $teamId, 'customer_id' => $contact->customer_id, 'contact_id' => $contact->id]));
+    $colleagues = Ticket::fromEloquentModel(TicketEloquentModel::factory()->create(['team_id' => $teamId, 'customer_id' => $contact->customer_id]));
+
+    expect(AccessEvaluator::allowsContact($contact->id, AccessResourceEnum::Invoice, AccessActionEnum::View))->toBeFalse()
+        ->and(AccessEvaluator::allowsContact($contact->id, AccessResourceEnum::Ticket, AccessActionEnum::View, $theirs))->toBeTrue()
+        ->and(AccessEvaluator::allowsContact($contact->id, AccessResourceEnum::Ticket, AccessActionEnum::View, $colleagues))->toBeFalse()
+        ->and(AccessEvaluator::contactMayOnSome($contact->id, AccessResourceEnum::Ticket, AccessActionEnum::View))->toBeTrue()
+        ->and(AccessEvaluator::contactDecisionDependsOnRecord($contact->id, AccessResourceEnum::Ticket, AccessActionEnum::View))->toBeTrue();
+
+    $contact->update(['contact_role_id' => $billing->getId()->toString()]);
+    ContactAccessSubject::forget($contact->id);
+
+    expect(AccessEvaluator::allowsContact($contact->id, AccessResourceEnum::Invoice, AccessActionEnum::View))->toBeTrue()
+        ->and(AccessEvaluator::contactDecisionDependsOnRecord($contact->id, AccessResourceEnum::Invoice, AccessActionEnum::View))->toBeFalse();
+});
+
+it('hides a section from a contact only when a deny rule about them covers all of it', function (): void {
+    ['contact' => $contact, 'teamId' => $teamId] = contactWithoutRules();
+    AccessRuleEloquentModel::factory()->forContacts()->create(['team_id' => $teamId, 'resources' => ['ticket'], 'actions' => ['view']]);
+    $deny = AccessRuleEloquentModel::factory()->forContacts()->deny()->create([
+        'team_id' => $teamId,
+        'resources' => ['ticket'],
+        'actions' => ['view'],
+        'conditions' => [['attribute' => 'ticket.subject_is_requester', 'operator' => 'is_false']],
+    ]);
+
+    expect(AccessEvaluator::contactMayOnSome($contact->id, AccessResourceEnum::Ticket, AccessActionEnum::View))->toBeTrue();
+
+    $deny->update(['conditions' => [['attribute' => 'contact.is_primary', 'operator' => 'is_false']]]);
+    FindAccessRules::forgetForTeam($teamId);
+
+    expect(AccessEvaluator::contactMayOnSome($contact->id, AccessResourceEnum::Ticket, AccessActionEnum::View))->toBeFalse();
 });

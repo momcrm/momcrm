@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\AccessRule\Actions;
 
+use App\AccessRule\AccessAudienceEnum;
 use App\AccessRule\AccessRule;
 use App\AccessRule\AccessRuleCollection;
 use App\AccessRule\AccessRuleEloquentModel;
+use App\AccessRule\Properties\Audience;
 use App\AccessRule\Properties\CreatedAt;
 use App\AccessRule\Properties\Id;
 use App\AccessRule\Properties\IsEnabled;
@@ -19,12 +21,16 @@ use Illuminate\Support\Collection;
 final class FindAccessRules
 {
     /**
-     * The team's enabled rules, loaded once per request.
+     * The team's enabled rules for one audience, loaded once per request.
      */
-    public static function enabledForTeam(string $teamId): AccessRuleCollection
+    public static function enabledForTeam(string $teamId, AccessAudienceEnum $audience = AccessAudienceEnum::Staff): AccessRuleCollection
     {
-        return RequestMemo::remember(self::memoKey($teamId), fn (): Collection => AccessRule::collect(
-            self::query($teamId)->where(IsEnabled::getDatabaseTableColumnName(), true)->get()->all(),
+        return RequestMemo::remember(self::memoKey($teamId).".{$audience->value}", fn (): Collection => AccessRule::collect(
+            self::query($teamId)
+                ->where(IsEnabled::getDatabaseTableColumnName(), true)
+                ->where(Audience::getDatabaseTableColumnName(), $audience->value)
+                ->get()
+                ->all(),
         ));
     }
 

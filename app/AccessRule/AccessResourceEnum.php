@@ -33,6 +33,7 @@ enum AccessResourceEnum: string
     case Record = 'record';
     case Secret = 'secret';
     case Service = 'service';
+    case Statement = 'statement';
     case Ticket = 'ticket';
 
     public function label(): string
@@ -56,18 +57,44 @@ enum AccessResourceEnum: string
             self::Record => 'Custom object records',
             self::Secret => 'Secrets',
             self::Service => 'Services',
+            self::Statement => 'Statement',
             self::Ticket => 'Tickets',
         };
     }
 
     /**
-     * The actions someone can take on this kind of record.
+     * The actions someone in the audience can take on this kind of record;
+     * none when the audience has nothing to do with it.
      *
      * @return array<int, AccessActionEnum>
      */
-    public function actions(): array
+    public function actions(AccessAudienceEnum $audience = AccessAudienceEnum::Staff): array
+    {
+        return match ($audience) {
+            AccessAudienceEnum::Staff => $this->staffActions(),
+            AccessAudienceEnum::Contact => $this->contactActions(),
+        };
+    }
+
+    /**
+     * The kinds of record rules for the audience can cover.
+     *
+     * @return list<self>
+     */
+    public static function forAudience(AccessAudienceEnum $audience): array
+    {
+        return array_values(array_filter(self::cases(), fn (self $resource): bool => $resource->actions($audience) !== []));
+    }
+
+    /**
+     * The actions staff can take on this kind of record.
+     *
+     * @return array<int, AccessActionEnum>
+     */
+    private function staffActions(): array
     {
         return match ($this) {
+            self::Statement => [],
             self::Article, self::Service => [
                 AccessActionEnum::Create,
                 AccessActionEnum::Update,
@@ -139,8 +166,29 @@ enum AccessResourceEnum: string
         };
     }
 
-    public function supports(AccessActionEnum $action): bool
+    /**
+     * What a customer's contact can do in the portal: see their company's
+     * records, and raise, answer and close its tickets.
+     *
+     * @return array<int, AccessActionEnum>
+     */
+    private function contactActions(): array
     {
-        return in_array($action, $this->actions(), true);
+        return match ($this) {
+            self::Ticket => [
+                AccessActionEnum::View,
+                AccessActionEnum::Create,
+                AccessActionEnum::Close,
+                AccessActionEnum::Reopen,
+            ],
+            self::Comment, self::Attachment => [AccessActionEnum::Create],
+            self::Article, self::Asset, self::Invoice, self::Payment, self::Service, self::Statement => [AccessActionEnum::View],
+            default => [],
+        };
+    }
+
+    public function supports(AccessActionEnum $action, AccessAudienceEnum $audience = AccessAudienceEnum::Staff): bool
+    {
+        return in_array($action, $this->actions($audience), true);
     }
 }

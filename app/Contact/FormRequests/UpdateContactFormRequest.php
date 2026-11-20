@@ -7,6 +7,7 @@ namespace App\Contact\FormRequests;
 use App\Contact\Actions\FindContact;
 use App\Contact\Actions\UpdateContact;
 use App\Contact\Contact;
+use App\Contact\ContactValidationRules;
 use App\Contact\Exceptions\CouldNotFindContact;
 use App\Contact\Properties\CustomerId;
 use App\Contact\Properties\Email;
@@ -14,6 +15,7 @@ use App\Contact\Properties\FirstName;
 use App\Contact\Properties\IsPrimary;
 use App\Contact\Properties\LastName;
 use App\Contact\Properties\MobilePhone;
+use App\Contact\Properties\PortalAccess;
 use App\Contact\Properties\Position;
 use App\Contact\Properties\ReceivesInvoices;
 use App\Contact\Properties\WorkPhone;
@@ -73,6 +75,7 @@ final class UpdateContactFormRequest extends FormRequest
             MobilePhone::getNameForValidation() => MobilePhone::getValidationRulesForUpdate($this),
             IsPrimary::getNameForValidation() => IsPrimary::getValidationRulesForUpdate($this),
             ReceivesInvoices::getNameForValidation() => ReceivesInvoices::getValidationRulesForUpdate($this),
+            ...ContactValidationRules::portal($this, (string) $this->user()?->current_team_id, $this->contact->getContactRoleId()->toNullableString()),
             ...CustomFieldValueRules::for((string) $this->user()?->current_team_id, CustomFieldTargetEnum::Contact, $this->contact->getCustomFields()),
         ];
     }
@@ -85,6 +88,7 @@ final class UpdateContactFormRequest extends FormRequest
         return [
             CustomerId::getNameForValidation().'.required' => __('Choose the customer this contact works for.'),
             CustomerId::getNameForValidation().'.exists' => __('Choose the customer this contact works for.'),
+            ...ContactValidationRules::messages(),
         ];
     }
 
@@ -105,7 +109,8 @@ final class UpdateContactFormRequest extends FormRequest
                 ->setPropertyIfExists(Types::stringKeyed(Arr::except($validated, CustomFieldValues::getNameForValidation())))
                 ->setCustomFields($customFields)
                 ->setIsPrimary($this->boolean(IsPrimary::getNameForValidation()))
-                ->setReceivesInvoices($this->boolean(ReceivesInvoices::getNameForValidation())),
+                ->setReceivesInvoices($this->boolean(ReceivesInvoices::getNameForValidation()))
+                ->setPortalAccess($this->boolean(PortalAccess::getNameForValidation())),
         );
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __(':name saved.', ['name' => $contact->getFullName()])]);

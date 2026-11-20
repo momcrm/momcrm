@@ -735,6 +735,7 @@ function AddChoice({
 }) {
     const [name, setName] = useState('');
     const noun = {
+        contact_role: 'role',
         customer_type: 'type',
         label: 'label',
         ticket_priority: 'priority',

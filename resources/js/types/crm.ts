@@ -132,6 +132,10 @@ export type Contact = {
     mobile_phone: string | null;
     is_primary: boolean;
     receives_invoices: boolean;
+    /** One of the team's contact roles, which portal access rules can check. */
+    contact_role_id: string | null;
+    /** Whether they may sign in to the customer portal. */
+    portal_access: boolean;
     custom_fields: CustomFieldValues;
 };
 
@@ -295,6 +299,7 @@ export type ServiceFormOptions = {
  * The lists a team can customise, as keyed in the shared `choices` prop.
  */
 export type ChoiceList =
+    | 'contact_role'
     | 'customer_type'
     | 'label'
     | 'ticket_priority'
@@ -1030,9 +1035,13 @@ export type Mailbox = {
     last_error: string | null;
 };
 
+/** Who an access rule is about: the team's staff or customers' contacts. */
+export type AccessAudience = 'staff' | 'contact';
+
 export type AccessRuleItem = {
     id: string;
     name: string;
+    audience: AccessAudience;
     resources: string[];
     actions: string[];
     effect: 'allow' | 'deny';

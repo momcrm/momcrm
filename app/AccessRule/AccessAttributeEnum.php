@@ -17,6 +17,13 @@ enum AccessAttributeEnum: string
     use Enum;
 
     case AssetLabel = 'asset.label';
+    case ContactCustomer = 'contact.customer';
+    case ContactCustomerStatus = 'contact.customer_status';
+    case ContactCustomerType = 'contact.customer_type';
+    case ContactIs = 'contact.is';
+    case ContactIsPrimary = 'contact.is_primary';
+    case ContactReceivesInvoices = 'contact.receives_invoices';
+    case ContactRole = 'contact.role';
     case CustomerStatus = 'customer.status';
     case GroupSubjectIsLead = 'group.subject_is_lead';
     case GroupSubjectIsMember = 'group.subject_is_member';
@@ -44,12 +51,20 @@ enum AccessAttributeEnum: string
     case TicketSubjectIsGroupMember = 'ticket.subject_is_group_member';
     case TicketSubjectIsProjectLead = 'ticket.subject_is_project_lead';
     case TicketSubjectIsProjectMember = 'ticket.subject_is_project_member';
+    case TicketSubjectIsRequester = 'ticket.subject_is_requester';
     case TicketType = 'ticket.type';
 
     public function label(): string
     {
         return match ($this) {
             self::AssetLabel => 'Asset has label',
+            self::ContactCustomer => 'Their customer',
+            self::ContactCustomerStatus => "Their customer's status",
+            self::ContactCustomerType => "Their customer's type",
+            self::ContactIs => 'They are',
+            self::ContactIsPrimary => 'They are the primary contact',
+            self::ContactReceivesInvoices => 'They get invoices',
+            self::ContactRole => 'Their contact role',
             self::CustomerStatus => 'Customer status',
             self::GroupSubjectIsLead => 'They lead the group',
             self::GroupSubjectIsMember => 'They are in the group',
@@ -77,6 +92,7 @@ enum AccessAttributeEnum: string
             self::TicketSubjectIsGroupMember => "They are in the ticket's group",
             self::TicketSubjectIsProjectLead => "They lead the ticket's project",
             self::TicketSubjectIsProjectMember => "They are a member of the ticket's project",
+            self::TicketSubjectIsRequester => 'They raised the ticket',
             self::TicketType => 'Ticket type',
         };
     }
@@ -94,14 +110,56 @@ enum AccessAttributeEnum: string
             self::InvoiceStatus => AccessResourceEnum::Invoice,
             self::RecordObject => AccessResourceEnum::Record,
             self::ProjectGroup, self::ProjectIsArchived, self::ProjectLabel, self::ProjectStatus, self::ProjectSubjectIsLead, self::ProjectSubjectIsMember, self::ProjectVisibility => AccessResourceEnum::Project,
-            self::TicketGroup, self::TicketIsArchived, self::TicketLabel, self::TicketPriority, self::TicketProject, self::TicketStatus, self::TicketSubjectIsAssignee, self::TicketSubjectIsGroupLead, self::TicketSubjectIsGroupMember, self::TicketSubjectIsProjectLead, self::TicketSubjectIsProjectMember, self::TicketType => AccessResourceEnum::Ticket,
+            self::TicketGroup, self::TicketIsArchived, self::TicketLabel, self::TicketPriority, self::TicketProject, self::TicketStatus, self::TicketSubjectIsAssignee, self::TicketSubjectIsGroupLead, self::TicketSubjectIsGroupMember, self::TicketSubjectIsProjectLead, self::TicketSubjectIsProjectMember, self::TicketSubjectIsRequester, self::TicketType => AccessResourceEnum::Ticket,
+            self::ContactCustomer, self::ContactCustomerStatus, self::ContactCustomerType, self::ContactIs, self::ContactIsPrimary, self::ContactReceivesInvoices, self::ContactRole,
             self::SubjectGroup, self::SubjectLeadsGroup, self::SubjectTeamRole, self::SubjectUser => null,
         };
+    }
+
+    /**
+     * The audience whose rules may use the attribute, or null when both may:
+     * what it reads about the person acting only exists for one of them.
+     */
+    public function audience(): ?AccessAudienceEnum
+    {
+        return match ($this) {
+            self::ContactCustomer,
+            self::ContactCustomerStatus,
+            self::ContactCustomerType,
+            self::ContactIs,
+            self::ContactIsPrimary,
+            self::ContactReceivesInvoices,
+            self::ContactRole,
+            self::TicketSubjectIsRequester => AccessAudienceEnum::Contact,
+            self::GroupSubjectIsLead,
+            self::GroupSubjectIsMember,
+            self::ProjectSubjectIsLead,
+            self::ProjectSubjectIsMember,
+            self::SubjectGroup,
+            self::SubjectLeadsGroup,
+            self::SubjectTeamRole,
+            self::SubjectUser,
+            self::TicketSubjectIsAssignee,
+            self::TicketSubjectIsGroupLead,
+            self::TicketSubjectIsGroupMember,
+            self::TicketSubjectIsProjectLead,
+            self::TicketSubjectIsProjectMember => AccessAudienceEnum::Staff,
+            default => null,
+        };
+    }
+
+    public function isFor(AccessAudienceEnum $audience): bool
+    {
+        $own = $this->audience();
+
+        return $own === null || $own === $audience;
     }
 
     public function type(): AccessAttributeTypeEnum
     {
         return match ($this) {
+            self::ContactIsPrimary,
+            self::ContactReceivesInvoices,
             self::GroupSubjectIsLead,
             self::GroupSubjectIsMember,
             self::ProjectIsArchived,
@@ -112,7 +170,8 @@ enum AccessAttributeEnum: string
             self::TicketSubjectIsGroupLead,
             self::TicketSubjectIsGroupMember,
             self::TicketSubjectIsProjectLead,
-            self::TicketSubjectIsProjectMember => AccessAttributeTypeEnum::Boolean,
+            self::TicketSubjectIsProjectMember,
+            self::TicketSubjectIsRequester => AccessAttributeTypeEnum::Boolean,
             default => AccessAttributeTypeEnum::Choice,
         };
     }
@@ -125,7 +184,9 @@ enum AccessAttributeEnum: string
     {
         return match ($this) {
             self::ProjectGroup, self::SubjectGroup, self::SubjectLeadsGroup, self::TicketGroup => Table::Groups,
-            self::AssetLabel, self::ProjectLabel, self::TicketLabel, self::TicketPriority, self::TicketStatus, self::TicketType => Table::Choices,
+            self::AssetLabel, self::ContactCustomerType, self::ContactRole, self::ProjectLabel, self::TicketLabel, self::TicketPriority, self::TicketStatus, self::TicketType => Table::Choices,
+            self::ContactCustomer => Table::Customers,
+            self::ContactIs => Table::Contacts,
             self::TicketProject => Table::Projects,
             self::RecordObject => Table::CustomObjects,
             default => null,

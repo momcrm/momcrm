@@ -6,12 +6,14 @@ namespace App\Contact\FormRequests;
 
 use App\Contact\Actions\CreateContact;
 use App\Contact\Contact;
+use App\Contact\ContactValidationRules;
 use App\Contact\Properties\CustomerId;
 use App\Contact\Properties\Email;
 use App\Contact\Properties\FirstName;
 use App\Contact\Properties\IsPrimary;
 use App\Contact\Properties\LastName;
 use App\Contact\Properties\MobilePhone;
+use App\Contact\Properties\PortalAccess;
 use App\Contact\Properties\Position;
 use App\Contact\Properties\ReceivesInvoices;
 use App\Contact\Properties\WorkPhone;
@@ -53,6 +55,7 @@ final class StoreContactFormRequest extends FormRequest
             MobilePhone::getNameForValidation() => MobilePhone::getValidationRulesForCreate($this),
             IsPrimary::getNameForValidation() => IsPrimary::getValidationRulesForCreate($this),
             ReceivesInvoices::getNameForValidation() => ReceivesInvoices::getValidationRulesForCreate($this),
+            ...ContactValidationRules::portal($this, (string) $this->user()?->current_team_id),
             ...CustomFieldValueRules::for((string) $this->user()?->current_team_id, CustomFieldTargetEnum::Contact),
         ];
     }
@@ -65,6 +68,7 @@ final class StoreContactFormRequest extends FormRequest
         return [
             CustomerId::getNameForValidation().'.required' => __('Choose the customer this contact works for.'),
             CustomerId::getNameForValidation().'.exists' => __('Choose the customer this contact works for.'),
+            ...ContactValidationRules::messages(),
         ];
     }
 
@@ -85,6 +89,7 @@ final class StoreContactFormRequest extends FormRequest
                 ->setCustomFields(CustomFieldValueRules::merge((string) $this->user()?->current_team_id, CustomFieldTargetEnum::Contact, new CustomFieldValues(null), $validated[CustomFieldValues::getNameForValidation()] ?? []))
                 ->setIsPrimary($this->boolean(IsPrimary::getNameForValidation()))
                 ->setReceivesInvoices($this->boolean(ReceivesInvoices::getNameForValidation()))
+                ->setPortalAccess($this->boolean(PortalAccess::getNameForValidation()))
                 ->setTeamId($this->user()?->current_team_id),
         );
 

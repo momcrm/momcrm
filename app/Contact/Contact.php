@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Contact;
 
 use App\Contact\Factories\ContactFactory;
+use App\Contact\Properties\ContactRoleId;
 use App\Contact\Properties\CreatedAt;
 use App\Contact\Properties\Customer;
 use App\Contact\Properties\CustomerId;
@@ -14,6 +15,7 @@ use App\Contact\Properties\Id;
 use App\Contact\Properties\IsPrimary;
 use App\Contact\Properties\LastName;
 use App\Contact\Properties\MobilePhone;
+use App\Contact\Properties\PortalAccess;
 use App\Contact\Properties\Position;
 use App\Contact\Properties\ReceivesInvoices;
 use App\Contact\Properties\TeamId;
@@ -30,6 +32,7 @@ use Mom\Data\AbstractValue;
 final class Contact extends AbstractData
 {
     public function __construct(
+        public ContactRoleId $contactRoleId,
         public CreatedAt $createdAt,
         public CustomFieldValues $customFields,
         public Customer $customer,
@@ -41,6 +44,7 @@ final class Contact extends AbstractData
         public ReceivesInvoices $receivesInvoices,
         public LastName $lastName,
         public MobilePhone $mobilePhone,
+        public PortalAccess $portalAccess,
         public Position $position,
         public TeamId $teamId,
         public UpdatedAt $updatedAt,
@@ -77,7 +81,7 @@ final class Contact extends AbstractData
     /**
      * The fields the contact pages show.
      *
-     * @return array{id: string, customer_id: string, first_name: string, last_name: ?string, full_name: string, email: ?string, position: ?string, work_phone: ?string, mobile_phone: ?string, is_primary: bool, receives_invoices: bool, custom_fields: array<string, mixed>}
+     * @return array{id: string, customer_id: string, first_name: string, last_name: ?string, full_name: string, email: ?string, position: ?string, work_phone: ?string, mobile_phone: ?string, is_primary: bool, receives_invoices: bool, contact_role_id: ?string, portal_access: bool, custom_fields: array<string, mixed>}
      */
     public function toSummary(): array
     {
@@ -93,6 +97,8 @@ final class Contact extends AbstractData
             'mobile_phone' => $this->getMobilePhone()->toNullableString(),
             'is_primary' => $this->getIsPrimary()->toBoolean(),
             'receives_invoices' => $this->getReceivesInvoices()->toBoolean(),
+            'contact_role_id' => $this->getContactRoleId()->toNullableString(),
+            'portal_access' => $this->getPortalAccess()->toBoolean(),
             'custom_fields' => $this->getCustomFields()->toValues(),
         ];
     }
@@ -105,6 +111,30 @@ final class Contact extends AbstractData
     public function setCustomFields(mixed $customFields): self
     {
         $this->customFields = new CustomFieldValues($customFields instanceof AbstractValue ? $customFields->toValue() : $customFields);
+
+        return $this;
+    }
+
+    public function getContactRoleId(): ContactRoleId
+    {
+        return $this->contactRoleId;
+    }
+
+    public function setContactRoleId(mixed $contactRoleId): self
+    {
+        $this->contactRoleId = new ContactRoleId($contactRoleId instanceof AbstractValue ? $contactRoleId->toValue() : $contactRoleId);
+
+        return $this;
+    }
+
+    public function getPortalAccess(): PortalAccess
+    {
+        return $this->portalAccess;
+    }
+
+    public function setPortalAccess(mixed $portalAccess): self
+    {
+        $this->portalAccess = new PortalAccess($portalAccess instanceof AbstractValue ? $portalAccess->toValue() : $portalAccess);
 
         return $this;
     }
