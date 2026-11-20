@@ -9,6 +9,8 @@ use App\Activity\ActivityEloquentModel;
 use App\Asset\AssetEloquentModel;
 use App\Attachment\AttachmentEloquentModel;
 use App\AuditLog\AuditLogEloquentModel;
+use App\BankAccount\BankAccountEloquentModel;
+use App\BankTransaction\BankTransactionEloquentModel;
 use App\Choice\ChoiceEloquentModel;
 use App\Comment\CommentEloquentModel;
 use App\Connector\ConnectorEloquentModel;
@@ -60,6 +62,8 @@ enum MorphMapKeyEnum: string
     case Asset = 'asset';
     case Attachment = 'attachment';
     case AuditLog = 'audit_log';
+    case BankAccount = 'bank_account';
+    case BankTransaction = 'bank_transaction';
     case Choice = 'choice';
     case Comment = 'comment';
     case Connector = 'connector';
@@ -124,6 +128,8 @@ enum MorphMapKeyEnum: string
             self::Asset => AssetEloquentModel::class,
             self::Attachment => AttachmentEloquentModel::class,
             self::AuditLog => AuditLogEloquentModel::class,
+            self::BankAccount => BankAccountEloquentModel::class,
+            self::BankTransaction => BankTransactionEloquentModel::class,
             self::Choice => ChoiceEloquentModel::class,
             self::Comment => CommentEloquentModel::class,
             self::Connector => ConnectorEloquentModel::class,

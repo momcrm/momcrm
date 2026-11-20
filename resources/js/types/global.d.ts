@@ -16,6 +16,7 @@ declare module '@inertiajs/core' {
             hasSampleData?: boolean;
             canRemoveSampleData?: boolean;
             canManageAccessRules?: boolean;
+            canManageBankFeeds?: boolean;
             canManageBilling?: boolean;
             canManageConnectors?: boolean;
             canManageCustomFields?: boolean;

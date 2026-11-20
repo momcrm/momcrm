@@ -5,6 +5,7 @@ import {
     CalendarDays,
     GanttChart,
     Inbox,
+    Landmark,
     LayoutDashboard,
     UsersRound,
     Building2,
@@ -30,6 +31,7 @@ import {
     overview,
     timeline,
 } from '@/routes';
+import { index as bankFeedsIndex } from '@/routes/bank-feeds';
 import { index as contactsIndex } from '@/routes/contacts';
 import { index as customersIndex } from '@/routes/customers';
 import { index as favoritesIndex } from '@/routes/favorites';
@@ -178,6 +180,12 @@ export function workspaceNavigation(
                     href: paymentsIndex(),
                     icon: Banknote,
                     shortcut: 'b',
+                },
+                {
+                    title: 'Bank feeds',
+                    href: bankFeedsIndex(),
+                    icon: Landmark,
+                    shortcut: 'k',
                 },
             ],
         },

@@ -17,6 +17,7 @@ enum AccessResourceEnum: string
 
     case Asset = 'asset';
     case Attachment = 'attachment';
+    case BankTransaction = 'bank_transaction';
     case Comment = 'comment';
     case Contact = 'contact';
     case Contract = 'contract';
@@ -37,6 +38,7 @@ enum AccessResourceEnum: string
         return match ($this) {
             self::Asset => 'Assets',
             self::Attachment => 'Files',
+            self::BankTransaction => 'Bank feeds',
             self::Comment => 'Comments',
             self::Contact => 'Contacts',
             self::Contract => 'Contracts',
@@ -71,6 +73,11 @@ enum AccessResourceEnum: string
             ],
             self::Asset, self::Contact, self::Contract, self::Location, self::Milestone, self::Payment, self::Record => [
                 AccessActionEnum::Create,
+                AccessActionEnum::Update,
+                AccessActionEnum::Delete,
+            ],
+            self::BankTransaction => [
+                AccessActionEnum::Import,
                 AccessActionEnum::Update,
                 AccessActionEnum::Delete,
             ],
