@@ -8,7 +8,7 @@ import SearchInput from '@/components/search-input';
 import { useTicketSelection } from '@/components/tickets/ticket-bulk';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { create, index } from '@/routes/invoices';
+import { create, index, run } from '@/routes/invoices';
 import type { InvoiceListItem, Option, Paginated } from '@/types';
 
 export default function InvoicesIndex({
@@ -34,9 +34,14 @@ export default function InvoicesIndex({
                     title="Invoices"
                     description="What you've billed your customers, and what's still owed."
                     actions={
-                        <Button asChild>
-                            <Link href={create()}>Create invoice</Link>
-                        </Button>
+                        <>
+                            <Button variant="outline" asChild>
+                                <Link href={run()}>Billing run</Link>
+                            </Button>
+                            <Button asChild>
+                                <Link href={create()}>Create invoice</Link>
+                            </Button>
+                        </>
                     }
                 />
 

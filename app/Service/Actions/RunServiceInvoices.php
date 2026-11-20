@@ -16,7 +16,6 @@ use App\Invoice\Invoice;
 use App\Service\Properties\ArchivedAt;
 use App\Service\Properties\BillingStartsOn;
 use App\Service\Properties\CustomerId;
-use App\Service\Properties\Name;
 use App\Service\Properties\RateId;
 use App\Service\Properties\Status;
 use App\Service\Properties\TeamId;
@@ -50,16 +49,7 @@ final readonly class RunServiceInvoices
      */
     public function __invoke(): int
     {
-        $teamIds = $this->billableServices()
-            ->pluck(TeamId::getDatabaseTableColumnNameWithTable(Table::Services->value), CustomerId::getDatabaseTableColumnNameWithTable(Table::Services->value))
-            ->mapWithKeys(fn (mixed $teamId, mixed $customerId): array => [Types::string($customerId) => Types::string($teamId)])
-            ->all();
-
-        foreach (FindCharge::customersWithChargesBy($this->day, $this->teamId) as $customerId => $teamId) {
-            $teamIds[$customerId] ??= $teamId;
-        }
-
-        $lines = CustomerBillingLines::forCustomers(array_map(strval(...), array_keys($teamIds)), $this->day);
+        $lines = CustomerBillingLines::forCustomers($this->billableCustomerIds(), $this->day);
         $customers = FindCustomer::byIdsForTeams(array_map(strval(...), array_keys($lines)));
         $teams = [];
         $drafted = 0;
@@ -101,6 +91,23 @@ final readonly class RunServiceInvoices
     }
 
     /**
+     * The customers the run bills by its day, of its team when it has one:
+     * active ones billed automatically or by hand, with a service that has
+     * started billing or a one-off charge made by then.
+     *
+     * @return list<string>
+     */
+    public function billableCustomerIds(): array
+    {
+        $ids = Types::stringList($this->billableServices()
+            ->distinct()
+            ->pluck(CustomerId::getDatabaseTableColumnNameWithTable(Table::Services->value))
+            ->all());
+
+        return array_values(array_unique([...$ids, ...array_map(strval(...), array_keys(FindCharge::customersWithChargesBy($this->day, $this->teamId)))]));
+    }
+
+    /**
      * Active services on a rate, not archived, that have started billing, of
      * active customers billed automatically or by hand.
      *
@@ -121,7 +128,6 @@ final readonly class RunServiceInvoices
                 ->withoutGlobalScope(CurrentTeamScope::class)
                 ->where(CustomerStatus::getDatabaseTableColumnName(), CustomerStatusEnum::Active->value)
                 ->whereIn(CustomerBillingType::getDatabaseTableColumnName(), [CustomerBillingTypeEnum::Automatic->value, CustomerBillingTypeEnum::Manual->value]))
-            ->orderBy(CustomerId::getDatabaseTableColumnNameWithTable($services))
-            ->orderBy(Name::getDatabaseTableColumnNameWithTable($services));
+            ->orderBy(CustomerId::getDatabaseTableColumnNameWithTable($services));
     }
 }
