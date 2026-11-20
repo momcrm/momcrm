@@ -2,8 +2,10 @@ import { Head } from '@inertiajs/react';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import ArticleTable from '@/components/articles/article-table';
+import CategorySelect from '@/components/articles/category-select';
 import NewArticleDialog from '@/components/articles/new-article-dialog';
 import EmptyState from '@/components/empty-state';
+import { useLabels } from '@/components/labels';
 import NativeSelect from '@/components/native-select';
 import PageHeader from '@/components/page-header';
 import Pager from '@/components/pager';
@@ -13,6 +15,7 @@ import { visitWithQuery } from '@/lib/query';
 import { index } from '@/routes/articles';
 import type {
     Abilities,
+    ArticleCategory,
     ArticleClassificationOption,
     ArticleListItem,
     Option,
@@ -23,6 +26,9 @@ type Filters = {
     search: string | null;
     status: string | null;
     classification: string | null;
+    category: string | null;
+    label: string | null;
+    review: string | null;
     sort: string;
     direction: 'asc' | 'desc';
 };
@@ -33,18 +39,26 @@ export default function ArticlesIndex({
     articles,
     filters,
     statuses,
+    categories,
     classifications,
     can,
 }: {
     articles: Paginated<ArticleListItem>;
     filters: Filters;
     statuses: Option[];
+    categories: ArticleCategory[];
     classifications: ArticleClassificationOption[];
     can: Abilities;
 }) {
     const [isCreating, setIsCreating] = useState(false);
+    const labels = useLabels(filters.label);
     const isFiltered = Boolean(
-        filters.search || filters.status || filters.classification,
+        filters.search ||
+        filters.status ||
+        filters.classification ||
+        filters.category ||
+        filters.label ||
+        filters.review,
     );
     const filter = (key: string) => (value: string) =>
         visitWithQuery({ [key]: value }, { only: RELOAD });
@@ -88,6 +102,46 @@ export default function ArticlesIndex({
                             </option>
                         ))}
                     </NativeSelect>
+                    {categories.length > 0 && (
+                        <CategorySelect
+                            aria-label="Category"
+                            categories={categories}
+                            emptyLabel="Any category"
+                            value={filters.category ?? ''}
+                            onChange={(event) =>
+                                filter('category')(event.target.value)
+                            }
+                            className="h-8 w-auto text-[13px]"
+                        />
+                    )}
+                    {labels.length > 0 && (
+                        <NativeSelect
+                            aria-label="Label"
+                            value={filters.label ?? ''}
+                            onChange={(event) =>
+                                filter('label')(event.target.value)
+                            }
+                            className="h-8 w-auto text-[13px]"
+                        >
+                            <option value="">Any label</option>
+                            {labels.map((label) => (
+                                <option key={label.id} value={label.id}>
+                                    {label.name}
+                                </option>
+                            ))}
+                        </NativeSelect>
+                    )}
+                    <NativeSelect
+                        aria-label="Review"
+                        value={filters.review ?? ''}
+                        onChange={(event) =>
+                            filter('review')(event.target.value)
+                        }
+                        className="h-8 w-auto text-[13px]"
+                    >
+                        <option value="">Any review date</option>
+                        <option value="due">Review due</option>
+                    </NativeSelect>
                     {classifications.length > 1 && (
                         <NativeSelect
                             aria-label="Classification"
@@ -123,6 +177,7 @@ export default function ArticlesIndex({
                     <>
                         <ArticleTable
                             articles={articles.data}
+                            categories={categories}
                             sort={{
                                 column: filters.sort,
                                 direction: filters.direction,
@@ -143,6 +198,7 @@ export default function ArticlesIndex({
                 open={isCreating}
                 onOpenChange={setIsCreating}
                 classifications={classifications}
+                categories={categories}
             />
         </>
     );

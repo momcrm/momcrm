@@ -5,11 +5,15 @@ declare(strict_types=1);
 namespace App\Article;
 
 use App\Article\Properties\Body;
+use App\Article\Properties\CategoryId;
 use App\Article\Properties\ChangeNote;
 use App\Article\Properties\Classification;
+use App\Article\Properties\NextReviewOn;
 use App\Article\Properties\Status;
 use App\Article\Properties\Summary;
 use App\Article\Properties\Title;
+use App\Choice\LabelTargetEnum;
+use App\Shared\Table;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -27,13 +31,18 @@ final class ArticleValidationRules
         return [
             Title::getNameForValidation() => Title::getValidationRulesForCreate($request),
             Classification::getNameForValidation() => self::classification($teamId, $userId),
+            CategoryId::getNameForValidation() => [
+                'nullable',
+                'uuid',
+                Rule::exists(Table::ArticleCategories->value, 'id')->where('team_id', $teamId),
+            ],
         ];
     }
 
     /**
      * @return array<string, array<int, mixed>>
      */
-    public static function forUpdate(FormRequest $request, string $teamId, string $userId): array
+    public static function forUpdate(FormRequest $request, string $teamId, string $userId, ?string $articleId = null): array
     {
         return [
             ...self::forCreate($request, $teamId, $userId),
@@ -42,6 +51,8 @@ final class ArticleValidationRules
             Status::getNameForValidation() => ['required', Rule::enum(ArticleStatusEnum::class)],
             ChangeNote::getNameForValidation() => ChangeNote::getValidationRulesForCreate($request),
             'is_major' => ['sometimes', 'boolean'],
+            NextReviewOn::getNameForValidation() => ['nullable', 'date'],
+            ...LabelTargetEnum::Article->rules($teamId, $articleId),
         ];
     }
 
@@ -52,6 +63,7 @@ final class ArticleValidationRules
     {
         return [
             Classification::getNameForValidation().'.in' => __('Choose a classification you can read yourself.'),
+            CategoryId::getNameForValidation().'.exists' => __('Choose one of your categories.'),
         ];
     }
 

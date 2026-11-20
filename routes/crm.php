@@ -8,6 +8,7 @@ use App\Article\Controllers\EditArticleController;
 use App\Article\Controllers\ListArticlesController;
 use App\Article\Controllers\RestoreArticleController;
 use App\Article\Controllers\RestoreArticleVersionController;
+use App\Article\Controllers\ReviewArticleController;
 use App\Article\Controllers\ShowArticleController;
 use App\Article\Controllers\ShowArticleHistoryController;
 use App\Article\Controllers\ShowArticleImageController;
@@ -243,6 +244,7 @@ Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function 
     Route::get('articles/{article}/images/{image}', ShowArticleImageController::class)->whereUuid(['article', 'image'])->name('articles.images.show');
     Route::get('articles/{article}/history', ShowArticleHistoryController::class)->whereUuid('article')->name('articles.history');
     Route::post('articles/{article}/versions/{version}/restore', RestoreArticleVersionController::class)->whereUuid(['article', 'version'])->name('articles.versions.restore');
+    Route::post('articles/{article}/review', ReviewArticleController::class)->whereUuid('article')->name('articles.review');
     Route::delete('articles/{article}', DeleteArticleController::class)->whereUuid('article')->name('articles.destroy');
 
     Route::get('contacts', ListContactsController::class)->name('contacts.index');

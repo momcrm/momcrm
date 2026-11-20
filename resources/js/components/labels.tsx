@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import type { Choice, LabelTag } from '@/types';
 
 /**
- * The team's live labels in order, shared by tickets, projects and assets,
+ * The team's live labels in order, shared by tickets, projects, assets and articles,
  * plus any archived ones among the given labels (such as the record's own).
  */
 export function useLabels(

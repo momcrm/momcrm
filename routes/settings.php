@@ -6,6 +6,10 @@ use App\AccessRule\Controllers\StoreAccessRuleController;
 use App\AccessRule\Controllers\UpdateAccessRuleController;
 use App\Activity\Controllers\ListAccountActivityController;
 use App\Activity\Controllers\ListTeamActivityController;
+use App\ArticleCategory\Controllers\DeleteArticleCategoryController;
+use App\ArticleCategory\Controllers\ListArticleCategoriesController;
+use App\ArticleCategory\Controllers\StoreArticleCategoryController;
+use App\ArticleCategory\Controllers\UpdateArticleCategoryController;
 use App\BankAccount\Controllers\DeleteBankAccountController;
 use App\BankAccount\Controllers\ListBankAccountsController;
 use App\BankAccount\Controllers\StoreBankAccountController;
@@ -132,6 +136,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('settings/bank-rules', StoreBankRuleController::class)->name('bank-rules.store');
     Route::put('settings/bank-rules/{bankRule}', UpdateBankRuleController::class)->whereUuid('bankRule')->name('bank-rules.update');
     Route::delete('settings/bank-rules/{bankRule}', DeleteBankRuleController::class)->whereUuid('bankRule')->name('bank-rules.destroy');
+
+    Route::get('settings/knowledge-base', ListArticleCategoriesController::class)->name('article-categories.index');
+    Route::post('settings/article-categories', StoreArticleCategoryController::class)->name('article-categories.store');
+    Route::put('settings/article-categories/{category}', UpdateArticleCategoryController::class)->whereUuid('category')->name('article-categories.update');
+    Route::delete('settings/article-categories/{category}', DeleteArticleCategoryController::class)->whereUuid('category')->name('article-categories.destroy');
 
     Route::get('settings/products', ListProductsController::class)->name('products.index');
     Route::post('settings/products', StoreProductController::class)->name('products.store');

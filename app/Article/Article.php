@@ -10,12 +10,17 @@ use App\Article\Properties\Author;
 use App\Article\Properties\AuthorId;
 use App\Article\Properties\Body;
 use App\Article\Properties\BodyText;
+use App\Article\Properties\Category;
+use App\Article\Properties\CategoryId;
 use App\Article\Properties\ChangeNote;
 use App\Article\Properties\Classification;
 use App\Article\Properties\CreatedAt;
 use App\Article\Properties\EditedBy;
 use App\Article\Properties\EditedById;
 use App\Article\Properties\Id;
+use App\Article\Properties\Labels;
+use App\Article\Properties\LastReviewedOn;
+use App\Article\Properties\NextReviewOn;
 use App\Article\Properties\PublishedAt;
 use App\Article\Properties\Status;
 use App\Article\Properties\Summary;
@@ -24,6 +29,7 @@ use App\Article\Properties\Title;
 use App\Article\Properties\UpdatedAt;
 use App\Article\Properties\VersionMajor;
 use App\Article\Properties\VersionMinor;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 use Mom\Data\AbstractData;
 use Mom\Data\AbstractValue;
@@ -52,6 +58,11 @@ final class Article extends AbstractData
         public TeamId $teamId,
         public Title $title,
         public UpdatedAt $updatedAt,
+        public Category $category,
+        public CategoryId $categoryId,
+        public Labels $labels,
+        public LastReviewedOn $lastReviewedOn,
+        public NextReviewOn $nextReviewOn,
         public ChangeNote $changeNote,
         public EditedBy $editedBy,
         public EditedById $editedById,
@@ -84,7 +95,7 @@ final class Article extends AbstractData
     /**
      * The fields the articles list shows.
      *
-     * @return array{id: string, title: string, summary: ?string, status: string, classification: string, version: ?string, author_name: ?string, published_at: ?string, updated_at: ?string, is_archived: bool}
+     * @return array{id: string, title: string, summary: ?string, status: string, classification: string, version: ?string, category_id: ?string, labels: list<array{id: string, name: string, hue: ?int}>, next_review_on: ?string, last_reviewed_on: ?string, is_review_due: bool, author_name: ?string, published_at: ?string, updated_at: ?string, is_archived: bool}
      */
     public function toSummary(): array
     {
@@ -95,6 +106,11 @@ final class Article extends AbstractData
             'status' => $this->getStatus()->toEnum()->value,
             'classification' => $this->getClassification()->toEnum()->value,
             'version' => $this->versionLabel(),
+            'category_id' => $this->getCategoryId()->toNullableString(),
+            'labels' => $this->getLabels()->toDataCollection()->toTags(),
+            'next_review_on' => $this->getNextReviewOn()->toNullableCarbon()?->toDateString(),
+            'last_reviewed_on' => $this->getLastReviewedOn()->toNullableCarbon()?->toDateString(),
+            'is_review_due' => $this->isReviewDue(),
             'author_name' => $this->getAuthor()->toNullableData()?->getName()->toString(),
             'published_at' => $this->getPublishedAt()->toNullableISOString(),
             'updated_at' => $this->getUpdatedAt()->toNullableISOString(),
@@ -105,7 +121,7 @@ final class Article extends AbstractData
     /**
      * Everything the article's page and editor show.
      *
-     * @return array{id: string, title: string, summary: ?string, status: string, classification: string, version: ?string, author_name: ?string, published_at: ?string, updated_at: ?string, is_archived: bool, body: string, change_note: ?string, created_at: ?string}
+     * @return array{id: string, title: string, summary: ?string, status: string, classification: string, version: ?string, category_id: ?string, labels: list<array{id: string, name: string, hue: ?int}>, next_review_on: ?string, last_reviewed_on: ?string, is_review_due: bool, author_name: ?string, published_at: ?string, updated_at: ?string, is_archived: bool, body: string, change_note: ?string, created_at: ?string}
      */
     public function toDetail(): array
     {
@@ -134,6 +150,16 @@ final class Article extends AbstractData
     public function hasBeenPublished(): bool
     {
         return $this->getPublishedAt()->isNotNull();
+    }
+
+    /**
+     * Whether its review day has come, for an article still in use.
+     */
+    public function isReviewDue(): bool
+    {
+        $nextReviewOn = $this->getNextReviewOn()->toNullableCarbon();
+
+        return $nextReviewOn !== null && ! $this->isArchived() && $nextReviewOn->startOfDay()->lte(CarbonImmutable::today());
     }
 
     public function isArchived(): bool
@@ -342,6 +368,52 @@ final class Article extends AbstractData
     public function setVersionMinor(mixed $versionMinor): self
     {
         $this->versionMinor = new VersionMinor($versionMinor instanceof AbstractValue ? $versionMinor->toValue() : $versionMinor);
+
+        return $this;
+    }
+
+    public function getCategory(): Category
+    {
+        return $this->category;
+    }
+
+    public function getCategoryId(): CategoryId
+    {
+        return $this->categoryId;
+    }
+
+    public function setCategoryId(mixed $categoryId): self
+    {
+        $this->categoryId = new CategoryId($categoryId instanceof AbstractValue ? $categoryId->toValue() : $categoryId);
+
+        return $this;
+    }
+
+    public function getLabels(): Labels
+    {
+        return $this->labels;
+    }
+
+    public function getLastReviewedOn(): LastReviewedOn
+    {
+        return $this->lastReviewedOn;
+    }
+
+    public function setLastReviewedOn(mixed $lastReviewedOn): self
+    {
+        $this->lastReviewedOn = new LastReviewedOn($lastReviewedOn instanceof AbstractValue ? $lastReviewedOn->toValue() : $lastReviewedOn);
+
+        return $this;
+    }
+
+    public function getNextReviewOn(): NextReviewOn
+    {
+        return $this->nextReviewOn;
+    }
+
+    public function setNextReviewOn(mixed $nextReviewOn): self
+    {
+        $this->nextReviewOn = new NextReviewOn($nextReviewOn instanceof AbstractValue ? $nextReviewOn->toValue() : $nextReviewOn);
 
         return $this;
     }

@@ -3,9 +3,11 @@ import { Eye } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { ArticleStatusPill } from '@/components/articles/article-badges';
+import CategorySelect from '@/components/articles/category-select';
 import RichTextEditor from '@/components/articles/rich-text-editor';
 import FormField from '@/components/form-field';
 import InputError from '@/components/input-error';
+import { LabelField } from '@/components/labels';
 import NativeSelect from '@/components/native-select';
 import UnsavedChangesBar, {
     countChanges,
@@ -19,6 +21,7 @@ import { edit, index, show, update } from '@/routes/articles';
 import { store as storeImage } from '@/routes/articles/images';
 import type {
     Article,
+    ArticleCategory,
     ArticleClassificationOption,
     ArticleStatus,
 } from '@/types';
@@ -34,9 +37,11 @@ function nextVersion(current: string, isMajor: boolean): string {
 
 export default function ArticleEdit({
     article,
+    categories,
     classifications,
 }: {
     article: Article;
+    categories: ArticleCategory[];
     classifications: ArticleClassificationOption[];
 }) {
     setLayoutProps({
@@ -52,6 +57,9 @@ export default function ArticleEdit({
         summary: article.summary ?? '',
         body: article.body,
         classification: article.classification as string,
+        category_id: article.category_id ?? '',
+        label_ids: article.labels.map((label) => label.id),
+        next_review_on: article.next_review_on ?? '',
     });
     const [saved, setSaved] = useState(form.data);
     const [changeNote, setChangeNote] = useState('');
@@ -75,6 +83,7 @@ export default function ArticleEdit({
             status,
             change_note: changeNote,
             is_major: isMajor,
+            labels_sent: true,
         }));
         form.put(update.url(article.id), {
             preserveScroll: true,
@@ -223,6 +232,47 @@ export default function ArticleEdit({
                         </NativeSelect>
                     </FormField>
                 </div>
+
+                <div className="grid gap-5 sm:grid-cols-2">
+                    <FormField
+                        id="category_id"
+                        label="Category"
+                        error={form.errors.category_id}
+                    >
+                        <CategorySelect
+                            id="category_id"
+                            categories={categories}
+                            value={form.data.category_id}
+                            onChange={(event) =>
+                                form.setData('category_id', event.target.value)
+                            }
+                        />
+                    </FormField>
+                    <FormField
+                        id="next_review_on"
+                        label="Next review"
+                        hint="When someone should check it is still right."
+                        error={form.errors.next_review_on}
+                    >
+                        <Input
+                            id="next_review_on"
+                            type="date"
+                            value={form.data.next_review_on}
+                            onChange={(event) =>
+                                form.setData(
+                                    'next_review_on',
+                                    event.target.value,
+                                )
+                            }
+                        />
+                    </FormField>
+                </div>
+
+                <LabelField
+                    selected={form.data.label_ids}
+                    onChange={(ids) => form.setData('label_ids', ids)}
+                    error={form.errors.label_ids}
+                />
 
                 {(isVersioned || !isPublished) && (
                     <div className="grid gap-3 rounded-lg border bg-card p-3 sm:grid-cols-[1fr_auto] sm:items-end">

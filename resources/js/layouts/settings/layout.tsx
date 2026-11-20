@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
     Activity,
+    BookOpen,
     Boxes,
     Building2,
     FileCog,
@@ -20,6 +21,7 @@ import type { PropsWithChildren } from 'react';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn, toUrl } from '@/lib/utils';
 import { index as accessRulesIndex } from '@/routes/access-rules';
+import { index as articleCategoriesIndex } from '@/routes/article-categories';
 import { edit as editBilling } from '@/routes/billing';
 import { index as activityIndex } from '@/routes/activity';
 import { edit as editAppearance } from '@/routes/appearance';
@@ -35,6 +37,12 @@ import { edit as editSecurity } from '@/routes/security';
 import { edit as editTeam } from '@/routes/team';
 import { edit as editWorkflow } from '@/routes/workflow';
 import type { NavItem } from '@/types';
+
+const knowledgeBaseItem: NavItem = {
+    title: 'Knowledge base',
+    href: articleCategoriesIndex(),
+    icon: BookOpen,
+};
 
 const accessRulesItem: NavItem = {
     title: 'Access rules',
@@ -148,7 +156,9 @@ export default function SettingsLayout({
                   ...section,
                   items: [
                       ...section.items,
-                      ...(canManageWorkflow ? [workflowItem] : []),
+                      ...(canManageWorkflow
+                          ? [workflowItem, knowledgeBaseItem]
+                          : []),
                       ...(canManageCustomObjects ? [customObjectsItem] : []),
                       ...(canManageBilling ? [billingItem] : []),
                       ...(canManageRates ? [ratesItem, productsItem] : []),

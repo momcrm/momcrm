@@ -1,4 +1,5 @@
 import { Form } from '@inertiajs/react';
+import CategorySelect from '@/components/articles/category-select';
 import FormField from '@/components/form-field';
 import NativeSelect from '@/components/native-select';
 import { Button } from '@/components/ui/button';
@@ -12,7 +13,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import { store } from '@/routes/articles';
-import type { ArticleClassificationOption } from '@/types';
+import type { ArticleCategory, ArticleClassificationOption } from '@/types';
 
 /**
  * Starts an article from its title and who may read it, then opens it in
@@ -22,10 +23,12 @@ export default function NewArticleDialog({
     open,
     onOpenChange,
     classifications,
+    categories,
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     classifications: ArticleClassificationOption[];
+    categories: ArticleCategory[];
 }) {
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -71,6 +74,20 @@ export default function NewArticleDialog({
                                     ))}
                                 </NativeSelect>
                             </FormField>
+                            {categories.length > 0 && (
+                                <FormField
+                                    id="article-category"
+                                    label="Category"
+                                    error={errors.category_id}
+                                >
+                                    <CategorySelect
+                                        id="article-category"
+                                        name="category_id"
+                                        categories={categories}
+                                        defaultValue=""
+                                    />
+                                </FormField>
+                            )}
                             <DialogFooter>
                                 <Button
                                     type="button"
