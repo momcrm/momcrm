@@ -128,6 +128,7 @@ final class TicketDrawer
             'requester' => $ticket->getRequesterEmail()->isNull() ? null : [
                 'name' => $ticket->getRequesterName()->toNullableString(),
                 'email' => $ticket->getRequesterEmail()->toString(),
+                'via' => $ticket->getMailboxId()->isNull() ? 'portal' : 'email',
             ],
             'location_name' => $location->isNull() ? null : $location->getName()->toString(),
             'labels' => Choice::collect($model->labels->all(), 'fromEloquentModel')->toTags(),
@@ -149,6 +150,7 @@ final class TicketDrawer
                     'author_id' => $comment->user_id,
                     'author_name' => $comment->author->name ?? $comment->sender_name ?? $comment->sender_email,
                     'sender_email' => $comment->sender_email,
+                    'from_portal' => $comment->contact_id !== null,
                     'visibility' => $comment->visibility,
                     'delivery' => $deliveries[$comment->id] ?? null,
                     'mentions' => $comment->mentions ?? [],

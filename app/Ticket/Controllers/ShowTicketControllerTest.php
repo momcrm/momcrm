@@ -112,6 +112,7 @@ it('shows who wrote in on a ticket opened by an email', function (): void {
         'customer_id' => null,
         'requester_name' => 'Sam Lee',
         'requester_email' => 'sam@acme.test',
+        'mailbox_id' => MailboxEloquentModel::factory()->create(['team_id' => $user->current_team_id])->id,
     ]);
     $typed = TicketEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
 
@@ -119,7 +120,7 @@ it('shows who wrote in on a ticket opened by an email', function (): void {
         ->get(route('tickets.show', $ticket->id))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->where('drawer.requester', ['name' => 'Sam Lee', 'email' => 'sam@acme.test'])
+            ->where('drawer.requester', ['name' => 'Sam Lee', 'email' => 'sam@acme.test', 'via' => 'email'])
             ->where('drawer.customer_name', null));
 
     actingAs($user)

@@ -14,10 +14,14 @@ use App\Attachment\Properties\AttachableType;
 use App\Attachment\Properties\FolderId;
 use App\Attachment\Properties\Id;
 use App\Attachment\Properties\Name;
+use App\Attachment\Properties\SharedWithCustomer;
 use App\Attachment\Properties\TeamId;
+use App\Contact\Contact;
+use App\Contact\ContactEloquentModel;
 use App\Project\Actions\FindProject;
 use App\Project\ProjectVisibility;
 use App\Shared\MorphMapKeyEnum;
+use App\Shared\RequestMemo;
 use App\Shared\Table;
 use App\Ticket\Properties\Id as TicketId;
 use App\Ticket\Properties\TeamId as TicketTeamId;
@@ -69,6 +73,58 @@ final class FindAttachment
         ProjectVisibility::constrainTickets($tickets->getQuery(), $userId, Table::Tickets->value);
 
         return $tickets->exists();
+    }
+
+    /**
+     * The ticket's files its customer can see in the portal, newest first.
+     */
+    public static function sharedOnTicket(string $ticketId): AttachmentCollection
+    {
+        return Attachment::collect(AttachmentEloquentModel::query()
+            ->withoutGlobalScopes()
+            ->where(AttachableType::getDatabaseTableColumnName(), MorphMapKeyEnum::Ticket->value)
+            ->where(AttachableId::getDatabaseTableColumnName(), $ticketId)
+            ->where(SharedWithCustomer::getDatabaseTableColumnName(), true)
+            ->latest()
+            ->get()
+            ->all());
+    }
+
+    /**
+     * A file shared on one of the customer's tickets, for a contact to
+     * download in the portal; empty otherwise.
+     */
+    public static function sharedByIdForCustomer(?string $id, string $teamId, string $customerId): Attachment
+    {
+        if ($id === null) {
+            return Attachment::new();
+        }
+
+        $tickets = Table::Tickets->value;
+        $attachments = Table::Attachments->value;
+
+        return Attachment::fromEloquentModel(AttachmentEloquentModel::query()
+            ->withoutGlobalScopes()
+            ->select("{$attachments}.*")
+            ->join($tickets, "{$tickets}.id", '=', "{$attachments}.attachable_id")
+            ->where("{$attachments}.attachable_type", MorphMapKeyEnum::Ticket->value)
+            ->where("{$attachments}.team_id", $teamId)
+            ->where("{$tickets}.customer_id", $customerId)
+            ->where("{$attachments}.".SharedWithCustomer::getDatabaseTableColumnName(), true)
+            ->where("{$attachments}.id", $id)
+            ->first());
+    }
+
+    /**
+     * The name of a contact who added a file in the portal.
+     */
+    private static function contactName(string $contactId): ?string
+    {
+        return RequestMemo::remember("attachment-contact-name.{$contactId}", function () use ($contactId): ?string {
+            $contact = ContactEloquentModel::query()->withoutGlobalScopes()->find($contactId);
+
+            return $contact === null ? null : Contact::fromEloquentModel($contact)->getFullName();
+        });
     }
 
     /**
@@ -140,10 +196,12 @@ final class FindAttachment
     }
 
     /**
-     * @return array{id: string, name: string, description: ?string, folder_id: ?string, size: int, mime_type: string, uploaded_by: ?string, created_at: ?string, url: string}
+     * @return array{id: string, name: string, description: ?string, folder_id: ?string, size: int, mime_type: string, uploaded_by: ?string, shared_with_customer: bool, created_at: ?string, url: string}
      */
     public static function listItem(Attachment $attachment): array
     {
+        $contactId = $attachment->getUploadedByContactId()->toNullableString();
+
         return [
             'id' => $attachment->getId()->toString(),
             'name' => $attachment->getName()->toString(),
@@ -151,7 +209,9 @@ final class FindAttachment
             'folder_id' => $attachment->getFolderId()->toNullableString(),
             'size' => $attachment->getSize()->toInteger(),
             'mime_type' => $attachment->getMimeType()->toString(),
-            'uploaded_by' => $attachment->getUploader()->toNullableData()?->getName()->toString(),
+            'uploaded_by' => $attachment->getUploader()->toNullableData()?->getName()->toString()
+                ?? ($contactId === null ? null : self::contactName($contactId)),
+            'shared_with_customer' => $attachment->getSharedWithCustomer()->toBoolean(),
             'created_at' => $attachment->getCreatedAt()->toNullableISOString(),
             'url' => route('attachments.show', $attachment->getId()->toString()),
         ];

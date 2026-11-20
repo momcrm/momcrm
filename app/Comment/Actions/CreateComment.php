@@ -63,7 +63,7 @@ final readonly class CreateComment
 
             NotifyTicketWatchers::send(
                 $ticket,
-                new TicketCommentedNotification($ticket, $author, $excerpt, senderName: $author === null ? $sender : null),
+                new TicketCommentedNotification($ticket, $author, $excerpt, senderName: $author === null ? $sender : null, isFromPortal: $model->contact_id !== null),
                 actorId: $model->user_id,
                 except: $mentionedIds,
             );

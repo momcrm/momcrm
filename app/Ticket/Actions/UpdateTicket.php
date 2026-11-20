@@ -28,6 +28,7 @@ final readonly class UpdateTicket
     public function __construct(
         private Ticket $ticket,
         private ?string $updatedById = null,
+        private ?string $actorName = null,
     ) {}
 
     public function __invoke(): Ticket
@@ -55,7 +56,11 @@ final readonly class UpdateTicket
 
         $model->update($this->ticket->forDatabaseUpdate());
 
-        $details = ['number' => $this->ticket->getNumber()->toInteger(), 'title' => $this->ticket->getTitle()->toString()];
+        $details = array_filter([
+            'number' => $this->ticket->getNumber()->toInteger(),
+            'title' => $this->ticket->getTitle()->toString(),
+            'actor_name' => $this->updatedById === null ? $this->actorName : null,
+        ], fn (mixed $value): bool => $value !== null);
         $statusChanged = $before->getStatusId()->toNullableString() !== $this->ticket->getStatusId()->toNullableString();
         $assigneeId = $this->ticket->getAssigneeId()->toNullableString();
         $assigneeChanged = $before->getAssigneeId()->toNullableString() !== $assigneeId;
@@ -96,7 +101,7 @@ final readonly class UpdateTicket
         if ($statusChanged) {
             NotifyTicketWatchers::send(
                 $model->refresh(),
-                new TicketStatusChangedNotification($model, $actor, $status->getName()->toString()),
+                new TicketStatusChangedNotification($model, $actor, $status->getName()->toString(), $this->updatedById === null ? $this->actorName : null),
                 actorId: $this->updatedById,
                 except: $assigneeChanged ? [$assigneeId] : [],
             );
@@ -105,9 +110,13 @@ final readonly class UpdateTicket
         return $this->ticket;
     }
 
-    public static function fromTicket(Ticket $ticket, ?string $updatedById = null): Ticket
+    /**
+     * $actorName names who made the change when it wasn't someone in the
+     * team, such as a customer's contact in the portal.
+     */
+    public static function fromTicket(Ticket $ticket, ?string $updatedById = null, ?string $actorName = null): Ticket
     {
-        return new self($ticket, $updatedById)->handle();
+        return new self($ticket, $updatedById, $actorName)->handle();
     }
 
     public function handle(): Ticket

@@ -8,10 +8,11 @@ use App\Attachment\Attachment;
 use App\Attachment\AttachmentEloquentModel;
 use App\Attachment\Properties\Description;
 use App\Attachment\Properties\FolderId;
+use App\Attachment\Properties\SharedWithCustomer;
 
 /**
- * Saves a file's description and folder; its stored copy and name stay as
- * they are.
+ * Saves a file's description, folder and whether the customer can see it;
+ * its stored copy and name stay as they are.
  */
 final readonly class UpdateAttachment
 {
@@ -27,6 +28,7 @@ final readonly class UpdateAttachment
             ?->update([
                 Description::getDatabaseTableColumnName() => $this->attachment->getDescription()->toNullableString(),
                 FolderId::getDatabaseTableColumnName() => $this->attachment->getFolderId()->toNullableString(),
+                SharedWithCustomer::getDatabaseTableColumnName() => $this->attachment->getSharedWithCustomer()->toBoolean(),
             ]);
 
         return $this->attachment;

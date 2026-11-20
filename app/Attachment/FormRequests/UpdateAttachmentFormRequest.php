@@ -10,16 +10,18 @@ use App\Attachment\Attachment;
 use App\Attachment\Exceptions\CouldNotFindAttachment;
 use App\Attachment\Properties\Description;
 use App\Attachment\Properties\FolderId;
+use App\Attachment\Properties\SharedWithCustomer;
 use App\Folder\FolderValidationRules;
 use App\Shared\MorphMapKeyEnum;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 
 /**
- * Changes a file's description, or moves a customer's file into another of
- * its folders.
+ * Changes a file's description, moves a customer's file into another of its
+ * folders, or shares a ticket's file with the customer in the portal.
  */
 final class UpdateAttachmentFormRequest extends FormRequest
 {
@@ -55,8 +57,11 @@ final class UpdateAttachmentFormRequest extends FormRequest
             ? $this->attachment->getAttachableId()->toNullableString()
             : null;
 
+        $isOnTicket = $this->attachment->getAttachableType()->toString() === MorphMapKeyEnum::Ticket->value;
+
         return [
             Description::getNameForValidation() => ['sometimes', ...Description::getValidationRulesForUpdate($this)],
+            SharedWithCustomer::getNameForValidation() => ['sometimes', Rule::prohibitedIf(! $isOnTicket), ...SharedWithCustomer::getValidationRulesForUpdate($this)],
             FolderId::getNameForValidation() => [
                 'sometimes',
                 ...FolderId::getValidationRulesForUpdate($this),

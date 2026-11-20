@@ -3,24 +3,11 @@
 declare(strict_types=1);
 
 use App\AccessRule\AccessRuleEloquentModel;
-use App\Contact\ContactEloquentModel;
-use App\Customer\CustomerEloquentModel;
 use App\User\UserEloquentModel;
 use Inertia\Testing\AssertableInertia as Assert;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\get;
-
-/**
- * A contact with portal access at a customer of a team with the default rules.
- */
-function portalContact(array $attributes = []): ContactEloquentModel
-{
-    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
-    $customer = CustomerEloquentModel::factory()->create(['team_id' => $owner->current_team_id, 'name' => 'Coastal Logistics']);
-
-    return ContactEloquentModel::factory()->withPortalAccess()->create(['team_id' => $owner->current_team_id, 'customer_id' => $customer->id, 'first_name' => 'Mark', 'last_name' => 'Ellis', ...$attributes]);
-}
 
 it('shows a contact their portal with the sections the rules allow', function (): void {
     $contact = portalContact();

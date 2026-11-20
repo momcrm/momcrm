@@ -6,6 +6,7 @@ namespace App\Comment;
 
 use App\Comment\Factories\CommentFactory;
 use App\Comment\Properties\Body;
+use App\Comment\Properties\ContactId;
 use App\Comment\Properties\CreatedAt;
 use App\Comment\Properties\Id;
 use App\Comment\Properties\Mentions;
@@ -28,6 +29,7 @@ final class Comment extends AbstractData
 {
     public function __construct(
         public Body $body,
+        public ContactId $contactId,
         public CreatedAt $createdAt,
         public Id $id,
         public Mentions $mentions,
@@ -71,6 +73,18 @@ final class Comment extends AbstractData
     public function setBody(mixed $body): self
     {
         $this->body = new Body($body instanceof AbstractValue ? $body->toValue() : $body);
+
+        return $this;
+    }
+
+    public function getContactId(): ContactId
+    {
+        return $this->contactId;
+    }
+
+    public function setContactId(mixed $contactId): self
+    {
+        $this->contactId = new ContactId($contactId instanceof AbstractValue ? $contactId->toValue() : $contactId);
 
         return $this;
     }

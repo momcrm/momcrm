@@ -519,6 +519,8 @@ export type TicketDrawerData = Omit<
     requester: {
         name: string | null;
         email: string;
+        /** Whether they wrote in by email or raised it in the customer portal. */
+        via: 'email' | 'portal';
     } | null;
     location_name: string | null;
     can: Abilities;
@@ -543,8 +545,10 @@ export type TicketComment = {
     author_id: string | null;
     /** The team member who wrote it, or the person whose email it is. */
     author_name: string | null;
-    /** Set when the comment arrived by email. */
+    /** Set when the customer wrote it, by email or in the portal. */
     sender_email: string | null;
+    /** Whether the customer wrote it in the customer portal. */
+    from_portal?: boolean;
     /** An internal note, or part of the conversation with the customer. */
     visibility: 'internal' | 'public';
     /** How a reply emailed to the customer fared. */
@@ -565,6 +569,8 @@ export type AttachmentItem = {
     size: number;
     mime_type: string;
     uploaded_by: string | null;
+    /** Whether the customer can see it in the portal (tickets only). */
+    shared_with_customer?: boolean;
     created_at: string | null;
     url: string;
 };

@@ -109,7 +109,9 @@ export default function TicketConversation({
                                         {comment.sender_email && (
                                             <span title={comment.sender_email}>
                                                 <SoftBadge tone="info">
-                                                    Customer
+                                                    {comment.from_portal
+                                                        ? 'Customer · portal'
+                                                        : 'Customer'}
                                                 </SoftBadge>
                                             </span>
                                         )}
