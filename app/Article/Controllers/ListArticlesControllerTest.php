@@ -20,6 +20,7 @@ it('lists the articles each role may read', function (TeamRoleEnum $role, array 
     ArticleEloquentModel::factory()->create([...$team, 'title' => 'Internal']);
     ArticleEloquentModel::factory()->classified(ArticleClassificationEnum::Confidential)->create([...$team, 'title' => 'Confidential']);
     ArticleEloquentModel::factory()->classified(ArticleClassificationEnum::StrictlyConfidential)->create([...$team, 'title' => 'Strictly confidential']);
+    ArticleEloquentModel::factory()->classified(ArticleClassificationEnum::Customer)->create([...$team, 'title' => 'Customer']);
     ArticleEloquentModel::factory()->create(['title' => 'Another team']);
 
     actingAs($user)
@@ -30,9 +31,9 @@ it('lists the articles each role may read', function (TeamRoleEnum $role, array 
             ->where('articles.data', fn ($articles): bool => collect($articles)->pluck('title')->all() === $titles)
             ->where('classifications', fn ($options): bool => count($options) === count($titles)));
 })->with([
-    'member' => [TeamRoleEnum::Member, ['Internal']],
-    'admin' => [TeamRoleEnum::Admin, ['Confidential', 'Internal']],
-    'owner' => [TeamRoleEnum::Owner, ['Confidential', 'Internal', 'Strictly confidential']],
+    'member' => [TeamRoleEnum::Member, ['Customer', 'Internal']],
+    'admin' => [TeamRoleEnum::Admin, ['Confidential', 'Customer', 'Internal']],
+    'owner' => [TeamRoleEnum::Owner, ['Confidential', 'Customer', 'Internal', 'Strictly confidential']],
 ]);
 
 it('searches titles, summaries and bodies, and filters by status and classification', function (): void {

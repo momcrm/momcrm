@@ -6,6 +6,7 @@ use App\Portal\Controllers\CreatePortalTicketController;
 use App\Portal\Controllers\DownloadPortalInvoicePdfController;
 use App\Portal\Controllers\DownloadPortalReceiptPdfController;
 use App\Portal\Controllers\DownloadPortalStatementController;
+use App\Portal\Controllers\ListPortalArticlesController;
 use App\Portal\Controllers\ListPortalAssetsController;
 use App\Portal\Controllers\ListPortalInvoicesController;
 use App\Portal\Controllers\ListPortalReceiptsController;
@@ -15,6 +16,8 @@ use App\Portal\Controllers\LogOutOfPortalController;
 use App\Portal\Controllers\RedirectPortalToProviderController;
 use App\Portal\Controllers\ReopenPortalTicketController;
 use App\Portal\Controllers\SendPortalCodeController;
+use App\Portal\Controllers\ShowPortalArticleController;
+use App\Portal\Controllers\ShowPortalArticleImageController;
 use App\Portal\Controllers\ShowPortalChoiceController;
 use App\Portal\Controllers\ShowPortalCodeController;
 use App\Portal\Controllers\ShowPortalDashboardController;
@@ -68,6 +71,10 @@ Route::prefix('portal')->name('portal.')->group(function () {
 
         Route::get('services', ListPortalServicesController::class)->name('services.index');
         Route::get('assets', ListPortalAssetsController::class)->name('assets.index');
+
+        Route::get('articles', ListPortalArticlesController::class)->name('articles.index');
+        Route::get('articles/{article}', ShowPortalArticleController::class)->name('articles.show');
+        Route::get('articles/{article}/images/{image}', ShowPortalArticleImageController::class)->name('articles.images.show');
         Route::post('logout', LogOutOfPortalController::class)->name('logout');
     });
 });

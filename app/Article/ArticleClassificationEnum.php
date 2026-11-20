@@ -9,14 +9,17 @@ use App\Shared\Traits\EnumOptions;
 use App\TeamUser\TeamRoleEnum;
 
 /**
- * Who in the team may read an article, by their role. Each tier is read by
- * the roles of the tiers above it too, so owners read everything.
+ * Who may read an article. Customer articles are read by everyone in the team
+ * and by customers in the portal; the other tiers are for the team alone, by
+ * role, each read by the roles of the tiers above it too, so owners read
+ * everything.
  */
 enum ArticleClassificationEnum: string
 {
     use Enum;
     use EnumOptions;
 
+    case Customer = 'customer';
     case Internal = 'internal';
     case Confidential = 'confidential';
     case StrictlyConfidential = 'strictly_confidential';
@@ -24,6 +27,7 @@ enum ArticleClassificationEnum: string
     public function label(): string
     {
         return match ($this) {
+            self::Customer => 'Customers',
             self::Internal => 'Internal',
             self::Confidential => 'Confidential',
             self::StrictlyConfidential => 'Strictly confidential',
@@ -33,6 +37,7 @@ enum ArticleClassificationEnum: string
     public function description(): string
     {
         return match ($this) {
+            self::Customer => 'Everyone in the team, and customers in the portal',
             self::Internal => 'Everyone in the team',
             self::Confidential => 'Owners and admins',
             self::StrictlyConfidential => 'Owners only',
@@ -42,7 +47,7 @@ enum ArticleClassificationEnum: string
     public function isReadableBy(TeamRoleEnum $role): bool
     {
         return match ($this) {
-            self::Internal => true,
+            self::Customer, self::Internal => true,
             self::Confidential => $role !== TeamRoleEnum::Member,
             self::StrictlyConfidential => $role === TeamRoleEnum::Owner,
         };

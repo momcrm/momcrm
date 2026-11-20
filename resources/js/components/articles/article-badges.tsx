@@ -11,12 +11,14 @@ export const articleClassificationLabels: Record<
     ArticleClassification,
     string
 > = {
+    customer: 'Customers',
     internal: 'Internal',
     confidential: 'Confidential',
     strictly_confidential: 'Strictly confidential',
 };
 
 const classificationTones: Record<ArticleClassification, Tone> = {
+    customer: 'info',
     internal: 'neutral',
     confidential: 'warning',
     strictly_confidential: 'destructive',
