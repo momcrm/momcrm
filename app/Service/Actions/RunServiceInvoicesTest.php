@@ -17,7 +17,7 @@ function invoiceRunSetup(): array
 {
     $team = TeamEloquentModel::factory()->create();
     $customer = CustomerEloquentModel::factory()->create(['team_id' => $team->id, 'name' => 'Acme']);
-    $rate = RateEloquentModel::factory()->create(['team_id' => $team->id, 'price_in_cents' => 3000]);
+    $rate = RateEloquentModel::factory()->priced(['AUD' => 3000])->create(['team_id' => $team->id]);
 
     return [$team, $customer, $rate];
 }
@@ -44,6 +44,20 @@ it('drafts one invoice per customer, with a line for each period due, priced fro
             ['Hosting · 1 Dec 2026 – 31 Dec 2026', 1, 3000, '2026-12-01', '2026-12-31'],
         ])
         ->and($lines->first()->service_id)->toBe($backup->id);
+});
+
+it("bills a customer in their currency, at the rate's price in it, leaving out services with no price in it", function (): void {
+    [$team] = invoiceRunSetup();
+    $customer = CustomerEloquentModel::factory()->create(['team_id' => $team->id, 'currency' => 'USD']);
+    $both = RateEloquentModel::factory()->priced(['AUD' => 3000, 'USD' => 2000])->create(['team_id' => $team->id]);
+    $audOnly = RateEloquentModel::factory()->priced(['AUD' => 3000])->create(['team_id' => $team->id]);
+    ServiceEloquentModel::factory()->create(['team_id' => $team->id, 'customer_id' => $customer->id, 'rate_id' => $both->id, 'name' => 'Backup', 'billing_starts_on' => '2026-12-01']);
+    ServiceEloquentModel::factory()->create(['team_id' => $team->id, 'customer_id' => $customer->id, 'rate_id' => $audOnly->id, 'name' => 'Hosting', 'billing_starts_on' => '2026-12-01']);
+
+    expect(RunServiceInvoices::on(CarbonImmutable::parse('2026-12-02')))->toBe(1)
+        ->and(InvoiceEloquentModel::query()->withoutGlobalScopes()->sole()->currency)->toBe('USD')
+        ->and(InvoiceItemEloquentModel::query()->withoutGlobalScopes()->get(['description', 'unit_price_in_cents'])->toArray())
+        ->toBe([['description' => 'Backup · 1 Dec 2026 – 31 Dec 2026', 'unit_price_in_cents' => 2000]]);
 });
 
 it('makes nothing new when run again, but bills again what a voided invoice billed', function (): void {

@@ -6,7 +6,10 @@ use App\Contact\ContactEloquentModel;
 use App\Customer\CustomerEloquentModel;
 use App\CustomField\CustomFieldEloquentModel;
 use App\CustomField\CustomFieldTargetEnum;
+use App\Invoice\InvoiceEloquentModel;
 use App\Location\LocationEloquentModel;
+use App\Rate\RateEloquentModel;
+use App\Service\ServiceEloquentModel;
 use App\User\UserEloquentModel;
 
 use function Pest\Laravel\actingAs;
@@ -24,6 +27,40 @@ it('saves changes to a customer', function (): void {
         ->status->toBe('inactive')
         ->number->toBe(4);
 });
+
+it('moves a customer to another currency their services are priced in', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $team = ['team_id' => $user->current_team_id];
+    $customer = CustomerEloquentModel::factory()->create($team);
+    $rate = RateEloquentModel::factory()->priced(['AUD' => 9500, 'USD' => 6200])->create($team);
+    ServiceEloquentModel::factory()->create([...$team, 'customer_id' => $customer->id, 'rate_id' => $rate->id]);
+    InvoiceEloquentModel::factory()->create([...$team, 'customer_id' => $customer->id, 'status' => 'void']);
+
+    actingAs($user)
+        ->put(route('customers.update', $customer->id), ['name' => $customer->name, 'status' => 'active', 'currency' => 'USD'])
+        ->assertSessionHasNoErrors();
+
+    expect($customer->fresh()->currency)->toBe('USD');
+});
+
+it('keeps a customer in their currency once invoiced, or while a service has no price in the new one', function (Closure $setUp, string $message): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $customer = CustomerEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
+    $setUp($customer);
+
+    actingAs($user)
+        ->put(route('customers.update', $customer->id), ['name' => $customer->name, 'status' => 'active', 'currency' => 'USD'])
+        ->assertSessionHasErrors(['currency' => $message]);
+
+    expect($customer->fresh()->currency)->toBe('AUD');
+})->with([
+    'invoiced' => [fn (CustomerEloquentModel $customer) => InvoiceEloquentModel::factory()->create(['team_id' => $customer->team_id, 'customer_id' => $customer->id]), 'This customer has been invoiced in AUD, so they stay in it.'],
+    'a service unpriced in USD' => [fn (CustomerEloquentModel $customer) => ServiceEloquentModel::factory()->create([
+        'team_id' => $customer->team_id,
+        'customer_id' => $customer->id,
+        'rate_id' => RateEloquentModel::factory()->priced(['AUD' => 9500])->create(['team_id' => $customer->team_id, 'name' => 'Support'])->id,
+    ]), 'Give Support a price in USD first.'],
+]);
 
 it("returns not found for another team's customer", function (): void {
     $other = CustomerEloquentModel::factory()->create(['name' => 'Theirs']);

@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Rate\Rate;
+use App\Rate\RatePrice;
 use Carbon\CarbonImmutable;
 
 /**
- * One stretch of days a service is billed for, and what one unit of it costs.
+ * One stretch of days a service is billed for, and what one unit of it costs
+ * in the price's currency.
  *
  * A period runs from its first day to the end of the month it closes in, so
  * every period after the first starts on the 1st. A service that starts part
@@ -28,7 +30,7 @@ final readonly class ServiceBillingPeriod
      * The period a service is billed for next: from its billing start when it
      * was never billed, otherwise from the day after it was last billed to.
      */
-    public static function next(Service $service, Rate $rate, ?CarbonImmutable $billedThrough): self
+    public static function next(Service $service, Rate $rate, RatePrice $price, ?CarbonImmutable $billedThrough): self
     {
         $startsOn = $billedThrough === null
             ? $service->getBillingStartsOn()->toCarbon()->startOfDay()
@@ -38,7 +40,7 @@ final readonly class ServiceBillingPeriod
             $startsOn = $startsOn->startOfMonth()->addMonth();
         }
 
-        return self::startingOn($startsOn, $service->billingPeriodInMonthsOn($rate), $rate);
+        return self::startingOn($startsOn, $service->billingPeriodInMonthsOn($rate), $rate, $price);
     }
 
     /**
@@ -47,22 +49,22 @@ final readonly class ServiceBillingPeriod
      *
      * @return list<self>
      */
-    public static function dueBy(Service $service, Rate $rate, ?CarbonImmutable $billedThrough, CarbonImmutable $day, int $limit = 24): array
+    public static function dueBy(Service $service, Rate $rate, RatePrice $price, ?CarbonImmutable $billedThrough, CarbonImmutable $day, int $limit = 24): array
     {
         $periods = [];
-        $period = self::next($service, $rate, $billedThrough);
+        $period = self::next($service, $rate, $price, $billedThrough);
 
         while ($period->startsOn->lte($day) && count($periods) < $limit) {
             $periods[] = $period;
-            $period = self::next($service, $rate, $period->endsOn);
+            $period = self::next($service, $rate, $price, $period->endsOn);
         }
 
         return $periods;
     }
 
-    private static function startingOn(CarbonImmutable $startsOn, int $months, Rate $rate): self
+    private static function startingOn(CarbonImmutable $startsOn, int $months, Rate $rate, RatePrice $price): self
     {
-        $monthlyPrice = $rate->getPriceInCents()->toInteger();
+        $monthlyPrice = $price->priceInCents;
         $endsOn = $startsOn->startOfMonth()->addMonthsNoOverflow($months)->subDay();
         $isPartMonth = $startsOn->day !== 1 && $rate->getProratesFirstMonth()->toBoolean();
 

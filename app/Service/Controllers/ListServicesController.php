@@ -7,7 +7,6 @@ namespace App\Service\Controllers;
 use App\Customer\Actions\FindCustomer;
 use App\Rate\Actions\FindRate;
 use App\Rate\Properties\BillingPeriodInMonths;
-use App\Rate\Rate;
 use App\Service\Actions\FindService;
 use App\Service\Service;
 use App\Service\ServiceCollection;
@@ -54,7 +53,7 @@ final class ListServicesController
                 'direction' => $direction,
             ],
             'statuses' => ServiceLifecycleEnum::options(),
-            'rates' => array_values(FindRate::listForTeam($teamId, withArchived: true)->map(fn (Rate $rate): array => $rate->toSummary())->all()),
+            'rates' => FindRate::listForTeam($teamId, withArchived: true)->toSummaries(),
             'customers' => FindCustomer::optionsForTeam($teamId),
             'billingPeriods' => BillingPeriodInMonths::ALLOWED,
         ]);

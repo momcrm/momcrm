@@ -7,6 +7,7 @@ namespace App\Invoice;
 use App\CustomField\Properties\CustomFieldValues;
 use App\Invoice\Factories\InvoiceFactory;
 use App\Invoice\Properties\CreatedAt;
+use App\Invoice\Properties\Currency;
 use App\Invoice\Properties\Customer;
 use App\Invoice\Properties\CustomerId;
 use App\Invoice\Properties\DueOn;
@@ -34,6 +35,7 @@ final class Invoice extends AbstractData
     public function __construct(
         public CustomFieldValues $customFields,
         public CreatedAt $createdAt,
+        public Currency $currency,
         public Customer $customer,
         public CustomerId $customerId,
         public DueOn $dueOn,
@@ -97,7 +99,7 @@ final class Invoice extends AbstractData
     }
 
     /**
-     * @return array{id: string, number: int, reference: string, customer_id: string, issued_on: ?string, due_on: ?string, status: string, is_overdue: bool, tax_rate_basis_points: int, purchase_order: ?string, notes: ?string, sent_at: ?string, paid_at: ?string, custom_fields: array<string, mixed>}
+     * @return array{id: string, number: int, reference: string, customer_id: string, issued_on: ?string, due_on: ?string, status: string, currency: string, is_overdue: bool, tax_rate_basis_points: int, purchase_order: ?string, notes: ?string, sent_at: ?string, paid_at: ?string, custom_fields: array<string, mixed>}
      */
     public function toSummary(): array
     {
@@ -109,6 +111,7 @@ final class Invoice extends AbstractData
             'issued_on' => $this->getIssuedOn()->toNullableCarbon()?->toDateString(),
             'due_on' => $this->getDueOn()->toNullableCarbon()?->toDateString(),
             'status' => $this->getStatus()->toString(),
+            'currency' => $this->getCurrency()->toEnum()->value,
             'is_overdue' => $this->isOverdue(),
             'tax_rate_basis_points' => $this->getTaxRateBasisPoints()->toInteger(),
             'purchase_order' => $this->getPurchaseOrder()->toNullableString(),
@@ -134,6 +137,18 @@ final class Invoice extends AbstractData
     public function getCreatedAt(): CreatedAt
     {
         return $this->createdAt;
+    }
+
+    public function getCurrency(): Currency
+    {
+        return $this->currency;
+    }
+
+    public function setCurrency(mixed $currency): self
+    {
+        $this->currency = new Currency($currency instanceof AbstractValue ? $currency->toValue() : $currency);
+
+        return $this;
     }
 
     public function getCustomerId(): CustomerId

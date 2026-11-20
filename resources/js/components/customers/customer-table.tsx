@@ -121,7 +121,10 @@ function buildColumns(
                     <span className="text-subtle-foreground">—</span>
                 ) : (
                     <span className="font-medium tabular-nums">
-                        {formatCents(info.getValue())}
+                        {formatCents(
+                            info.getValue(),
+                            info.row.original.currency,
+                        )}
                     </span>
                 ),
         }),

@@ -9,10 +9,10 @@ import DeleteServiceController from '@/actions/App/Service/Controllers/DeleteSer
 import RestoreServiceController from '@/actions/App/Service/Controllers/RestoreServiceController';
 import SetServiceAutoRenewController from '@/actions/App/Service/Controllers/SetServiceAutoRenewController';
 import ConfirmDelete from '@/components/confirm-delete';
-import NativeSelect from '@/components/native-select';
+import RateCombobox from '@/components/rates/rate-combobox';
 import { SettingsRow, SettingsSection } from '@/components/settings-section';
 import { Button } from '@/components/ui/button';
-import { formatCents } from '@/lib/money';
+import { formatCents, priceIn } from '@/lib/money';
 import type { Abilities, Rate, Service } from '@/types';
 
 const keepScroll = { preserveScroll: true };
@@ -53,7 +53,9 @@ export function ChangeRateSection({
     service: Service;
     rates: Rate[];
 }) {
-    const choices = rates.filter((rate) => !rate.is_archived);
+    const choices = rates.filter(
+        (rate) => !rate.is_archived && priceIn(rate.prices, service.currency),
+    );
 
     return (
         <SettingsSection
@@ -76,27 +78,24 @@ export function ChangeRateSection({
                         error={errors.rate_id}
                     >
                         <div className="flex gap-2">
-                            <NativeSelect
+                            <RateCombobox
                                 id="rate_id"
                                 name="rate_id"
+                                rates={choices}
                                 defaultValue={
                                     service.rate?.is_archived
                                         ? ''
                                         : (service.rate_id ?? '')
                                 }
-                                required
-                            >
-                                <option value="" disabled>
-                                    Choose a rate
-                                </option>
-                                {choices.map((rate) => (
-                                    <option key={rate.id} value={rate.id}>
-                                        {rate.name} ·{' '}
-                                        {formatCents(rate.price_in_cents)} a
-                                        month
-                                    </option>
-                                ))}
-                            </NativeSelect>
+                                detail={(rate) =>
+                                    `${formatCents(
+                                        priceIn(rate.prices, service.currency)
+                                            ?.price_in_cents,
+                                        service.currency,
+                                    )} a month`
+                                }
+                                invalid={Boolean(errors.rate_id)}
+                            />
                             <Button
                                 variant="outline"
                                 className="shrink-0"

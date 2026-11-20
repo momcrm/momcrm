@@ -6,6 +6,7 @@ namespace App\Customer\Controllers;
 
 use App\Customer\CustomerBillingTypeEnum;
 use App\Customer\CustomerStatusEnum;
+use App\Shared\CurrencyEnum;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -18,6 +19,7 @@ final class ListCustomerFormOptionsController
         return response()->json([
             'statuses' => CustomerStatusEnum::options(),
             'billingTypes' => CustomerBillingTypeEnum::options(),
+            'currencies' => CurrencyEnum::options(),
         ]);
     }
 }

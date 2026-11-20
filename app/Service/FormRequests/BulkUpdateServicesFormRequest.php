@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Service\FormRequests;
 
+use App\Customer\Actions\FindCustomer;
 use App\Rate\Actions\FindRate;
 use App\Service\Actions\ChangeServiceRate;
 use App\Service\Actions\UpdateService;
@@ -70,9 +71,11 @@ final class BulkUpdateServicesFormRequest extends FormRequest
      */
     public function rules(): array
     {
+        $currencies = FindCustomer::currenciesByIds(array_values(array_unique($this->services->map(fn (Service $service): string => $service->getCustomerId()->toString())->all())));
+
         return [
             ...BulkServiceSelection::rules(),
-            RateId::getNameForValidation() => ['sometimes', ...ServiceValidationRules::rate($this, (string) $this->user()?->current_team_id)],
+            RateId::getNameForValidation() => ['sometimes', ...ServiceValidationRules::rate($this, (string) $this->user()?->current_team_id, array_values($currencies))],
             Quantity::getNameForValidation() => ['sometimes', ...Quantity::getValidationRulesForCreate($this)],
             BillingPeriodInMonths::getNameForValidation() => ['sometimes', ...BillingPeriodInMonths::getValidationRulesForCreate($this)],
             AutoRenew::getNameForValidation() => ['sometimes', 'boolean'],

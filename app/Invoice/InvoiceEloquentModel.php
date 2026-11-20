@@ -32,6 +32,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property CarbonImmutable|null $created_at
+ * @property string $currency
  * @property string $customer_id
  * @property CarbonImmutable $due_on
  * @property string $id

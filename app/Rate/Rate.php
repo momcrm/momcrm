@@ -7,22 +7,25 @@ namespace App\Rate;
 use App\Rate\Factories\RateFactory;
 use App\Rate\Properties\ArchivedAt;
 use App\Rate\Properties\BillingPeriodInMonths;
-use App\Rate\Properties\CostInCents;
 use App\Rate\Properties\CreatedAt;
 use App\Rate\Properties\Description;
 use App\Rate\Properties\Id;
 use App\Rate\Properties\Name;
-use App\Rate\Properties\PriceInCents;
+use App\Rate\Properties\ParentId;
+use App\Rate\Properties\Prices;
 use App\Rate\Properties\ProratesFirstMonth;
 use App\Rate\Properties\TeamId;
 use App\Rate\Properties\UpdatedAt;
+use App\Shared\CurrencyEnum;
 use Illuminate\Support\Collection;
 use Mom\Data\AbstractData;
 use Mom\Data\AbstractValue;
 
 /**
  * One entry in the team's price list, such as "Managed IT support" at $95 a
- * month per seat. A service is priced from its rate.
+ * month per seat, priced in one or more currencies. A service is priced from
+ * its rate, in the currency its customer is billed in. A rate can sit under
+ * another, so the price list reads as a tree.
  *
  * @extends AbstractData<RateEloquentModel>
  */
@@ -31,12 +34,12 @@ final class Rate extends AbstractData
     public function __construct(
         public ArchivedAt $archivedAt,
         public BillingPeriodInMonths $billingPeriodInMonths,
-        public CostInCents $costInCents,
         public CreatedAt $createdAt,
         public Description $description,
         public Id $id,
         public Name $name,
-        public PriceInCents $priceInCents,
+        public ParentId $parentId,
+        public Prices $prices,
         public ProratesFirstMonth $proratesFirstMonth,
         public TeamId $teamId,
         public UpdatedAt $updatedAt,
@@ -67,20 +70,28 @@ final class Rate extends AbstractData
     /**
      * The fields the rate pages and pickers show.
      *
-     * @return array{id: string, name: string, description: ?string, price_in_cents: int, cost_in_cents: ?int, billing_period_in_months: int, prorates_first_month: bool, is_archived: bool}
+     * @return array{id: string, parent_id: ?string, name: string, description: ?string, prices: list<array{currency: string, price_in_cents: int, cost_in_cents: ?int}>, billing_period_in_months: int, prorates_first_month: bool, is_archived: bool}
      */
     public function toSummary(): array
     {
         return [
             'id' => $this->getId()->toString(),
+            'parent_id' => $this->getParentId()->toNullableString(),
             'name' => $this->getName()->toString(),
             'description' => $this->getDescription()->toNullableString(),
-            'price_in_cents' => $this->getPriceInCents()->toInteger(),
-            'cost_in_cents' => $this->getCostInCents()->toNullableInteger(),
+            'prices' => array_map(fn (RatePrice $price): array => $price->toArray(), $this->getPrices()->toPrices()),
             'billing_period_in_months' => $this->getBillingPeriodInMonths()->toInteger(),
             'prorates_first_month' => $this->getProratesFirstMonth()->toBoolean(),
             'is_archived' => $this->isArchived(),
         ];
+    }
+
+    /**
+     * The price in one currency, or null when the rate isn't sold in it.
+     */
+    public function priceIn(CurrencyEnum $currency): ?RatePrice
+    {
+        return $this->getPrices()->in($currency);
     }
 
     public function isArchived(): bool
@@ -108,18 +119,6 @@ final class Rate extends AbstractData
     public function setBillingPeriodInMonths(mixed $billingPeriodInMonths): self
     {
         $this->billingPeriodInMonths = new BillingPeriodInMonths($billingPeriodInMonths instanceof AbstractValue ? $billingPeriodInMonths->toValue() : $billingPeriodInMonths);
-
-        return $this;
-    }
-
-    public function getCostInCents(): CostInCents
-    {
-        return $this->costInCents;
-    }
-
-    public function setCostInCents(mixed $costInCents): self
-    {
-        $this->costInCents = new CostInCents($costInCents instanceof AbstractValue ? $costInCents->toValue() : $costInCents);
 
         return $this;
     }
@@ -165,14 +164,26 @@ final class Rate extends AbstractData
         return $this;
     }
 
-    public function getPriceInCents(): PriceInCents
+    public function getParentId(): ParentId
     {
-        return $this->priceInCents;
+        return $this->parentId;
     }
 
-    public function setPriceInCents(mixed $priceInCents): self
+    public function setParentId(mixed $parentId): self
     {
-        $this->priceInCents = new PriceInCents($priceInCents instanceof AbstractValue ? $priceInCents->toValue() : $priceInCents);
+        $this->parentId = new ParentId($parentId instanceof AbstractValue ? $parentId->toValue() : $parentId);
+
+        return $this;
+    }
+
+    public function getPrices(): Prices
+    {
+        return $this->prices;
+    }
+
+    public function setPrices(mixed $prices): self
+    {
+        $this->prices = new Prices($prices instanceof AbstractValue ? $prices->toValue() : $prices);
 
         return $this;
     }

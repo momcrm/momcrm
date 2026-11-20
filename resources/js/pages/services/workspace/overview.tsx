@@ -57,14 +57,16 @@ export default function ServiceOverview({
             label: 'Price',
             value:
                 service.rate &&
-                `${formatCents(service.rate.price_in_cents)} a month each`,
+                (service.rate.price_in_cents == null
+                    ? `No ${service.currency} price, so not billed`
+                    : `${formatCents(service.rate.price_in_cents, service.currency)} a month each`),
         },
         { label: 'Quantity', value: service.quantity },
         {
             label: `Rental per ${period}`,
             value:
                 service.rental_in_cents != null &&
-                `${formatCents(service.rental_in_cents)} ex GST`,
+                `${formatCents(service.rental_in_cents, service.currency)} before tax`,
         },
         {
             label: 'Billing starts',
@@ -73,7 +75,7 @@ export default function ServiceOverview({
         {
             label: 'Next invoice',
             value: service.next_invoice
-                ? `${formatDay(service.next_invoice.starts_on)} – ${formatDay(service.next_invoice.ends_on)} · ${formatCents(service.next_invoice.total_in_cents)}`
+                ? `${formatDay(service.next_invoice.starts_on)} – ${formatDay(service.next_invoice.ends_on)} · ${formatCents(service.next_invoice.total_in_cents, service.currency)}`
                 : service.lifecycle === 'active'
                   ? null
                   : 'Not billed while it is off',

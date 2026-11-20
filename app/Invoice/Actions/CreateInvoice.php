@@ -9,6 +9,7 @@ use App\Invoice\InvoiceEloquentModel;
 use App\Invoice\InvoiceStatusEnum;
 use App\Invoice\Properties\Id;
 use App\Shared\Actions\NextTeamNumber;
+use App\Shared\CurrencyEnum;
 use App\Shared\Table;
 use Illuminate\Support\Facades\DB;
 
@@ -30,6 +31,10 @@ final readonly class CreateInvoice
         return DB::transaction(function (): Invoice {
             if ($this->invoice->getId()->isNull()) {
                 $this->invoice->setId(Id::generate());
+            }
+
+            if ($this->invoice->getCurrency()->isNull()) {
+                $this->invoice->setCurrency(CurrencyEnum::default()->value);
             }
 
             $this->invoice

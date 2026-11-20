@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Customer\Actions\FindCustomer;
 use App\Customer\CustomerEloquentModel;
 use App\InvoiceItem\Actions\FindInvoiceItem;
 use App\Location\LocationEloquentModel;
 use App\Rate\Actions\FindRate;
 use App\Rate\Rate;
 use App\Shared\Abstracts\AbstractDataCollection;
+use App\Shared\CurrencyEnum;
 use App\Shared\Types;
 
 /**
@@ -23,18 +25,21 @@ final class ServiceCollection extends AbstractDataCollection
     }
 
     /**
-     * Each service as the pages show it, with its rate, what it costs and its
-     * next invoice, reading the rates and what was billed in one query each.
+     * Each service as the pages show it, with its rate, what it costs in its
+     * customer's currency and its next invoice, reading the rates, currencies
+     * and what was billed in one query each.
      *
      * @return list<array<string, mixed>>
      */
     public function toSummaries(): array
     {
         $rates = FindRate::byIds(array_values(array_unique(array_filter($this->map(fn (Service $service): ?string => $service->getRateId()->toNullableString())->all()))));
+        $currencies = FindCustomer::currenciesByIds(array_values(array_unique($this->map(fn (Service $service): string => $service->getCustomerId()->toString())->all())));
         $billedThrough = FindInvoiceItem::billedThroughForServices(array_values($this->map(fn (Service $service): string => $service->getId()->toString())->all()));
 
         return array_values($this->map(fn (Service $service): array => $service->toSummary(
             $rates[$service->getRateId()->toString()] ?? Rate::new(),
+            $currencies[$service->getCustomerId()->toString()] ?? CurrencyEnum::default(),
             $billedThrough[$service->getId()->toString()] ?? null,
         ))->all());
     }

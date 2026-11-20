@@ -7,20 +7,25 @@ import {
     billingFrequencyLabel,
     billingPeriodLabel,
 } from '@/components/rates/billing-period';
+import RateCombobox from '@/components/rates/rate-combobox';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
-import { formatCents } from '@/lib/money';
+import { formatCents, priceIn } from '@/lib/money';
 import { cn } from '@/lib/utils';
 import type { Rate, Service, ServiceFormOptions } from '@/types';
 
 type Action = { action: string; method: 'post' | 'put' };
 
-function rateLabel(rate: Rate): string {
-    return `${rate.name} · ${formatCents(rate.price_in_cents)} a month${rate.is_archived ? ' (archived)' : ''}`;
+function monthlyPrice(rate: Rate, currency: string): string {
+    const price = priceIn(rate.prices, currency);
+
+    return price
+        ? `${formatCents(price.price_in_cents, currency)} a month`
+        : `no ${currency} price`;
 }
 
 /**
@@ -98,29 +103,22 @@ export default function ServiceForm({
                                 label="Rate"
                                 hint={
                                     options.rates.length === 0
-                                        ? 'Add a rate under Settings → Rates first.'
-                                        : undefined
+                                        ? `Add a rate with a ${options.currency} price under Settings → Rates first.`
+                                        : `Priced in ${options.currency}, the customer's currency.`
                                 }
                                 error={errors.rate_id}
                             >
-                                <NativeSelect
+                                <RateCombobox
                                     id="rate_id"
                                     name="rate_id"
+                                    rates={options.rates}
                                     value={rateId}
-                                    onChange={(event) =>
-                                        setRateId(event.target.value)
+                                    onValueChange={setRateId}
+                                    detail={(option) =>
+                                        monthlyPrice(option, options.currency)
                                     }
-                                    required
-                                >
-                                    {options.rates.map((option) => (
-                                        <option
-                                            key={option.id}
-                                            value={option.id}
-                                        >
-                                            {rateLabel(option)}
-                                        </option>
-                                    ))}
-                                </NativeSelect>
+                                    invalid={Boolean(errors.rate_id)}
+                                />
                             </FormField>
                             <FormField
                                 id="status"

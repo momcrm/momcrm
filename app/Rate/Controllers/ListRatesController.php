@@ -7,6 +7,7 @@ namespace App\Rate\Controllers;
 use App\Rate\Actions\FindRate;
 use App\Rate\Properties\BillingPeriodInMonths;
 use App\Rate\RateAccess;
+use App\Shared\CurrencyEnum;
 use App\Team\Exceptions\CouldNotViewTeam;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -26,6 +27,7 @@ final class ListRatesController
 
         return Inertia::render('settings/rates', [
             'rates' => FindRate::listForTeam(RateAccess::team($request)->getId()->toString(), withArchived: true)->toSummaries(),
+            'currencies' => CurrencyEnum::options(),
             'billingPeriods' => BillingPeriodInMonths::ALLOWED,
         ]);
     }

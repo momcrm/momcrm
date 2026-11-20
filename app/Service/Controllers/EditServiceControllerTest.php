@@ -20,7 +20,7 @@ it('shows the edit form for a service, with its rate, what it costs and the rate
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
     $team = ['team_id' => $user->current_team_id];
     $customer = CustomerEloquentModel::factory()->create($team);
-    $rate = RateEloquentModel::factory()->archived()->create([...$team, 'name' => 'Old support', 'price_in_cents' => 1000, 'billing_period_in_months' => 3]);
+    $rate = RateEloquentModel::factory()->archived()->priced(['AUD' => 1000])->create([...$team, 'name' => 'Old support', 'billing_period_in_months' => 3]);
     RateEloquentModel::factory()->archived()->create([...$team, 'name' => 'Another old one']);
     RateEloquentModel::factory()->create([...$team, 'name' => 'Support']);
     $service = ServiceEloquentModel::factory()->create([...$team, 'customer_id' => $customer->id, 'rate_id' => $rate->id, 'quantity' => 2]);

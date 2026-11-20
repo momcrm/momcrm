@@ -26,8 +26,13 @@ import { Textarea } from '@/components/ui/textarea';
 import StoreCustomerController from '@/actions/App/Customer/Controllers/StoreCustomerController';
 import { formOptions } from '@/routes/customers';
 import type { Option } from '@/types';
+import { DEFAULT_CURRENCY } from '@/lib/money';
 
-type CustomerFormOptions = { statuses: Option[]; billingTypes: Option[] };
+type CustomerFormOptions = {
+    statuses: Option[];
+    billingTypes: Option[];
+    currencies: Option[];
+};
 
 const CreateCustomerContext = createContext<{
     openCreateCustomer: () => void;
@@ -195,6 +200,27 @@ function CreateCustomerForm({
                                         value={billingType.value}
                                     >
                                         {billingType.label}
+                                    </option>
+                                ))}
+                            </NativeSelect>
+                        </FormField>
+                        <FormField
+                            id="customer-currency"
+                            label="Currency"
+                            hint="What their services are priced and invoiced in."
+                            error={errors.currency}
+                        >
+                            <NativeSelect
+                                id="customer-currency"
+                                name="currency"
+                                defaultValue={DEFAULT_CURRENCY}
+                            >
+                                {options.currencies.map((currency) => (
+                                    <option
+                                        key={currency.value}
+                                        value={currency.value}
+                                    >
+                                        {currency.label}
                                     </option>
                                 ))}
                             </NativeSelect>

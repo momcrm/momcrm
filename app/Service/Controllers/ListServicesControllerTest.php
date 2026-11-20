@@ -16,7 +16,7 @@ it("lists the team's services across customers, with their customer, location an
     $team = ['team_id' => $user->current_team_id];
     $customer = CustomerEloquentModel::factory()->create([...$team, 'name' => 'Acme']);
     $location = LocationEloquentModel::factory()->create([...$team, 'customer_id' => $customer->id, 'name' => 'Head office']);
-    $rate = RateEloquentModel::factory()->create([...$team, 'price_in_cents' => 1000]);
+    $rate = RateEloquentModel::factory()->priced(['AUD' => 1000])->create([...$team]);
     ServiceEloquentModel::factory()->create([...$team, 'customer_id' => $customer->id, 'location_id' => $location->id, 'rate_id' => $rate->id, 'name' => 'Backup', 'quantity' => 3]);
     ServiceEloquentModel::factory()->inactive()->create([...$team, 'name' => 'Antivirus']);
     ServiceEloquentModel::factory()->archived()->create([...$team, 'name' => 'Old']);

@@ -1,34 +1,58 @@
 import { Head, router } from '@inertiajs/react';
-import { Archive, ArchiveRestore, Pencil, Plus } from 'lucide-react';
+import {
+    Archive,
+    ArchiveRestore,
+    CornerDownRight,
+    Pencil,
+    Plus,
+} from 'lucide-react';
 import { useState } from 'react';
 import Heading from '@/components/heading';
 import { billingPeriodLabel } from '@/components/rates/billing-period';
 import RateFormDialog from '@/components/rates/rate-form-dialog';
+import { depthAmong } from '@/components/rates/rate-tree';
 import { Button } from '@/components/ui/button';
-import { formatCents } from '@/lib/money';
+import { formatPrices } from '@/lib/money';
 import { archive, restore } from '@/routes/rates';
-import type { Rate } from '@/types';
+import type { Option, Rate } from '@/types';
 
 /**
- * "$95.00 a month", and how often it is billed when that isn't monthly.
+ * "$95.00 · USD 62.00 a month", and how often it is billed when that isn't
+ * monthly.
  */
 function describePrice(rate: Rate): string {
-    const price = `${formatCents(rate.price_in_cents)} a month`;
+    const price = `${formatPrices(rate.prices)} a month`;
 
     return rate.billing_period_in_months === 1
         ? price
         : `${price}, billed every ${billingPeriodLabel(rate.billing_period_in_months)}`;
 }
 
+type Editing = { rate: Rate } | { parentId: string | null } | null;
+
 function RateRow({
     rate,
+    depth,
+    note,
     onEdit,
+    onAddUnder,
 }: {
     rate: Rate;
+    /** How far to indent it under the rates shown above it. */
+    depth: number;
+    /** Where it sits, when its parent isn't shown beside it. */
+    note?: string;
     onEdit: (rate: Rate) => void;
+    onAddUnder: (rate: Rate) => void;
 }) {
     return (
-        <li className="flex items-center gap-2 px-3 py-2">
+        <li
+            className="flex items-center gap-2 py-2 pr-3"
+            style={{ paddingLeft: `${0.75 + depth * 1.5}rem` }}
+        >
+            {depth > 0 && (
+                <CornerDownRight className="size-3.5 shrink-0 text-subtle-foreground" />
+            )}
             <div className="min-w-0 flex-1">
                 <p
                     className={
@@ -40,7 +64,7 @@ function RateRow({
                     {rate.name}
                 </p>
                 <p className="truncate text-xs text-muted-foreground">
-                    {[describePrice(rate), rate.description]
+                    {[note, describePrice(rate), rate.description]
                         .filter(Boolean)
                         .join(' · ')}
                 </p>
@@ -63,6 +87,15 @@ function RateRow({
                 </Button>
             ) : (
                 <>
+                    <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label={`Add a rate under ${rate.name}`}
+                        title="Add a rate under this one"
+                        onClick={() => onAddUnder(rate)}
+                    >
+                        <Plus />
+                    </Button>
                     <Button
                         variant="ghost"
                         size="icon-sm"
@@ -95,13 +128,27 @@ function RateRow({
 export default function Rates({
     rates,
     billingPeriods,
+    currencies,
 }: {
     rates: Rate[];
     billingPeriods: number[];
+    currencies: Option[];
 }) {
-    const [editing, setEditing] = useState<Rate | 'new' | null>(null);
+    const [editing, setEditing] = useState<Editing>(null);
     const live = rates.filter((rate) => !rate.is_archived);
     const archived = rates.filter((rate) => rate.is_archived);
+    const byId = new Map(rates.map((rate) => [rate.id, rate]));
+
+    /** "Under Microsoft 365 (archived)" for a live rate whose parent isn't live. */
+    const liveNote = (rate: Rate): string | undefined => {
+        const parent = rate.parent_id ? byId.get(rate.parent_id) : undefined;
+
+        return parent?.is_archived
+            ? `Under ${parent.path} (archived)`
+            : undefined;
+    };
+    const edit = (rate: Rate) => setEditing({ rate });
+    const addUnder = (rate: Rate) => setEditing({ parentId: rate.id });
 
     return (
         <>
@@ -114,12 +161,12 @@ export default function Rates({
                     <Heading
                         variant="small"
                         title="Rates"
-                        description="Your price list. Each service is priced from a rate, so changing a rate changes what its services are billed from their next invoice."
+                        description="Your price list. Each service is priced from a rate in its customer's currency, so changing a rate changes what its services are billed from their next invoice. Put rates under others to group them; a rate with rates under it can still be sold."
                     />
                     <Button
                         size="sm"
                         className="shrink-0"
-                        onClick={() => setEditing('new')}
+                        onClick={() => setEditing({ parentId: null })}
                     >
                         <Plus />
                         Add rate
@@ -137,7 +184,10 @@ export default function Rates({
                             <RateRow
                                 key={rate.id}
                                 rate={rate}
-                                onEdit={setEditing}
+                                depth={depthAmong(rate, live)}
+                                note={liveNote(rate)}
+                                onEdit={edit}
+                                onAddUnder={addUnder}
                             />
                         ))}
                     </ul>
@@ -157,7 +207,14 @@ export default function Rates({
                                 <RateRow
                                     key={rate.id}
                                     rate={rate}
-                                    onEdit={setEditing}
+                                    depth={0}
+                                    note={
+                                        rate.depth > 0
+                                            ? `Under ${rate.path.slice(0, rate.path.lastIndexOf(' › '))}`
+                                            : undefined
+                                    }
+                                    onEdit={edit}
+                                    onAddUnder={addUnder}
                                 />
                             ))}
                         </ul>
@@ -169,15 +226,20 @@ export default function Rates({
                 key={
                     editing === null
                         ? 'closed'
-                        : editing === 'new'
-                          ? 'new'
-                          : editing.id
+                        : 'rate' in editing
+                          ? editing.rate.id
+                          : `new-${editing.parentId ?? 'top'}`
                 }
                 open={editing !== null}
                 onOpenChange={(open) => !open && setEditing(null)}
                 billingPeriods={billingPeriods}
-                rate={
-                    editing === null || editing === 'new' ? undefined : editing
+                currencies={currencies}
+                rates={rates}
+                rate={editing && 'rate' in editing ? editing.rate : undefined}
+                parentId={
+                    editing && 'parentId' in editing
+                        ? editing.parentId
+                        : undefined
                 }
             />
         </>

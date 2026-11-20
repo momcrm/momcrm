@@ -4,6 +4,7 @@ import EmptyState from '@/components/empty-state';
 import NativeSelect from '@/components/native-select';
 import PageHeader from '@/components/page-header';
 import Pager from '@/components/pager';
+import RateCombobox from '@/components/rates/rate-combobox';
 import SearchInput from '@/components/search-input';
 import { ServiceBulkBar } from '@/components/services/service-bulk';
 import ServiceTable from '@/components/services/service-table';
@@ -109,19 +110,14 @@ export default function ServicesIndex({
                             </option>
                         ))}
                     </FilterSelect>
-                    <FilterSelect
-                        label="Rate"
-                        value={filters.rate}
-                        onChange={filter('rate')}
-                    >
-                        <option value="">Any rate</option>
-                        {rates.map((rate) => (
-                            <option key={rate.id} value={rate.id}>
-                                {rate.name}
-                                {rate.is_archived ? ' (archived)' : ''}
-                            </option>
-                        ))}
-                    </FilterSelect>
+                    <RateCombobox
+                        aria-label="Rate"
+                        rates={rates}
+                        value={filters.rate ?? ''}
+                        onValueChange={filter('rate')}
+                        emptyLabel="Any rate"
+                        className="h-8 w-56 text-[13px]"
+                    />
                     <FilterSelect
                         label="Customer"
                         value={filters.customer}

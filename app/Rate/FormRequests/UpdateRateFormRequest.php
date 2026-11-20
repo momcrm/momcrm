@@ -7,14 +7,18 @@ namespace App\Rate\FormRequests;
 use App\Rate\Actions\FindRate;
 use App\Rate\Actions\UpdateRate;
 use App\Rate\Exceptions\CouldNotFindRate;
+use App\Rate\Properties\Prices;
 use App\Rate\Rate;
 use App\Rate\RateAccess;
 use App\Rate\RateValidationRules;
+use App\Shared\CurrencyEnum;
 use App\Shared\Types;
 use App\Team\Exceptions\CouldNotViewTeam;
+use Closure;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Validation\Validator;
 use Inertia\Inertia;
 
 /**
@@ -51,7 +55,7 @@ final class UpdateRateFormRequest extends FormRequest
      */
     public function rules(): array
     {
-        return RateValidationRules::for($this, $this->rate->getTeamId()->toString(), $this->rate->getId()->toString());
+        return RateValidationRules::for($this, $this->rate->getTeamId()->toString(), $this->rate);
     }
 
     /**
@@ -60,6 +64,30 @@ final class UpdateRateFormRequest extends FormRequest
     public function messages(): array
     {
         return RateValidationRules::messages();
+    }
+
+    /**
+     * A rate keeps a price in every currency its services' customers are
+     * billed in.
+     *
+     * @return array<int, Closure(Validator): void>
+     */
+    public function after(): array
+    {
+        return [function (Validator $validator): void {
+            $prices = $this->input(Prices::getNameForValidation());
+            $kept = is_array($prices) ? array_map(fn (mixed $price): mixed => is_array($price) ? ($price['currency'] ?? null) : null, $prices) : [];
+            $dropped = array_values(array_filter(
+                FindRate::currenciesInUse($this->rate->getId()->toString()),
+                fn (CurrencyEnum $currency): bool => ! in_array($currency->value, $kept, true),
+            ));
+
+            if ($dropped !== []) {
+                $validator->errors()->add(Prices::getNameForValidation(), __('Customers on this rate are billed in :currencies, so it keeps a price in each.', [
+                    'currencies' => implode(', ', array_map(fn (CurrencyEnum $currency): string => $currency->value, $dropped)),
+                ]));
+            }
+        }];
     }
 
     public function process(): RedirectResponse

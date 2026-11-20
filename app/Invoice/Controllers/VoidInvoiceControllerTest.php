@@ -13,8 +13,9 @@ it('voids a draft or sent invoice', function (InvoiceStatusEnum $status): void {
     $invoice = InvoiceEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'status' => $status->value]);
 
     actingAs($user)
+        ->from(route('invoices.index'))
         ->post(route('invoices.void', $invoice->id))
-        ->assertRedirectToRoute('invoices.show', $invoice->id);
+        ->assertRedirectToRoute('invoices.index');
 
     expect($invoice->fresh()->status)->toBe('void');
 })->with([InvoiceStatusEnum::Draft, InvoiceStatusEnum::Sent]);

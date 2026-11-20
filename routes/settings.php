@@ -49,7 +49,9 @@ use App\Rate\Controllers\ListRatesController;
 use App\Rate\Controllers\RestoreRateController;
 use App\Rate\Controllers\StoreRateController;
 use App\Rate\Controllers\UpdateRateController;
+use App\Team\Controllers\EditBillingDetailsController;
 use App\Team\Controllers\EditTeamController;
+use App\Team\Controllers\UpdateBillingDetailsController;
 use App\Team\Controllers\UpdateTeamController;
 use App\TeamInvitation\Controllers\DeleteTeamInvitationController;
 use App\TeamInvitation\Controllers\ResendTeamInvitationController;
@@ -88,6 +90,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('settings/team/invitations/{invitation}', DeleteTeamInvitationController::class)->name('team.invitations.destroy');
     Route::post('settings/team/invitations/{invitation}/resend', ResendTeamInvitationController::class)->name('team.invitations.resend');
     Route::get('settings/team/activity', ListTeamActivityController::class)->name('team-activity.index');
+
+    Route::get('settings/billing', EditBillingDetailsController::class)->name('billing.edit');
+    Route::patch('settings/billing', UpdateBillingDetailsController::class)->name('billing.update');
 
     Route::get('settings/access-rules', ListAccessRulesController::class)->name('access-rules.index');
     Route::post('settings/access-rules', StoreAccessRuleController::class)->name('access-rules.store');

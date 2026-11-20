@@ -95,7 +95,10 @@ function buildColumns(selection: TicketSelection, rowIds: string[]) {
                     dash
                 ) : (
                     <span className="tabular-nums">
-                        {formatCents(info.getValue())}
+                        {formatCents(
+                            info.getValue(),
+                            info.row.original.currency,
+                        )}
                         <span className="text-xs text-muted-foreground">
                             {' '}
                             /{' '}

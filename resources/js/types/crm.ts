@@ -18,6 +18,8 @@ export type Customer = {
     website: string | null;
     status: 'active' | 'inactive';
     billing_type: CustomerBillingType;
+    /** ISO 4217 code the customer is billed in, e.g. AUD. */
+    currency: string;
     prefix: string | null;
     type_id: string | null;
     notes: string | null;
@@ -148,18 +150,31 @@ export type Asset = {
     custom_fields: CustomFieldValues;
 };
 
+/** What one unit of a rate costs a month in one currency. */
+export type RatePrice = {
+    currency: string;
+    price_in_cents: number;
+    cost_in_cents: number | null;
+};
+
 /**
- * One entry in the team's price list. The price is per unit per month.
+ * One entry in the team's price list, priced per unit per month in one or
+ * more currencies.
  */
 export type Rate = {
     id: string;
+    /** The rate this one sits under, if any; parents have prices too. */
+    parent_id: string | null;
     name: string;
     description: string | null;
-    price_in_cents: number;
-    cost_in_cents: number | null;
+    prices: RatePrice[];
     billing_period_in_months: number;
     prorates_first_month: boolean;
     is_archived: boolean;
+    /** How many rates it sits under. Lists come in tree order. */
+    depth: number;
+    /** Its name after its parents', e.g. "Microsoft 365 › Business Standard". */
+    path: string;
 };
 
 export type ServiceLifecycle = 'active' | 'inactive' | 'archived';
@@ -173,15 +188,18 @@ export type Service = {
     lifecycle: ServiceLifecycle;
     auto_renew: boolean;
     quantity: number | null;
+    /** The currency its customer is billed in, which every amount is in. */
+    currency: string;
     rate_id: string | null;
-    rate: Pick<
-        Rate,
-        | 'id'
-        | 'name'
-        | 'price_in_cents'
-        | 'billing_period_in_months'
-        | 'is_archived'
-    > | null;
+    rate:
+        | (Pick<
+              Rate,
+              'id' | 'name' | 'billing_period_in_months' | 'is_archived'
+          > & {
+              /** The monthly price in the service's currency; null when the rate has none in it. */
+              price_in_cents: number | null;
+          })
+        | null;
     /** The service's own billing period; null follows the rate's. */
     billing_period_in_months: number | null;
     effective_billing_period_in_months: number | null;
@@ -246,10 +264,12 @@ export type ServiceInvoiceLine = {
 };
 
 /**
- * What the service form offers: the team's rates, the customer's locations
- * and contacts, and the billing periods.
+ * What the service form offers: the currency the customer is billed in, the
+ * team's rates priced in it, the customer's locations and contacts, and the
+ * billing periods.
  */
 export type ServiceFormOptions = {
+    currency: string;
     rates: Rate[];
     locations: CustomerOption[];
     contacts: CustomerOption[];
@@ -679,6 +699,8 @@ export type Invoice = {
     issued_on: string | null;
     due_on: string | null;
     status: InvoiceStatus;
+    /** ISO 4217 code every amount on the invoice is in. */
+    currency: string;
     is_overdue: boolean;
     tax_rate_basis_points: number;
     purchase_order: string | null;
@@ -692,6 +714,35 @@ export type InvoiceTotals = {
     subtotal_in_cents: number;
     tax_in_cents: number;
     total_in_cents: number;
+};
+
+/**
+ * Everything printed on an invoice, as the invoice page, the invoice dialog
+ * and the PDF show it.
+ */
+export type InvoiceDocument = {
+    /** "Invoice", "Tax invoice" or "VAT invoice". */
+    title: string;
+    invoice: Invoice;
+    items: InvoiceItem[];
+    totals: InvoiceTotals;
+    customer: Customer;
+    /** The team the invoice is from. */
+    from: TeamBilling;
+};
+
+/** The business details a team prints on its invoices. */
+export type TeamBilling = {
+    /** The name invoices are issued under: the billing name, or the team's name. */
+    name: string;
+    billing_name: string | null;
+    /** What the team's country calls its tax ID, e.g. ABN, VAT or GST No. */
+    tax_id_label: string | null;
+    tax_id: string | null;
+    billing_email: string | null;
+    billing_phone: string | null;
+    billing_address: string | null;
+    payment_details: string | null;
 };
 
 export type InvoiceListItem = Invoice &

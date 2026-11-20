@@ -18,7 +18,7 @@ export function serviceDetail(service: Service): string {
     );
 
     return service.unit_price_in_cents != null
-        ? `${service.quantity} × ${formatCents(service.unit_price_in_cents)} per ${period}`
+        ? `${service.quantity} × ${formatCents(service.unit_price_in_cents, service.currency)} per ${period}`
         : `Quantity ${service.quantity}`;
 }
 

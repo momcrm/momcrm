@@ -6,6 +6,7 @@ namespace App\Service;
 
 use App\CustomField\Properties\CustomFieldValues;
 use App\Rate\Rate;
+use App\Rate\RatePrice;
 use App\Service\Factories\ServiceFactory;
 use App\Service\Properties\ArchivedAt;
 use App\Service\Properties\AutoRenew;
@@ -25,6 +26,7 @@ use App\Service\Properties\ShortName;
 use App\Service\Properties\Status;
 use App\Service\Properties\TeamId;
 use App\Service\Properties\UpdatedAt;
+use App\Shared\CurrencyEnum;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 use Mom\Data\AbstractData;
@@ -32,8 +34,8 @@ use Mom\Data\AbstractValue;
 
 /**
  * Something a customer gets from the team and is billed for, priced from a
- * rate: the rate's monthly price, times the quantity, times the months billed
- * at once.
+ * rate: the rate's monthly price in the customer's currency, times the
+ * quantity, times the months billed at once.
  *
  * @extends AbstractData<ServiceEloquentModel>
  */
@@ -84,14 +86,16 @@ final class Service extends AbstractData
     }
 
     /**
-     * The fields the service pages show, with what it costs when its rate is
-     * given, and the period it is billed for next when it is billed at all.
+     * The fields the service pages show, with what it costs in its customer's
+     * currency when its rate is given and has a price in it, and the period
+     * it is billed for next when it is billed at all.
      *
-     * @return array{id: string, customer_id: string, name: ?string, short_name: ?string, status: string, lifecycle: string, auto_renew: bool, quantity: ?int, rate_id: ?string, rate: ?array{id: string, name: string, price_in_cents: int, billing_period_in_months: int, is_archived: bool}, billing_period_in_months: ?int, effective_billing_period_in_months: ?int, unit_price_in_cents: ?int, rental_in_cents: ?int, next_invoice: ?array{starts_on: string, ends_on: string, unit_price_in_cents: int, total_in_cents: int}, billing_starts_on: ?string, ends_on: ?string, location_id: ?string, contact_id: ?string, note: ?string, archived_at: ?string, custom_fields: array<string, mixed>}
+     * @return array{id: string, customer_id: string, name: ?string, short_name: ?string, status: string, lifecycle: string, auto_renew: bool, quantity: ?int, currency: string, rate_id: ?string, rate: ?array{id: string, name: string, price_in_cents: ?int, billing_period_in_months: int, is_archived: bool}, billing_period_in_months: ?int, effective_billing_period_in_months: ?int, unit_price_in_cents: ?int, rental_in_cents: ?int, next_invoice: ?array{starts_on: string, ends_on: string, unit_price_in_cents: int, total_in_cents: int}, billing_starts_on: ?string, ends_on: ?string, location_id: ?string, contact_id: ?string, note: ?string, archived_at: ?string, custom_fields: array<string, mixed>}
      */
-    public function toSummary(?Rate $rate = null, ?CarbonImmutable $billedThrough = null): array
+    public function toSummary(?Rate $rate, CurrencyEnum $currency, ?CarbonImmutable $billedThrough = null): array
     {
         $rate = $rate !== null && $rate->isNotNull() && $rate->getId()->toString() === $this->getRateId()->toNullableString() ? $rate : null;
+        $price = $rate?->priceIn($currency);
 
         return [
             'id' => $this->getId()->toString(),
@@ -102,19 +106,20 @@ final class Service extends AbstractData
             'lifecycle' => $this->lifecycle()->value,
             'auto_renew' => $this->getAutoRenew()->toBoolean(),
             'quantity' => $this->getQuantity()->toNullableInteger(),
+            'currency' => $currency->value,
             'rate_id' => $this->getRateId()->toNullableString(),
             'rate' => $rate === null ? null : [
                 'id' => $rate->getId()->toString(),
                 'name' => $rate->getName()->toString(),
-                'price_in_cents' => $rate->getPriceInCents()->toInteger(),
+                'price_in_cents' => $price?->priceInCents,
                 'billing_period_in_months' => $rate->getBillingPeriodInMonths()->toInteger(),
                 'is_archived' => $rate->isArchived(),
             ],
             'billing_period_in_months' => $this->getBillingPeriodInMonths()->toNullableInteger(),
             'effective_billing_period_in_months' => $rate === null ? $this->getBillingPeriodInMonths()->toNullableInteger() : $this->billingPeriodInMonthsOn($rate),
-            'unit_price_in_cents' => $rate === null ? null : $this->unitPriceForPeriodInCents($rate),
-            'rental_in_cents' => $rate === null ? null : $this->rentalInCents($rate),
-            'next_invoice' => $rate === null || ! $this->isBilled() ? null : $this->nextInvoice($rate, $billedThrough),
+            'unit_price_in_cents' => $rate === null || $price === null ? null : $this->unitPriceForPeriodInCents($rate, $price),
+            'rental_in_cents' => $rate === null || $price === null ? null : $this->rentalInCents($rate, $price),
+            'next_invoice' => $rate === null || $price === null || ! $this->isBilled() ? null : $this->nextInvoice($rate, $price, $billedThrough),
             'billing_starts_on' => $this->getBillingStartsOn()->toNullableCarbon()?->toDateString(),
             'ends_on' => $this->getEndsOn()->toNullableCarbon()?->toDateString(),
             'location_id' => $this->getLocationId()->toNullableString(),
@@ -148,9 +153,9 @@ final class Service extends AbstractData
     /**
      * @return array{starts_on: string, ends_on: string, unit_price_in_cents: int, total_in_cents: int}
      */
-    private function nextInvoice(Rate $rate, ?CarbonImmutable $billedThrough): array
+    private function nextInvoice(Rate $rate, RatePrice $price, ?CarbonImmutable $billedThrough): array
     {
-        $period = ServiceBillingPeriod::next($this, $rate, $billedThrough);
+        $period = ServiceBillingPeriod::next($this, $rate, $price, $billedThrough);
 
         return [
             ...$period->toArray(),
@@ -183,17 +188,17 @@ final class Service extends AbstractData
      * What one unit costs for a whole billing period: the rate's monthly price
      * times the months billed at once.
      */
-    public function unitPriceForPeriodInCents(Rate $rate): int
+    public function unitPriceForPeriodInCents(Rate $rate, RatePrice $price): int
     {
-        return $rate->getPriceInCents()->toInteger() * $this->billingPeriodInMonthsOn($rate);
+        return $price->priceInCents * $this->billingPeriodInMonthsOn($rate);
     }
 
     /**
      * What the service costs for a whole billing period, before tax.
      */
-    public function rentalInCents(Rate $rate): int
+    public function rentalInCents(Rate $rate, RatePrice $price): int
     {
-        return $this->unitPriceForPeriodInCents($rate) * ($this->getQuantity()->toNullableInteger() ?? 1);
+        return $this->unitPriceForPeriodInCents($rate, $price) * ($this->getQuantity()->toNullableInteger() ?? 1);
     }
 
     public function getCustomFields(): CustomFieldValues

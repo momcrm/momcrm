@@ -11,6 +11,7 @@ use App\Customer\CustomerEloquentModel;
 use App\Customer\CustomerRelationship;
 use App\Customer\CustomerStatusEnum;
 use App\Customer\Properties\BillingType;
+use App\Customer\Properties\Currency;
 use App\Customer\Properties\Email;
 use App\Customer\Properties\Id;
 use App\Customer\Properties\Name;
@@ -22,6 +23,7 @@ use App\CustomField\Actions\FindCustomField;
 use App\CustomField\CustomFieldQuery;
 use App\CustomField\CustomFieldTargetEnum;
 use App\Service\Properties\ArchivedAt as ServiceArchivedAt;
+use App\Shared\CurrencyEnum;
 use App\Team\Scopes\CurrentTeamScope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -109,6 +111,27 @@ final class FindCustomer
                 'id' => $customer->id,
                 'name' => $customer->prefix === null ? $customer->name : "{$customer->prefix} · {$customer->name}",
             ]);
+    }
+
+    /**
+     * The currency each customer is billed in, keyed by id, whichever team
+     * they belong to; for pricing services already read for a team.
+     *
+     * @param  list<string>  $ids
+     * @return array<string, CurrencyEnum>
+     */
+    public static function currenciesByIds(array $ids): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+
+        return CustomerEloquentModel::query()
+            ->withoutGlobalScopes()
+            ->whereKey($ids)
+            ->get([Id::getDatabaseTableColumnName(), Currency::getDatabaseTableColumnName()])
+            ->mapWithKeys(fn (CustomerEloquentModel $customer): array => [$customer->id => CurrencyEnum::tryFrom($customer->currency) ?? CurrencyEnum::default()])
+            ->all();
     }
 
     /**

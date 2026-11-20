@@ -3,6 +3,9 @@ import { useState } from 'react';
 import FormField from '@/components/form-field';
 import NativeSelect from '@/components/native-select';
 import { billingFrequencyLabel } from '@/components/rates/billing-period';
+import RateCombobox from '@/components/rates/rate-combobox';
+import RatePricesField from '@/components/rates/rate-prices-field';
+import { rateDescendantIds } from '@/components/rates/rate-tree';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -16,26 +19,40 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { store, update } from '@/routes/rates';
-import type { Rate } from '@/types';
-
-function dollars(cents: number | null | undefined): string {
-    return cents == null ? '' : (cents / 100).toFixed(2);
-}
+import type { Option, Rate } from '@/types';
 
 /**
- * Adds a rate to the price list, or edits one.
+ * Adds a rate to the price list, or edits one. A new rate can start under a
+ * parent, as when added from that rate's row.
  */
 export default function RateFormDialog({
     open,
     onOpenChange,
     billingPeriods,
+    currencies,
+    rates,
     rate,
+    parentId = null,
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     billingPeriods: number[];
+    currencies: Option[];
+    /** Every rate of the team, in tree order, to choose a parent from. */
+    rates: Rate[];
     rate?: Rate;
+    parentId?: string | null;
 }) {
+    const underIt = rate ? rateDescendantIds(rate.id, rates) : new Set();
+    const parents = rates.filter(
+        (option) =>
+            option.id !== rate?.id &&
+            !underIt.has(option.id) &&
+            (!option.is_archived || option.id === rate?.parent_id),
+    );
+    const parent = rates.find(
+        (option) => option.id === (rate ? rate.parent_id : parentId),
+    );
     const [prorates, setProrates] = useState(
         rate?.prorates_first_month ?? true,
     );
@@ -44,11 +61,16 @@ export default function RateFormDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-lg">
                 <DialogTitle>
-                    {rate ? `Edit ${rate.name}` : 'New rate'}
+                    {rate
+                        ? `Edit ${rate.name}`
+                        : parent
+                          ? `New rate under ${parent.name}`
+                          : 'New rate'}
                 </DialogTitle>
                 <DialogDescription>
-                    Services are priced from a rate: its monthly price, times
-                    the quantity, times the months billed at once.
+                    Services are priced from a rate: its monthly price in the
+                    customer's currency, times the quantity, times the months
+                    billed at once.
                 </DialogDescription>
                 <Form
                     {...(rate ? update.form(rate.id) : store.form())}
@@ -73,6 +95,23 @@ export default function RateFormDialog({
                                 />
                             </FormField>
                             <FormField
+                                id="rate-parent"
+                                label="Under"
+                                hint="Groups it in the price list. Both rates can still be sold."
+                                error={errors.parent_id}
+                            >
+                                <RateCombobox
+                                    id="rate-parent"
+                                    name="parent_id"
+                                    rates={parents}
+                                    defaultValue={
+                                        (rate ? rate.parent_id : parentId) ?? ''
+                                    }
+                                    emptyLabel="Nothing, at the top"
+                                    invalid={Boolean(errors.parent_id)}
+                                />
+                            </FormField>
+                            <FormField
                                 id="rate-description"
                                 label="Description"
                                 error={errors.description}
@@ -83,45 +122,11 @@ export default function RateFormDialog({
                                     defaultValue={rate?.description ?? ''}
                                 />
                             </FormField>
-                            <div className="grid gap-5 sm:grid-cols-2">
-                                <FormField
-                                    id="rate-price"
-                                    label="Price a month (AUD, ex GST)"
-                                    hint="Per unit."
-                                    error={errors.price_in_cents}
-                                >
-                                    <Input
-                                        id="rate-price"
-                                        name="price"
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                        inputMode="decimal"
-                                        defaultValue={dollars(
-                                            rate?.price_in_cents,
-                                        )}
-                                        required
-                                    />
-                                </FormField>
-                                <FormField
-                                    id="rate-cost"
-                                    label="Cost a month"
-                                    hint="Optional, what it costs you."
-                                    error={errors.cost_in_cents}
-                                >
-                                    <Input
-                                        id="rate-cost"
-                                        name="cost"
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                        inputMode="decimal"
-                                        defaultValue={dollars(
-                                            rate?.cost_in_cents,
-                                        )}
-                                    />
-                                </FormField>
-                            </div>
+                            <RatePricesField
+                                prices={rate?.prices}
+                                currencies={currencies}
+                                errors={errors}
+                            />
                             <FormField
                                 id="rate-billing-period"
                                 label="Billed"

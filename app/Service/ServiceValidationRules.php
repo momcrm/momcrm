@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Rate\Actions\FindRate;
 use App\Rate\Properties\ArchivedAt as RateArchivedAt;
 use App\Rate\Properties\TeamId as RateTeamId;
 use App\Service\Properties\AutoRenew;
@@ -18,7 +19,9 @@ use App\Service\Properties\Note;
 use App\Service\Properties\Quantity;
 use App\Service\Properties\RateId;
 use App\Service\Properties\ShortName;
+use App\Shared\CurrencyEnum;
 use App\Shared\Table;
+use Closure;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Exists;
@@ -60,13 +63,15 @@ final class ServiceValidationRules
     }
 
     /**
-     * A rate of the team's that is still offered.
+     * A rate of the team's that is still offered, with a price in each
+     * currency the services' customers are billed in.
      *
+     * @param  list<CurrencyEnum>  $currencies
      * @return array<int, mixed>
      */
-    public static function rate(FormRequest $request, string $teamId): array
+    public static function rate(FormRequest $request, string $teamId, array $currencies): array
     {
-        return [...RateId::getValidationRulesForCreate($request), self::liveRateOf($teamId)];
+        return [...RateId::getValidationRulesForCreate($request), self::liveRateOf($teamId), self::pricedIn($teamId, $currencies)];
     }
 
     /**
@@ -80,6 +85,30 @@ final class ServiceValidationRules
             RateId::getNameForValidation().'.exists' => __('Choose one of your rates.'),
             EndsOn::getNameForValidation().'.after_or_equal' => __('It can\'t expire before billing starts.'),
         ];
+    }
+
+    /**
+     * @param  list<CurrencyEnum>  $currencies
+     * @return Closure(string, mixed, Closure(string): mixed): void
+     */
+    private static function pricedIn(string $teamId, array $currencies): Closure
+    {
+        return function (string $attribute, mixed $value, Closure $fail) use ($teamId, $currencies): void {
+            $rate = FindRate::byIdForTeam(is_string($value) ? $value : null, $teamId);
+
+            if ($rate->isNull()) {
+                return;
+            }
+
+            $missing = array_values(array_filter($currencies, fn (CurrencyEnum $currency): bool => $rate->priceIn($currency) === null));
+
+            if ($missing !== []) {
+                $fail(__(':rate has no price in :currencies. Add one under Settings, Rates.', [
+                    'rate' => $rate->getName()->toString(),
+                    'currencies' => implode(', ', array_unique(array_map(fn (CurrencyEnum $currency): string => $currency->value, $missing))),
+                ]));
+            }
+        };
     }
 
     private static function liveRateOf(string $teamId): Exists

@@ -57,7 +57,7 @@ final class StoreServiceFormRequest extends FormRequest
 
         return [
             ...ServiceValidationRules::for($this, $this->customer->getId()->toString()),
-            RateId::getNameForValidation() => ServiceValidationRules::rate($this, $teamId),
+            RateId::getNameForValidation() => ServiceValidationRules::rate($this, $teamId, [$this->customer->getCurrency()->toEnum()]),
             Status::getNameForValidation() => Status::getValidationRulesForCreate($this),
             ...CustomFieldValueRules::for($teamId, CustomFieldTargetEnum::Service),
         ];

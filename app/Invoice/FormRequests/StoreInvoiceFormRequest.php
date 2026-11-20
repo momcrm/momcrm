@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Invoice\FormRequests;
 
+use App\Customer\Actions\FindCustomer;
 use App\CustomField\CustomFieldTargetEnum;
 use App\CustomField\CustomFieldValueRules;
 use App\CustomField\Properties\CustomFieldValues;
@@ -66,10 +67,12 @@ final class StoreInvoiceFormRequest extends FormRequest
     public function process(): RedirectResponse
     {
         $validated = $this->validated();
+        $customer = FindCustomer::byIdForTeam(Types::string($validated[CustomerId::getNameForValidation()]), $this->user()?->current_team_id);
 
         $invoice = CreateInvoice::fromInvoice(
             Invoice::new()
                 ->setPropertyIfExists(Types::stringKeyed(Arr::except($validated, CustomFieldValues::getNameForValidation())))
+                ->setCurrency($customer->getCurrency()->toEnum()->value)
                 ->setCustomFields(CustomFieldValueRules::merge((string) $this->user()?->current_team_id, CustomFieldTargetEnum::Invoice, new CustomFieldValues(null), $validated[CustomFieldValues::getNameForValidation()] ?? []))
                 ->setTeamId($this->user()?->current_team_id),
             InvoiceValidationRules::items($validated),

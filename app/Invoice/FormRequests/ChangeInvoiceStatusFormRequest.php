@@ -70,6 +70,6 @@ final class ChangeInvoiceStatusFormRequest extends FormRequest
             default => __(':reference voided.', ['reference' => $invoice->getReference()]),
         }]);
 
-        return to_route('invoices.show', $invoice->getId()->toString());
+        return back();
     }
 }

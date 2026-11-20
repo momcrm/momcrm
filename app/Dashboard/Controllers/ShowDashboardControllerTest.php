@@ -45,7 +45,7 @@ it("shows the team's numbers, the user's tickets and the checklist", function ()
                 'overdue_tickets' => 0,
                 'customers' => 1,
                 'unpaid_invoices' => 1,
-                'unpaid_total_in_cents' => 12345,
+                'unpaid_totals' => [['currency' => 'AUD', 'total_in_cents' => 12345]],
                 'overdue_invoices' => 1,
             ])
             ->has('myTickets', 1)
