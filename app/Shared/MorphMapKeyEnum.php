@@ -7,6 +7,7 @@ namespace App\Shared;
 use App\AccessRule\AccessRuleEloquentModel;
 use App\Activity\ActivityEloquentModel;
 use App\Article\ArticleEloquentModel;
+use App\ArticleVersion\ArticleVersionEloquentModel;
 use App\Asset\AssetEloquentModel;
 use App\Attachment\AttachmentEloquentModel;
 use App\AuditLog\AuditLogEloquentModel;
@@ -64,6 +65,7 @@ enum MorphMapKeyEnum: string
     case AccessRule = 'access_rule';
     case Activity = 'activity';
     case Article = 'article';
+    case ArticleVersion = 'article_version';
     case Asset = 'asset';
     case Attachment = 'attachment';
     case AuditLog = 'audit_log';
@@ -134,6 +136,7 @@ enum MorphMapKeyEnum: string
             self::AccessRule => AccessRuleEloquentModel::class,
             self::Activity => ActivityEloquentModel::class,
             self::Article => ArticleEloquentModel::class,
+            self::ArticleVersion => ArticleVersionEloquentModel::class,
             self::Asset => AssetEloquentModel::class,
             self::Attachment => AttachmentEloquentModel::class,
             self::AuditLog => AuditLogEloquentModel::class,

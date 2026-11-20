@@ -10,8 +10,11 @@ use App\Article\Properties\Author;
 use App\Article\Properties\AuthorId;
 use App\Article\Properties\Body;
 use App\Article\Properties\BodyText;
+use App\Article\Properties\ChangeNote;
 use App\Article\Properties\Classification;
 use App\Article\Properties\CreatedAt;
+use App\Article\Properties\EditedBy;
+use App\Article\Properties\EditedById;
 use App\Article\Properties\Id;
 use App\Article\Properties\PublishedAt;
 use App\Article\Properties\Status;
@@ -19,6 +22,8 @@ use App\Article\Properties\Summary;
 use App\Article\Properties\TeamId;
 use App\Article\Properties\Title;
 use App\Article\Properties\UpdatedAt;
+use App\Article\Properties\VersionMajor;
+use App\Article\Properties\VersionMinor;
 use Illuminate\Support\Collection;
 use Mom\Data\AbstractData;
 use Mom\Data\AbstractValue;
@@ -47,6 +52,11 @@ final class Article extends AbstractData
         public TeamId $teamId,
         public Title $title,
         public UpdatedAt $updatedAt,
+        public ChangeNote $changeNote,
+        public EditedBy $editedBy,
+        public EditedById $editedById,
+        public VersionMajor $versionMajor,
+        public VersionMinor $versionMinor,
     ) {}
 
     public static function getFactory(): ArticleFactory
@@ -74,7 +84,7 @@ final class Article extends AbstractData
     /**
      * The fields the articles list shows.
      *
-     * @return array{id: string, title: string, summary: ?string, status: string, classification: string, author_name: ?string, published_at: ?string, updated_at: ?string, is_archived: bool}
+     * @return array{id: string, title: string, summary: ?string, status: string, classification: string, version: ?string, author_name: ?string, published_at: ?string, updated_at: ?string, is_archived: bool}
      */
     public function toSummary(): array
     {
@@ -84,6 +94,7 @@ final class Article extends AbstractData
             'summary' => $this->getSummary()->toNullableString(),
             'status' => $this->getStatus()->toEnum()->value,
             'classification' => $this->getClassification()->toEnum()->value,
+            'version' => $this->versionLabel(),
             'author_name' => $this->getAuthor()->toNullableData()?->getName()->toString(),
             'published_at' => $this->getPublishedAt()->toNullableISOString(),
             'updated_at' => $this->getUpdatedAt()->toNullableISOString(),
@@ -94,15 +105,35 @@ final class Article extends AbstractData
     /**
      * Everything the article's page and editor show.
      *
-     * @return array{id: string, title: string, summary: ?string, status: string, classification: string, author_name: ?string, published_at: ?string, updated_at: ?string, is_archived: bool, body: string, created_at: ?string}
+     * @return array{id: string, title: string, summary: ?string, status: string, classification: string, version: ?string, author_name: ?string, published_at: ?string, updated_at: ?string, is_archived: bool, body: string, change_note: ?string, created_at: ?string}
      */
     public function toDetail(): array
     {
         return [
             ...$this->toSummary(),
             'body' => $this->getBody()->toString(),
+            'change_note' => $this->getChangeNote()->toNullableString(),
             'created_at' => $this->getCreatedAt()->toNullableISOString(),
         ];
+    }
+
+    /**
+     * Its version, such as "1.2", or null until it is first published.
+     */
+    public function versionLabel(): ?string
+    {
+        $major = $this->getVersionMajor()->toInteger();
+
+        return $major === 0 ? null : $major.'.'.$this->getVersionMinor()->toInteger();
+    }
+
+    /**
+     * Whether it has been published, even if it has gone back to a draft
+     * since: from then on, each change is kept as a version.
+     */
+    public function hasBeenPublished(): bool
+    {
+        return $this->getPublishedAt()->isNotNull();
     }
 
     public function isArchived(): bool
@@ -260,5 +291,58 @@ final class Article extends AbstractData
     public function getUpdatedAt(): UpdatedAt
     {
         return $this->updatedAt;
+    }
+
+    public function getChangeNote(): ChangeNote
+    {
+        return $this->changeNote;
+    }
+
+    public function setChangeNote(mixed $changeNote): self
+    {
+        $this->changeNote = new ChangeNote($changeNote instanceof AbstractValue ? $changeNote->toValue() : $changeNote);
+
+        return $this;
+    }
+
+    public function getEditedBy(): EditedBy
+    {
+        return $this->editedBy;
+    }
+
+    public function getEditedById(): EditedById
+    {
+        return $this->editedById;
+    }
+
+    public function setEditedById(mixed $editedById): self
+    {
+        $this->editedById = new EditedById($editedById instanceof AbstractValue ? $editedById->toValue() : $editedById);
+
+        return $this;
+    }
+
+    public function getVersionMajor(): VersionMajor
+    {
+        return $this->versionMajor;
+    }
+
+    public function setVersionMajor(mixed $versionMajor): self
+    {
+        $this->versionMajor = new VersionMajor($versionMajor instanceof AbstractValue ? $versionMajor->toValue() : $versionMajor);
+
+        return $this;
+    }
+
+    public function getVersionMinor(): VersionMinor
+    {
+        return $this->versionMinor;
+    }
+
+    public function setVersionMinor(mixed $versionMinor): self
+    {
+        $this->versionMinor = new VersionMinor($versionMinor instanceof AbstractValue ? $versionMinor->toValue() : $versionMinor);
+
+        return $this;
     }
 }

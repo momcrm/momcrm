@@ -11,4 +11,5 @@ enum ArticleRelationship: string
     use Enum;
 
     case Author = 'author';
+    case EditedBy = 'editedBy';
 }

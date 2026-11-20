@@ -46,7 +46,7 @@ final class FindArticle
 
         return Article::fromEloquentModel(
             self::visible($teamId, $userId)
-                ->with(ArticleRelationship::Author->value)
+                ->with([ArticleRelationship::Author->value, ArticleRelationship::EditedBy->value])
                 ->where(Id::getDatabaseTableColumnName(), $id)
                 ->first(),
         );

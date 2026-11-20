@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Article;
 
 use App\Article\Properties\Body;
+use App\Article\Properties\ChangeNote;
 use App\Article\Properties\Classification;
 use App\Article\Properties\Status;
 use App\Article\Properties\Summary;
@@ -39,6 +40,8 @@ final class ArticleValidationRules
             Summary::getNameForValidation() => Summary::getValidationRulesForCreate($request),
             Body::getNameForValidation() => Body::getValidationRulesForCreate($request),
             Status::getNameForValidation() => ['required', Rule::enum(ArticleStatusEnum::class)],
+            ChangeNote::getNameForValidation() => ChangeNote::getValidationRulesForCreate($request),
+            'is_major' => ['sometimes', 'boolean'],
         ];
     }
 

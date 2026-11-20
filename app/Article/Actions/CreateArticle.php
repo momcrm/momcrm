@@ -20,6 +20,10 @@ final readonly class CreateArticle
             $this->article->setId(Id::generate());
         }
 
+        if ($this->article->getVersionMajor()->isNull()) {
+            $this->article->setVersionMajor(0)->setVersionMinor(0);
+        }
+
         $model = ArticleEloquentModel::query()->create($this->article->forDatabaseCreate());
 
         return Article::fromEloquentModel($model->refresh());
