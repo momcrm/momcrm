@@ -1138,3 +1138,22 @@ export type Charge = {
     /** The invoice it is on, once billed. */
     invoice: { id: string; reference: string } | null;
 };
+
+/** A line a customer is due to be billed: a service period or a one-off charge. */
+export type BillingLine = {
+    /** Names the line the same way each time, to pick it. */
+    key: string;
+    kind: 'service' | 'charge';
+    description: string;
+    quantity: number;
+    unit_price_in_cents: number;
+    total_in_cents: number;
+};
+
+/** What the "Bill now" dialog fetches for a customer. */
+export type CustomerBilling = {
+    customer: { id: string; name: string; currency: string };
+    date: string;
+    due_on: string;
+    lines: BillingLine[];
+};

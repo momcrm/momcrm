@@ -1,4 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
+import BillNowDialog from '@/components/billing/bill-now-dialog';
 import ChargesCard from '@/components/charges/charges-card';
 import { AddLink, TabHeader } from '@/components/customers/workspace-tab';
 import EmptyState from '@/components/empty-state';
@@ -49,6 +50,7 @@ export default function CustomerInvoices({
     );
     const actions = (
         <div className="flex flex-wrap gap-2">
+            <BillNowDialog customerId={customer.id} />
             <RecordPaymentButton customerId={customer.id} />
             {add}
         </div>
