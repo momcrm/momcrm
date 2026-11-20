@@ -98,6 +98,27 @@ final class FindCustomer
     }
 
     /**
+     * Customers by id, keyed by id, whichever team they belong to; for work
+     * that spans teams, such as the monthly invoice run.
+     *
+     * @param  list<string>  $ids
+     * @return array<string, Customer>
+     */
+    public static function byIdsForTeams(array $ids): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+
+        return CustomerEloquentModel::query()
+            ->withoutGlobalScopes()
+            ->whereKey($ids)
+            ->get()
+            ->mapWithKeys(fn (CustomerEloquentModel $model): array => [$model->id => Customer::fromEloquentModel($model)])
+            ->all();
+    }
+
+    /**
      * Every customer in the team as id/name pairs, for pickers. A customer
      * with a prefix is named "PREFIX · Name" so it can be found by either.
      *
