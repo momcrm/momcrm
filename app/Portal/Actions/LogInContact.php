@@ -62,6 +62,7 @@ final class LogInContact
         Auth::guard(PortalAuth::GUARD)->login($model, remember: true);
         $request->session()->regenerate();
         $request->session()->put(PortalSession::VERIFIED_EMAIL, mb_strtolower((string) $model->email));
+        $request->session()->forget(PortalSession::VIEWING_AS);
 
         $intended = Types::nullableString($request->session()->pull(PortalSession::INTENDED));
 

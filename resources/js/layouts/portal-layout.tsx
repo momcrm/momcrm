@@ -1,5 +1,6 @@
 import { Link, router, usePage } from '@inertiajs/react';
-import { ArrowLeftRight, LogOut } from 'lucide-react';
+import { ArrowLeftRight, Eye, LogOut } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import type { ReactNode } from 'react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -14,6 +15,7 @@ import { useCurrentUrl } from '@/hooks/use-current-url';
 import { useInitials } from '@/hooks/use-initials';
 import { cn } from '@/lib/utils';
 import { choose, home, logout, statement } from '@/routes/portal';
+import { stop as stopViewingAs } from '@/routes/portal/view-as';
 import { index as articles } from '@/routes/portal/articles';
 import { index as assets } from '@/routes/portal/assets';
 import { index as invoices } from '@/routes/portal/invoices';
@@ -71,6 +73,22 @@ export default function PortalLayout({ children }: { children: ReactNode }) {
 
     return (
         <div className="flex min-h-svh flex-col bg-background">
+            {portal.viewingAs && (
+                <div className="flex flex-wrap items-center justify-center gap-3 bg-warning/15 px-4 py-2 text-sm">
+                    <Eye className="size-4" />
+                    <span>
+                        You're viewing the portal as {portal.contact.name}.
+                        Nothing can be changed.
+                    </span>
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => router.post(stopViewingAs.url())}
+                    >
+                        Exit
+                    </Button>
+                </div>
+            )}
             <header className="border-b bg-sidebar">
                 <div className="mx-auto flex h-14 w-full max-w-5xl items-center gap-4 px-4">
                     <Link

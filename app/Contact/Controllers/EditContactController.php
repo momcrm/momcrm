@@ -13,7 +13,9 @@ use App\CustomField\Actions\FindLinkedRecords;
 use App\CustomField\CustomFieldRelationEnum;
 use App\CustomField\CustomFieldRelationLabels;
 use App\CustomField\CustomFieldTargetEnum;
+use App\Team\Actions\FindTeam;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -37,6 +39,7 @@ final class EditContactController
             'linkedRecords' => FindLinkedRecords::to($teamId, (string) $request->user()?->id, CustomFieldRelationEnum::Contact, $found->getId()->toString()),
             'customers' => FindCustomer::optionsForTeam($teamId),
             'can' => AccessAbilities::for($request->user(), AccessResourceEnum::Contact, $found),
+            'canViewInPortal' => Gate::allows('viewPortalAsContact', FindTeam::byId($teamId)),
         ]);
     }
 }

@@ -32,7 +32,7 @@ final class PortalProps
     ];
 
     /**
-     * @return array{contact: array{id: string, name: string, email: ?string}, customer: array{id: string, name: string}, team: array{name: string}, sections: array<string, bool>, canSwitch: bool}|null
+     * @return array{contact: array{id: string, name: string, email: ?string}, customer: array{id: string, name: string}, team: array{name: string}, sections: array<string, bool>, canSwitch: bool, viewingAs: bool}|null
      */
     public static function forSignedIn(): ?array
     {
@@ -62,7 +62,8 @@ final class PortalProps
                 fn (AccessResourceEnum $resource): bool => AccessEvaluator::contactMayOnSome($model->id, $resource, AccessActionEnum::View),
                 self::SECTIONS,
             ),
-            'canSwitch' => FindPortalContacts::forEmail($model->email)->count() > 1,
+            'canSwitch' => ! PortalAccess::isViewingAs() && FindPortalContacts::forEmail($model->email)->count() > 1,
+            'viewingAs' => PortalAccess::isViewingAs(),
         ];
     }
 }

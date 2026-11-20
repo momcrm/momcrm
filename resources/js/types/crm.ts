@@ -136,6 +136,8 @@ export type Contact = {
     contact_role_id: string | null;
     /** Whether they may sign in to the customer portal. */
     portal_access: boolean;
+    portal_invited_at: string | null;
+    portal_last_seen_at: string | null;
     custom_fields: CustomFieldValues;
 };
 
@@ -553,7 +555,8 @@ export type TicketComment = {
     visibility: 'internal' | 'public';
     /** How a reply emailed to the customer fared. */
     delivery: {
-        status: 'pending' | 'sent' | 'failed';
+        /** "portal" when no mailbox sent it: the customer was told to read it in the portal. */
+        status: 'pending' | 'sent' | 'failed' | 'portal';
         error: string | null;
     } | null;
     mentions: string[];

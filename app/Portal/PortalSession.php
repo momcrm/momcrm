@@ -32,4 +32,10 @@ final class PortalSession
      * The portal page a signed-out contact asked for, to return to once in.
      */
     public const string INTENDED = 'portal.intended';
+
+    /**
+     * The staff member viewing the portal as a contact. While it is set the
+     * portal is read-only.
+     */
+    public const string VIEWING_AS = 'portal.viewing_as';
 }

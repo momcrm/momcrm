@@ -19,7 +19,7 @@ final class LogOutOfPortalController
     public function __invoke(Request $request): RedirectResponse
     {
         Auth::guard(PortalAuth::GUARD)->logout();
-        $request->session()->forget([PortalSession::VERIFIED_EMAIL, PortalSession::INTENDED]);
+        $request->session()->forget([PortalSession::VERIFIED_EMAIL, PortalSession::INTENDED, PortalSession::VIEWING_AS]);
         $request->session()->regenerateToken();
 
         return to_route('portal.login');

@@ -25,7 +25,18 @@ final class PortalAccess
     {
         $contact = PortalAuth::contact();
 
-        return $contact !== null && AccessEvaluator::allowsContact($contact->id, $resource, $action, $record);
+        return $contact !== null
+            && ! self::isReadOnly($action)
+            && AccessEvaluator::allowsContact($contact->id, $resource, $action, $record);
+    }
+
+    /**
+     * Whether a staff member is viewing the portal as the contact, when
+     * nothing may be changed.
+     */
+    public static function isViewingAs(): bool
+    {
+        return is_string(session(PortalSession::VIEWING_AS));
     }
 
     /**
@@ -35,6 +46,10 @@ final class PortalAccess
      */
     public static function authorize(AccessResourceEnum $resource, AccessActionEnum $action, ?AbstractData $record = null): void
     {
+        if (self::isReadOnly($action)) {
+            throw new AuthorizationException(__("You're viewing the portal as this contact, so nothing can be changed."));
+        }
+
         $contact = PortalAuth::contact();
         $response = $contact === null
             ? null
@@ -43,6 +58,11 @@ final class PortalAccess
         if ($response === null || $response->denied()) {
             throw new AuthorizationException($response?->message() ?? __('This action is unauthorized.'));
         }
+    }
+
+    private static function isReadOnly(AccessActionEnum $action): bool
+    {
+        return $action !== AccessActionEnum::View && self::isViewingAs();
     }
 
     /**

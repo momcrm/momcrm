@@ -36,6 +36,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property bool $is_primary
  * @property bool $receives_invoices
  * @property bool $portal_access
+ * @property CarbonImmutable|null $portal_invited_at
  * @property CarbonImmutable|null $portal_last_seen_at
  * @property string|null $remember_token
  * @property string|null $last_name
@@ -111,6 +112,7 @@ final class ContactEloquentModel extends Model implements Auditable, Authenticat
             ReceivesInvoices::getDatabaseTableColumnName() => 'boolean',
             PortalAccess::getDatabaseTableColumnName() => 'boolean',
             'portal_last_seen_at' => 'immutable_datetime',
+            'portal_invited_at' => 'immutable_datetime',
         ];
     }
 

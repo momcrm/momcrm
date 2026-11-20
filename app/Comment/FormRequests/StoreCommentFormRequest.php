@@ -7,13 +7,16 @@ namespace App\Comment\FormRequests;
 use App\Comment\Actions\CreateComment;
 use App\Comment\Comment;
 use App\Comment\CommentVisibilityEnum;
+use App\Comment\Notifications\TicketReplyInPortalNotification;
 use App\Comment\Properties\Body;
 use App\Comment\Properties\Mentions;
 use App\Comment\Properties\Visibility;
 use App\MailboxMessage\Actions\QueueCommentEmail;
 use App\MailboxMessage\TicketReplyRoute;
+use App\Portal\Actions\FindPortalReplyRecipient;
 use App\Shared\Table;
 use App\Shared\Types;
+use App\Team\Actions\FindTeam;
 use App\Ticket\Actions\FindTicket;
 use App\Ticket\Exceptions\CouldNotFindTicket;
 use App\Ticket\Ticket;
@@ -23,6 +26,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
@@ -66,7 +70,8 @@ final class StoreCommentFormRequest extends FormRequest
 
     /**
      * A reply to the customer needs someone to send it to and a mailbox to
-     * send it from.
+     * send it from, unless the ticket's contact uses the customer portal: then
+     * they are emailed a link to the reply there instead.
      *
      * @return array<int, Closure(Validator): void>
      */
@@ -78,6 +83,10 @@ final class StoreCommentFormRequest extends FormRequest
             }
 
             $route = TicketReplyRoute::forTicket($this->ticket);
+
+            if ($route->mailbox->isNull() && FindPortalReplyRecipient::forTicket($this->ticket)->isNotNull()) {
+                return;
+            }
 
             if ($route->to === null) {
                 $validator->errors()->add(Visibility::getNameForValidation(), __('This ticket has no email address to reply to.'));
@@ -115,9 +124,28 @@ final class StoreCommentFormRequest extends FormRequest
                 ->setMentions($mentions === [] ? null : $mentions)
                 ->setVisibility($this->isReply() ? CommentVisibilityEnum::Public : CommentVisibilityEnum::Internal));
 
-            if ($this->isReply()) {
-                QueueCommentEmail::forComment($comment, TicketReplyRoute::forTicket($this->ticket));
+            if (! $this->isReply()) {
+                return;
             }
+
+            $route = TicketReplyRoute::forTicket($this->ticket);
+
+            if ($route->mailbox->isNotNull()) {
+                QueueCommentEmail::forComment($comment, $route);
+
+                return;
+            }
+
+            $contact = FindPortalReplyRecipient::forTicket($this->ticket);
+
+            Notification::route('mail', $contact->getEmail()->toString())->notify(new TicketReplyInPortalNotification(
+                ticketId: $this->ticket->getId()->toString(),
+                number: $this->ticket->getNumber()->toInteger(),
+                title: $this->ticket->getTitle()->toString(),
+                teamName: FindTeam::byId($this->ticket->getTeamId()->toString())->getName()->toString(),
+                authorName: (string) $this->user()?->name,
+                body: $comment->getBody()->toString(),
+            ));
         });
 
         return back();

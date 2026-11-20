@@ -267,6 +267,10 @@ function Delivery({ comment }: { comment: TicketComment }) {
         return <SoftBadge tone="success">Sent to customer</SoftBadge>;
     }
 
+    if (comment.delivery?.status === 'portal') {
+        return <SoftBadge tone="success">In the portal</SoftBadge>;
+    }
+
     if (comment.delivery?.status === 'pending') {
         return <SoftBadge tone="neutral">Sending</SoftBadge>;
     }

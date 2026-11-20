@@ -48,6 +48,7 @@ use App\Comment\Controllers\StoreCommentController;
 use App\Comment\Controllers\StoreRecordCommentController;
 use App\Contact\Controllers\DeleteContactController;
 use App\Contact\Controllers\EditContactController;
+use App\Contact\Controllers\InviteContactToPortalController;
 use App\Contact\Controllers\ListContactFormOptionsController;
 use App\Contact\Controllers\ListContactsController;
 use App\Contact\Controllers\StoreContactController;
@@ -138,6 +139,7 @@ use App\Payment\Controllers\StorePaymentController;
 use App\Payment\Controllers\UpdatePaymentController;
 use App\PaymentAllocation\Controllers\DeletePaymentAllocationController;
 use App\PaymentAllocation\Controllers\UpdatePaymentAllocationController;
+use App\Portal\Controllers\ViewPortalAsContactController;
 use App\Project\Controllers\ArchiveProjectController;
 use App\Project\Controllers\DeleteProjectController;
 use App\Project\Controllers\ListProjectsController;
@@ -262,6 +264,8 @@ Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function 
     Route::get('contacts/{contact}/edit', EditContactController::class)->whereUuid('contact')->name('contacts.edit');
     Route::put('contacts/{contact}', UpdateContactController::class)->whereUuid('contact')->name('contacts.update');
     Route::delete('contacts/{contact}', DeleteContactController::class)->whereUuid('contact')->name('contacts.destroy');
+    Route::post('contacts/{contact}/portal-invitation', InviteContactToPortalController::class)->whereUuid('contact')->name('contacts.portal-invitation');
+    Route::post('contacts/{contact}/view-in-portal', ViewPortalAsContactController::class)->whereUuid('contact')->name('contacts.view-in-portal');
 
     Route::get('customers/{customer}/locations/create', CreateLocationController::class)->whereUuid('customer')->name('locations.create');
     Route::post('customers/{customer}/locations', StoreLocationController::class)->whereUuid('customer')->name('locations.store');

@@ -16,6 +16,8 @@ use App\Contact\Properties\IsPrimary;
 use App\Contact\Properties\LastName;
 use App\Contact\Properties\MobilePhone;
 use App\Contact\Properties\PortalAccess;
+use App\Contact\Properties\PortalInvitedAt;
+use App\Contact\Properties\PortalLastSeenAt;
 use App\Contact\Properties\Position;
 use App\Contact\Properties\ReceivesInvoices;
 use App\Contact\Properties\TeamId;
@@ -45,6 +47,8 @@ final class Contact extends AbstractData
         public LastName $lastName,
         public MobilePhone $mobilePhone,
         public PortalAccess $portalAccess,
+        public PortalInvitedAt $portalInvitedAt,
+        public PortalLastSeenAt $portalLastSeenAt,
         public Position $position,
         public TeamId $teamId,
         public UpdatedAt $updatedAt,
@@ -81,7 +85,7 @@ final class Contact extends AbstractData
     /**
      * The fields the contact pages show.
      *
-     * @return array{id: string, customer_id: string, first_name: string, last_name: ?string, full_name: string, email: ?string, position: ?string, work_phone: ?string, mobile_phone: ?string, is_primary: bool, receives_invoices: bool, contact_role_id: ?string, portal_access: bool, custom_fields: array<string, mixed>}
+     * @return array{id: string, customer_id: string, first_name: string, last_name: ?string, full_name: string, email: ?string, position: ?string, work_phone: ?string, mobile_phone: ?string, is_primary: bool, receives_invoices: bool, contact_role_id: ?string, portal_access: bool, portal_invited_at: ?string, portal_last_seen_at: ?string, custom_fields: array<string, mixed>}
      */
     public function toSummary(): array
     {
@@ -99,6 +103,8 @@ final class Contact extends AbstractData
             'receives_invoices' => $this->getReceivesInvoices()->toBoolean(),
             'contact_role_id' => $this->getContactRoleId()->toNullableString(),
             'portal_access' => $this->getPortalAccess()->toBoolean(),
+            'portal_invited_at' => $this->getPortalInvitedAt()->toNullableISOString(),
+            'portal_last_seen_at' => $this->getPortalLastSeenAt()->toNullableISOString(),
             'custom_fields' => $this->getCustomFields()->toValues(),
         ];
     }
@@ -137,6 +143,23 @@ final class Contact extends AbstractData
         $this->portalAccess = new PortalAccess($portalAccess instanceof AbstractValue ? $portalAccess->toValue() : $portalAccess);
 
         return $this;
+    }
+
+    public function getPortalInvitedAt(): PortalInvitedAt
+    {
+        return $this->portalInvitedAt;
+    }
+
+    public function setPortalInvitedAt(mixed $portalInvitedAt): self
+    {
+        $this->portalInvitedAt = new PortalInvitedAt($portalInvitedAt instanceof AbstractValue ? $portalInvitedAt->toValue() : $portalInvitedAt);
+
+        return $this;
+    }
+
+    public function getPortalLastSeenAt(): PortalLastSeenAt
+    {
+        return $this->portalLastSeenAt;
     }
 
     public function getCreatedAt(): CreatedAt
