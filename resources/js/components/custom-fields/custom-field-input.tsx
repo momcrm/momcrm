@@ -245,7 +245,7 @@ export function CustomFieldInput({
                         typeof value === 'string' ? labels[value] : undefined
                     }
                     onChange={onChange}
-                    className="flex h-control-md w-full min-w-0 items-center rounded-md border border-border-strong bg-card px-2.5 text-left text-sm"
+                    className="flex h-control-md w-full min-w-0 select-chevron items-center rounded-md border border-border-strong bg-card bg-size-[0.75rem] bg-position-[right_0.5625rem_center] pr-7 pl-2.5 text-left text-sm"
                 />
             );
 

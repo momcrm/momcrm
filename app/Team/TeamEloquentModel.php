@@ -27,6 +27,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property string $id
  * @property string $owner_id
  * @property string $name
+ * @property string|null $billing_name
+ * @property string|null $tax_id_label
+ * @property string|null $tax_id
+ * @property string|null $billing_email
+ * @property string|null $billing_phone
+ * @property string|null $billing_address
+ * @property string|null $payment_details
  * @property bool $personal_team
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at

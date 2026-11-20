@@ -13,8 +13,9 @@ it('marks a sent invoice as paid', function (): void {
     $invoice = InvoiceEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'status' => InvoiceStatusEnum::Sent->value]);
 
     actingAs($user)
+        ->from(route('invoices.index'))
         ->post(route('invoices.paid', $invoice->id))
-        ->assertRedirectToRoute('invoices.show', $invoice->id);
+        ->assertRedirectToRoute('invoices.index');
 
     expect($invoice->fresh())
         ->status->toBe('paid')

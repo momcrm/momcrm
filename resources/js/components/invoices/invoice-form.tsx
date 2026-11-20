@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
-import { formatCents } from '@/lib/money';
+import { DEFAULT_CURRENCY, formatCents } from '@/lib/money';
 import type { CustomerOption, Invoice, InvoiceItem, Service } from '@/types';
 
 type Action = { action: string; method: 'post' | 'put' };
@@ -72,7 +72,8 @@ export default function InvoiceForm({
     action: Action;
     invoice?: Invoice;
     items?: InvoiceItem[];
-    customers?: CustomerOption[];
+    /** Customers to choose from, with the currency each is billed in. */
+    customers?: (CustomerOption & { currency: string })[];
     services: Service[];
     customerId?: string | null;
     defaults?: {
@@ -96,6 +97,12 @@ export default function InvoiceForm({
                 1000) / 100,
         ),
     );
+
+    const currency =
+        invoice?.currency ??
+        customers?.find((customer) => customer.id === selectedCustomer)
+            ?.currency ??
+        DEFAULT_CURRENCY;
 
     const customerServices = services.filter(
         (service) => service.customer_id === selectedCustomer,
@@ -318,7 +325,7 @@ export default function InvoiceForm({
                                         required
                                     />
                                     <p className="py-2 text-right text-sm tabular-nums">
-                                        {formatCents(rowCents(row))}
+                                        {formatCents(rowCents(row), currency)}
                                     </p>
                                     <Button
                                         type="button"
@@ -357,7 +364,7 @@ export default function InvoiceForm({
                         <div className="flex justify-between">
                             <span>Subtotal</span>
                             <span className="tabular-nums">
-                                {formatCents(subtotal)}
+                                {formatCents(subtotal, currency)}
                             </span>
                         </div>
                         <div className="flex items-center justify-between gap-2">
@@ -376,14 +383,14 @@ export default function InvoiceForm({
                                 }
                             />
                             <span className="tabular-nums">
-                                {formatCents(tax)}
+                                {formatCents(tax, currency)}
                             </span>
                         </div>
                         <InputError message={errors.tax_rate_basis_points} />
                         <div className="flex justify-between border-t pt-2 font-medium">
-                            <span>Total (AUD)</span>
+                            <span>Total ({currency})</span>
                             <span className="tabular-nums">
-                                {formatCents(subtotal + tax)}
+                                {formatCents(subtotal + tax, currency)}
                             </span>
                         </div>
                     </div>

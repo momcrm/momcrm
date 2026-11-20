@@ -65,6 +65,7 @@ class HandleInertiaRequests extends Middleware
             'hasSampleData' => fn (): bool => $this->hasSampleData($request),
             'canRemoveSampleData' => fn (): bool => $this->canRemoveSampleData($request),
             'canManageAccessRules' => fn (): bool => $this->allowsOnCurrentTeam($request, 'manageAccessRules'),
+            'canManageBilling' => fn (): bool => $this->allowsOnCurrentTeam($request, 'manageBilling'),
             'canManageConnectors' => fn (): bool => $this->allowsOnCurrentTeam($request, 'manageConnectors'),
             'canManageCustomFields' => fn (): bool => $this->allowsOnCurrentTeam($request, 'manageCustomFields'),
             'canManageCustomObjects' => fn (): bool => $this->allowsOnCurrentTeam($request, 'manageCustomObjects'),

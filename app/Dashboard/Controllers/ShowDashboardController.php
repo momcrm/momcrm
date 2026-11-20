@@ -22,6 +22,7 @@ use App\Ticket\Ticket;
 use App\Ticket\TicketDrawer;
 use App\User\UserEloquentModel;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -48,7 +49,12 @@ final class ShowDashboardController
                 ...WorkspaceNumbers::headline($teamId),
                 'customers' => CustomerEloquentModel::query()->withoutGlobalScope(CurrentTeamScope::class)->where(CustomerTeamId::getDatabaseTableColumnName(), $teamId)->count(),
                 'unpaid_invoices' => $unpaid->count(),
-                'unpaid_total_in_cents' => Types::intOrZero($unpaid->sum('total_in_cents')),
+                'unpaid_totals' => $unpaid
+                    ->groupBy('currency')
+                    ->map(fn (Collection $invoices, string $currency): array => ['currency' => $currency, 'total_in_cents' => Types::intOrZero($invoices->sum('total_in_cents'))])
+                    ->sortByDesc('total_in_cents')
+                    ->values()
+                    ->all(),
                 'overdue_invoices' => $unpaid->where('is_overdue', true)->count(),
             ],
             'myTickets' => FindTicket::assignedTo($teamId, $user->id)

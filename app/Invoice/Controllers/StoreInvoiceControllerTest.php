@@ -50,6 +50,15 @@ it('saves a draft invoice with its line items in cents', function (): void {
         ]);
 });
 
+it("puts the invoice in the customer's currency", function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $customer = CustomerEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'currency' => 'SGD']);
+
+    actingAs($user)->post(route('invoices.store'), invoicePayload($customer->id))->assertSessionHasNoErrors();
+
+    expect(InvoiceEloquentModel::query()->sole()->currency)->toBe('SGD');
+});
+
 it('requires at least one line item', function (): void {
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
     $customer = CustomerEloquentModel::factory()->create(['team_id' => $user->current_team_id]);

@@ -50,6 +50,9 @@ final class FindInvoice
             ->orderByDesc(Number::getDatabaseTableColumnName())
             ->paginate($perPage)
             ->withQueryString()
+            // The open invoice dialog (?invoice=) stays on this page; a null
+            // value leaves it out of the next and previous page links.
+            ->appends('invoice', null)
             ->through(fn (InvoiceEloquentModel $model): Invoice => Invoice::fromEloquentModel($model));
     }
 

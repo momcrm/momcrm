@@ -2,6 +2,7 @@ import { Link, usePage } from '@inertiajs/react';
 import {
     Activity,
     Boxes,
+    Building2,
     FileCog,
     KeyRound,
     Mail,
@@ -17,6 +18,7 @@ import type { PropsWithChildren } from 'react';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn, toUrl } from '@/lib/utils';
 import { index as accessRulesIndex } from '@/routes/access-rules';
+import { edit as editBilling } from '@/routes/billing';
 import { index as activityIndex } from '@/routes/activity';
 import { edit as editAppearance } from '@/routes/appearance';
 import { index as connectorsIndex } from '@/routes/connectors';
@@ -52,6 +54,12 @@ const connectorsItem: NavItem = {
     title: 'Connectors',
     href: connectorsIndex(),
     icon: Plug,
+};
+
+const billingItem: NavItem = {
+    title: 'Billing details',
+    href: editBilling(),
+    icon: Building2,
 };
 
 const ratesItem: NavItem = {
@@ -103,6 +111,7 @@ export default function SettingsLayout({
     const { isCurrentOrParentUrl } = useCurrentUrl();
     const {
         canManageAccessRules,
+        canManageBilling,
         canManageConnectors,
         canManageCustomObjects,
         canManageEmail,
@@ -124,6 +133,7 @@ export default function SettingsLayout({
                       ...section.items,
                       ...(canManageWorkflow ? [workflowItem] : []),
                       ...(canManageCustomObjects ? [customObjectsItem] : []),
+                      ...(canManageBilling ? [billingItem] : []),
                       ...(canManageRates ? [ratesItem] : []),
                       ...(canManageEmail ? [emailItem] : []),
                       ...(canManageConnectors ? [connectorsItem] : []),

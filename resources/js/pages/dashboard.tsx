@@ -54,7 +54,8 @@ type Stats = {
     overdue_tickets: number;
     customers: number;
     unpaid_invoices: number;
-    unpaid_total_in_cents: number;
+    /** What sent invoices still owe, one total per currency, largest first. */
+    unpaid_totals: { currency: string; total_in_cents: number }[];
     overdue_invoices: number;
 };
 
@@ -196,7 +197,14 @@ export default function Dashboard({
                     >
                         <span>
                             <span className="font-medium">
-                                {formatCents(stats.unpaid_total_in_cents)}
+                                {stats.unpaid_totals
+                                    .map((total) =>
+                                        formatCents(
+                                            total.total_in_cents,
+                                            total.currency,
+                                        ),
+                                    )
+                                    .join(' + ')}
                             </span>{' '}
                             <span className="text-muted-foreground">
                                 waiting on {stats.unpaid_invoices}{' '}

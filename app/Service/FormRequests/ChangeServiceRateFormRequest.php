@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Service\FormRequests;
 
+use App\Customer\Actions\FindCustomer;
 use App\Rate\Actions\FindRate;
 use App\Service\Actions\ChangeServiceRate;
 use App\Service\Actions\FindService;
@@ -50,8 +51,11 @@ final class ChangeServiceRateFormRequest extends FormRequest
      */
     public function rules(): array
     {
+        $teamId = $this->service->getTeamId()->toString();
+        $currency = FindCustomer::byIdForTeam($this->service->getCustomerId()->toString(), $teamId)->getCurrency()->toEnum();
+
         return [
-            RateId::getNameForValidation() => ServiceValidationRules::rate($this, $this->service->getTeamId()->toString()),
+            RateId::getNameForValidation() => ServiceValidationRules::rate($this, $teamId, [$currency]),
         ];
     }
 

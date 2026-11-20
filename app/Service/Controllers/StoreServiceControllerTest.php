@@ -84,6 +84,7 @@ it('checks the fields', function (Closure $input, string $field, string $message
     'no rate' => [fn (string $rate): array => serviceInput($rate, ['rate_id' => null]), 'rate_id', 'The rate id field is required.'],
     "another team's rate" => [fn (): array => serviceInput(RateEloquentModel::factory()->create()->id), 'rate_id', 'Choose one of your rates.'],
     'an archived rate' => [fn (string $rate, string $team): array => serviceInput(RateEloquentModel::factory()->archived()->create(['team_id' => $team])->id), 'rate_id', 'Choose one of your rates.'],
+    "a rate with no price in the customer's currency" => [fn (string $rate, string $team): array => serviceInput(RateEloquentModel::factory()->priced(['USD' => 100])->create(['team_id' => $team, 'name' => 'US support'])->id), 'rate_id', 'US support has no price in AUD. Add one under Settings, Rates.'],
     'a short name already used' => [fn (string $rate): array => serviceInput($rate, ['short_name' => 'taken']), 'short_name', 'This customer already has a service with that short name.'],
     'a short name with spaces' => [fn (string $rate): array => serviceInput($rate, ['short_name' => 'two words']), 'short_name', 'Use only letters, numbers and @ . _ -, as in a domain or email address.'],
     "another customer's contact" => [fn (string $rate): array => serviceInput($rate, ['contact_id' => ContactEloquentModel::factory()->create()->id]), 'contact_id', 'The selected contact id is invalid.'],

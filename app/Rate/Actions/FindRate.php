@@ -4,12 +4,19 @@ declare(strict_types=1);
 
 namespace App\Rate\Actions;
 
+use App\Customer\Actions\FindCustomer;
 use App\Rate\Properties\ArchivedAt;
 use App\Rate\Properties\Name;
 use App\Rate\Properties\TeamId;
 use App\Rate\Rate;
 use App\Rate\RateCollection;
 use App\Rate\RateEloquentModel;
+use App\Service\Properties\ArchivedAt as ServiceArchivedAt;
+use App\Service\Properties\CustomerId as ServiceCustomerId;
+use App\Service\Properties\RateId as ServiceRateId;
+use App\Service\ServiceEloquentModel;
+use App\Shared\CurrencyEnum;
+use App\Shared\Types;
 use Illuminate\Database\Eloquent\Builder;
 
 final class FindRate
@@ -68,5 +75,24 @@ final class FindRate
             ->find($id);
 
         return $model === null ? Rate::new() : Rate::fromEloquentModel($model);
+    }
+
+    /**
+     * The currencies the customers of a rate's services are billed in, not
+     * counting archived services: the prices the rate can't do without.
+     *
+     * @return list<CurrencyEnum>
+     */
+    public static function currenciesInUse(string $rateId): array
+    {
+        $customerIds = Types::stringList(ServiceEloquentModel::query()
+            ->withoutGlobalScopes()
+            ->where(ServiceRateId::getDatabaseTableColumnName(), $rateId)
+            ->whereNull(ServiceArchivedAt::getDatabaseTableColumnName())
+            ->distinct()
+            ->pluck(ServiceCustomerId::getDatabaseTableColumnName())
+            ->all());
+
+        return array_values(array_unique(FindCustomer::currenciesByIds($customerIds), SORT_REGULAR));
     }
 }

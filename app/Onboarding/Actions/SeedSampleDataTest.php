@@ -33,13 +33,13 @@ it('adds sample customers with contacts, tickets and an invoice to the team', fu
 
 it('prices the sample services from rates added to the price list, reusing ones it already added', function (): void {
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
-    RateEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'name' => 'Cloud backup', 'price_in_cents' => 9900]);
+    RateEloquentModel::factory()->priced(['AUD' => 9900])->create(['team_id' => $user->current_team_id, 'name' => 'Cloud backup']);
 
     SeedSampleData::forTeam(teamId: $user->current_team_id, userId: $user->id);
 
     $rates = RateEloquentModel::query()->withoutGlobalScopes()->orderBy('name')->get();
     expect($rates->pluck('name')->all())->toBe(['Cloud backup', 'Managed IT support', 'Microsoft 365 Business Standard'])
-        ->and($rates->firstWhere('name', 'Managed IT support')->price_in_cents)->toBe(4500)
+        ->and($rates->firstWhere('name', 'Managed IT support')->prices)->toEqual([['currency' => 'AUD', 'price_in_cents' => 4500, 'cost_in_cents' => null]])
         ->and(ServiceEloquentModel::query()->withoutGlobalScopes()->whereNull('rate_id')->exists())->toBeFalse()
         ->and(ServiceEloquentModel::query()->withoutGlobalScopes()->where('name', 'Cloud backup')->sole()->rate_id)->toBe($rates->first()->id);
 });

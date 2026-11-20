@@ -1,11 +1,12 @@
-import { router } from '@inertiajs/react';
 import DataTable, {
     dataTableColumns,
     withoutColumn,
 } from '@/components/data-table';
+import InvoiceDialog, {
+    useInvoiceDialog,
+} from '@/components/invoices/invoice-dialog';
 import StatusPill from '@/components/status-pill';
 import { formatCents } from '@/lib/money';
-import { show } from '@/routes/invoices';
 import type { InvoiceListItem, Tone } from '@/types';
 
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
@@ -73,7 +74,7 @@ const columns = column.columns([
         meta: { className: 'w-32 text-right' },
         cell: (info) => (
             <span className="font-medium tabular-nums">
-                {formatCents(info.getValue())}
+                {formatCents(info.getValue(), info.row.original.currency)}
             </span>
         ),
     }),
@@ -98,14 +99,21 @@ export default function InvoiceTable({
     invoices: InvoiceListItem[];
     showCustomer?: boolean;
 }) {
+    const { openInvoice } = useInvoiceDialog();
+
     return (
-        <DataTable
-            columns={
-                showCustomer ? columns : withoutColumn(columns, 'customer_name')
-            }
-            data={invoices}
-            getRowId={(invoice) => invoice.id}
-            onRowClick={(invoice) => router.visit(show.url(invoice.id))}
-        />
+        <>
+            <DataTable
+                columns={
+                    showCustomer
+                        ? columns
+                        : withoutColumn(columns, 'customer_name')
+                }
+                data={invoices}
+                getRowId={(invoice) => invoice.id}
+                onRowClick={(invoice) => openInvoice(invoice.id)}
+            />
+            <InvoiceDialog />
+        </>
     );
 }

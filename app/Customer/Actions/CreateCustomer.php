@@ -9,6 +9,7 @@ use App\Customer\CustomerBillingTypeEnum;
 use App\Customer\CustomerEloquentModel;
 use App\Customer\Properties\Id;
 use App\Shared\Actions\NextTeamNumber;
+use App\Shared\CurrencyEnum;
 use App\Shared\Table;
 use Illuminate\Support\Facades\DB;
 
@@ -27,6 +28,10 @@ final readonly class CreateCustomer
 
             if ($this->customer->getBillingType()->isNull()) {
                 $this->customer->setBillingType(CustomerBillingTypeEnum::Manual->value);
+            }
+
+            if ($this->customer->getCurrency()->isNull()) {
+                $this->customer->setCurrency(CurrencyEnum::default()->value);
             }
 
             $this->customer->setNumber(NextTeamNumber::for(Table::Customers, $this->customer->getTeamId()->toString()));

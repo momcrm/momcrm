@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Service\Actions;
 
+use App\Customer\Actions\FindCustomer;
 use App\Customer\CustomerBillingTypeEnum;
 use App\Customer\CustomerStatusEnum;
 use App\Customer\Properties\BillingType as CustomerBillingType;
@@ -25,6 +26,7 @@ use App\Service\ServiceBillingPeriod;
 use App\Service\ServiceEloquentModel;
 use App\Service\ServiceRelationship;
 use App\Service\ServiceStatusEnum;
+use App\Shared\CurrencyEnum;
 use App\Shared\Table;
 use App\Team\Scopes\CurrentTeamScope;
 use Carbon\CarbonImmutable;
@@ -33,10 +35,11 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Drafts the month's invoices from services, as Amphora's monthly invoice
- * run does: one draft per billable customer, with a line for each period of
- * each active service that has started by the day of the run and isn't on
- * an invoice yet. Running it again makes nothing new, since a period already
- * on an invoice that wasn't voided counts as billed.
+ * run does: one draft per billable customer, in their currency, with a line
+ * for each period of each active service that has started by the day of the
+ * run and isn't on an invoice yet. A service whose rate has no price in the
+ * customer's currency is left out. Running it again makes nothing new, since
+ * a period already on an invoice that wasn't voided counts as billed.
  */
 final readonly class RunServiceInvoices
 {
@@ -55,19 +58,23 @@ final readonly class RunServiceInvoices
         $services = Service::collect($this->billableServices()->get()->all(), 'fromEloquentModel');
         $rates = FindRate::byIds(array_values(array_unique($services->map(fn (Service $service): string => $service->getRateId()->toString())->all())));
         $billedThrough = FindInvoiceItem::billedThroughForServices(array_values($services->map(fn (Service $service): string => $service->getId()->toString())->all()));
+        $customers = self::byCustomer($services->all());
+        $currencies = FindCustomer::currenciesByIds(array_map(strval(...), array_keys($customers)));
         $drafted = 0;
 
-        foreach (self::byCustomer($services->all()) as $customerServices) {
+        foreach ($customers as $customerId => $customerServices) {
+            $currency = $currencies[$customerId] ?? CurrencyEnum::default();
             $items = [];
 
             foreach ($customerServices as $service) {
                 $rate = $rates[$service->getRateId()->toString()] ?? null;
+                $price = $rate?->priceIn($currency);
 
-                if ($rate === null) {
+                if ($rate === null || $price === null) {
                     continue;
                 }
 
-                foreach (ServiceBillingPeriod::dueBy($service, $rate, $billedThrough[$service->getId()->toString()] ?? null, $this->day) as $period) {
+                foreach (ServiceBillingPeriod::dueBy($service, $rate, $price, $billedThrough[$service->getId()->toString()] ?? null, $this->day) as $period) {
                     $items[] = [
                         'description' => self::describe($service, $period),
                         'quantity' => $service->getQuantity()->toNullableInteger() ?? 1,
@@ -89,6 +96,7 @@ final readonly class RunServiceInvoices
                 Invoice::new()
                     ->setTeamId($first->getTeamId())
                     ->setCustomerId($first->getCustomerId())
+                    ->setCurrency($currency->value)
                     ->setIssuedOn($this->day)
                     ->setDueOn($this->day->addDays(CreateInvoiceController::DEFAULT_DAYS_TO_PAY))
                     ->setTaxRateBasisPoints(self::TAX_RATE_BASIS_POINTS),

@@ -18,7 +18,7 @@ it("shows a service's overview with its billing, customer, location and contact"
     $customer = CustomerEloquentModel::factory()->create([...$team, 'name' => 'Acme']);
     $location = LocationEloquentModel::factory()->create([...$team, 'customer_id' => $customer->id, 'name' => 'Head office']);
     $contact = ContactEloquentModel::factory()->create([...$team, 'customer_id' => $customer->id, 'first_name' => 'Pat', 'last_name' => 'Lee']);
-    $rate = RateEloquentModel::factory()->create([...$team, 'name' => 'Support', 'price_in_cents' => 9500]);
+    $rate = RateEloquentModel::factory()->priced(['AUD' => 9500])->create([...$team, 'name' => 'Support']);
     $service = ServiceEloquentModel::factory()->create([...$team, 'customer_id' => $customer->id, 'rate_id' => $rate->id, 'location_id' => $location->id, 'contact_id' => $contact->id, 'quantity' => 4, 'billing_starts_on' => '2026-12-01']);
 
     actingAs($user)

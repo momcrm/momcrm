@@ -79,6 +79,7 @@ export default function CustomerSettings({
     workspace,
     statuses,
     billingTypes,
+    currencies,
     contacts,
     locations,
     mainContactId,
@@ -87,6 +88,7 @@ export default function CustomerSettings({
     workspace: CustomerWorkspace;
     statuses: Option[];
     billingTypes: Option[];
+    currencies: Option[];
     contacts: CustomerOption[];
     locations: CustomerOption[];
     mainContactId: string | null;
@@ -107,6 +109,7 @@ export default function CustomerSettings({
         type_id: customer.type_id ?? '',
         status: customer.status as string,
         billing_type: customer.billing_type as string,
+        currency: customer.currency,
         email: customer.email ?? '',
         phone: customer.phone ?? '',
         website: customer.website ?? '',
@@ -260,6 +263,23 @@ export default function CustomerSettings({
                                 form.setData('billing_type', value)
                             }
                         />
+                    </SettingsRow>
+                    <SettingsRow
+                        label="Currency"
+                        htmlFor="currency"
+                        description="What their services are priced and invoiced in. Fixed once they have been invoiced."
+                        error={form.errors.currency}
+                    >
+                        <NativeSelect {...text('currency')}>
+                            {currencies.map((currency) => (
+                                <option
+                                    key={currency.value}
+                                    value={currency.value}
+                                >
+                                    {currency.label}
+                                </option>
+                            ))}
+                        </NativeSelect>
                     </SettingsRow>
                 </SettingsSection>
 

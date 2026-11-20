@@ -6,11 +6,18 @@ namespace App\Team;
 
 use App\Shared\Abstracts\AbstractUuid;
 use App\Team\Factories\TeamFactory;
+use App\Team\Properties\BillingAddress;
+use App\Team\Properties\BillingEmail;
+use App\Team\Properties\BillingName;
+use App\Team\Properties\BillingPhone;
 use App\Team\Properties\CreatedAt;
 use App\Team\Properties\Id;
 use App\Team\Properties\IsPersonal;
 use App\Team\Properties\Name;
 use App\Team\Properties\OwnerId;
+use App\Team\Properties\PaymentDetails;
+use App\Team\Properties\TaxId;
+use App\Team\Properties\TaxIdLabel;
 use App\Team\Properties\UpdatedAt;
 use Illuminate\Support\Collection;
 use Mom\Data\AbstractBoolean;
@@ -24,6 +31,13 @@ use Mom\Data\AbstractValue;
 final class Team extends AbstractData
 {
     public function __construct(
+        public BillingName $billingName,
+        public TaxIdLabel $taxIdLabel,
+        public TaxId $taxId,
+        public BillingEmail $billingEmail,
+        public BillingPhone $billingPhone,
+        public BillingAddress $billingAddress,
+        public PaymentDetails $paymentDetails,
         public CreatedAt $createdAt,
         public Id $id,
         public IsPersonal $isPersonal,
@@ -171,5 +185,116 @@ final class Team extends AbstractData
     public function getUpdatedAt(): UpdatedAt
     {
         return $this->updatedAt;
+    }
+
+    public function getBillingName(): BillingName
+    {
+        return $this->billingName;
+    }
+
+    public function setBillingName(mixed $billingName): self
+    {
+        $this->billingName = new BillingName($billingName instanceof AbstractValue ? $billingName->toValue() : $billingName);
+
+        return $this;
+    }
+
+    public function getTaxIdLabel(): TaxIdLabel
+    {
+        return $this->taxIdLabel;
+    }
+
+    public function setTaxIdLabel(mixed $taxIdLabel): self
+    {
+        $this->taxIdLabel = new TaxIdLabel($taxIdLabel instanceof AbstractValue ? $taxIdLabel->toValue() : $taxIdLabel);
+
+        return $this;
+    }
+
+    public function getTaxId(): TaxId
+    {
+        return $this->taxId;
+    }
+
+    public function setTaxId(mixed $taxId): self
+    {
+        $this->taxId = new TaxId($taxId instanceof AbstractValue ? $taxId->toValue() : $taxId);
+
+        return $this;
+    }
+
+    public function getBillingEmail(): BillingEmail
+    {
+        return $this->billingEmail;
+    }
+
+    public function setBillingEmail(mixed $billingEmail): self
+    {
+        $this->billingEmail = new BillingEmail($billingEmail instanceof AbstractValue ? $billingEmail->toValue() : $billingEmail);
+
+        return $this;
+    }
+
+    public function getBillingPhone(): BillingPhone
+    {
+        return $this->billingPhone;
+    }
+
+    public function setBillingPhone(mixed $billingPhone): self
+    {
+        $this->billingPhone = new BillingPhone($billingPhone instanceof AbstractValue ? $billingPhone->toValue() : $billingPhone);
+
+        return $this;
+    }
+
+    public function getBillingAddress(): BillingAddress
+    {
+        return $this->billingAddress;
+    }
+
+    public function setBillingAddress(mixed $billingAddress): self
+    {
+        $this->billingAddress = new BillingAddress($billingAddress instanceof AbstractValue ? $billingAddress->toValue() : $billingAddress);
+
+        return $this;
+    }
+
+    public function getPaymentDetails(): PaymentDetails
+    {
+        return $this->paymentDetails;
+    }
+
+    public function setPaymentDetails(mixed $paymentDetails): self
+    {
+        $this->paymentDetails = new PaymentDetails($paymentDetails instanceof AbstractValue ? $paymentDetails->toValue() : $paymentDetails);
+
+        return $this;
+    }
+
+    /**
+     * The name invoices are issued under: the billing name, or else the team's name.
+     */
+    public function getNameOnInvoices(): string
+    {
+        return $this->getBillingName()->toNullableString() ?? $this->getName()->toString();
+    }
+
+    /**
+     * What the team prints on its invoices, for the billing settings and the invoice itself.
+     *
+     * @return array{name: string, billing_name: ?string, tax_id_label: ?string, tax_id: ?string, billing_email: ?string, billing_phone: ?string, billing_address: ?string, payment_details: ?string}
+     */
+    public function toBillingSummary(): array
+    {
+        return [
+            'name' => $this->getNameOnInvoices(),
+            'billing_name' => $this->getBillingName()->toNullableString(),
+            'tax_id_label' => $this->getTaxIdLabel()->toNullableString(),
+            'tax_id' => $this->getTaxId()->toNullableString(),
+            'billing_email' => $this->getBillingEmail()->toNullableString(),
+            'billing_phone' => $this->getBillingPhone()->toNullableString(),
+            'billing_address' => $this->getBillingAddress()->toNullableString(),
+            'payment_details' => $this->getPaymentDetails()->toNullableString(),
+        ];
     }
 }

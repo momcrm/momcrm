@@ -7,6 +7,9 @@ import {
 } from '@/components/custom-fields/custom-fields-form';
 import { AlertTriangle } from 'lucide-react';
 import type { ReactNode } from 'react';
+import InvoiceDialog, {
+    useInvoiceDialog,
+} from '@/components/invoices/invoice-dialog';
 import { serviceDetail } from '@/components/services/service-detail';
 import {
     DueChip,
@@ -30,7 +33,6 @@ import {
     services,
     tickets,
 } from '@/routes/customers';
-import { show as showInvoice } from '@/routes/invoices';
 import { show as showService } from '@/routes/services';
 import { show as showTicket } from '@/routes/tickets';
 import type {
@@ -58,7 +60,13 @@ function formatDate(day: string | null): string {
  * company dashboard shows it: everything owed, what isn't due yet, and what
  * is overdue (flagged when it isn't zero).
  */
-function MoneyStrip({ money }: { money: CustomerMoney }) {
+function MoneyStrip({
+    money,
+    currency,
+}: {
+    money: CustomerMoney;
+    currency: string;
+}) {
     const figures = [
         { label: 'Balance', value: money.balance_in_cents, alarm: false },
         { label: 'Current', value: money.current_in_cents, alarm: false },
@@ -94,7 +102,7 @@ function MoneyStrip({ money }: { money: CustomerMoney }) {
                             figure.alarm && 'text-destructive',
                         )}
                     >
-                        {formatCents(figure.value)}
+                        {formatCents(figure.value, currency)}
                     </span>
                 </div>
             ))}
@@ -166,12 +174,19 @@ function TicketRow({ ticket }: { ticket: TicketListItem }) {
     );
 }
 
-function InvoiceRow({ invoice }: { invoice: InvoiceListItem }) {
+function InvoiceRow({
+    invoice,
+    onOpen,
+}: {
+    invoice: InvoiceListItem;
+    onOpen: (id: string) => void;
+}) {
     return (
         <li>
-            <Link
-                href={showInvoice(invoice.id)}
-                className="-mx-2 flex h-9 items-center gap-2.5 rounded-md px-2 text-sm hover:bg-accent/50"
+            <button
+                type="button"
+                onClick={() => onOpen(invoice.id)}
+                className="-mx-2 flex h-9 w-[calc(100%+1rem)] items-center gap-2.5 rounded-md px-2 text-left text-sm hover:bg-accent/50"
             >
                 <span className="font-mono text-xs text-subtle-foreground">
                     #{invoice.number}
@@ -180,9 +195,9 @@ function InvoiceRow({ invoice }: { invoice: InvoiceListItem }) {
                     Issued {formatDate(invoice.issued_on)}
                 </span>
                 <span className="font-medium tabular-nums">
-                    {formatCents(invoice.total_in_cents)}
+                    {formatCents(invoice.total_in_cents, invoice.currency)}
                 </span>
-            </Link>
+            </button>
         </li>
     );
 }
@@ -255,6 +270,7 @@ export default function CustomerDashboard({
 }) {
     const { customer, counts } = workspace;
     const id = customer.id;
+    const { openInvoice } = useInvoiceDialog();
     useWorkspaceBreadcrumbs(customer);
 
     const customFields = useCustomFields('customer');
@@ -296,7 +312,7 @@ export default function CustomerDashboard({
             <Head title={customer.name} />
 
             <div className="@container flex flex-col gap-4">
-                <MoneyStrip money={money} />
+                <MoneyStrip money={money} currency={customer.currency} />
 
                 <div className="grid min-w-0 gap-4 @3xl:grid-cols-2">
                     <Card
@@ -325,9 +341,11 @@ export default function CustomerDashboard({
                                 <InvoiceRow
                                     key={invoice.id}
                                     invoice={invoice}
+                                    onOpen={openInvoice}
                                 />
                             ))}
                         </ul>
+                        <InvoiceDialog />
                     </Card>
 
                     <Card

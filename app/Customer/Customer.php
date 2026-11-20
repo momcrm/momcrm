@@ -9,6 +9,7 @@ use App\Customer\Properties\Abn;
 use App\Customer\Properties\BillingType;
 use App\Customer\Properties\ContactsCount;
 use App\Customer\Properties\CreatedAt;
+use App\Customer\Properties\Currency;
 use App\Customer\Properties\Email;
 use App\Customer\Properties\Id;
 use App\Customer\Properties\IsSample;
@@ -38,6 +39,7 @@ final class Customer extends AbstractData
         public BillingType $billingType,
         public ContactsCount $contactsCount,
         public CreatedAt $createdAt,
+        public Currency $currency,
         public CustomFieldValues $customFields,
         public Email $email,
         public Id $id,
@@ -80,7 +82,7 @@ final class Customer extends AbstractData
     /**
      * The fields the customer pages show.
      *
-     * @return array{id: string, number: int, name: string, prefix: ?string, type_id: ?string, abn: ?string, email: ?string, phone: ?string, website: ?string, status: string, billing_type: string, notes: ?string, is_sample: bool, custom_fields: array<string, mixed>}
+     * @return array{id: string, number: int, name: string, prefix: ?string, type_id: ?string, abn: ?string, email: ?string, phone: ?string, website: ?string, status: string, billing_type: string, currency: string, notes: ?string, is_sample: bool, custom_fields: array<string, mixed>}
      */
     public function toSummary(): array
     {
@@ -96,6 +98,7 @@ final class Customer extends AbstractData
             'website' => $this->getWebsite()->toNullableString(),
             'status' => $this->getStatus()->toString(),
             'billing_type' => $this->getBillingType()->toEnum()->value,
+            'currency' => $this->getCurrency()->toEnum()->value,
             'notes' => $this->getNotes()->toNullableString(),
             'is_sample' => $this->getIsSample()->toBoolean(),
             'custom_fields' => $this->getCustomFields()->toValues(),
@@ -129,6 +132,18 @@ final class Customer extends AbstractData
     public function getCreatedAt(): CreatedAt
     {
         return $this->createdAt;
+    }
+
+    public function getCurrency(): Currency
+    {
+        return $this->currency;
+    }
+
+    public function setCurrency(mixed $currency): self
+    {
+        $this->currency = new Currency($currency instanceof AbstractValue ? $currency->toValue() : $currency);
+
+        return $this;
     }
 
     public function getEmail(): Email

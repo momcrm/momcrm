@@ -15,8 +15,9 @@ it('marks a draft as sent and stamps when', function (): void {
     $invoice = InvoiceEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
 
     actingAs($user)
+        ->from(route('invoices.index'))
         ->post(route('invoices.sent', $invoice->id))
-        ->assertRedirectToRoute('invoices.show', $invoice->id);
+        ->assertRedirectToRoute('invoices.index');
 
     expect($invoice->fresh())
         ->status->toBe('sent')

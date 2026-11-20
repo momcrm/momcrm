@@ -15,7 +15,7 @@ it('offers customers and their active services with sensible defaults', function
     travelTo('2026-11-14 09:00:00');
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
     $customer = CustomerEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
-    $rate = RateEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'price_in_cents' => 2500]);
+    $rate = RateEloquentModel::factory()->priced(['AUD' => 2500])->create(['team_id' => $user->current_team_id]);
     ServiceEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'customer_id' => $customer->id, 'name' => 'Backup', 'rate_id' => $rate->id, 'billing_period_in_months' => 3]);
     ServiceEloquentModel::factory()->inactive()->create(['team_id' => $user->current_team_id, 'customer_id' => $customer->id]);
     ServiceEloquentModel::factory()->archived()->create(['team_id' => $user->current_team_id, 'customer_id' => $customer->id]);

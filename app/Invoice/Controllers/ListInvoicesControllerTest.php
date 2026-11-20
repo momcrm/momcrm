@@ -45,3 +45,13 @@ it('filters by status and finds by number', function (): void {
         ->get(route('invoices.index', ['search' => 'INV-0012']))
         ->assertInertia(fn (Assert $page) => $page->where('invoices.total', 1)->where('invoices.data.0.number', 12));
 });
+
+it('leaves the open invoice out of the page links, keeping the filters', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $customer = CustomerEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
+    $invoices = InvoiceEloquentModel::factory()->count(26)->sequence(fn ($sequence) => ['number' => $sequence->index + 1])->create(['team_id' => $user->current_team_id, 'customer_id' => $customer->id]);
+
+    actingAs($user)
+        ->get(route('invoices.index', ['status' => 'draft', 'invoice' => $invoices->first()->id]))
+        ->assertInertia(fn (Assert $page) => $page->where('invoices.next_page_url', route('invoices.index', ['status' => 'draft', 'page' => 2])));
+});

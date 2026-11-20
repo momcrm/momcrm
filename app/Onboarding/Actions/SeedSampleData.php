@@ -36,9 +36,11 @@ use App\Project\ProjectVisibilityEnum;
 use App\Rate\Actions\CreateRate;
 use App\Rate\Actions\FindRate;
 use App\Rate\Rate;
+use App\Rate\RatePrice;
 use App\Service\Actions\CreateService;
 use App\Service\Service;
 use App\Service\ServiceStatusEnum;
+use App\Shared\CurrencyEnum;
 use App\Shared\HuePalette;
 use App\Ticket\Actions\CreateTicket;
 use App\Ticket\Actions\MoveTicket;
@@ -268,7 +270,7 @@ final readonly class SeedSampleData
         return CreateRate::fromRate(Rate::new()
             ->setTeamId($this->teamId)
             ->setName($service['name'])
-            ->setPriceInCents($service['cents'])
+            ->setPrices([new RatePrice(CurrencyEnum::default(), $service['cents'])->toArray()])
             ->setBillingPeriodInMonths(1)
             ->setProratesFirstMonth(true));
     }

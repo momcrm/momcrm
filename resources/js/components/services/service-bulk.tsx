@@ -17,7 +17,7 @@ import {
     DropdownMenuItem,
     DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import { formatCents } from '@/lib/money';
+import { formatPrices } from '@/lib/money';
 import {
     change as bulkChange,
     update as bulkUpdate,
@@ -131,10 +131,10 @@ export function ServiceBulkBar({
                                     }
                                 >
                                     <span className="flex-1 truncate">
-                                        {rate.name}
+                                        {rate.path}
                                     </span>
                                     <span className="text-xs text-muted-foreground tabular-nums">
-                                        {formatCents(rate.price_in_cents)}
+                                        {formatPrices(rate.prices)}
                                     </span>
                                 </DropdownMenuItem>
                             ))}

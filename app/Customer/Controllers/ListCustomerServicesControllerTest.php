@@ -14,7 +14,7 @@ it("lists the customer's services with what they cost, leaving archived ones out
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
     $customer = CustomerEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
     $ours = ['team_id' => $user->current_team_id, 'customer_id' => $customer->id];
-    $rate = RateEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'price_in_cents' => 4995]);
+    $rate = RateEloquentModel::factory()->priced(['AUD' => 4995])->create(['team_id' => $user->current_team_id]);
     ServiceEloquentModel::factory()->create([...$ours, 'name' => 'Backup', 'rate_id' => $rate->id, 'quantity' => 2]);
     ServiceEloquentModel::factory()->archived()->create([...$ours, 'name' => 'Old backup']);
     ServiceEloquentModel::factory()->create(['name' => 'Another customer']);
@@ -40,6 +40,24 @@ it("lists the customer's services with what they cost, leaving archived ones out
         ->assertInertia(fn (Assert $page) => $page
             ->has('services', 2)
             ->where('services.1.lifecycle', 'archived'),
+        );
+});
+
+it("prices services in the customer's currency and offers only rates priced in it", function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $customer = CustomerEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'currency' => 'NZD']);
+    $both = RateEloquentModel::factory()->priced(['AUD' => 4995, 'NZD' => 5500])->create(['team_id' => $user->current_team_id]);
+    RateEloquentModel::factory()->priced(['AUD' => 1000])->create(['team_id' => $user->current_team_id]);
+    ServiceEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'customer_id' => $customer->id, 'rate_id' => $both->id, 'quantity' => 2]);
+
+    actingAs($user)
+        ->get(route('customers.services', $customer->id))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('services.0.currency', 'NZD')
+            ->where('services.0.rate.price_in_cents', 5500)
+            ->where('services.0.rental_in_cents', 11000)
+            ->where('serviceForm.currency', 'NZD')
+            ->where('serviceForm.rates', fn ($rates): bool => collect($rates)->pluck('id')->all() === [$both->id]),
         );
 });
 
