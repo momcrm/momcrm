@@ -804,12 +804,22 @@ export type PaymentAllocation = {
     amount_in_cents: number;
 };
 
+/** A customer's contact a document can be emailed to. */
+export type ContactRecipient = {
+    id: string;
+    name: string;
+    email: string;
+    is_primary: boolean;
+};
+
 /** What the payment dialog fetches. */
 export type PaymentDetails = {
     payment: Payment;
     allocations: PaymentAllocation[];
     can: Abilities;
     methods: Option[];
+    /** Who the receipt can be emailed to. */
+    contacts: ContactRecipient[];
 };
 
 /** What the record payment dialog fetches for a customer. */

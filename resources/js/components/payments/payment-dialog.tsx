@@ -1,12 +1,14 @@
 import { Form, Link, router, useHttp, usePage } from '@inertiajs/react';
-import { Pencil, Trash2, X } from 'lucide-react';
+import { Download, Pencil, Trash2, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import SendPaymentReceiptController from '@/actions/App/Payment/Controllers/SendPaymentReceiptController';
 import UpdatePaymentController from '@/actions/App/Payment/Controllers/UpdatePaymentController';
 import FormField from '@/components/form-field';
 import InputError from '@/components/input-error';
 import NativeSelect from '@/components/native-select';
 import RecordPaymentDialog from '@/components/payments/record-payment-dialog';
+import SendToContactsDialog from '@/components/send-to-contacts-dialog';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -27,7 +29,7 @@ import {
     destroy as destroyAllocation,
     update as updateAllocation,
 } from '@/routes/payment-allocations';
-import { destroy, details } from '@/routes/payments';
+import { destroy, details, receipt } from '@/routes/payments';
 import type { PaymentAllocation, PaymentDetails } from '@/types';
 
 /** The query parameter that keeps a payment open over the page. */
@@ -564,6 +566,27 @@ export default function PaymentDialog() {
                         </section>
 
                         <div className="flex flex-wrap justify-end gap-2">
+                            <Button variant="outline" size="sm" asChild>
+                                <a
+                                    href={receipt.url(payment.id, {
+                                        query: { download: 1 },
+                                    })}
+                                >
+                                    <Download />
+                                    Receipt
+                                </a>
+                            </Button>
+                            {shown.can.update && (
+                                <SendToContactsDialog
+                                    url={SendPaymentReceiptController.url(
+                                        payment.id,
+                                    )}
+                                    contacts={shown.contacts}
+                                    title={`Send receipt ${payment.reference_number}`}
+                                    description={`Email the receipt to ${payment.customer_name ?? 'the customer'}'s contacts, with the PDF attached.`}
+                                    trigger="Send receipt"
+                                />
+                            )}
                             {shown.can.update &&
                                 payment.unallocated_in_cents > 0 && (
                                     <>
