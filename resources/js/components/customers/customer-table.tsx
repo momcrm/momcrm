@@ -116,17 +116,29 @@ function buildColumns(
         column.accessor('balance_in_cents', {
             header: 'Balance due',
             meta: { className: 'w-28 text-right' },
-            cell: (info) =>
-                info.getValue() === 0 ? (
-                    <span className="text-subtle-foreground">—</span>
-                ) : (
-                    <span className="font-medium tabular-nums">
-                        {formatCents(
-                            info.getValue(),
-                            info.row.original.currency,
-                        )}
-                    </span>
-                ),
+            cell: (info) => (
+                <div className="flex flex-col items-end">
+                    {info.getValue() === 0 ? (
+                        <span className="text-subtle-foreground">—</span>
+                    ) : (
+                        <span className="font-medium tabular-nums">
+                            {formatCents(
+                                info.getValue(),
+                                info.row.original.currency,
+                            )}
+                        </span>
+                    )}
+                    {info.row.original.credit_in_cents > 0 && (
+                        <span className="text-xs text-muted-foreground tabular-nums">
+                            {formatCents(
+                                info.row.original.credit_in_cents,
+                                info.row.original.currency,
+                            )}{' '}
+                            credit
+                        </span>
+                    )}
+                </div>
+            ),
         }),
         column.accessor('status', {
             header: 'Status',

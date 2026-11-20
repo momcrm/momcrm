@@ -113,16 +113,30 @@ it('refuses invoices that take more than the amount received', function (): void
         ->assertSessionHasErrors(['amount_in_cents' => 'The invoices take A$110.00, more than the A$100.00 there is to apply.']);
 });
 
-it('refuses an amount left over after the invoices', function (): void {
+it("keeps what isn't applied to invoices as the customer's credit", function (): void {
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
     $customer = CustomerEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
     $invoice = sentInvoiceFor($customer);
 
     actingAs($user)
         ->post(route('payments.store'), paymentPayload($customer->id, [['invoice_id' => $invoice->id, 'amount' => '100']], ['amount' => '120']))
-        ->assertSessionHasErrors(['amount_in_cents' => 'Apply all of it to invoices: A$20.00 is left over.']);
+        ->assertSessionHasNoErrors()
+        ->assertInertiaFlash('toast', ['type' => 'success', 'message' => 'PAY-0001 recorded. A$20.00 is kept as credit.']);
 
-    assertDatabaseCount('payments', 0);
+    expect(PaymentEloquentModel::query()->sole()->amount_in_cents)->toBe(12000)
+        ->and(PaymentAllocationEloquentModel::query()->sole()->amount_in_cents)->toBe(10000);
+});
+
+it('records a payment applied to no invoice at all', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $customer = CustomerEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
+
+    actingAs($user)
+        ->post(route('payments.store'), paymentPayload($customer->id, [], ['method' => 'credit']))
+        ->assertSessionHasNoErrors();
+
+    assertDatabaseCount('payments', 1);
+    assertDatabaseCount('payment_allocations', 0);
 });
 
 it('refuses invoices that are not sent', function (InvoiceStatusEnum $status, string $message): void {

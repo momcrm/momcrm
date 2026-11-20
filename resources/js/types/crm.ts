@@ -97,6 +97,8 @@ export type CustomerMoney = {
     balance_in_cents: number;
     current_in_cents: number;
     overdue_in_cents: number;
+    /** What they have paid that isn't applied to an invoice. */
+    credit_in_cents: number;
 };
 
 export type CustomerListItem = Customer & {
@@ -105,6 +107,7 @@ export type CustomerListItem = Customer & {
     contacts_count: number;
     services_count: number;
     balance_in_cents: number;
+    credit_in_cents: number;
     updated_at: string | null;
 };
 
@@ -732,6 +735,8 @@ export type InvoiceDocument = {
     customer: Customer;
     /** The team the invoice is from. */
     from: TeamBilling;
+    /** What the customer has paid that isn't applied to an invoice. */
+    customer_credit_in_cents: number;
     /** The payments applied to the invoice, oldest first. */
     payments: PaymentAllocation[];
 };

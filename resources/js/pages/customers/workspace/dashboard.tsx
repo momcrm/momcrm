@@ -58,8 +58,8 @@ function formatDate(day: string | null): string {
 
 /**
  * What the customer owes as one strip divided by hairlines, as staff-vue's
- * company dashboard shows it: everything owed, what isn't due yet, and what
- * is overdue (flagged when it isn't zero).
+ * company dashboard shows it: everything owed, what isn't due yet, what is
+ * overdue (flagged when it isn't zero) and the credit they have.
  */
 function MoneyStrip({
     money,
@@ -76,12 +76,13 @@ function MoneyStrip({
             value: money.overdue_in_cents,
             alarm: money.overdue_in_cents > 0,
         },
+        { label: 'Credit', value: money.credit_in_cents, alarm: false },
     ];
 
     return (
         <section
             aria-label="What they owe"
-            className="grid overflow-hidden rounded-xl border bg-card shadow-xs sm:grid-cols-3"
+            className="grid overflow-hidden rounded-xl border bg-card shadow-xs sm:grid-cols-4"
         >
             {figures.map((figure) => (
                 <div

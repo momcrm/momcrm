@@ -13,6 +13,7 @@ use App\CustomField\CustomFieldQuery;
 use App\CustomField\CustomFieldRelationLabels;
 use App\CustomField\CustomFieldTargetEnum;
 use App\Invoice\Actions\FindInvoice;
+use App\Payment\Actions\FindPayment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -36,9 +37,11 @@ final class ListCustomersController
             CustomFieldTargetEnum::Customer,
             ...array_map(fn (Customer $customer): array => $customer->getCustomFields()->toValues(), $customers->items()),
         );
-        $balances = FindInvoice::balancesForCustomers($teamId, $customers->getCollection()
+        $customerIds = $customers->getCollection()
             ->map(fn (Customer $customer): string => $customer->getId()->toString())
-            ->all());
+            ->all();
+        $balances = FindInvoice::balancesForCustomers($teamId, $customerIds);
+        $credit = FindPayment::creditForCustomers($teamId, array_values($customerIds));
 
         return Inertia::render('customers/index', [
             'customers' => $customers->through(fn (Customer $customer): array => [
@@ -47,6 +50,7 @@ final class ListCustomersController
                 'contacts_count' => $customer->getContactsCount()->toInteger(),
                 'services_count' => $customer->getServicesCount()->toInteger(),
                 'balance_in_cents' => $balances[$customer->getId()->toString()]['balance_in_cents'] ?? 0,
+                'credit_in_cents' => $credit[$customer->getId()->toString()] ?? 0,
                 'updated_at' => $customer->getUpdatedAt()->toNullableCarbon()?->toIso8601String(),
             ]),
             'filters' => [

@@ -13,6 +13,7 @@ use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Number;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
@@ -62,16 +63,14 @@ final class ChangeInvoiceStatusFormRequest extends FormRequest
             ]);
         }
 
-        if ($status === InvoiceStatusEnum::Void && $this->invoice->getPaidInCents()->toInteger() > 0) {
-            throw ValidationException::withMessages([
-                'status' => __('Payments have been applied to :reference, so it cannot be voided.', ['reference' => $this->invoice->getReference()]),
-            ]);
-        }
-
+        $paidBefore = $this->invoice->getPaidInCents()->toInteger();
         $invoice = ChangeInvoiceStatus::to($this->invoice, $status);
+        $money = fn (int $cents): string => (string) Number::currency($cents / 100, $invoice->getCurrency()->toEnum()->value);
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => match ($status) {
-            InvoiceStatusEnum::Sent => __(':reference marked as sent.', ['reference' => $invoice->getReference()]),
+        Inertia::flash('toast', ['type' => 'success', 'message' => match (true) {
+            $status === InvoiceStatusEnum::Sent && $invoice->getPaidInCents()->toInteger() > 0 => __(':reference marked as sent. :amount of credit was applied to it.', ['reference' => $invoice->getReference(), 'amount' => $money($invoice->getPaidInCents()->toInteger())]),
+            $status === InvoiceStatusEnum::Sent => __(':reference marked as sent.', ['reference' => $invoice->getReference()]),
+            $paidBefore > 0 => __(':reference voided. The :amount paid on it is now credit.', ['reference' => $invoice->getReference(), 'amount' => $money($paidBefore)]),
             default => __(':reference voided.', ['reference' => $invoice->getReference()]),
         }]);
 

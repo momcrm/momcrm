@@ -4,21 +4,16 @@ declare(strict_types=1);
 
 namespace App\Payment\Actions;
 
-use App\Invoice\Actions\SyncInvoicePaymentStatus;
 use App\Payment\Payment;
 use App\Payment\PaymentEloquentModel;
 use App\Payment\Properties\Id;
-use App\PaymentAllocation\PaymentAllocation;
-use App\PaymentAllocation\PaymentAllocationEloquentModel;
-use App\PaymentAllocation\Properties\Id as AllocationId;
 use App\Shared\Actions\NextTeamNumber;
 use App\Shared\Table;
 use Illuminate\Support\Facades\DB;
 
 /**
  * Records money received from a customer, numbered within its team, and
- * applies it to their invoices. Invoices it pays off become paid. The
- * allocations must already have been checked (PaymentAllocationRules).
+ * applies it to their invoices. Whatever isn't applied is their credit.
  */
 final readonly class RecordPayment
 {
@@ -41,19 +36,7 @@ final readonly class RecordPayment
 
             PaymentEloquentModel::query()->create($this->payment->forDatabaseCreate());
 
-            foreach ($this->allocations as $invoiceId => $amountInCents) {
-                PaymentAllocationEloquentModel::query()->create(
-                    PaymentAllocation::new()
-                        ->setId(AllocationId::generate())
-                        ->setTeamId($teamId)
-                        ->setPaymentId($this->payment->getId()->toString())
-                        ->setInvoiceId($invoiceId)
-                        ->setAmountInCents($amountInCents)
-                        ->forDatabaseCreate(),
-                );
-            }
-
-            SyncInvoicePaymentStatus::forInvoices(array_map(strval(...), array_keys($this->allocations)), $teamId);
+            AllocatePayment::toInvoices($this->payment, $this->allocations);
 
             return FindPayment::byIdForTeam($this->payment->getId()->toString(), $teamId);
         });
