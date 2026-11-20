@@ -29,6 +29,7 @@ export default function SendToContactsDialog({
     description,
     trigger = 'Send',
     preselect,
+    onSent,
 }: {
     /** Where to post the chosen contact_ids. */
     url: string;
@@ -40,6 +41,8 @@ export default function SendToContactsDialog({
     trigger?: string;
     /** Which contacts start ticked, when not just the primary one. */
     preselect?: (contacts: ContactRecipient[]) => ContactRecipient[];
+    /** Called once it is sent, such as to reload what sending changed. */
+    onSent?: () => void;
 }) {
     const [open, setOpen] = useState(false);
     const [chosen, setChosen] = useState<string[]>([]);
@@ -67,7 +70,10 @@ export default function SendToContactsDialog({
                 onStart: () => setProcessing(true),
                 onFinish: () => setProcessing(false),
                 onError: (errors) => setError(Object.values(errors)[0]),
-                onSuccess: () => setOpen(false),
+                onSuccess: () => {
+                    setOpen(false);
+                    onSent?.();
+                },
             },
         );
 
