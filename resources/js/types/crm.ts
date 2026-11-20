@@ -494,6 +494,8 @@ export type TicketDrawerData = Omit<
     custom_field_labels: Record<string, string>;
     /** What points at the ticket through record-link custom fields. */
     linked_records: LinkedRecordGroup[];
+    /** Knowledge base articles attached to the ticket. */
+    articles: AttachedArticle[];
     parent: { id: string; number: number; title: string } | null;
     subtasks: {
         id: string;
@@ -1240,3 +1242,17 @@ export type ArticleCategory = {
     /** Such as "Networking › Routers". */
     path: string;
 };
+
+/** An article attached to a ticket, asset or service. */
+export type AttachedArticle = {
+    /** The attachment's id, to take it off again. */
+    link_id: string;
+    id: string;
+    title: string;
+    summary: string | null;
+    status: ArticleStatus;
+    classification: ArticleClassification;
+    is_archived: boolean;
+};
+
+export type ArticleLinkTarget = 'ticket' | 'asset' | 'service';

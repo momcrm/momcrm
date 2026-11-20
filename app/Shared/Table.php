@@ -9,6 +9,7 @@ enum Table: string
     case AccessRules = 'access_rules';
     case Activities = 'activities';
     case ArticleCategories = 'article_categories';
+    case ArticleLinks = 'article_links';
     case ArticleVersions = 'article_versions';
     case Articles = 'articles';
     case Assets = 'assets';

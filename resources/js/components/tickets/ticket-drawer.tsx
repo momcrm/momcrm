@@ -1,4 +1,5 @@
 import { Link, router } from '@inertiajs/react';
+import LinkedArticles from '@/components/articles/linked-articles';
 import LinkedRecords from '@/components/custom-fields/linked-records';
 import {
     AlertTriangle,
@@ -597,6 +598,14 @@ export function TicketDetails({
                         can={ticket.attachment_can}
                     />
                 </section>
+
+                <LinkedArticles
+                    target="ticket"
+                    recordId={ticket.id}
+                    articles={ticket.articles}
+                    canEdit={Boolean(ticket.can.update)}
+                    reload={['drawer']}
+                />
 
                 <LinkedRecords groups={ticket.linked_records} />
 

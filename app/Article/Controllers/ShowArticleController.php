@@ -10,6 +10,7 @@ use App\Article\Actions\FindArticle;
 use App\Article\Article;
 use App\Article\Exceptions\CouldNotFindArticle;
 use App\ArticleCategory\Actions\FindArticleCategory;
+use App\ArticleLink\Actions\FindArticleLink;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -30,6 +31,7 @@ final class ShowArticleController
         return Inertia::render('articles/show', [
             'article' => $found->toDetail(),
             'categoryPath' => self::categoryPath($found),
+            'linkedTo' => FindArticleLink::recordsFor($found),
             'can' => AccessAbilities::for($request->user(), AccessResourceEnum::Article, $found),
         ]);
     }

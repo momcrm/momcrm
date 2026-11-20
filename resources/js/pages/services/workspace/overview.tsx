@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import type { ReactNode } from 'react';
+import LinkedArticles from '@/components/articles/linked-articles';
 import { useCustomFields } from '@/components/custom-fields/custom-field-input';
 import {
     CustomFieldValueView,
@@ -10,7 +11,7 @@ import { formatDay } from '@/components/services/service-detail';
 import { useServiceBreadcrumbs } from '@/layouts/service/layout';
 import { formatCents } from '@/lib/money';
 import { show as showCustomer } from '@/routes/customers';
-import type { ServiceWorkspace } from '@/types';
+import type { AttachedArticle, ServiceWorkspace } from '@/types';
 
 type Detail = { label: string; value: ReactNode };
 
@@ -34,9 +35,12 @@ function Panel({ title, details }: { title: string; details: Detail[] }) {
 
 export default function ServiceOverview({
     workspace,
+    articles,
     dates,
 }: {
     workspace: ServiceWorkspace;
+    /** Knowledge base articles attached to the service. */
+    articles: AttachedArticle[];
     dates: { created_at: string | null; updated_at: string | null };
 }) {
     const { service, customer, location, contact } = workspace;
@@ -150,6 +154,13 @@ export default function ServiceOverview({
                     </section>
                 )}
                 <Panel title="Record" details={record} />
+                <LinkedArticles
+                    target="service"
+                    recordId={service.id}
+                    articles={articles}
+                    canEdit={Boolean(workspace.can.update)}
+                    reload={['articles']}
+                />
             </div>
         </>
     );

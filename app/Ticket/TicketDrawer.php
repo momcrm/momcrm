@@ -13,6 +13,8 @@ use App\Activity\ActivityEloquentModel;
 use App\Activity\ActivityRelationship;
 use App\Activity\Properties\SubjectId;
 use App\Activity\Properties\SubjectType;
+use App\ArticleLink\Actions\FindArticleLink;
+use App\ArticleLink\ArticleLinkTargetEnum;
 use App\Attachment\Actions\FindAttachment;
 use App\Attachment\Attachment;
 use App\Choice\Choice;
@@ -110,6 +112,7 @@ final class TicketDrawer
             ...$ticket->toSummary(),
             'custom_field_labels' => CustomFieldRelationLabels::for($teamId, CustomFieldTargetEnum::Ticket, $ticket->getCustomFields()->toValues()),
             'linked_records' => FindLinkedRecords::to($teamId, $userId, CustomFieldRelationEnum::Ticket, $model->id),
+            'articles' => FindArticleLink::articlesFor(ArticleLinkTargetEnum::Ticket, $model->id, $teamId, $userId),
             'can' => AccessAbilities::for($user, AccessResourceEnum::Ticket, $ticket),
             'attachment_can' => AccessAbilities::for($user, AccessResourceEnum::Attachment),
             'customer_name' => $customer instanceof CustomerEloquentModel ? $customer->name : null,

@@ -41,10 +41,16 @@ function formatDate(iso: string | null): string {
 export default function ArticleShow({
     article,
     categoryPath,
+    linkedTo,
     can,
 }: {
     article: Article;
     categoryPath: string | null;
+    /** The tickets, assets and services it is attached to, by kind. */
+    linkedTo: {
+        kind: string;
+        records: { link_id: string; id: string; title: string; url: string }[];
+    }[];
     can: Abilities;
 }) {
     setLayoutProps({
@@ -187,6 +193,31 @@ export default function ArticleShow({
                         title="Nothing written yet"
                         description="Open the editor to write the article."
                     />
+                )}
+
+                {linkedTo.length > 0 && (
+                    <section className="space-y-3 border-t pt-5">
+                        <h2 className="text-sm font-medium">Attached to</h2>
+                        <dl className="grid gap-3 sm:grid-cols-3">
+                            {linkedTo.map((group) => (
+                                <div key={group.kind} className="min-w-0">
+                                    <dt className="text-xs text-muted-foreground">
+                                        {group.kind}
+                                    </dt>
+                                    {group.records.map((record) => (
+                                        <dd key={record.link_id}>
+                                            <Link
+                                                href={record.url}
+                                                className="block truncate text-sm hover:underline"
+                                            >
+                                                {record.title}
+                                            </Link>
+                                        </dd>
+                                    ))}
+                                </div>
+                            ))}
+                        </dl>
+                    </section>
                 )}
             </div>
         </>
