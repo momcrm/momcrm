@@ -60,3 +60,12 @@ export function isWeekend(day: string): boolean {
 
     return weekday === 0 || weekday === 6;
 }
+
+const mediumDay = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' });
+
+/**
+ * A YYYY-MM-DD day for reading, such as "20 Nov 2026".
+ */
+export function formatDay(day: string): string {
+    return mediumDay.format(parseDay(day));
+}
