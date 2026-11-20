@@ -2,12 +2,15 @@
 
 declare(strict_types=1);
 
+use App\Article\ArticleClassificationEnum;
+use App\Article\ArticleEloquentModel;
 use App\Contact\ContactEloquentModel;
 use App\Customer\CustomerEloquentModel;
 use App\CustomObject\CustomObjectEloquentModel;
 use App\Invoice\InvoiceEloquentModel;
 use App\Project\ProjectEloquentModel;
 use App\Record\RecordEloquentModel;
+use App\TeamUser\TeamRoleEnum;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
 
@@ -92,4 +95,27 @@ it("finds records of the team's live custom objects, under their object's name",
             'subtitle' => 'Vehicles',
             'url' => route('records.show', [$vehicles->id, $van->id]),
         ]);
+});
+
+it('finds articles the person may read by their body, leaving out archived ones', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $member = UserEloquentModel::factory()->inTeam($owner->current_team_id, TeamRoleEnum::Member)->create();
+    $team = ['team_id' => $owner->current_team_id];
+    $reset = ArticleEloquentModel::factory()->create([...$team, 'title' => 'Reset a router', 'summary' => 'Factory reset steps', 'body_text' => 'Hold the harbour button']);
+    ArticleEloquentModel::factory()->classified(ArticleClassificationEnum::Confidential)->create([...$team, 'title' => 'Harbour admin password']);
+    ArticleEloquentModel::factory()->archived()->create([...$team, 'title' => 'Old harbour notes']);
+
+    actingAs($member)
+        ->getJson(route('search', ['q' => 'harbour']))
+        ->assertJsonCount(1, 'articles')
+        ->assertJsonPath('articles.0', [
+            'id' => $reset->id,
+            'title' => 'Reset a router',
+            'subtitle' => 'Factory reset steps',
+            'url' => route('articles.show', $reset->id),
+        ]);
+
+    actingAs($owner)
+        ->getJson(route('search', ['q' => 'harbour']))
+        ->assertJsonCount(2, 'articles');
 });

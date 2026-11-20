@@ -2,6 +2,7 @@ import {
     Activity,
     Archive,
     Banknote,
+    BookOpen,
     CalendarDays,
     GanttChart,
     Inbox,
@@ -31,6 +32,7 @@ import {
     overview,
     timeline,
 } from '@/routes';
+import { index as articlesIndex } from '@/routes/articles';
 import { index as bankFeedsIndex } from '@/routes/bank-feeds';
 import { index as contactsIndex } from '@/routes/contacts';
 import { index as customersIndex } from '@/routes/customers';
@@ -127,6 +129,12 @@ export function workspaceNavigation(
                     href: timeline(),
                     icon: GanttChart,
                     shortcut: 'r',
+                },
+                {
+                    title: 'Knowledge base',
+                    href: articlesIndex(),
+                    icon: BookOpen,
+                    shortcut: 'n',
                 },
                 {
                     title: 'Members',

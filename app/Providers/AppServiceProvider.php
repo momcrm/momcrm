@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Activity\Listeners\RecordAccountActivity;
+use App\Article\Article;
+use App\Article\ArticlePolicy;
 use App\Asset\Asset;
 use App\Asset\AssetPolicy;
 use App\Attachment\Attachment;
@@ -184,6 +186,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Asset::class, AssetPolicy::class);
         Gate::policy(Contract::class, ContractPolicy::class);
         Gate::policy(Secret::class, SecretPolicy::class);
+        Gate::policy(Article::class, ArticlePolicy::class);
         Gate::policy(Attachment::class, AttachmentPolicy::class);
         Gate::policy(BankTransaction::class, BankTransactionPolicy::class);
         Gate::policy(Charge::class, ChargePolicy::class);

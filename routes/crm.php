@@ -2,6 +2,14 @@
 
 use App\Activity\Controllers\ListWorkspaceActivityController;
 use App\Archive\Controllers\ShowArchiveController;
+use App\Article\Controllers\ArchiveArticleController;
+use App\Article\Controllers\DeleteArticleController;
+use App\Article\Controllers\EditArticleController;
+use App\Article\Controllers\ListArticlesController;
+use App\Article\Controllers\RestoreArticleController;
+use App\Article\Controllers\ShowArticleController;
+use App\Article\Controllers\StoreArticleController;
+use App\Article\Controllers\UpdateArticleController;
 use App\Asset\Controllers\CreateAssetController;
 use App\Asset\Controllers\DeleteAssetController;
 use App\Asset\Controllers\EditAssetController;
@@ -219,6 +227,15 @@ Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function 
     Route::get('customers/{customer}/settings', EditCustomerController::class)->whereUuid('customer')->name('customers.edit');
     Route::put('customers/{customer}', UpdateCustomerController::class)->whereUuid('customer')->name('customers.update');
     Route::delete('customers/{customer}', DeleteCustomerController::class)->whereUuid('customer')->name('customers.destroy');
+
+    Route::get('articles', ListArticlesController::class)->name('articles.index');
+    Route::post('articles', StoreArticleController::class)->name('articles.store');
+    Route::get('articles/{article}', ShowArticleController::class)->whereUuid('article')->name('articles.show');
+    Route::get('articles/{article}/edit', EditArticleController::class)->whereUuid('article')->name('articles.edit');
+    Route::put('articles/{article}', UpdateArticleController::class)->whereUuid('article')->name('articles.update');
+    Route::post('articles/{article}/archive', ArchiveArticleController::class)->whereUuid('article')->name('articles.archive');
+    Route::post('articles/{article}/restore', RestoreArticleController::class)->whereUuid('article')->name('articles.restore');
+    Route::delete('articles/{article}', DeleteArticleController::class)->whereUuid('article')->name('articles.destroy');
 
     Route::get('contacts', ListContactsController::class)->name('contacts.index');
     Route::get('contacts/form-options', ListContactFormOptionsController::class)->name('contacts.form-options');

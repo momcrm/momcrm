@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Search\Controllers;
 
+use App\Article\Actions\FindArticle;
+use App\Article\Article;
 use App\Contact\Actions\FindContact;
 use App\Contact\Contact;
 use App\Customer\Actions\FindCustomer;
@@ -73,6 +75,15 @@ final class SearchWorkspaceController
                 ])
                 ->all(),
             'records' => $this->records($teamId, $term),
+            'articles' => FindArticle::searchVisible($teamId, $user->id, $term, self::RESULTS_PER_GROUP)
+                ->map(fn (Article $article): array => [
+                    'id' => $article->getId()->toString(),
+                    'title' => $article->getTitle()->toString(),
+                    'subtitle' => $article->getSummary()->toNullableString(),
+                    'url' => route('articles.show', $article->getId()->toString()),
+                ])
+                ->values()
+                ->all(),
             'invoices' => preg_match('/\d/', $term) === 1
                 ? FindInvoice::paginateForTeam($teamId, search: $term, perPage: self::RESULTS_PER_GROUP)
                     ->getCollection()
