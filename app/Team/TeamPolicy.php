@@ -86,6 +86,16 @@ final class TeamPolicy
     }
 
     /**
+     * Owners and admins set up the bank accounts whose statements are imported.
+     */
+    public function manageBankFeeds(UserEloquentModel $user, Team $team): Response
+    {
+        return $this->isOwnerOrAdmin($user, $team)
+            ? Response::allow()
+            : Response::deny('Only team owners and admins can set up bank accounts.');
+    }
+
+    /**
      * Owners and admins keep the business details printed on the team's invoices.
      */
     public function manageBilling(UserEloquentModel $user, Team $team): Response

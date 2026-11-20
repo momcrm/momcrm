@@ -15,6 +15,10 @@ use App\Attachment\Controllers\StoreProjectAttachmentController;
 use App\Attachment\Controllers\StoreRecordAttachmentController;
 use App\Attachment\Controllers\StoreTicketAttachmentController;
 use App\Attachment\Controllers\UpdateAttachmentController;
+use App\BankTransaction\Controllers\DeleteBankTransactionsController;
+use App\BankTransaction\Controllers\HideBankTransactionsController;
+use App\BankTransaction\Controllers\ImportBankStatementController;
+use App\BankTransaction\Controllers\ListBankTransactionsController;
 use App\Comment\Controllers\DeleteCommentController;
 use App\Comment\Controllers\StoreCommentController;
 use App\Comment\Controllers\StoreRecordCommentController;
@@ -321,4 +325,9 @@ Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function 
     Route::put('payment-allocations/{allocation}', UpdatePaymentAllocationController::class)->whereUuid('allocation')->name('payment-allocations.update');
     Route::delete('payment-allocations/{allocation}', DeletePaymentAllocationController::class)->whereUuid('allocation')->name('payment-allocations.destroy');
     Route::post('invoices/{invoice}/apply-credit', ApplyInvoiceCreditController::class)->whereUuid('invoice')->name('invoices.apply-credit');
+
+    Route::get('bank-feeds', ListBankTransactionsController::class)->name('bank-feeds.index');
+    Route::post('bank-feeds/import', ImportBankStatementController::class)->name('bank-feeds.import');
+    Route::patch('bank-feeds/hidden', HideBankTransactionsController::class)->name('bank-feeds.hide');
+    Route::delete('bank-feeds', DeleteBankTransactionsController::class)->name('bank-feeds.destroy');
 });

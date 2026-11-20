@@ -1024,3 +1024,55 @@ export type AccessRuleOptions = {
         options: Option[];
     })[];
 };
+
+/** A bank account whose statements are imported as bank feed lines. */
+export type BankAccount = {
+    id: string;
+    name: string;
+    kind: string;
+    kind_label: string;
+    currency: string;
+    last_imported_at: string | null;
+};
+
+export type BankTransactionStatus = 'pending' | 'hidden';
+
+/** A deposit imported from a bank statement. */
+export type BankTransaction = {
+    id: string;
+    bank_account_id: string;
+    bank_account_name: string | null;
+    currency: string | null;
+    posted_on: string | null;
+    amount_in_cents: number;
+    description: string;
+    /** The BPAY customer reference number it was paid with. */
+    crn: string | null;
+    payer_name: string | null;
+    customer_id: string | null;
+    customer_name: string | null;
+    matched_by: string | null;
+    matched_by_label: string | null;
+    status: BankTransactionStatus;
+    status_label: string;
+};
+
+/** Which columns of a CSV statement hold what, counted from 0. */
+export type StatementColumns = {
+    has_header: boolean;
+    date: number;
+    description: number[];
+    amount: number | null;
+    credit: number | null;
+    debit: number | null;
+    date_order: 'dmy' | 'mdy' | 'ymd' | null;
+    layout?: string;
+};
+
+/** What the import needs to ask about a CSV it couldn't read on its own. */
+export type StatementColumnsRequest = {
+    file: string;
+    headings: string[];
+    rows: string[][];
+    guess: StatementColumns;
+};

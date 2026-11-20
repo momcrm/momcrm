@@ -5,6 +5,7 @@ import {
     Building2,
     FileCog,
     KeyRound,
+    Landmark,
     Mail,
     Palette,
     Plug,
@@ -21,6 +22,7 @@ import { index as accessRulesIndex } from '@/routes/access-rules';
 import { edit as editBilling } from '@/routes/billing';
 import { index as activityIndex } from '@/routes/activity';
 import { edit as editAppearance } from '@/routes/appearance';
+import { index as bankAccountsIndex } from '@/routes/bank-accounts';
 import { index as connectorsIndex } from '@/routes/connectors';
 import { edit as editCustomObjects } from '@/routes/custom-objects';
 import { edit as editEnvironment } from '@/routes/environment';
@@ -60,6 +62,12 @@ const billingItem: NavItem = {
     title: 'Billing details',
     href: editBilling(),
     icon: Building2,
+};
+
+const bankFeedsItem: NavItem = {
+    title: 'Bank feeds',
+    href: bankAccountsIndex(),
+    icon: Landmark,
 };
 
 const ratesItem: NavItem = {
@@ -111,6 +119,7 @@ export default function SettingsLayout({
     const { isCurrentOrParentUrl } = useCurrentUrl();
     const {
         canManageAccessRules,
+        canManageBankFeeds,
         canManageBilling,
         canManageConnectors,
         canManageCustomObjects,
@@ -135,6 +144,7 @@ export default function SettingsLayout({
                       ...(canManageCustomObjects ? [customObjectsItem] : []),
                       ...(canManageBilling ? [billingItem] : []),
                       ...(canManageRates ? [ratesItem] : []),
+                      ...(canManageBankFeeds ? [bankFeedsItem] : []),
                       ...(canManageEmail ? [emailItem] : []),
                       ...(canManageConnectors ? [connectorsItem] : []),
                       ...(canManageAccessRules ? [accessRulesItem] : []),

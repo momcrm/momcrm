@@ -7,6 +7,8 @@ use App\Asset\Asset;
 use App\Asset\AssetPolicy;
 use App\Attachment\Attachment;
 use App\Attachment\AttachmentPolicy;
+use App\BankTransaction\BankTransaction;
+use App\BankTransaction\BankTransactionPolicy;
 use App\Comment\Comment;
 use App\Comment\CommentPolicy;
 use App\Connector\ConnectorCapabilityEnum;
@@ -181,6 +183,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Contract::class, ContractPolicy::class);
         Gate::policy(Secret::class, SecretPolicy::class);
         Gate::policy(Attachment::class, AttachmentPolicy::class);
+        Gate::policy(BankTransaction::class, BankTransactionPolicy::class);
         Gate::policy(Comment::class, CommentPolicy::class);
         Gate::policy(Contact::class, ContactPolicy::class);
         Gate::policy(Customer::class, CustomerPolicy::class);
