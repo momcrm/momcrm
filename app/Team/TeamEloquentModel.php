@@ -34,6 +34,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property string|null $billing_phone
  * @property string|null $billing_address
  * @property string|null $payment_details
+ * @property int $days_to_pay
  * @property string|null $bpay_biller_code
  * @property bool $personal_team
  * @property CarbonImmutable|null $created_at

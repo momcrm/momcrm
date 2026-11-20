@@ -13,10 +13,13 @@ use App\Service\Service;
 use App\Service\ServiceEloquentModel;
 use App\Service\ServiceStatusEnum;
 use App\Shared\CurrencyEnum;
+use App\Team\Actions\FindTeam;
+use App\Team\Properties\DaysToPay;
 use App\Team\Scopes\CurrentTeamScope;
 
 /**
  * What the invoice form needs: customers with the currency they are billed
+ * in and the days they have to pay,
  * in, and each customer's active services so a line item can be filled from
  * one, priced for one billing period in that currency.
  */
@@ -28,11 +31,18 @@ final class InvoiceFormOptions
     public static function forTeam(string $teamId): array
     {
         $customers = FindCustomer::optionsForTeam($teamId);
-        $currencies = FindCustomer::currenciesByIds(array_values($customers->map(fn (array $customer): string => $customer['id'])->all()));
+        $ids = array_values($customers->map(fn (array $customer): string => $customer['id'])->all());
+        $currencies = FindCustomer::currenciesByIds($ids);
+        $daysToPay = FindCustomer::daysToPayByIds($ids);
+        $teamDaysToPay = FindTeam::byId($teamId)->getDaysToPay()->toNullableInteger() ?? DaysToPay::DEFAULT;
 
         return [
             'customers' => $customers
-                ->map(fn (array $customer): array => [...$customer, 'currency' => ($currencies[$customer['id']] ?? CurrencyEnum::default())->value])
+                ->map(fn (array $customer): array => [
+                    ...$customer,
+                    'currency' => ($currencies[$customer['id']] ?? CurrencyEnum::default())->value,
+                    'days_to_pay' => $daysToPay[$customer['id']] ?? $teamDaysToPay,
+                ])
                 ->values()
                 ->all(),
             'services' => Service::collect(

@@ -12,6 +12,7 @@ use App\Team\Properties\BillingName;
 use App\Team\Properties\BillingPhone;
 use App\Team\Properties\BpayBillerCode;
 use App\Team\Properties\CreatedAt;
+use App\Team\Properties\DaysToPay;
 use App\Team\Properties\Id;
 use App\Team\Properties\InvoicePrefix;
 use App\Team\Properties\IsPersonal;
@@ -40,6 +41,7 @@ final class Team extends AbstractData
         public BillingPhone $billingPhone,
         public BillingAddress $billingAddress,
         public PaymentDetails $paymentDetails,
+        public DaysToPay $daysToPay,
         public BpayBillerCode $bpayBillerCode,
         public InvoicePrefix $invoicePrefix,
         public CreatedAt $createdAt,
@@ -275,6 +277,18 @@ final class Team extends AbstractData
         return $this;
     }
 
+    public function getDaysToPay(): DaysToPay
+    {
+        return $this->daysToPay;
+    }
+
+    public function setDaysToPay(mixed $daysToPay): self
+    {
+        $this->daysToPay = new DaysToPay($daysToPay instanceof AbstractValue ? $daysToPay->toValue() : $daysToPay);
+
+        return $this;
+    }
+
     public function getPaymentDetails(): PaymentDetails
     {
         return $this->paymentDetails;
@@ -315,7 +329,7 @@ final class Team extends AbstractData
     /**
      * What the team prints on its invoices, for the billing settings and the invoice itself.
      *
-     * @return array{name: string, billing_name: ?string, tax_id_label: ?string, tax_id: ?string, billing_email: ?string, billing_phone: ?string, billing_address: ?string, payment_details: ?string, bpay_biller_code: ?string, invoice_prefix: string}
+     * @return array{name: string, billing_name: ?string, tax_id_label: ?string, tax_id: ?string, billing_email: ?string, billing_phone: ?string, billing_address: ?string, payment_details: ?string, days_to_pay: int, bpay_biller_code: ?string, invoice_prefix: string}
      */
     public function toBillingSummary(): array
     {
@@ -328,6 +342,7 @@ final class Team extends AbstractData
             'billing_phone' => $this->getBillingPhone()->toNullableString(),
             'billing_address' => $this->getBillingAddress()->toNullableString(),
             'payment_details' => $this->getPaymentDetails()->toNullableString(),
+            'days_to_pay' => $this->getDaysToPay()->toNullableInteger() ?? DaysToPay::DEFAULT,
             'bpay_biller_code' => $this->getBpayBillerCode()->toNullableString(),
             'invoice_prefix' => $this->getInvoicePrefix()->toNullableString() ?? InvoicePrefix::DEFAULT,
         ];

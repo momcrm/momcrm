@@ -21,6 +21,8 @@ export type Customer = {
     website: string | null;
     status: 'active' | 'inactive';
     billing_type: CustomerBillingType;
+    /** Their own days to pay; null when they go by the team's. */
+    days_to_pay: number | null;
     /** ISO 4217 code the customer is billed in, e.g. AUD. */
     currency: string;
     prefix: string | null;
@@ -759,6 +761,8 @@ export type TeamBilling = {
     billing_address: string | null;
     payment_details: string | null;
     bpay_biller_code: string | null;
+    /** How many days customers have to pay, unless a customer has their own. */
+    days_to_pay: number;
     /** What invoice numbers start with, e.g. INV-; empty for none. */
     invoice_prefix: string;
 };

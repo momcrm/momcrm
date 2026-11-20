@@ -22,6 +22,7 @@ it('saves the details printed on invoices', function (): void {
             'billing_address' => "1 Hay St\nPerth WA 6000",
             'payment_details' => 'BSB 000-000, account 12345678',
             'bpay_biller_code' => '123456',
+            'days_to_pay' => '30',
             'invoice_prefix' => 'CEB-',
         ])
         ->assertSessionHasNoErrors()
@@ -36,6 +37,7 @@ it('saves the details printed on invoices', function (): void {
         ->billing_address->toBe("1 Hay St\nPerth WA 6000")
         ->payment_details->toBe('BSB 000-000, account 12345678')
         ->bpay_biller_code->toBe('123456')
+        ->days_to_pay->toBe(30)
         ->invoice_prefix->toBe('CEB-');
 });
 

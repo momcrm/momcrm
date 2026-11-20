@@ -164,3 +164,16 @@ it('rejects a customer custom field value that is not valid, naming the field', 
 
     expect($customer->fresh()->custom_fields)->toBeNull();
 });
+
+it('gives a customer their own days to pay, and takes it away', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $customer = CustomerEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
+
+    actingAs($user)->put(route('customers.update', $customer->id), ['name' => $customer->name, 'status' => 'active', 'days_to_pay' => '7'])->assertSessionHasNoErrors();
+    expect($customer->fresh()->days_to_pay)->toBe(7);
+
+    actingAs($user)->put(route('customers.update', $customer->id), ['name' => $customer->name, 'status' => 'active', 'days_to_pay' => ''])->assertSessionHasNoErrors();
+    expect($customer->fresh()->days_to_pay)->toBeNull();
+
+    actingAs($user)->put(route('customers.update', $customer->id), ['name' => $customer->name, 'status' => 'active', 'days_to_pay' => '400'])->assertSessionHasErrors('days_to_pay');
+});

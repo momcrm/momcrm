@@ -12,6 +12,7 @@ use App\Customer\CustomerRelationship;
 use App\Customer\CustomerStatusEnum;
 use App\Customer\Properties\BillingType;
 use App\Customer\Properties\Currency;
+use App\Customer\Properties\DaysToPay;
 use App\Customer\Properties\Email;
 use App\Customer\Properties\Id;
 use App\Customer\Properties\Name;
@@ -111,6 +112,27 @@ final class FindCustomer
                 'id' => $customer->id,
                 'name' => $customer->prefix === null ? $customer->name : "{$customer->prefix} · {$customer->name}",
             ]);
+    }
+
+    /**
+     * Each customer's own days to pay, keyed by id; null for those who go
+     * by their team's.
+     *
+     * @param  list<string>  $ids
+     * @return array<string, ?int>
+     */
+    public static function daysToPayByIds(array $ids): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+
+        return CustomerEloquentModel::query()
+            ->withoutGlobalScopes()
+            ->whereKey($ids)
+            ->get([Id::getDatabaseTableColumnName(), DaysToPay::getDatabaseTableColumnName()])
+            ->mapWithKeys(fn (CustomerEloquentModel $customer): array => [$customer->id => $customer->days_to_pay])
+            ->all();
     }
 
     /**

@@ -72,8 +72,8 @@ export default function InvoiceForm({
     action: Action;
     invoice?: Invoice;
     items?: InvoiceItem[];
-    /** Customers to choose from, with the currency each is billed in. */
-    customers?: (CustomerOption & { currency: string })[];
+    /** Customers to choose from, with the currency each is billed in and the days they have to pay. */
+    customers?: (CustomerOption & { currency: string; days_to_pay: number })[];
     services: Service[];
     customerId?: string | null;
     defaults?: {
@@ -87,6 +87,33 @@ export default function InvoiceForm({
     const [selectedCustomer, setSelectedCustomer] = useState(
         invoice?.customer_id ?? customerId ?? '',
     );
+    const [issuedOn, setIssuedOn] = useState(
+        invoice?.issued_on ?? defaults?.issued_on ?? '',
+    );
+    const [dueOn, setDueOn] = useState(
+        invoice?.due_on ?? defaults?.due_on ?? '',
+    );
+
+    /**
+     * A new invoice is due by its customer's payment terms, counted from
+     * the day it is issued, until the due date is changed by hand.
+     */
+    const [isDueOnTyped, setIsDueOnTyped] = useState(invoice !== undefined);
+    const followTerms = (customerId: string, issued: string) => {
+        const days = customers?.find(
+            (customer) => customer.id === customerId,
+        )?.days_to_pay;
+
+        if (isDueOnTyped || days === undefined || issued === '') {
+            return;
+        }
+
+        const due = new Date(`${issued}T00:00:00`);
+        due.setDate(due.getDate() + days);
+        setDueOn(
+            `${due.getFullYear()}-${String(due.getMonth() + 1).padStart(2, '0')}-${String(due.getDate()).padStart(2, '0')}`,
+        );
+    };
     const [rows, setRows] = useState<Row[]>(
         items && items.length > 0 ? items.map(toRow) : [emptyRow()],
     );
@@ -151,9 +178,13 @@ export default function InvoiceForm({
                                     id="customer_id"
                                     name="customer_id"
                                     value={selectedCustomer}
-                                    onChange={(event) =>
-                                        setSelectedCustomer(event.target.value)
-                                    }
+                                    onChange={(event) => {
+                                        setSelectedCustomer(event.target.value);
+                                        followTerms(
+                                            event.target.value,
+                                            issuedOn,
+                                        );
+                                    }}
                                     required
                                 >
                                     <option value="" disabled>
@@ -190,9 +221,14 @@ export default function InvoiceForm({
                                 id="issued_on"
                                 name="issued_on"
                                 type="date"
-                                defaultValue={
-                                    invoice?.issued_on ?? defaults?.issued_on
-                                }
+                                value={issuedOn}
+                                onChange={(event) => {
+                                    setIssuedOn(event.target.value);
+                                    followTerms(
+                                        selectedCustomer,
+                                        event.target.value,
+                                    );
+                                }}
                                 required
                             />
                         </FormField>
@@ -205,9 +241,11 @@ export default function InvoiceForm({
                                 id="due_on"
                                 name="due_on"
                                 type="date"
-                                defaultValue={
-                                    invoice?.due_on ?? defaults?.due_on
-                                }
+                                value={dueOn}
+                                onChange={(event) => {
+                                    setDueOn(event.target.value);
+                                    setIsDueOnTyped(true);
+                                }}
                                 required
                             />
                         </FormField>

@@ -100,3 +100,16 @@ it('runs from the command for one team on a given day', function (): void {
 
     expect(InvoiceEloquentModel::query()->withoutGlobalScopes()->sole()->team_id)->toBe($team->id);
 });
+
+it("dues each draft by its customer's payment terms", function (): void {
+    [$team, $customer, $rate] = invoiceRunSetup();
+    $team->update(['days_to_pay' => 30]);
+    $quick = CustomerEloquentModel::factory()->create(['team_id' => $team->id, 'days_to_pay' => 7]);
+    ServiceEloquentModel::factory()->create(['team_id' => $team->id, 'customer_id' => $customer->id, 'rate_id' => $rate->id, 'billing_starts_on' => '2026-12-01']);
+    ServiceEloquentModel::factory()->create(['team_id' => $team->id, 'customer_id' => $quick->id, 'rate_id' => $rate->id, 'billing_starts_on' => '2026-12-01']);
+
+    RunServiceInvoices::on(CarbonImmutable::parse('2026-12-02'));
+
+    expect(InvoiceEloquentModel::query()->withoutGlobalScopes()->pluck('due_on', 'customer_id')->map(fn ($due): string => $due->toDateString())->all())
+        ->toEqual([$customer->id => '2027-01-01', $quick->id => '2026-12-09']);
+});
