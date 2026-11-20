@@ -56,7 +56,7 @@ final class ImportBankStatementFormRequest extends FormRequest
         return [
             'bank_account_id' => ['required', 'uuid'],
             'files' => ['required', 'array', 'min:1', 'max:'.self::MAX_FILES],
-            'files.*' => ['required', 'file', 'max:'.self::MAX_KILOBYTES, 'extensions:csv,txt'],
+            'files.*' => ['required', 'file', 'max:'.self::MAX_KILOBYTES, 'extensions:csv,txt,ofx,qfx'],
             'columns' => ['sometimes', 'nullable', 'array'],
             'columns.has_header' => ['sometimes', 'boolean'],
             'columns.date' => ['required_with:columns', 'integer', 'min:0'],
@@ -76,7 +76,7 @@ final class ImportBankStatementFormRequest extends FormRequest
     {
         return [
             'files.required' => __('Choose a statement file to import.'),
-            'files.*.extensions' => __('Choose a statement exported as CSV.'),
+            'files.*.extensions' => __('Choose a statement exported as CSV, OFX or QFX.'),
             'files.*.max' => __('A statement file can be up to 5 MB.'),
         ];
     }

@@ -331,9 +331,9 @@ export default function ImportStatementDialog({
             <DialogContent className={request ? 'sm:max-w-2xl' : 'sm:max-w-md'}>
                 <DialogTitle>Import a statement</DialogTitle>
                 <DialogDescription>
-                    Export a statement from your online banking as CSV and
-                    upload it here. Deposits become lines to match to customers;
-                    anything already imported is skipped.
+                    Export a statement from your online banking as CSV, OFX or
+                    QFX and upload it here. Deposits become lines to match to
+                    customers; anything already imported is skipped.
                 </DialogDescription>
                 <form onSubmit={submit} className="space-y-5">
                     {request && form.data.columns ? (
@@ -380,7 +380,7 @@ export default function ImportStatementDialog({
                                     id="import-files"
                                     type="file"
                                     multiple
-                                    accept=".csv,text/csv,.txt"
+                                    accept=".csv,text/csv,.txt,.ofx,.qfx"
                                     onChange={(event) =>
                                         form.setData(
                                             'files',
