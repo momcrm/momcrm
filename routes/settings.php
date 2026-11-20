@@ -51,6 +51,11 @@ use App\Mailbox\Controllers\ShowEmailSettingsController;
 use App\Mailbox\Controllers\StoreMailboxController;
 use App\Mailbox\Controllers\SyncMailboxController;
 use App\Mailbox\Controllers\UpdateMailboxController;
+use App\Product\Controllers\ArchiveProductController;
+use App\Product\Controllers\ListProductsController;
+use App\Product\Controllers\RestoreProductController;
+use App\Product\Controllers\StoreProductController;
+use App\Product\Controllers\UpdateProductController;
 use App\Rate\Controllers\ArchiveRateController;
 use App\Rate\Controllers\ListRatesController;
 use App\Rate\Controllers\RestoreRateController;
@@ -127,6 +132,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('settings/bank-rules', StoreBankRuleController::class)->name('bank-rules.store');
     Route::put('settings/bank-rules/{bankRule}', UpdateBankRuleController::class)->whereUuid('bankRule')->name('bank-rules.update');
     Route::delete('settings/bank-rules/{bankRule}', DeleteBankRuleController::class)->whereUuid('bankRule')->name('bank-rules.destroy');
+
+    Route::get('settings/products', ListProductsController::class)->name('products.index');
+    Route::post('settings/products', StoreProductController::class)->name('products.store');
+    Route::put('settings/products/{product}', UpdateProductController::class)->whereUuid('product')->name('products.update');
+    Route::post('settings/products/{product}/archive', ArchiveProductController::class)->whereUuid('product')->name('products.archive');
+    Route::post('settings/products/{product}/restore', RestoreProductController::class)->whereUuid('product')->name('products.restore');
 
     Route::get('settings/custom-fields', ShowCustomFieldsController::class)->name('custom-fields.edit');
     Route::post('settings/custom-fields', StoreCustomFieldController::class)->name('custom-fields.store');
