@@ -54,6 +54,8 @@ export type CustomerWorkspace = {
         files: number;
         secrets: number;
         contracts: number;
+        /** Articles about the customer the person may read. */
+        articles: number;
         /** Lines waiting to be invoiced. */
         waiting_lines: number;
     };
@@ -1199,6 +1201,8 @@ export type ArticleListItem = {
     /** Such as "1.2"; null until first published. */
     version: string | null;
     category_id: string | null;
+    customer_id: string | null;
+    customer_name: string | null;
     labels: LabelTag[];
     next_review_on: string | null;
     last_reviewed_on: string | null;

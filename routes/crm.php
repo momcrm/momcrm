@@ -57,6 +57,7 @@ use App\Customer\Controllers\DeleteCustomerController;
 use App\Customer\Controllers\DownloadCustomerStatementController;
 use App\Customer\Controllers\EditCustomerController;
 use App\Customer\Controllers\ImportCustomersController;
+use App\Customer\Controllers\ListCustomerArticlesController;
 use App\Customer\Controllers\ListCustomerAssetsController;
 use App\Customer\Controllers\ListCustomerContactsController;
 use App\Customer\Controllers\ListCustomerContractsController;
@@ -200,6 +201,7 @@ Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function 
     Route::get('customers/{customer}/tickets', ListCustomerTicketsController::class)->whereUuid('customer')->name('customers.tickets');
     Route::get('customers/{customer}/projects', ListCustomerProjectsController::class)->whereUuid('customer')->name('customers.projects');
     Route::get('customers/{customer}/contacts', ListCustomerContactsController::class)->whereUuid('customer')->name('customers.contacts');
+    Route::get('customers/{customer}/articles', ListCustomerArticlesController::class)->whereUuid('customer')->name('customers.articles');
     Route::get('customers/{customer}/locations', ListCustomerLocationsController::class)->whereUuid('customer')->name('customers.locations');
     Route::get('customers/{customer}/assets', ListCustomerAssetsController::class)->whereUuid('customer')->name('customers.assets');
     Route::get('customers/{customer}/services', ListCustomerServicesController::class)->whereUuid('customer')->name('customers.services');

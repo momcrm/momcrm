@@ -18,6 +18,7 @@ import type {
     ArticleCategory,
     ArticleClassificationOption,
     ArticleListItem,
+    CustomerOption,
     Option,
     Paginated,
 } from '@/types';
@@ -29,6 +30,7 @@ type Filters = {
     category: string | null;
     label: string | null;
     review: string | null;
+    customer: string | null;
     sort: string;
     direction: 'asc' | 'desc';
 };
@@ -40,6 +42,7 @@ export default function ArticlesIndex({
     filters,
     statuses,
     categories,
+    customers,
     classifications,
     can,
 }: {
@@ -47,6 +50,7 @@ export default function ArticlesIndex({
     filters: Filters;
     statuses: Option[];
     categories: ArticleCategory[];
+    customers: CustomerOption[];
     classifications: ArticleClassificationOption[];
     can: Abilities;
 }) {
@@ -58,7 +62,8 @@ export default function ArticlesIndex({
         filters.classification ||
         filters.category ||
         filters.label ||
-        filters.review,
+        filters.review ||
+        filters.customer,
     );
     const filter = (key: string) => (value: string) =>
         visitWithQuery({ [key]: value }, { only: RELOAD });
@@ -102,6 +107,23 @@ export default function ArticlesIndex({
                             </option>
                         ))}
                     </NativeSelect>
+                    {customers.length > 0 && (
+                        <NativeSelect
+                            aria-label="Customer"
+                            value={filters.customer ?? ''}
+                            onChange={(event) =>
+                                filter('customer')(event.target.value)
+                            }
+                            className="h-8 w-auto max-w-56 text-[13px]"
+                        >
+                            <option value="">Any customer</option>
+                            {customers.map((customer) => (
+                                <option key={customer.id} value={customer.id}>
+                                    {customer.name}
+                                </option>
+                            ))}
+                        </NativeSelect>
+                    )}
                     {categories.length > 0 && (
                         <CategorySelect
                             aria-label="Category"
@@ -199,6 +221,7 @@ export default function ArticlesIndex({
                 onOpenChange={setIsCreating}
                 classifications={classifications}
                 categories={categories}
+                customers={customers}
             />
         </>
     );

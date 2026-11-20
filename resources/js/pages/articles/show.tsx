@@ -22,6 +22,7 @@ import {
     restore,
     show,
 } from '@/routes/articles';
+import { articles as customerArticles } from '@/routes/customers';
 import type { Abilities, Article } from '@/types';
 
 /** A timestamp or a YYYY-MM-DD day, such as "20 Nov 2026". */
@@ -142,11 +143,20 @@ export default function ArticleShow({
                     <span>· Updated {timeAgo(article.updated_at)}</span>
                 </div>
 
-                {(categoryPath ||
+                {(article.customer_id ||
+                    categoryPath ||
                     article.labels.length > 0 ||
                     article.next_review_on ||
                     article.last_reviewed_on) && (
                     <div className="-mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[13px] text-muted-foreground">
+                        {article.customer_id && (
+                            <Link
+                                href={customerArticles(article.customer_id)}
+                                className="text-foreground hover:underline"
+                            >
+                                {article.customer_name ?? 'Customer'}
+                            </Link>
+                        )}
                         {categoryPath && <span>{categoryPath}</span>}
                         <LabelChips labels={article.labels} />
                         {article.is_review_due ? (

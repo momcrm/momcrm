@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Article\ArticleEloquentModel;
+use App\Customer\CustomerEloquentModel;
 use App\TeamUser\TeamRoleEnum;
 use App\User\UserEloquentModel;
 
@@ -40,4 +41,19 @@ it('requires a title', function (): void {
     actingAs(UserEloquentModel::factory()->withPersonalTeam()->create())
         ->post(route('articles.store'), ['classification' => 'internal'])
         ->assertSessionHasErrors(['title' => 'The title field is required.']);
+});
+
+it('starts an article about a customer', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $customer = CustomerEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
+
+    actingAs($user)->post(route('articles.store'), ['title' => 'Their network', 'classification' => 'internal', 'customer_id' => $customer->id]);
+
+    expect(ArticleEloquentModel::query()->sole()->customer_id)->toBe($customer->id);
+});
+
+it("won't start an article about another team's customer", function (): void {
+    actingAs(UserEloquentModel::factory()->withPersonalTeam()->create())
+        ->post(route('articles.store'), ['title' => 'Their network', 'classification' => 'internal', 'customer_id' => CustomerEloquentModel::factory()->create()->id])
+        ->assertSessionHasErrors(['customer_id' => 'Choose one of your customers.']);
 });

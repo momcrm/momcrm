@@ -6,6 +6,7 @@ use App\Article\ArticleClassificationEnum;
 use App\Article\ArticleEloquentModel;
 use App\ArticleCategory\ArticleCategoryEloquentModel;
 use App\Choice\ChoiceEloquentModel;
+use App\Customer\CustomerEloquentModel;
 use App\TeamUser\TeamRoleEnum;
 use App\User\UserEloquentModel;
 use Inertia\Testing\AssertableInertia;
@@ -79,4 +80,18 @@ it('filters by a category and the ones under it, by label and by review due', fu
         ->and($titles(['category' => $routers->id]))->toBe(['Router reset'])
         ->and($titles(['label' => $label->id]))->toBe(['Router reset'])
         ->and($titles(['review' => 'due']))->toBe(['Router reset']);
+});
+
+it('filters by customer, naming each article\'s customer', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $team = ['team_id' => $owner->current_team_id];
+    $customer = CustomerEloquentModel::factory()->create([...$team, 'name' => 'Harbour Dental']);
+    ArticleEloquentModel::factory()->create([...$team, 'title' => 'Their network', 'customer_id' => $customer->id]);
+    ArticleEloquentModel::factory()->create([...$team, 'title' => 'For everyone']);
+
+    actingAs($owner)
+        ->get(route('articles.index', ['customer' => $customer->id]))
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->has('articles.data', 1)
+            ->where('articles.data.0.customer_name', 'Harbour Dental'));
 });

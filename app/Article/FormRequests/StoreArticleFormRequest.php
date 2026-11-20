@@ -10,6 +10,7 @@ use App\Article\ArticleStatusEnum;
 use App\Article\ArticleValidationRules;
 use App\Article\Properties\CategoryId;
 use App\Article\Properties\Classification;
+use App\Article\Properties\CustomerId;
 use App\Article\Properties\Title;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
@@ -50,6 +51,7 @@ final class StoreArticleFormRequest extends FormRequest
                 ->setTitle($this->string(Title::getNameForValidation())->trim()->toString())
                 ->setClassification($this->string(Classification::getNameForValidation())->toString())
                 ->setCategoryId($this->input(CategoryId::getNameForValidation()) ?: null)
+                ->setCustomerId($this->input(CustomerId::getNameForValidation()) ?: null)
                 ->setStatus(ArticleStatusEnum::Draft)
                 ->setAuthorId($this->user()?->id)
                 ->setTeamId($this->teamId()),

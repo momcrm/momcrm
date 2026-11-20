@@ -9,6 +9,7 @@ use App\Article\ArticleClassificationEnum;
 use App\Article\ArticleVisibility;
 use App\Article\Exceptions\CouldNotFindArticle;
 use App\ArticleCategory\Actions\FindArticleCategory;
+use App\Customer\Actions\FindCustomer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
@@ -34,6 +35,7 @@ final class EditArticleController
         return Inertia::render('articles/edit', [
             'article' => $found->toDetail(),
             'categories' => FindArticleCategory::listForTeam($teamId)->toSummaries(),
+            'customers' => FindCustomer::optionsForTeam($teamId),
             'classifications' => ArticleClassificationEnum::optionsFor(ArticleVisibility::roleOf($teamId, $userId)),
         ]);
     }

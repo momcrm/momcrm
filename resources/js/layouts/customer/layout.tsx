@@ -2,6 +2,7 @@ import { Link, setLayoutProps, usePage } from '@inertiajs/react';
 import type { InertiaLinkProps } from '@inertiajs/react';
 import {
     Banknote,
+    BookOpen,
     Boxes,
     FilePlus2,
     FileSignature,
@@ -28,6 +29,7 @@ import { ChoiceTag, useChoice } from '@/components/tickets/ticket-meta';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn, toUrl } from '@/lib/utils';
 import {
+    articles,
     assets,
     billing,
     contacts,
@@ -120,6 +122,12 @@ function links(workspace: CustomerWorkspace): WorkspaceLink[] {
             href: secrets(id),
             icon: KeyRound,
             count: counts.secrets,
+        },
+        {
+            title: 'Articles',
+            href: articles(id),
+            icon: BookOpen,
+            count: counts.articles,
         },
         {
             title: 'Invoices',

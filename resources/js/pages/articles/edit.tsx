@@ -23,6 +23,7 @@ import type {
     Article,
     ArticleCategory,
     ArticleClassificationOption,
+    CustomerOption,
     ArticleStatus,
 } from '@/types';
 
@@ -38,10 +39,12 @@ function nextVersion(current: string, isMajor: boolean): string {
 export default function ArticleEdit({
     article,
     categories,
+    customers,
     classifications,
 }: {
     article: Article;
     categories: ArticleCategory[];
+    customers: CustomerOption[];
     classifications: ArticleClassificationOption[];
 }) {
     setLayoutProps({
@@ -58,6 +61,7 @@ export default function ArticleEdit({
         body: article.body,
         classification: article.classification as string,
         category_id: article.category_id ?? '',
+        customer_id: article.customer_id ?? '',
         label_ids: article.labels.map((label) => label.id),
         next_review_on: article.next_review_on ?? '',
     });
@@ -233,7 +237,27 @@ export default function ArticleEdit({
                     </FormField>
                 </div>
 
-                <div className="grid gap-5 sm:grid-cols-2">
+                <div className="grid gap-5 sm:grid-cols-3">
+                    <FormField
+                        id="customer_id"
+                        label="About a customer"
+                        error={form.errors.customer_id}
+                    >
+                        <NativeSelect
+                            id="customer_id"
+                            value={form.data.customer_id}
+                            onChange={(event) =>
+                                form.setData('customer_id', event.target.value)
+                            }
+                        >
+                            <option value="">No, for the whole team</option>
+                            {customers.map((customer) => (
+                                <option key={customer.id} value={customer.id}>
+                                    {customer.name}
+                                </option>
+                            ))}
+                        </NativeSelect>
+                    </FormField>
                     <FormField
                         id="category_id"
                         label="Category"

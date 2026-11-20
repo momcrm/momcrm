@@ -6,6 +6,7 @@ namespace App\Customer;
 
 use App\AccessRule\AccessResourceEnum;
 use App\AccessRule\Engine\AccessAbilities;
+use App\Article\Actions\FindArticle;
 use App\Asset\Actions\FindAsset;
 use App\Attachment\Actions\FindAttachment;
 use App\Charge\Actions\FindCharge;
@@ -76,7 +77,8 @@ final readonly class CustomerWorkspace
 
     /**
      * How many of each record the customer has, for the nav. Tickets count
-     * only the open ones; waiting lines are those still to be invoiced.
+     * only the open ones; waiting lines are those still to be invoiced;
+     * articles only those the person may read.
      *
      * @return array<string, int>
      */
@@ -96,6 +98,7 @@ final readonly class CustomerWorkspace
             'secrets' => FindSecret::countForCustomer($customerId, $this->teamId),
             'invoices' => FindInvoice::paginateForTeam($this->teamId, customerId: $customerId, perPage: 1)->total(),
             'payments' => FindPayment::countForCustomer($customerId, $this->teamId),
+            'articles' => FindArticle::countVisibleForCustomer($this->teamId, $this->userId, $customerId),
             'waiting_lines' => count(FindCharge::unbilledForCustomers([$customerId], $this->customer->getCurrency()->toEnum())[$customerId] ?? []),
         ];
     }
