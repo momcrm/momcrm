@@ -11,6 +11,7 @@ use App\Team\Properties\BillingAddress;
 use App\Team\Properties\BillingEmail;
 use App\Team\Properties\BillingName;
 use App\Team\Properties\BillingPhone;
+use App\Team\Properties\BpayBillerCode;
 use App\Team\Properties\InvoicePrefix;
 use App\Team\Properties\PaymentDetails;
 use App\Team\Properties\TaxId;
@@ -63,6 +64,7 @@ final class UpdateBillingDetailsFormRequest extends FormRequest
             BillingPhone::getNameForValidation() => BillingPhone::getValidationRulesForUpdate($this),
             BillingAddress::getNameForValidation() => BillingAddress::getValidationRulesForUpdate($this),
             PaymentDetails::getNameForValidation() => PaymentDetails::getValidationRulesForUpdate($this),
+            BpayBillerCode::getNameForValidation() => BpayBillerCode::getValidationRulesForUpdate($this),
             InvoicePrefix::getNameForValidation() => InvoicePrefix::getValidationRulesForUpdate($this),
         ];
     }
@@ -74,6 +76,7 @@ final class UpdateBillingDetailsFormRequest extends FormRequest
     {
         return [
             TaxIdLabel::getNameForValidation().'.required_with' => __('Say what your tax ID is called, e.g. ABN or VAT.'),
+            BpayBillerCode::getNameForValidation().'.regex' => __('A BPAY biller code is 3 to 10 digits.'),
             InvoicePrefix::getNameForValidation().'.regex' => __('Use letters, numbers and - / _ . # only, with no spaces.'),
         ];
     }

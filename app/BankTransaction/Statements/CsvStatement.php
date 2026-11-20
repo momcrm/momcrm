@@ -82,6 +82,16 @@ final class CsvStatement
     }
 
     /**
+     * The file's rows, blank ones left out.
+     *
+     * @return list<list<string>>
+     */
+    public function rows(): array
+    {
+        return $this->rows;
+    }
+
+    /**
      * The file's transactions, read with the columns given, or else those
      * found from its headings, or else the account's saved columns when the
      * file is in the same layout.

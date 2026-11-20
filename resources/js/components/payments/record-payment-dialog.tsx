@@ -143,8 +143,10 @@ export default function RecordPaymentDialog({
                   : '',
         );
         setPaidOn(bankLine?.posted_on ?? today());
-        setMethod('bank_transfer');
-        setReference('');
+        setMethod(
+            bankLine?.bank_account_kind === 'bpay' ? 'bpay' : 'bank_transfer',
+        );
+        setReference(bankLine?.crn ?? '');
         setNotes(bankLine?.description ?? '');
         setTyped({});
         setTicked(new Set());

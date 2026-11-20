@@ -12,6 +12,7 @@ use App\InvoiceItem\InvoiceItemEloquentModel;
 use App\Payment\PaymentEloquentModel;
 use App\PaymentAllocation\PaymentAllocationEloquentModel;
 use App\Service\ServiceEloquentModel;
+use App\Team\TeamEloquentModel;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -107,4 +108,19 @@ it('lists what links to the customer through record-link fields', function (): v
             ->where('linkedRecords.0.field', 'Parent company')
             ->where('linkedRecords.0.records.0.title', 'Acme Retail'),
         );
+});
+
+it("shows the customer's BPAY reference when the team takes BPAY", function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $customer = CustomerEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'number' => 42]);
+
+    actingAs($user)
+        ->get(route('customers.show', $customer->id))
+        ->assertInertia(fn (Assert $page) => $page->where('bpayReference', null));
+
+    TeamEloquentModel::query()->findOrFail($user->current_team_id)->update(['bpay_biller_code' => '123456']);
+
+    actingAs($user)
+        ->get(route('customers.show', $customer->id))
+        ->assertInertia(fn (Assert $page) => $page->where('bpayReference', '422'));
 });

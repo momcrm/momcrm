@@ -179,6 +179,28 @@ export default function Billing({
                                 <InputError message={errors.payment_details} />
                             </div>
 
+                            <div className="grid gap-2">
+                                <Label htmlFor="bpay_biller_code">
+                                    BPAY biller code
+                                </Label>
+                                <Input
+                                    id="bpay_biller_code"
+                                    name="bpay_biller_code"
+                                    inputMode="numeric"
+                                    defaultValue={
+                                        billing.bpay_biller_code ?? ''
+                                    }
+                                    className="max-w-40 font-mono"
+                                />
+                                <p className="text-sm text-muted-foreground">
+                                    From your bank, if customers can pay you by
+                                    BPAY. Invoices then show it with each
+                                    customer’s reference number, and BPAY
+                                    payments match to them on import.
+                                </p>
+                                <InputError message={errors.bpay_biller_code} />
+                            </div>
+
                             <InvoicePrefixField
                                 defaultValue={billing.invoice_prefix}
                                 error={errors.invoice_prefix}

@@ -163,10 +163,15 @@
             @endif
         </table>
 
-        @if ($team->getPaymentDetails()->isNotNull() && $status !== \App\Invoice\InvoiceStatusEnum::Paid && $status !== \App\Invoice\InvoiceStatusEnum::Void)
+        @if (($team->getPaymentDetails()->isNotNull() || $document->bpay() !== null) && $status !== \App\Invoice\InvoiceStatusEnum::Paid && $status !== \App\Invoice\InvoiceStatusEnum::Void)
             <div class="payment">
                 <div class="label">How to pay</div>
-                <p>{{ $team->getPaymentDetails()->toString() }}</p>
+                @if ($document->bpay() !== null)
+                    <p><strong>BPAY</strong> &middot; Biller code {{ $document->bpay()['biller_code'] }} &middot; Ref {{ $document->bpay()['reference'] }}</p>
+                @endif
+                @if ($team->getPaymentDetails()->isNotNull())
+                    <p>{{ $team->getPaymentDetails()->toString() }}</p>
+                @endif
             </div>
         @endif
 

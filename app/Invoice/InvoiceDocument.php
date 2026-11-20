@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Invoice;
 
 use App\Customer\Actions\FindCustomer;
+use App\Customer\BpayReference;
 use App\Customer\Customer;
 use App\Invoice\Actions\FindInvoice;
 use App\InvoiceItem\InvoiceItem;
@@ -75,7 +76,7 @@ final readonly class InvoiceDocument
     }
 
     /**
-     * @return array{title: string, invoice: array<string, mixed>, items: array<int, array<string, mixed>>, totals: array{subtotal_in_cents: int, tax_in_cents: int, total_in_cents: int}, customer: array<string, mixed>, from: array<string, ?string>, customer_credit_in_cents: int, payments: array<int, array<string, mixed>>}
+     * @return array{title: string, invoice: array<string, mixed>, items: array<int, array<string, mixed>>, totals: array{subtotal_in_cents: int, tax_in_cents: int, total_in_cents: int}, customer: array<string, mixed>, from: array<string, ?string>, customer_credit_in_cents: int, payments: array<int, array<string, mixed>>, bpay: ?array{biller_code: string, reference: string}}
      */
     public function toArray(): array
     {
@@ -90,6 +91,23 @@ final readonly class InvoiceDocument
             'payments' => array_values(FindPayment::allocationsForInvoice($this->invoice->getId()->toString(), $this->invoice->getTeamId()->toString())
                 ->map(fn (PaymentAllocation $allocation): array => $allocation->toSummary())
                 ->all()),
+            'bpay' => $this->bpay(),
+        ];
+    }
+
+    /**
+     * How to pay by BPAY, when the team has a biller code: the code and the
+     * customer's reference number.
+     *
+     * @return array{biller_code: string, reference: string}|null
+     */
+    public function bpay(): ?array
+    {
+        $billerCode = $this->team->getBpayBillerCode()->toNullableString();
+
+        return $billerCode === null ? null : [
+            'biller_code' => $billerCode,
+            'reference' => BpayReference::forCustomerNumber($this->customer->getNumber()->toInteger()),
         ];
     }
 }

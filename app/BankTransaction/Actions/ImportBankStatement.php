@@ -80,7 +80,7 @@ final readonly class ImportBankStatement
                     ->insertOrIgnore(array_map(
                         fn (StatementLine $line): array => $rules->hides($line->description)
                             ? $this->row($line, null, isHidden: true)
-                            : $this->row($line, $matcher?->match($line->description)),
+                            : $this->row($line, $matcher?->match($line->description, $line->crn)),
                         $chunk,
                     ));
             }

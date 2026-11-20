@@ -45,7 +45,7 @@ final readonly class MatchBankTransactions
             }
 
             $matcher = $matchers[$account->getId()->toString()] ??= CustomerMatcher::forAccount($account, $rules);
-            $match = $matcher->match($description);
+            $match = $matcher->match($description, $transaction->getCrn()->toNullableString());
 
             if ($match !== null) {
                 AssignBankTransactionCustomer::to($transaction, $match->customerId, $match->matchedBy);

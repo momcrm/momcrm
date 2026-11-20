@@ -159,3 +159,21 @@ it('imports a deposit a hide rule applies to as hidden', function (): void {
 
     expect(BankTransactionEloquentModel::query()->whereNotNull('hidden_at')->pluck('description')->all())->toBe(['TRANSFER FROM SAVINGS 1234']);
 });
+
+it('imports a BPAY biller file into a BPAY account, matching each payment by its reference number', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $account = BankAccountEloquentModel::factory()->create(['team_id' => $owner->current_team_id, 'kind' => 'bpay']);
+    $customer = CustomerEloquentModel::factory()->create(['team_id' => $owner->current_team_id, 'number' => 42]);
+    $csv = "Customer Reference Number,Amount,Transaction Reference Number,Date Payment Accepted,Payer Name,Transaction Type\n"
+        ."422,1250.00,TRN1,20251113,GLENDA CITIZEN,0\n"
+        ."423,40.00,TRN2,20251113,SOMEONE,0\n";
+
+    actingAs($owner)
+        ->post(route('bank-feeds.import'), ['bank_account_id' => $account->id, 'files' => [bank_statement($csv, 'bpay.csv')]])
+        ->assertInertiaFlash('toast', ['type' => 'success', 'message' => '2 new deposits imported.']);
+
+    expect(BankTransactionEloquentModel::query()->orderBy('external_id')->get(['crn', 'customer_id', 'matched_by'])->toArray())->toBe([
+        ['crn' => '422', 'customer_id' => $customer->id, 'matched_by' => 'crn'],
+        ['crn' => '423', 'customer_id' => null, 'matched_by' => null],
+    ]);
+});

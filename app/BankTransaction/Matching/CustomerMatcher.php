@@ -8,6 +8,7 @@ use App\BankAccount\BankAccount;
 use App\BankRule\Actions\FindBankRule;
 use App\BankRule\BankRuleCollection;
 use App\BankTransaction\BankTransactionMatchEnum;
+use App\Customer\BpayReference;
 use App\Customer\CustomerEloquentModel;
 use App\Customer\CustomerStatusEnum;
 use App\Customer\Properties\Currency as CustomerCurrency;
@@ -136,8 +137,18 @@ final class CustomerMatcher
         );
     }
 
-    public function match(string $description): ?CustomerMatch
+    /**
+     * The customer a deposit is from: by the BPAY reference it was paid
+     * with when it has one, which is exact, otherwise by its description.
+     */
+    public function match(string $description, ?string $crn = null): ?CustomerMatch
     {
+        $customerNumber = $crn === null ? null : BpayReference::customerNumberOf($crn);
+
+        if ($customerNumber !== null && isset($this->customerNumbers[$customerNumber])) {
+            return new CustomerMatch($this->customerNumbers[$customerNumber], BankTransactionMatchEnum::Crn);
+        }
+
         $match = $this->matched[$description] ??= $this->find($description) ?? false;
 
         return $match === false ? null : $match;

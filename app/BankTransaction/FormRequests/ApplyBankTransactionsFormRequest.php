@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\BankTransaction\FormRequests;
 
+use App\BankAccount\BankAccountKindEnum;
 use App\BankTransaction\Actions\ApplyBankTransaction;
 use App\BankTransaction\BankTransactionCollection;
 use App\BankTransaction\BankTransactionSelection;
@@ -97,7 +98,8 @@ final class ApplyBankTransactionsFormRequest extends FormRequest
                         ->setAmountInCents($amount)
                         ->setCurrency($customer->getCurrency()->toEnum()->value)
                         ->setPaidOn($transaction->getPostedOn()->toNullableCarbon()?->toDateString())
-                        ->setMethod(PaymentMethodEnum::BankTransfer->value)
+                        ->setMethod($transaction->getBankAccount()->toData()->getKind()->toEnum() === BankAccountKindEnum::Bpay ? PaymentMethodEnum::Bpay->value : PaymentMethodEnum::BankTransfer->value)
+                        ->setReference($transaction->getCrn()->toNullableString())
                         ->setNotes($transaction->getDescription()->toString()),
                     ApplyBankTransaction::oldestInvoicesFirst($customer->getId()->toString(), $teamId, $amount),
                 );
