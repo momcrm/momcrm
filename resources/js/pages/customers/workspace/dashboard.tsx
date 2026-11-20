@@ -280,7 +280,10 @@ export default function CustomerDashboard({
         { label: 'Email', value: customer.email },
         { label: 'Phone', value: customer.phone },
         { label: 'Website', value: customer.website },
-        { label: 'ABN', value: customer.abn },
+        {
+            label: customer.tax_id_label ?? 'Tax ID',
+            value: customer.tax_id,
+        },
         ...customFields
             .filter((field) =>
                 hasCustomFieldValue(field, customer.custom_fields[field.id]),

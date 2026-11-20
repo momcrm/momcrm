@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Customer;
 
 use App\Choice\ChoiceListEnum;
-use App\Customer\Properties\Abn;
 use App\Customer\Properties\BillingType;
 use App\Customer\Properties\Currency;
 use App\Customer\Properties\Email;
@@ -14,6 +13,8 @@ use App\Customer\Properties\Notes;
 use App\Customer\Properties\Phone;
 use App\Customer\Properties\Prefix;
 use App\Customer\Properties\Status;
+use App\Customer\Properties\TaxId;
+use App\Customer\Properties\TaxIdLabel;
 use App\Customer\Properties\TypeId;
 use App\Customer\Properties\Website;
 use App\Invoice\InvoiceEloquentModel;
@@ -61,7 +62,8 @@ final class CustomerValidationRules
                     ->where('team_id', $teamId)
                     ->ignore($currentId),
             ],
-            Abn::getNameForValidation() => Abn::getValidationRulesForCreate($request),
+            TaxId::getNameForValidation() => TaxId::getValidationRulesForCreate($request),
+            TaxIdLabel::getNameForValidation() => TaxIdLabel::getValidationRulesForCreate($request),
             Email::getNameForValidation() => Email::getValidationRulesForCreate($request),
             Phone::getNameForValidation() => Phone::getValidationRulesForCreate($request),
             Website::getNameForValidation() => Website::getValidationRulesForCreate($request),
@@ -98,6 +100,7 @@ final class CustomerValidationRules
             TypeId::getNameForValidation().'.exists' => __('Choose one of your team\'s customer types.'),
             Prefix::getNameForValidation().'.unique' => __('Another customer already uses this prefix.'),
             Prefix::getNameForValidation().'.regex' => __('Use letters only.'),
+            TaxIdLabel::getNameForValidation().'.required_with' => __('Say what their tax ID is called, e.g. ABN or VAT.'),
         ];
     }
 

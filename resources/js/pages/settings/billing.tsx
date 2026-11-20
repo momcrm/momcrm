@@ -2,24 +2,12 @@ import { Form, Head } from '@inertiajs/react';
 import UpdateBillingDetailsController from '@/actions/App/Team/Controllers/UpdateBillingDetailsController';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
+import TaxIdInputs from '@/components/tax-id-inputs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import type { TeamBilling } from '@/types';
-
-/** What tax IDs are called in the countries the app bills in. */
-const taxIdLabels = [
-    'ABN',
-    'GST No.',
-    'NZBN',
-    'VAT',
-    'UEN',
-    'TIN',
-    'BN',
-    'BRN',
-    'EIN',
-];
 
 export default function Billing({
     teamName,
@@ -67,29 +55,18 @@ export default function Billing({
 
                             <div className="grid gap-2">
                                 <Label htmlFor="tax_id">Tax ID</Label>
-                                <div className="flex gap-2">
-                                    <Input
-                                        aria-label="What your tax ID is called"
-                                        name="tax_id_label"
-                                        list="tax-id-labels"
-                                        defaultValue={
-                                            billing.tax_id_label ?? ''
-                                        }
-                                        placeholder="ABN"
-                                        className="w-28 shrink-0"
-                                    />
-                                    <datalist id="tax-id-labels">
-                                        {taxIdLabels.map((label) => (
-                                            <option key={label} value={label} />
-                                        ))}
-                                    </datalist>
-                                    <Input
-                                        id="tax_id"
-                                        name="tax_id"
-                                        defaultValue={billing.tax_id ?? ''}
-                                        placeholder="12 345 678 901"
-                                    />
-                                </div>
+                                <TaxIdInputs
+                                    labelInput={{
+                                        name: 'tax_id_label',
+                                        defaultValue:
+                                            billing.tax_id_label ?? '',
+                                    }}
+                                    idInput={{
+                                        id: 'tax_id',
+                                        name: 'tax_id',
+                                        defaultValue: billing.tax_id ?? '',
+                                    }}
+                                />
                                 <p className="text-sm text-muted-foreground">
                                     Name it the way your country does, e.g. ABN,
                                     VAT or GST No. With a tax ID, invoices that

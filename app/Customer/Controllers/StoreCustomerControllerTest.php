@@ -18,7 +18,8 @@ it('adds a customer to the current team and opens it', function (): void {
         'email' => 'hello@acme.test',
         'phone' => '08 9000 0000',
         'website' => 'https://acme.test',
-        'abn' => '12 345 678 901',
+        'tax_id_label' => 'VAT',
+        'tax_id' => 'GB 123 4567 89',
         'status' => 'active',
         'notes' => 'Prefers email.',
     ]);
@@ -29,8 +30,18 @@ it('adds a customer to the current team and opens it', function (): void {
         ->team_id->toBe($user->current_team_id)
         ->name->toBe('Acme IT')
         ->email->toBe('hello@acme.test')
+        ->tax_id_label->toBe('VAT')
+        ->tax_id->toBe('GB 123 4567 89')
         ->number->toBe(1)
         ->is_sample->toBeFalse();
+});
+
+it('asks what a tax ID is called', function (): void {
+    actingAs(UserEloquentModel::factory()->withPersonalTeam()->create())
+        ->post(route('customers.store'), ['name' => 'Acme IT', 'status' => 'active', 'tax_id' => '12 345 678 901'])
+        ->assertSessionHasErrors(['tax_id_label' => 'Say what their tax ID is called, e.g. ABN or VAT.']);
+
+    expect(CustomerEloquentModel::query()->count())->toBe(0);
 });
 
 it('numbers customers from 1 within each team', function (): void {

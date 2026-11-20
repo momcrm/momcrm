@@ -60,8 +60,8 @@
                 <td style="width: 50%; padding-right: 24px;">
                     <div class="label">Bill to</div>
                     <div class="bill-to-name">{{ $customer->getName()->toString() }}</div>
-                    @if ($customer->getAbn()->isNotNull())
-                        <div class="muted">ABN {{ $customer->getAbn()->toString() }}</div>
+                    @if ($customer->taxIdLine() !== null)
+                        <div class="muted">{{ $customer->taxIdLine() }}</div>
                     @endif
                     @if ($customer->getEmail()->isNotNull())
                         <div class="muted">{{ $customer->getEmail()->toString() }}</div>

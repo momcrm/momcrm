@@ -15,6 +15,7 @@ import { SettingsRow, SettingsSection } from '@/components/settings-section';
 import { ChoiceTag } from '@/components/tickets/ticket-meta';
 import { useCustomerTypes } from '@/components/customers/customer-meta';
 import { Button } from '@/components/ui/button';
+import TaxIdInputs from '@/components/tax-id-inputs';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
@@ -113,7 +114,8 @@ export default function CustomerSettings({
         email: customer.email ?? '',
         phone: customer.phone ?? '',
         website: customer.website ?? '',
-        abn: customer.abn ?? '',
+        tax_id: customer.tax_id ?? '',
+        tax_id_label: customer.tax_id_label ?? '',
         notes: customer.notes ?? '',
         main_contact_id: mainContactId ?? '',
         main_location_id: mainLocationId ?? '',
@@ -317,11 +319,14 @@ export default function CustomerSettings({
                         />
                     </SettingsRow>
                     <SettingsRow
-                        label="ABN"
-                        htmlFor="abn"
-                        error={form.errors.abn}
+                        label="Tax ID"
+                        htmlFor="tax_id"
+                        error={form.errors.tax_id_label ?? form.errors.tax_id}
                     >
-                        <Input {...text('abn')} className="w-48" />
+                        <TaxIdInputs
+                            labelInput={text('tax_id_label')}
+                            idInput={{ ...text('tax_id'), className: 'w-48' }}
+                        />
                     </SettingsRow>
                 </SettingsSection>
 

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Customer;
 
 use App\Customer\Factories\CustomerFactory;
-use App\Customer\Properties\Abn;
 use App\Customer\Properties\BillingType;
 use App\Customer\Properties\ContactsCount;
 use App\Customer\Properties\CreatedAt;
@@ -20,6 +19,8 @@ use App\Customer\Properties\Phone;
 use App\Customer\Properties\Prefix;
 use App\Customer\Properties\ServicesCount;
 use App\Customer\Properties\Status;
+use App\Customer\Properties\TaxId;
+use App\Customer\Properties\TaxIdLabel;
 use App\Customer\Properties\TeamId;
 use App\Customer\Properties\TypeId;
 use App\Customer\Properties\UpdatedAt;
@@ -35,7 +36,6 @@ use Mom\Data\AbstractValue;
 final class Customer extends AbstractData
 {
     public function __construct(
-        public Abn $abn,
         public BillingType $billingType,
         public ContactsCount $contactsCount,
         public CreatedAt $createdAt,
@@ -51,6 +51,8 @@ final class Customer extends AbstractData
         public Prefix $prefix,
         public ServicesCount $servicesCount,
         public Status $status,
+        public TaxId $taxId,
+        public TaxIdLabel $taxIdLabel,
         public TeamId $teamId,
         public TypeId $typeId,
         public UpdatedAt $updatedAt,
@@ -82,7 +84,7 @@ final class Customer extends AbstractData
     /**
      * The fields the customer pages show.
      *
-     * @return array{id: string, number: int, name: string, prefix: ?string, type_id: ?string, abn: ?string, email: ?string, phone: ?string, website: ?string, status: string, billing_type: string, currency: string, notes: ?string, is_sample: bool, custom_fields: array<string, mixed>}
+     * @return array{id: string, number: int, name: string, prefix: ?string, type_id: ?string, tax_id: ?string, tax_id_label: ?string, email: ?string, phone: ?string, website: ?string, status: string, billing_type: string, currency: string, notes: ?string, is_sample: bool, custom_fields: array<string, mixed>}
      */
     public function toSummary(): array
     {
@@ -92,7 +94,8 @@ final class Customer extends AbstractData
             'name' => $this->getName()->toString(),
             'prefix' => $this->getPrefix()->toNullableString(),
             'type_id' => $this->getTypeId()->toNullableString(),
-            'abn' => $this->getAbn()->toNullableString(),
+            'tax_id' => $this->getTaxId()->toNullableString(),
+            'tax_id_label' => $this->getTaxIdLabel()->toNullableString(),
             'email' => $this->getEmail()->toNullableString(),
             'phone' => $this->getPhone()->toNullableString(),
             'website' => $this->getWebsite()->toNullableString(),
@@ -105,14 +108,38 @@ final class Customer extends AbstractData
         ];
     }
 
-    public function getAbn(): Abn
+    /**
+     * The tax ID as printed, e.g. "ABN 12 345 678 901", or null without one.
+     */
+    public function taxIdLine(): ?string
     {
-        return $this->abn;
+        if ($this->getTaxId()->isNull()) {
+            return null;
+        }
+
+        return ($this->getTaxIdLabel()->toNullableString() ?? __('Tax ID')).' '.$this->getTaxId()->toString();
     }
 
-    public function setAbn(mixed $abn): self
+    public function getTaxId(): TaxId
     {
-        $this->abn = new Abn($abn instanceof AbstractValue ? $abn->toValue() : $abn);
+        return $this->taxId;
+    }
+
+    public function setTaxId(mixed $taxId): self
+    {
+        $this->taxId = new TaxId($taxId instanceof AbstractValue ? $taxId->toValue() : $taxId);
+
+        return $this;
+    }
+
+    public function getTaxIdLabel(): TaxIdLabel
+    {
+        return $this->taxIdLabel;
+    }
+
+    public function setTaxIdLabel(mixed $taxIdLabel): self
+    {
+        $this->taxIdLabel = new TaxIdLabel($taxIdLabel instanceof AbstractValue ? $taxIdLabel->toValue() : $taxIdLabel);
 
         return $this;
     }

@@ -34,7 +34,8 @@ final readonly class ImportCustomersFromCsv
      */
     public const array HEADINGS = [
         'name' => ['name', 'customer', 'customer name', 'company', 'company name', 'business', 'business name', 'organisation', 'organization', 'client', 'client name'],
-        'abn' => ['abn'],
+        'tax_id' => ['tax id', 'tax number', 'tax no', 'abn', 'vat', 'vat number', 'vat no', 'gst number', 'gst no', 'nzbn', 'uen', 'tin', 'ein', 'business number'],
+        'tax_id_label' => ['tax id label', 'tax id type'],
         'email' => ['email', 'e mail', 'customer email', 'company email', 'email address'],
         'phone' => ['phone', 'customer phone', 'company phone', 'telephone', 'phone number'],
         'website' => ['website', 'web', 'url', 'web site'],
@@ -43,6 +44,24 @@ final readonly class ImportCustomersFromCsv
         'contact_last_name' => ['last name', 'contact last name', 'lastname', 'surname', 'family name'],
         'contact_email' => ['contact email'],
         'contact_phone' => ['contact phone', 'mobile', 'contact mobile', 'mobile phone'],
+    ];
+
+    /**
+     * What a tax ID heading says the tax ID is called, when it says.
+     *
+     * @var array<string, string>
+     */
+    public const array TAX_ID_LABELS = [
+        'abn' => 'ABN',
+        'vat' => 'VAT',
+        'vat number' => 'VAT',
+        'vat no' => 'VAT',
+        'gst number' => 'GST No.',
+        'gst no' => 'GST No.',
+        'nzbn' => 'NZBN',
+        'uen' => 'UEN',
+        'tin' => 'TIN',
+        'ein' => 'EIN',
     ];
 
     public function __construct(
@@ -68,7 +87,8 @@ final readonly class ImportCustomersFromCsv
                 $customer = CreateCustomer::fromCustomer(Customer::new()
                     ->setTeamId($this->teamId)
                     ->setName($group['name'])
-                    ->setAbn($group['abn'])
+                    ->setTaxId($group['tax_id'])
+                    ->setTaxIdLabel($group['tax_id_label'])
                     ->setEmail($group['email'])
                     ->setPhone($group['phone'])
                     ->setWebsite($group['website'])
@@ -150,6 +170,8 @@ final readonly class ImportCustomersFromCsv
         }
 
         $columns = $this->matchColumns($header);
+        $taxIdColumn = array_search('tax_id', $columns, true);
+        $labelFromHeading = $taxIdColumn === false ? null : (self::TAX_ID_LABELS[self::normalise($header[$taxIdColumn])] ?? null);
 
         if (! in_array('name', $columns, true)) {
             fclose($handle);
@@ -181,6 +203,11 @@ final readonly class ImportCustomersFromCsv
                 }
             }
 
+            // A column headed ABN or VAT says what its tax IDs are called.
+            if ($labelFromHeading !== null && ($row['tax_id_label'] ?? '') === '') {
+                $row['tax_id_label'] = $labelFromHeading;
+            }
+
             $rows[] = $row;
         }
 
@@ -202,7 +229,7 @@ final readonly class ImportCustomersFromCsv
         $taken = [];
 
         return array_map(function (?string $heading) use (&$taken): ?string {
-            $normalised = trim((string) preg_replace('/[^a-z0-9]+/', ' ', mb_strtolower(preg_replace('/^\xEF\xBB\xBF/', '', (string) $heading) ?? '')));
+            $normalised = self::normalise($heading);
 
             foreach (self::HEADINGS as $field => $headings) {
                 if (! isset($taken[$field]) && in_array($normalised, $headings, true)) {
@@ -217,8 +244,17 @@ final readonly class ImportCustomersFromCsv
     }
 
     /**
+     * A heading lowercased, with anything but letters and digits made a
+     * single space.
+     */
+    private static function normalise(?string $heading): string
+    {
+        return trim((string) preg_replace('/[^a-z0-9]+/', ' ', mb_strtolower(preg_replace('/^\xEF\xBB\xBF/', '', (string) $heading) ?? '')));
+    }
+
+    /**
      * @param  array<int, array<string, string>>  $rows
-     * @return array<string, array{name: string, abn: ?string, email: ?string, phone: ?string, website: ?string, contacts: array<int, array{first_name: string, last_name: ?string, email: ?string, phone: ?string}>}>
+     * @return array<string, array{name: string, tax_id: ?string, tax_id_label: ?string, email: ?string, phone: ?string, website: ?string, contacts: array<int, array{first_name: string, last_name: ?string, email: ?string, phone: ?string}>}>
      *
      * @throws ValidationException
      */
@@ -230,7 +266,8 @@ final readonly class ImportCustomersFromCsv
         foreach ($rows as $row) {
             $validator = Validator::make($row, [
                 'name' => ['required', 'string', 'max:255'],
-                'abn' => ['nullable', 'string', 'max:20'],
+                'tax_id' => ['nullable', 'string', 'max:50'],
+                'tax_id_label' => ['nullable', 'string', 'max:20'],
                 'email' => ['nullable', 'email', 'max:255'],
                 'phone' => ['nullable', 'string', 'max:50'],
                 'website' => ['nullable', 'url', 'max:255'],
@@ -252,7 +289,8 @@ final readonly class ImportCustomersFromCsv
             $key = mb_strtolower($row['name']);
             $grouped[$key] ??= [
                 'name' => $row['name'],
-                'abn' => ($row['abn'] ?? '') ?: null,
+                'tax_id' => ($row['tax_id'] ?? '') ?: null,
+                'tax_id_label' => ($row['tax_id'] ?? '') === '' ? null : (($row['tax_id_label'] ?? '') ?: null),
                 'email' => ($row['email'] ?? '') ?: null,
                 'phone' => ($row['phone'] ?? '') ?: null,
                 'website' => ($row['website'] ?? '') ?: null,
