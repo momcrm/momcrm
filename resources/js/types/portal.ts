@@ -93,3 +93,31 @@ export type PortalReceipt = {
     amount_in_cents: number;
     pdf_url: string;
 };
+
+/** One of the customer's services in the portal. */
+export type PortalService = {
+    id: string;
+    name: string | null;
+    short_name: string | null;
+    status: string;
+    is_active: boolean;
+    quantity: number | null;
+    currency: string;
+    rate_name: string | null;
+    /** What it costs each billing period. */
+    rental_in_cents: number | null;
+    billing_period_in_months: number | null;
+    billing_starts_on: string | null;
+    ends_on: string | null;
+    location_name: string | null;
+};
+
+/** One of the customer's assets in the portal. */
+export type PortalAsset = {
+    id: string;
+    name: string | null;
+    serial_number: string | null;
+    status: string;
+    is_active: boolean;
+    location_name: string | null;
+};

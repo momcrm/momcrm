@@ -6,8 +6,10 @@ use App\Portal\Controllers\CreatePortalTicketController;
 use App\Portal\Controllers\DownloadPortalInvoicePdfController;
 use App\Portal\Controllers\DownloadPortalReceiptPdfController;
 use App\Portal\Controllers\DownloadPortalStatementController;
+use App\Portal\Controllers\ListPortalAssetsController;
 use App\Portal\Controllers\ListPortalInvoicesController;
 use App\Portal\Controllers\ListPortalReceiptsController;
+use App\Portal\Controllers\ListPortalServicesController;
 use App\Portal\Controllers\ListPortalTicketsController;
 use App\Portal\Controllers\LogOutOfPortalController;
 use App\Portal\Controllers\RedirectPortalToProviderController;
@@ -63,6 +65,9 @@ Route::prefix('portal')->name('portal.')->group(function () {
         Route::get('receipts/{payment}/pdf', DownloadPortalReceiptPdfController::class)->name('receipts.pdf');
         Route::get('statement', ShowPortalStatementController::class)->name('statement');
         Route::get('statement/pdf', DownloadPortalStatementController::class)->name('statement.pdf');
+
+        Route::get('services', ListPortalServicesController::class)->name('services.index');
+        Route::get('assets', ListPortalAssetsController::class)->name('assets.index');
         Route::post('logout', LogOutOfPortalController::class)->name('logout');
     });
 });

@@ -14,8 +14,10 @@ import { useCurrentUrl } from '@/hooks/use-current-url';
 import { useInitials } from '@/hooks/use-initials';
 import { cn } from '@/lib/utils';
 import { choose, home, logout, statement } from '@/routes/portal';
+import { index as assets } from '@/routes/portal/assets';
 import { index as invoices } from '@/routes/portal/invoices';
 import { index as receipts } from '@/routes/portal/receipts';
+import { index as services } from '@/routes/portal/services';
 import { index as tickets } from '@/routes/portal/tickets';
 import type { PortalSection, PortalShared } from '@/types';
 
@@ -49,6 +51,8 @@ export const portalNavItems: PortalNavItem[] = [
     { title: 'Invoices', href: invoices.url(), section: 'invoices' },
     { title: 'Receipts', href: receipts.url(), section: 'receipts' },
     { title: 'Statement', href: statement.url(), section: 'statement' },
+    { title: 'Services', href: services.url(), section: 'services' },
+    { title: 'Assets', href: assets.url(), section: 'assets' },
 ];
 
 /**
