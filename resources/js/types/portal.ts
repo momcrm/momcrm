@@ -68,3 +68,28 @@ export type PortalFile = {
     created_at: string | null;
     url: string;
 };
+
+/** One of the customer's invoices in the portal. */
+export type PortalInvoice = {
+    id: string;
+    reference: string;
+    issued_on: string | null;
+    due_on: string | null;
+    status: 'sent' | 'paid';
+    is_overdue: boolean;
+    currency: string;
+    total_in_cents: number;
+    balance_in_cents: number;
+    pdf_url: string;
+};
+
+/** One of the customer's payments in the portal. */
+export type PortalReceipt = {
+    id: string;
+    reference: string;
+    paid_on: string | null;
+    method: string;
+    currency: string;
+    amount_in_cents: number;
+    pdf_url: string;
+};

@@ -3,6 +3,11 @@
 use App\Portal\Controllers\ChoosePortalContactController;
 use App\Portal\Controllers\ClosePortalTicketController;
 use App\Portal\Controllers\CreatePortalTicketController;
+use App\Portal\Controllers\DownloadPortalInvoicePdfController;
+use App\Portal\Controllers\DownloadPortalReceiptPdfController;
+use App\Portal\Controllers\DownloadPortalStatementController;
+use App\Portal\Controllers\ListPortalInvoicesController;
+use App\Portal\Controllers\ListPortalReceiptsController;
 use App\Portal\Controllers\ListPortalTicketsController;
 use App\Portal\Controllers\LogOutOfPortalController;
 use App\Portal\Controllers\RedirectPortalToProviderController;
@@ -13,6 +18,7 @@ use App\Portal\Controllers\ShowPortalCodeController;
 use App\Portal\Controllers\ShowPortalDashboardController;
 use App\Portal\Controllers\ShowPortalFileController;
 use App\Portal\Controllers\ShowPortalLoginController;
+use App\Portal\Controllers\ShowPortalStatementController;
 use App\Portal\Controllers\ShowPortalTicketController;
 use App\Portal\Controllers\StorePortalTicketController;
 use App\Portal\Controllers\StorePortalTicketFilesController;
@@ -50,6 +56,13 @@ Route::prefix('portal')->name('portal.')->group(function () {
         Route::post('tickets/{ticket}/close', ClosePortalTicketController::class)->name('tickets.close');
         Route::post('tickets/{ticket}/reopen', ReopenPortalTicketController::class)->name('tickets.reopen');
         Route::get('files/{attachment}', ShowPortalFileController::class)->name('files.show');
+
+        Route::get('invoices', ListPortalInvoicesController::class)->name('invoices.index');
+        Route::get('invoices/{invoice}/pdf', DownloadPortalInvoicePdfController::class)->name('invoices.pdf');
+        Route::get('receipts', ListPortalReceiptsController::class)->name('receipts.index');
+        Route::get('receipts/{payment}/pdf', DownloadPortalReceiptPdfController::class)->name('receipts.pdf');
+        Route::get('statement', ShowPortalStatementController::class)->name('statement');
+        Route::get('statement/pdf', DownloadPortalStatementController::class)->name('statement.pdf');
         Route::post('logout', LogOutOfPortalController::class)->name('logout');
     });
 });
