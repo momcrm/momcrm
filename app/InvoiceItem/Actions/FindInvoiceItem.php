@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\InvoiceItem\Actions;
 
+use App\Charge\Properties\RentalEndsOn as ChargeRentalEndsOn;
+use App\Charge\Properties\ServiceId as ChargeServiceId;
 use App\Invoice\Invoice;
 use App\Invoice\InvoiceStatusEnum;
 use App\Invoice\Properties\IssuedOn;
@@ -25,7 +27,8 @@ final class FindInvoiceItem
 {
     /**
      * The last day each service was billed to on an invoice that wasn't
-     * voided, by service id. Services never billed are left out.
+     * voided, or by a service-period charge waiting to be combined into one,
+     * by service id. Services never billed are left out.
      *
      * @param  list<string>  $serviceIds
      * @return array<string, CarbonImmutable>
@@ -39,7 +42,10 @@ final class FindInvoiceItem
         $items = Table::InvoiceItems->value;
         $invoices = Table::Invoices->value;
 
-        return DB::table($items)
+        $charges = Table::Charges->value;
+        $billed = [];
+
+        $rows = DB::table($items)
             ->join($invoices, "{$invoices}.id", '=', "{$items}.invoice_id")
             ->whereIn(ServiceId::getDatabaseTableColumnNameWithTable($items), $serviceIds)
             ->where(Status::getDatabaseTableColumnNameWithTable($invoices), '!=', InvoiceStatusEnum::Void->value)
@@ -47,8 +53,23 @@ final class FindInvoiceItem
             ->groupBy(ServiceId::getDatabaseTableColumnNameWithTable($items))
             ->selectRaw("{$items}.service_id as service_id, max({$items}.rental_ends_on) as billed_through")
             ->get()
-            ->mapWithKeys(fn (object $row): array => [Types::string($row->service_id) => CarbonImmutable::parse(Types::string($row->billed_through))->startOfDay()])
-            ->all();
+            ->concat(DB::table($charges)
+                ->whereIn(ChargeServiceId::getDatabaseTableColumnNameWithTable($charges), $serviceIds)
+                ->whereNotNull(ChargeRentalEndsOn::getDatabaseTableColumnNameWithTable($charges))
+                ->groupBy(ChargeServiceId::getDatabaseTableColumnNameWithTable($charges))
+                ->selectRaw("{$charges}.service_id as service_id, max({$charges}.rental_ends_on) as billed_through")
+                ->get());
+
+        foreach ($rows as $row) {
+            $serviceId = Types::string($row->service_id);
+            $through = CarbonImmutable::parse(Types::string($row->billed_through))->startOfDay();
+
+            if (! isset($billed[$serviceId]) || $through->gt($billed[$serviceId])) {
+                $billed[$serviceId] = $through;
+            }
+        }
+
+        return $billed;
     }
 
     /**

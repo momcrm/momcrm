@@ -22,7 +22,9 @@ use App\BankTransaction\Controllers\HideBankTransactionsController;
 use App\BankTransaction\Controllers\ImportBankStatementController;
 use App\BankTransaction\Controllers\ListBankTransactionsController;
 use App\BankTransaction\Controllers\MatchBankTransactionsController;
+use App\Charge\Controllers\ChargeServicePeriodController;
 use App\Charge\Controllers\DeleteChargeController;
+use App\Charge\Controllers\ShowServicePeriodController;
 use App\Charge\Controllers\StoreChargeController;
 use App\Charge\Controllers\UpdateChargeController;
 use App\Comment\Controllers\DeleteCommentController;
@@ -209,6 +211,8 @@ Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function 
     Route::get('customers/{customer}/outstanding-invoices', ListOutstandingInvoicesController::class)->whereUuid('customer')->name('customers.outstanding-invoices');
     Route::get('customers/{customer}/billing', ShowCustomerBillingController::class)->whereUuid('customer')->name('customers.billing');
     Route::post('customers/{customer}/bill', BillCustomerController::class)->whereUuid('customer')->name('customers.bill');
+    Route::get('customers/{customer}/billing/service-period', ShowServicePeriodController::class)->whereUuid('customer')->name('customers.billing.service-period');
+    Route::post('customers/{customer}/billing/service-period', ChargeServicePeriodController::class)->whereUuid('customer')->name('customers.billing.service-period.store');
     Route::get('customers/{customer}/settings', EditCustomerController::class)->whereUuid('customer')->name('customers.edit');
     Route::put('customers/{customer}', UpdateCustomerController::class)->whereUuid('customer')->name('customers.update');
     Route::delete('customers/{customer}', DeleteCustomerController::class)->whereUuid('customer')->name('customers.destroy');
