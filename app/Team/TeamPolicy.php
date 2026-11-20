@@ -65,6 +65,17 @@ final class TeamPolicy
     }
 
     /**
+     * Owners and admins can open the customer portal as one of the team's
+     * contacts, to check what that contact sees.
+     */
+    public function viewPortalAsContact(UserEloquentModel $user, Team $team): Response
+    {
+        return $this->isOwnerOrAdmin($user, $team)
+            ? Response::allow()
+            : Response::deny('Only team owners and admins can view the portal as a contact.');
+    }
+
+    /**
      * Owners and admins edit the team's customisable lists, such as ticket
      * statuses and priorities.
      */

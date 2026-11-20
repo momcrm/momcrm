@@ -35,6 +35,7 @@ use App\Group\Actions\FindGroup;
 use App\Location\Actions\FindLocation;
 use App\MailboxMessage\Actions\FindMailboxMessage;
 use App\MailboxMessage\TicketReplyRoute;
+use App\Portal\Actions\FindPortalReplyRecipient;
 use App\Project\Actions\FindProject;
 use App\Shared\MorphMapKeyEnum;
 use App\Team\Scopes\CurrentTeamScope;
@@ -107,6 +108,7 @@ final class TicketDrawer
         $location = FindLocation::byIdForTeam($ticket->getLocationId()->toNullableString(), $teamId);
 
         $deliveries = FindMailboxMessage::deliveriesForTicket($model->id, $teamId);
+        $repliesShowInPortal = FindPortalReplyRecipient::forTicket($ticket)->isNotNull();
 
         return [
             ...$ticket->toSummary(),
@@ -152,7 +154,7 @@ final class TicketDrawer
                     'sender_email' => $comment->sender_email,
                     'from_portal' => $comment->contact_id !== null,
                     'visibility' => $comment->visibility,
-                    'delivery' => $deliveries[$comment->id] ?? null,
+                    'delivery' => $deliveries[$comment->id] ?? ($repliesShowInPortal && $comment->user_id !== null ? ['status' => 'portal', 'error' => null] : null),
                     'mentions' => $comment->mentions ?? [],
                     'created_at' => $comment->created_at?->toIso8601String(),
                     'can_delete' => $comment->user_id === $userId

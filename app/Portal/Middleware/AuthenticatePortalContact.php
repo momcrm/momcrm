@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Portal\Middleware;
 
+use App\Portal\PortalAccess;
 use App\Portal\PortalAuth;
 use App\Portal\PortalSession;
 use Carbon\CarbonImmutable;
@@ -48,7 +49,7 @@ final class AuthenticatePortalContact
 
         Auth::shouldUse(PortalAuth::GUARD);
 
-        if ($contact->portal_last_seen_at === null || $contact->portal_last_seen_at->lt(CarbonImmutable::now()->subMinutes(self::SEEN_EVERY_MINUTES))) {
+        if (! PortalAccess::isViewingAs() && ($contact->portal_last_seen_at === null || $contact->portal_last_seen_at->lt(CarbonImmutable::now()->subMinutes(self::SEEN_EVERY_MINUTES)))) {
             $contact->newQueryWithoutScopes()->whereKey($contact->id)->update(['portal_last_seen_at' => CarbonImmutable::now()]);
         }
 

@@ -25,6 +25,7 @@ use App\Portal\Controllers\ShowPortalFileController;
 use App\Portal\Controllers\ShowPortalLoginController;
 use App\Portal\Controllers\ShowPortalStatementController;
 use App\Portal\Controllers\ShowPortalTicketController;
+use App\Portal\Controllers\StopViewingPortalAsContactController;
 use App\Portal\Controllers\StorePortalTicketController;
 use App\Portal\Controllers\StorePortalTicketFilesController;
 use App\Portal\Controllers\StorePortalTicketReplyController;
@@ -76,5 +77,6 @@ Route::prefix('portal')->name('portal.')->group(function () {
         Route::get('articles/{article}', ShowPortalArticleController::class)->name('articles.show');
         Route::get('articles/{article}/images/{image}', ShowPortalArticleImageController::class)->name('articles.images.show');
         Route::post('logout', LogOutOfPortalController::class)->name('logout');
+        Route::post('view-as/stop', StopViewingPortalAsContactController::class)->name('view-as.stop');
     });
 });

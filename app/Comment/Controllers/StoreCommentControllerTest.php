@@ -7,6 +7,7 @@ use App\Activity\ActivityTypeEnum;
 use App\Comment\CommentEloquentModel;
 use App\Comment\Notifications\MentionedInCommentNotification;
 use App\Comment\Notifications\TicketCommentedNotification;
+use App\Comment\Notifications\TicketReplyInPortalNotification;
 use App\Favorite\FavoriteEloquentModel;
 use App\Mailbox\MailboxEloquentModel;
 use App\MailboxMessage\Jobs\SendMailboxMessageJob;
@@ -163,4 +164,23 @@ it('rejects a visibility it does not know', function (): void {
     actingAs($user)
         ->post(route('comments.store', $ticket->id), ['body' => 'Hello', 'visibility' => 'everyone'])
         ->assertSessionHasErrors(['visibility' => 'The selected visibility is invalid.']);
+});
+
+it("tells a portal contact about a reply when there's no mailbox to send it from", function (): void {
+    Notification::fake();
+    $contact = portalContact();
+    $staff = UserEloquentModel::query()->where('current_team_id', $contact->team_id)->sole();
+    $ticket = portalTicket($contact, ['contact_id' => $contact->id, 'title' => 'Printer jam']);
+
+    actingAs($staff)
+        ->post(route('comments.store', $ticket->id), ['body' => 'We have ordered a part.', 'visibility' => 'public'])
+        ->assertSessionHasNoErrors();
+
+    expect(CommentEloquentModel::query()->withoutGlobalScopes()->sole()->visibility)->toBe('public');
+    Notification::assertSentOnDemand(
+        TicketReplyInPortalNotification::class,
+        fn (TicketReplyInPortalNotification $notification, array $channels, object $notifiable): bool => $notifiable->routes['mail'] === 'mark@coastal.test'
+            && $notification->body === 'We have ordered a part.',
+    );
+    expect(MailboxMessageEloquentModel::query()->withoutGlobalScopes()->exists())->toBeFalse();
 });

@@ -20,6 +20,8 @@ export type PortalShared = {
     sections: Record<PortalSection, boolean>;
     /** Whether their email is a portal contact at other customers too. */
     canSwitch: boolean;
+    /** A staff member is looking at the portal as them, read-only. */
+    viewingAs: boolean;
 };
 
 /** One customer someone can sign in to the portal as. */
