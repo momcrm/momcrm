@@ -47,6 +47,8 @@ declare module '@inertiajs/core' {
                 import('./crm').CustomFieldTarget,
                 import('./crm').CustomField[]
             > | null;
+            /** The signed-in contact, on customer portal pages only. */
+            portal?: import('./portal').PortalShared | null;
             [key: string]: unknown;
         };
     }

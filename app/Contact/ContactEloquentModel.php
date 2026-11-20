@@ -17,6 +17,8 @@ use App\CustomField\Properties\CustomFieldValues;
 use App\Shared\Table;
 use App\Team\Scopes\CurrentTeamScope;
 use Carbon\CarbonImmutable;
+use Illuminate\Auth\Authenticatable;
+use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -34,6 +36,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property bool $is_primary
  * @property bool $receives_invoices
  * @property bool $portal_access
+ * @property CarbonImmutable|null $portal_last_seen_at
+ * @property string|null $remember_token
  * @property string|null $last_name
  * @property string|null $mobile_phone
  * @property string|null $position
@@ -43,14 +47,21 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 #[ObservedBy(AuditObserver::class)]
 #[ScopedBy(CurrentTeamScope::class)]
-final class ContactEloquentModel extends Model implements Auditable
+final class ContactEloquentModel extends Model implements Auditable, AuthenticatableContract
 {
+    use Authenticatable;
+
     /** @use HasFactory<ContactFactory> */
     use HasFactory;
 
     use HasUuids;
 
     protected $guarded = [];
+
+    /**
+     * @var list<string>
+     */
+    protected $hidden = ['remember_token'];
 
     public function auditTeamId(): string
     {
@@ -65,6 +76,16 @@ final class ContactEloquentModel extends Model implements Auditable
     public function getKeyName(): string
     {
         return Id::getDatabaseTableColumnName();
+    }
+
+    /**
+     * Contacts sign in to the portal with an emailed code or Google or
+     * Microsoft, never a password. An empty password (not null) still lets
+     * the remember-me cookie sign them back in.
+     */
+    public function getAuthPassword(): string
+    {
+        return '';
     }
 
     /**
@@ -89,6 +110,7 @@ final class ContactEloquentModel extends Model implements Auditable
             IsPrimary::getDatabaseTableColumnName() => 'boolean',
             ReceivesInvoices::getDatabaseTableColumnName() => 'boolean',
             PortalAccess::getDatabaseTableColumnName() => 'boolean',
+            'portal_last_seen_at' => 'immutable_datetime',
         ];
     }
 

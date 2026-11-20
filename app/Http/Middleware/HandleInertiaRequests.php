@@ -14,6 +14,7 @@ use App\Group\Actions\FindGroup;
 use App\Inbox\Actions\FindNotifications;
 use App\Onboarding\Actions\GetGettingStartedProgress;
 use App\Onboarding\Actions\RemoveSampleData;
+use App\Portal\PortalProps;
 use App\Project\Actions\FindProject;
 use App\Team\Actions\FindTeam;
 use App\Team\Team;
@@ -53,6 +54,10 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        if ($request->routeIs('portal.*')) {
+            return $this->sharePortal($request);
+        }
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
@@ -81,6 +86,21 @@ class HandleInertiaRequests extends Middleware
             'gettingStarted' => fn (): ?array => $request->user() instanceof UserEloquentModel
                 ? GetGettingStartedProgress::forUser($request->user())
                 : null,
+        ];
+    }
+
+    /**
+     * The customer portal shares nothing about the team's own workspace, even
+     * when the browser is also signed in to it as staff.
+     *
+     * @return array<string, mixed>
+     */
+    private function sharePortal(Request $request): array
+    {
+        return [
+            ...parent::share($request),
+            'name' => config('app.name'),
+            'portal' => fn (): ?array => PortalProps::forSignedIn(),
         ];
     }
 

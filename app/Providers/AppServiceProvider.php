@@ -41,6 +41,7 @@ use App\Passkey\FormRequests\PasskeyVerificationFormRequest;
 use App\Passkey\PasskeyEloquentModel;
 use App\Payment\Payment;
 use App\Payment\PaymentPolicy;
+use App\Portal\PortalContactUserProvider;
 use App\Project\Project;
 use App\Project\ProjectPolicy;
 use App\Record\Record;
@@ -60,8 +61,11 @@ use App\User\UserEloquentModel;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Auth\Notifications\VerifyEmail;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\Hashing\Hasher;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
@@ -110,6 +114,8 @@ class AppServiceProvider extends ServiceProvider
         $this->configurePolicies();
 
         Passkeys::usePasskeyModel(PasskeyEloquentModel::class);
+
+        Auth::provider('portal-contacts', fn (Application $app): PortalContactUserProvider => new PortalContactUserProvider($app->make(Hasher::class)));
 
         $this->configureMorphMap();
         $this->configureListeners();

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Contact\ContactEloquentModel;
 use App\Team\Scopes\CurrentTeamScope;
 use App\Team\TeamEloquentModel;
 use App\TeamUser\Actions\CreateTeamUser;
@@ -79,4 +80,16 @@ it('applies no scope without an authenticated user', function (): void {
     TeamScopedRecord::query()->create(['team_id' => TeamEloquentModel::factory()->create()->id, 'name' => 'Second']);
 
     expect(TeamScopedRecord::query()->count())->toBe(2);
+});
+
+it("limits records to a portal contact's own team", function (): void {
+    $theirs = TeamEloquentModel::factory()->create();
+    $other = TeamEloquentModel::factory()->create();
+    TeamScopedRecord::query()->create(['team_id' => $theirs->id, 'name' => 'Theirs']);
+    TeamScopedRecord::query()->create(['team_id' => $other->id, 'name' => 'Other']);
+    $contact = ContactEloquentModel::factory()->create(['team_id' => $theirs->id]);
+
+    actingAs($contact, 'portal');
+
+    expect(TeamScopedRecord::query()->pluck('name')->all())->toBe(['Theirs']);
 });
