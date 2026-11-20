@@ -11,6 +11,7 @@ import UnsavedChangesBar, {
     countChanges,
 } from '@/components/unsaved-changes-bar';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
@@ -21,6 +22,15 @@ import type {
     ArticleClassificationOption,
     ArticleStatus,
 } from '@/types';
+
+/**
+ * The version a change will make: the next minor one, or the next major one.
+ */
+function nextVersion(current: string, isMajor: boolean): string {
+    const [major, minor] = current.split('.').map(Number);
+
+    return isMajor ? `${major + 1}.0` : `${major}.${minor + 1}`;
+}
 
 export default function ArticleEdit({
     article,
@@ -44,6 +54,9 @@ export default function ArticleEdit({
         classification: article.classification as string,
     });
     const [saved, setSaved] = useState(form.data);
+    const [changeNote, setChangeNote] = useState('');
+    const [isMajor, setIsMajor] = useState(false);
+    const isVersioned = article.version !== null;
     const imageUpload = useHttp<{ image: File | null }, { src: string }>({
         image: null,
     });
@@ -57,12 +70,19 @@ export default function ArticleEdit({
     const isPublished = article.status === 'published';
 
     const save = (status: ArticleStatus = article.status) => {
-        form.transform((data) => ({ ...data, status }));
+        form.transform((data) => ({
+            ...data,
+            status,
+            change_note: changeNote,
+            is_major: isMajor,
+        }));
         form.put(update.url(article.id), {
             preserveScroll: true,
             onSuccess: () => {
                 form.setDefaults();
                 setSaved(form.data);
+                setChangeNote('');
+                setIsMajor(false);
             },
         });
     };
@@ -99,7 +119,14 @@ export default function ArticleEdit({
                 className="mx-auto flex w-full max-w-3xl flex-col gap-5 p-4 md:p-6"
             >
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                    <ArticleStatusPill status={article.status} />
+                    <span className="flex items-center gap-2">
+                        <ArticleStatusPill status={article.status} />
+                        {article.version && (
+                            <span className="text-[13px] text-muted-foreground tabular-nums">
+                                v{article.version}
+                            </span>
+                        )}
+                    </span>
                     <div className="ml-auto flex flex-wrap items-center gap-1.5">
                         <Button variant="ghost" asChild>
                             <Link href={show(article.id)}>
@@ -196,6 +223,52 @@ export default function ArticleEdit({
                         </NativeSelect>
                     </FormField>
                 </div>
+
+                {(isVersioned || !isPublished) && (
+                    <div className="grid gap-3 rounded-lg border bg-card p-3 sm:grid-cols-[1fr_auto] sm:items-end">
+                        <FormField
+                            id="change_note"
+                            label={
+                                isVersioned
+                                    ? 'What changed'
+                                    : 'Note for the first version'
+                            }
+                            hint={
+                                isVersioned
+                                    ? `Saving a change makes version ${nextVersion(article.version ?? '1.0', isMajor)}; the one before is kept in its history.`
+                                    : 'Publishing makes it version 1.0.'
+                            }
+                            error={
+                                (form.errors as Partial<Record<string, string>>)
+                                    .change_note
+                            }
+                        >
+                            <Input
+                                id="change_note"
+                                value={changeNote}
+                                onChange={(event) =>
+                                    setChangeNote(event.target.value)
+                                }
+                                placeholder={
+                                    isVersioned
+                                        ? 'Added the steps for the new modem'
+                                        : 'Optional'
+                                }
+                            />
+                        </FormField>
+                        {isVersioned && (
+                            <label className="flex h-control-md items-center gap-2 text-sm">
+                                <Checkbox
+                                    checked={isMajor}
+                                    onCheckedChange={(checked) =>
+                                        setIsMajor(checked === true)
+                                    }
+                                />
+                                Major change
+                            </label>
+                        )}
+                    </div>
+                )}
 
                 <div className="grid gap-1.5">
                     <RichTextEditor

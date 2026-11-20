@@ -1,5 +1,5 @@
 import { Form, Head, Link, setLayoutProps } from '@inertiajs/react';
-import { Archive, ArchiveRestore, Pencil } from 'lucide-react';
+import { Archive, ArchiveRestore, History, Pencil } from 'lucide-react';
 import {
     ArticleStatusPill,
     ClassificationBadge,
@@ -14,6 +14,7 @@ import {
     archive,
     destroy,
     edit,
+    history,
     index,
     restore,
     show,
@@ -54,6 +55,14 @@ export default function ArticleShow({
                     description={article.summary ?? undefined}
                     actions={
                         <>
+                            {article.version && (
+                                <Button variant="ghost" asChild>
+                                    <Link href={history(article.id)}>
+                                        <History />
+                                        History
+                                    </Link>
+                                </Button>
+                            )}
                             {can.update && !article.is_archived && (
                                 <Button asChild>
                                     <Link href={edit(article.id)}>
@@ -108,6 +117,9 @@ export default function ArticleShow({
                         classification={article.classification}
                         showInternal
                     />
+                    {article.version && (
+                        <span className="tabular-nums">v{article.version}</span>
+                    )}
                     {article.author_name && (
                         <span>By {article.author_name}</span>
                     )}

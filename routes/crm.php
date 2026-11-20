@@ -7,7 +7,9 @@ use App\Article\Controllers\DeleteArticleController;
 use App\Article\Controllers\EditArticleController;
 use App\Article\Controllers\ListArticlesController;
 use App\Article\Controllers\RestoreArticleController;
+use App\Article\Controllers\RestoreArticleVersionController;
 use App\Article\Controllers\ShowArticleController;
+use App\Article\Controllers\ShowArticleHistoryController;
 use App\Article\Controllers\ShowArticleImageController;
 use App\Article\Controllers\StoreArticleController;
 use App\Article\Controllers\StoreArticleImageController;
@@ -239,6 +241,8 @@ Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function 
     Route::post('articles/{article}/restore', RestoreArticleController::class)->whereUuid('article')->name('articles.restore');
     Route::post('articles/{article}/images', StoreArticleImageController::class)->whereUuid('article')->name('articles.images.store');
     Route::get('articles/{article}/images/{image}', ShowArticleImageController::class)->whereUuid(['article', 'image'])->name('articles.images.show');
+    Route::get('articles/{article}/history', ShowArticleHistoryController::class)->whereUuid('article')->name('articles.history');
+    Route::post('articles/{article}/versions/{version}/restore', RestoreArticleVersionController::class)->whereUuid(['article', 'version'])->name('articles.versions.restore');
     Route::delete('articles/{article}', DeleteArticleController::class)->whereUuid('article')->name('articles.destroy');
 
     Route::get('contacts', ListContactsController::class)->name('contacts.index');

@@ -10,6 +10,7 @@ use App\Article\Article;
 use App\Article\ArticleValidationRules;
 use App\Article\Exceptions\CouldNotFindArticle;
 use App\Article\Properties\Body;
+use App\Article\Properties\ChangeNote;
 use App\Article\Properties\Classification;
 use App\Article\Properties\Status;
 use App\Article\Properties\Summary;
@@ -22,7 +23,8 @@ use Inertia\Inertia;
 
 /**
  * Saves the editor: title, summary, body, classification and whether the
- * article is published. Stays on the editor.
+ * article is published, with a note on what changed and whether it is a
+ * major change once it has been published. Stays on the editor.
  */
 final class UpdateArticleFormRequest extends FormRequest
 {
@@ -74,7 +76,10 @@ final class UpdateArticleFormRequest extends FormRequest
                 ->setSummary($this->string(Summary::getNameForValidation())->trim()->toString() ?: null)
                 ->setBody($this->input(Body::getNameForValidation()))
                 ->setClassification($this->string(Classification::getNameForValidation())->toString())
-                ->setStatus($this->string(Status::getNameForValidation())->toString()),
+                ->setStatus($this->string(Status::getNameForValidation())->toString())
+                ->setChangeNote($this->string(ChangeNote::getNameForValidation())->trim()->toString() ?: null),
+            $this->user()?->id,
+            $this->boolean('is_major'),
         );
 
         $message = $article->isPublished() && ! $wasPublished ? ':title published.' : ':title saved.';

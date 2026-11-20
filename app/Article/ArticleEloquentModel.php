@@ -7,6 +7,7 @@ namespace App\Article;
 use App\Article\Factories\ArticleFactory;
 use App\Article\Properties\ArchivedAt;
 use App\Article\Properties\AuthorId;
+use App\Article\Properties\EditedById;
 use App\Article\Properties\Id;
 use App\Article\Properties\PublishedAt;
 use App\AuditLog\AuditObserver;
@@ -27,8 +28,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $author_id
  * @property string|null $body
  * @property string|null $body_text
+ * @property string|null $change_note
  * @property string $classification
  * @property CarbonImmutable|null $created_at
+ * @property string|null $edited_by_id
  * @property string $id
  * @property CarbonImmutable|null $published_at
  * @property string $status
@@ -36,6 +39,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $team_id
  * @property string $title
  * @property CarbonImmutable|null $updated_at
+ * @property int $version_major
+ * @property int $version_minor
  */
 #[ObservedBy(AuditObserver::class)]
 #[ScopedBy(CurrentTeamScope::class)]
@@ -80,6 +85,18 @@ final class ArticleEloquentModel extends Model implements Auditable
             related: UserEloquentModel::class,
             foreignKey: AuthorId::getDatabaseTableColumnName(),
             relation: ArticleRelationship::Author->value,
+        );
+    }
+
+    /**
+     * @return BelongsTo<UserEloquentModel, $this>
+     */
+    public function editedBy(): BelongsTo
+    {
+        return $this->belongsTo(
+            related: UserEloquentModel::class,
+            foreignKey: EditedById::getDatabaseTableColumnName(),
+            relation: ArticleRelationship::EditedBy->value,
         );
     }
 
