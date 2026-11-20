@@ -8,6 +8,7 @@ use App\CustomField\CustomFieldEloquentModel;
 use App\CustomField\CustomFieldTargetEnum;
 use App\Invoice\InvoiceEloquentModel;
 use App\Location\LocationEloquentModel;
+use App\Payment\PaymentEloquentModel;
 use App\Rate\RateEloquentModel;
 use App\Service\ServiceEloquentModel;
 use App\User\UserEloquentModel;
@@ -43,7 +44,7 @@ it('moves a customer to another currency their services are priced in', function
     expect($customer->fresh()->currency)->toBe('USD');
 });
 
-it('keeps a customer in their currency once invoiced, or while a service has no price in the new one', function (Closure $setUp, string $message): void {
+it('keeps a customer in their currency once invoiced or paid, or while a service has no price in the new one', function (Closure $setUp, string $message): void {
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
     $customer = CustomerEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
     $setUp($customer);
@@ -54,7 +55,8 @@ it('keeps a customer in their currency once invoiced, or while a service has no 
 
     expect($customer->fresh()->currency)->toBe('AUD');
 })->with([
-    'invoiced' => [fn (CustomerEloquentModel $customer) => InvoiceEloquentModel::factory()->create(['team_id' => $customer->team_id, 'customer_id' => $customer->id]), 'This customer has been invoiced in AUD, so they stay in it.'],
+    'invoiced' => [fn (CustomerEloquentModel $customer) => InvoiceEloquentModel::factory()->create(['team_id' => $customer->team_id, 'customer_id' => $customer->id]), 'This customer has invoices or payments in AUD, so they stay in it.'],
+    'paid' => [fn (CustomerEloquentModel $customer) => PaymentEloquentModel::factory()->create(['team_id' => $customer->team_id, 'customer_id' => $customer->id]), 'This customer has invoices or payments in AUD, so they stay in it.'],
     'a service unpriced in USD' => [fn (CustomerEloquentModel $customer) => ServiceEloquentModel::factory()->create([
         'team_id' => $customer->team_id,
         'customer_id' => $customer->id,

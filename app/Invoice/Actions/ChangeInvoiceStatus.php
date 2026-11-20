@@ -10,8 +10,8 @@ use Carbon\CarbonImmutable;
 use InvalidArgumentException;
 
 /**
- * Moves an invoice along draft → sent → paid, or voids it, stamping when it
- * was sent or paid.
+ * Moves an invoice from draft to sent, or voids it, stamping when it was
+ * sent. Payments make it paid (SyncInvoicePaymentStatus).
  */
 final readonly class ChangeInvoiceStatus
 {
@@ -30,7 +30,6 @@ final readonly class ChangeInvoiceStatus
 
         match ($this->status) {
             InvoiceStatusEnum::Sent => $this->invoice->setSentAt(CarbonImmutable::now()),
-            InvoiceStatusEnum::Paid => $this->invoice->setPaidAt(CarbonImmutable::now()),
             default => null,
         };
 

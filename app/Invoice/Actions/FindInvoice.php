@@ -8,10 +8,11 @@ use App\Invoice\Invoice;
 use App\Invoice\InvoiceEloquentModel;
 use App\Invoice\InvoiceRelationship;
 use App\Invoice\InvoiceStatusEnum;
-use App\Invoice\InvoiceTotals;
 use App\Invoice\Properties\CustomerId;
+use App\Invoice\Properties\DueOn;
 use App\Invoice\Properties\Id;
 use App\Invoice\Properties\Number;
+use App\Invoice\Properties\PaidInCents;
 use App\Invoice\Properties\Status;
 use App\Invoice\Properties\TeamId;
 use App\InvoiceItem\InvoiceItem;
@@ -19,6 +20,7 @@ use App\InvoiceItem\InvoiceItemCollection;
 use App\InvoiceItem\InvoiceItemEloquentModel;
 use App\InvoiceItem\Properties\InvoiceId;
 use App\InvoiceItem\Properties\Position;
+use App\PaymentAllocation\Properties\AmountInCents as AllocationAmountInCents;
 use App\Team\Scopes\CurrentTeamScope;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
@@ -58,8 +60,9 @@ final class FindInvoice
 
     /**
      * What each customer owes on invoices that were sent and not yet paid, in
-     * cents: everything, what isn't due yet (due today or later) and what is
-     * overdue. Customers who owe nothing are left out.
+     * cents, after the payments applied to them: everything, what isn't due
+     * yet (due today or later) and what is overdue. Customers who owe nothing
+     * are left out.
      *
      * @param  array<int, string>|null  $customerIds  null for every customer
      * @return array<string, array{balance_in_cents: int, current_in_cents: int, overdue_in_cents: int}>
@@ -76,7 +79,7 @@ final class FindInvoice
             ->get()
             ->each(function (InvoiceEloquentModel $model) use (&$balances, $today): void {
                 $invoice = Invoice::fromEloquentModel($model);
-                $total = InvoiceTotals::fromItems($invoice->getItems()->toDataCollection(), $invoice->getTaxRateBasisPoints()->toInteger())->totalInCents;
+                $total = $invoice->balanceAfter($invoice->totals());
                 $customerId = $invoice->getCustomerId()->toString();
                 $isOverdue = $invoice->getDueOn()->toCarbon()->toDateString() < $today;
 
@@ -86,6 +89,48 @@ final class FindInvoice
             });
 
         return $balances;
+    }
+
+    /**
+     * A customer's sent invoices that still have something owing, oldest due
+     * first, as list items: the invoices a payment can be applied to.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public static function outstandingForCustomer(string $customerId, string $teamId): array
+    {
+        return self::query($teamId)
+            ->with(InvoiceRelationship::Items->value)
+            ->where(CustomerId::getDatabaseTableColumnName(), $customerId)
+            ->where(Status::getDatabaseTableColumnName(), InvoiceStatusEnum::Sent->value)
+            ->orderBy(DueOn::getDatabaseTableColumnName())
+            ->orderBy(Number::getDatabaseTableColumnName())
+            ->get()
+            ->map(fn (InvoiceEloquentModel $model): array => self::listItem(Invoice::fromEloquentModel($model)))
+            ->filter(fn (array $item): bool => $item['balance_in_cents'] > 0)
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Invoices of a team by id, with their items and what has been paid,
+     * keyed by id.
+     *
+     * @param  array<int, string>  $ids
+     * @return array<string, Invoice>
+     */
+    public static function byIdsForTeam(array $ids, string $teamId): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+
+        return self::query($teamId)
+            ->with(InvoiceRelationship::Items->value)
+            ->whereIn(Id::getDatabaseTableColumnName(), $ids)
+            ->get()
+            ->mapWithKeys(fn (InvoiceEloquentModel $model): array => [$model->id => Invoice::fromEloquentModel($model)])
+            ->all();
     }
 
     public static function itemsFor(Invoice $invoice): InvoiceItemCollection
@@ -107,9 +152,12 @@ final class FindInvoice
      */
     public static function listItem(Invoice $invoice): array
     {
+        $totals = $invoice->totals();
+
         return [
             ...$invoice->toSummary(),
-            ...InvoiceTotals::fromItems($invoice->getItems()->toDataCollection(), $invoice->getTaxRateBasisPoints()->toInteger())->toArray(),
+            ...$totals->toArray(),
+            'balance_in_cents' => $invoice->balanceAfter($totals),
             'customer_name' => $invoice->getCustomer()->toNullableData()?->getName()->toString(),
         ];
     }
@@ -121,6 +169,9 @@ final class FindInvoice
     {
         return InvoiceEloquentModel::query()
             ->withoutGlobalScope(CurrentTeamScope::class)
-            ->where(TeamId::getDatabaseTableColumnName(), $teamId);
+            ->where(TeamId::getDatabaseTableColumnName(), $teamId)
+            ->withSum([
+                InvoiceRelationship::Allocations->value.' as '.PaidInCents::getDatabaseTableColumnName() => fn (Builder $query) => $query->withoutGlobalScope(CurrentTeamScope::class),
+            ], AllocationAmountInCents::getDatabaseTableColumnName());
     }
 }

@@ -25,6 +25,7 @@ enum AccessResourceEnum: string
     case Invoice = 'invoice';
     case Location = 'location';
     case Milestone = 'milestone';
+    case Payment = 'payment';
     case Project = 'project';
     case Record = 'record';
     case Secret = 'secret';
@@ -44,6 +45,7 @@ enum AccessResourceEnum: string
             self::Invoice => 'Invoices',
             self::Location => 'Locations',
             self::Milestone => 'Milestones',
+            self::Payment => 'Payments',
             self::Project => 'Projects',
             self::Record => 'Custom object records',
             self::Secret => 'Secrets',
@@ -67,7 +69,7 @@ enum AccessResourceEnum: string
                 AccessActionEnum::Restore,
                 AccessActionEnum::Delete,
             ],
-            self::Asset, self::Contact, self::Contract, self::Location, self::Milestone, self::Record => [
+            self::Asset, self::Contact, self::Contract, self::Location, self::Milestone, self::Payment, self::Record => [
                 AccessActionEnum::Create,
                 AccessActionEnum::Update,
                 AccessActionEnum::Delete,

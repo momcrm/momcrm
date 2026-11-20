@@ -3,6 +3,7 @@ import { AddLink, TabHeader } from '@/components/customers/workspace-tab';
 import EmptyState from '@/components/empty-state';
 import InvoiceTable from '@/components/invoices/invoice-table';
 import Pager from '@/components/pager';
+import RecordPaymentButton from '@/components/payments/record-payment-button';
 import { useWorkspaceBreadcrumbs } from '@/layouts/customer/layout';
 import { cn } from '@/lib/utils';
 import { invoices as invoicesTab } from '@/routes/customers';
@@ -37,11 +38,17 @@ export default function CustomerInvoices({
             label="Create invoice"
         />
     );
+    const actions = (
+        <div className="flex flex-wrap gap-2">
+            <RecordPaymentButton customerId={customer.id} />
+            {add}
+        </div>
+    );
 
     return (
         <>
             <Head title={`${customer.name} · Invoices`} />
-            <TabHeader title="Invoices" action={add} />
+            <TabHeader title="Invoices" action={actions} />
 
             <nav className="mb-4 flex w-fit gap-1 rounded-lg bg-muted p-1">
                 {tabs.map((tab) => (

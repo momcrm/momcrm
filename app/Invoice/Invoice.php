@@ -17,6 +17,7 @@ use App\Invoice\Properties\Items;
 use App\Invoice\Properties\Notes;
 use App\Invoice\Properties\Number;
 use App\Invoice\Properties\PaidAt;
+use App\Invoice\Properties\PaidInCents;
 use App\Invoice\Properties\PurchaseOrder;
 use App\Invoice\Properties\SentAt;
 use App\Invoice\Properties\Status;
@@ -45,6 +46,7 @@ final class Invoice extends AbstractData
         public Notes $notes,
         public Number $number,
         public PaidAt $paidAt,
+        public PaidInCents $paidInCents,
         public PurchaseOrder $purchaseOrder,
         public SentAt $sentAt,
         public Status $status,
@@ -89,6 +91,30 @@ final class Invoice extends AbstractData
     }
 
     /**
+     * The totals of the invoice's line items, which must have been loaded.
+     */
+    public function totals(): InvoiceTotals
+    {
+        return InvoiceTotals::fromItems($this->getItems()->toDataCollection(), $this->getTaxRateBasisPoints()->toInteger());
+    }
+
+    /**
+     * What is still owed once payments are taken off a total, never below 0.
+     */
+    public function balanceAfter(InvoiceTotals $totals): int
+    {
+        return max(0, $totals->totalInCents - $this->getPaidInCents()->toInteger());
+    }
+
+    /**
+     * Only sent invoices are owed, so only they can be paid.
+     */
+    public function canTakePayments(): bool
+    {
+        return $this->getStatus()->toEnum() === InvoiceStatusEnum::Sent;
+    }
+
+    /**
      * Sent invoices whose due date has passed.
      */
     public function isOverdue(): bool
@@ -99,7 +125,7 @@ final class Invoice extends AbstractData
     }
 
     /**
-     * @return array{id: string, number: int, reference: string, customer_id: string, issued_on: ?string, due_on: ?string, status: string, currency: string, is_overdue: bool, tax_rate_basis_points: int, purchase_order: ?string, notes: ?string, sent_at: ?string, paid_at: ?string, custom_fields: array<string, mixed>}
+     * @return array{id: string, number: int, reference: string, customer_id: string, issued_on: ?string, due_on: ?string, status: string, currency: string, is_overdue: bool, tax_rate_basis_points: int, purchase_order: ?string, notes: ?string, sent_at: ?string, paid_at: ?string, paid_in_cents: int, custom_fields: array<string, mixed>}
      */
     public function toSummary(): array
     {
@@ -118,8 +144,14 @@ final class Invoice extends AbstractData
             'notes' => $this->getNotes()->toNullableString(),
             'sent_at' => $this->getSentAt()->toNullableISOString(),
             'paid_at' => $this->getPaidAt()->toNullableISOString(),
+            'paid_in_cents' => $this->getPaidInCents()->toInteger(),
             'custom_fields' => $this->getCustomFields()->toValues(),
         ];
+    }
+
+    public function getPaidInCents(): PaidInCents
+    {
+        return $this->paidInCents;
     }
 
     public function getCustomFields(): CustomFieldValues

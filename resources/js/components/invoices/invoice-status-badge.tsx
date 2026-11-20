@@ -11,10 +11,15 @@ const labels: Record<Invoice['status'], string> = {
 export default function InvoiceStatusBadge({
     invoice,
 }: {
-    invoice: Pick<Invoice, 'status' | 'is_overdue'>;
+    invoice: Pick<Invoice, 'status' | 'is_overdue'> &
+        Partial<Pick<Invoice, 'paid_in_cents'>>;
 }) {
     if (invoice.is_overdue) {
         return <Badge variant="destructive">Overdue</Badge>;
+    }
+
+    if (invoice.status === 'sent' && (invoice.paid_in_cents ?? 0) > 0) {
+        return <Badge variant="secondary">Part paid</Badge>;
     }
 
     return (

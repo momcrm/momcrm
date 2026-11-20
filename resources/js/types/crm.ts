@@ -707,6 +707,8 @@ export type Invoice = {
     notes: string | null;
     sent_at: string | null;
     paid_at: string | null;
+    /** The sum of the payments applied to the invoice. */
+    paid_in_cents: number;
     custom_fields: CustomFieldValues;
 };
 
@@ -746,7 +748,26 @@ export type TeamBilling = {
 };
 
 export type InvoiceListItem = Invoice &
-    InvoiceTotals & { customer_name: string | null };
+    InvoiceTotals & {
+        customer_name: string | null;
+        /** What is still owed: the total less payments, never below 0. */
+        balance_in_cents: number;
+    };
+
+export type PaymentMethod =
+    | 'bank_transfer'
+    | 'bpay'
+    | 'card'
+    | 'cash'
+    | 'cheque'
+    | 'credit';
+
+/** What the record payment dialog fetches for a customer. */
+export type OutstandingInvoices = {
+    customer: { id: string; name: string; currency: string };
+    methods: Option[];
+    invoices: InvoiceListItem[];
+};
 
 export type InvoiceItem = {
     id: string;
