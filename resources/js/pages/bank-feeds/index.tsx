@@ -37,6 +37,9 @@ export default function BankFeedsIndex({
     const selection = useTicketSelection(
         transactions.data.map((line) => line.id),
     );
+    const hasImported = accounts.some(
+        (account) => account.last_imported_at !== null,
+    );
     const isFiltered = Boolean(
         filters.search || filters.account || filters.from || filters.to,
     );
@@ -87,10 +90,15 @@ export default function BankFeedsIndex({
                                     title="No matching lines"
                                     description="Check the spelling, or clear a filter."
                                 />
-                            ) : (
+                            ) : hasImported ? (
                                 <EmptyState
                                     title="Nothing to match"
                                     description="Every deposit is dealt with. Import a newer statement to bring in more."
+                                />
+                            ) : (
+                                <EmptyState
+                                    title="Nothing imported yet"
+                                    description="Export a statement from your online banking and import it here. Each deposit in it becomes a line to match to a customer."
                                 />
                             )
                         ) : (
