@@ -15,6 +15,7 @@ enum AccessResourceEnum: string
     use Enum;
     use EnumOptions;
 
+    case Article = 'article';
     case Asset = 'asset';
     case Attachment = 'attachment';
     case BankTransaction = 'bank_transaction';
@@ -37,6 +38,7 @@ enum AccessResourceEnum: string
     public function label(): string
     {
         return match ($this) {
+            self::Article => 'Articles',
             self::Asset => 'Assets',
             self::Attachment => 'Files',
             self::BankTransaction => 'Bank feeds',
@@ -66,7 +68,7 @@ enum AccessResourceEnum: string
     public function actions(): array
     {
         return match ($this) {
-            self::Service => [
+            self::Article, self::Service => [
                 AccessActionEnum::Create,
                 AccessActionEnum::Update,
                 AccessActionEnum::Archive,

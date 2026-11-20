@@ -25,6 +25,7 @@
         "mom/data": "6.4.0",
         "mom/microsoft": "6.4.0",
         "socialiteproviders/microsoft": "^4.10",
+        "symfony/html-sanitizer": "^8.1",
         "webklex/php-imap": "^6.2"
     },
     "require-dev": {

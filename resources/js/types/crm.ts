@@ -1175,3 +1175,35 @@ export type BillingRunCustomer = {
     total_in_cents: number;
     lines: BillingLine[];
 };
+
+export type ArticleStatus = 'draft' | 'published';
+
+export type ArticleClassification =
+    | 'internal'
+    | 'confidential'
+    | 'strictly_confidential';
+
+/** A classification someone may give an article, with who can read it. */
+export type ArticleClassificationOption = {
+    value: ArticleClassification;
+    label: string;
+    description: string;
+};
+
+export type ArticleListItem = {
+    id: string;
+    title: string;
+    summary: string | null;
+    status: ArticleStatus;
+    classification: ArticleClassification;
+    author_name: string | null;
+    published_at: string | null;
+    updated_at: string | null;
+    is_archived: boolean;
+};
+
+export type Article = ArticleListItem & {
+    /** Sanitised HTML from the editor. */
+    body: string;
+    created_at: string | null;
+};
