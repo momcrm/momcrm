@@ -31,6 +31,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * @property string|null $abn
  * @property string $billing_type
+ * @property int|null $days_to_pay
  * @property CarbonImmutable|null $created_at
  * @property string $currency
  * @property string|null $email

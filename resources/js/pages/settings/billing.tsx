@@ -201,6 +201,26 @@ export default function Billing({
                                 <InputError message={errors.bpay_biller_code} />
                             </div>
 
+                            <div className="grid gap-2">
+                                <Label htmlFor="days_to_pay">Days to pay</Label>
+                                <Input
+                                    id="days_to_pay"
+                                    name="days_to_pay"
+                                    type="number"
+                                    min={0}
+                                    max={365}
+                                    defaultValue={billing.days_to_pay}
+                                    className="max-w-28"
+                                    required
+                                />
+                                <p className="text-sm text-muted-foreground">
+                                    How long after an invoice is issued it is
+                                    due. A customer can have their own in their
+                                    settings.
+                                </p>
+                                <InputError message={errors.days_to_pay} />
+                            </div>
+
                             <InvoicePrefixField
                                 defaultValue={billing.invoice_prefix}
                                 error={errors.invoice_prefix}

@@ -76,7 +76,7 @@ final readonly class InvoiceDocument
     }
 
     /**
-     * @return array{title: string, invoice: array<string, mixed>, items: array<int, array<string, mixed>>, totals: array{subtotal_in_cents: int, tax_in_cents: int, total_in_cents: int}, customer: array<string, mixed>, from: array<string, ?string>, customer_credit_in_cents: int, payments: array<int, array<string, mixed>>, bpay: ?array{biller_code: string, reference: string}}
+     * @return array{title: string, invoice: array<string, mixed>, items: array<int, array<string, mixed>>, totals: array{subtotal_in_cents: int, tax_in_cents: int, total_in_cents: int}, customer: array<string, mixed>, from: array<string, int|string|null>, customer_credit_in_cents: int, payments: array<int, array<string, mixed>>, bpay: ?array{biller_code: string, reference: string}}
      */
     public function toArray(): array
     {

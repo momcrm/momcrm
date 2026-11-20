@@ -85,6 +85,7 @@ export default function CustomerSettings({
     locations,
     mainContactId,
     mainLocationId,
+    teamDaysToPay,
 }: {
     workspace: CustomerWorkspace;
     statuses: Option[];
@@ -94,6 +95,8 @@ export default function CustomerSettings({
     locations: CustomerOption[];
     mainContactId: string | null;
     mainLocationId: string | null;
+    /** The team's days to pay, used when the customer has none of their own. */
+    teamDaysToPay: number;
 }) {
     const { customer, can } = workspace;
     const { canManageWorkflow } = usePage().props;
@@ -110,6 +113,8 @@ export default function CustomerSettings({
         type_id: customer.type_id ?? '',
         status: customer.status as string,
         billing_type: customer.billing_type as string,
+        days_to_pay:
+            customer.days_to_pay === null ? '' : String(customer.days_to_pay),
         currency: customer.currency,
         email: customer.email ?? '',
         phone: customer.phone ?? '',
@@ -264,6 +269,21 @@ export default function CustomerSettings({
                             onChange={(value) =>
                                 form.setData('billing_type', value)
                             }
+                        />
+                    </SettingsRow>
+                    <SettingsRow
+                        label="Days to pay"
+                        htmlFor="days_to_pay"
+                        description={`How long after an invoice is issued it is due. Leave blank for your team's ${teamDaysToPay} days.`}
+                        error={form.errors.days_to_pay}
+                    >
+                        <Input
+                            {...text('days_to_pay')}
+                            type="number"
+                            min={0}
+                            max={365}
+                            placeholder={String(teamDaysToPay)}
+                            className="max-w-28"
                         />
                     </SettingsRow>
                     <SettingsRow

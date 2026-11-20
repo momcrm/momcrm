@@ -13,6 +13,8 @@ use App\Customer\Exceptions\CouldNotFindCustomer;
 use App\Location\Actions\FindLocation;
 use App\Location\Location;
 use App\Shared\CurrencyEnum;
+use App\Team\Actions\FindTeam;
+use App\Team\Properties\DaysToPay;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -37,6 +39,7 @@ final class EditCustomerController
             'statuses' => CustomerStatusEnum::options(),
             'billingTypes' => CustomerBillingTypeEnum::options(),
             'currencies' => CurrencyEnum::options(),
+            'teamDaysToPay' => FindTeam::byId($workspace->teamId)->getDaysToPay()->toNullableInteger() ?? DaysToPay::DEFAULT,
             'contacts' => $contacts
                 ->map(fn (Contact $contact): array => ['id' => $contact->getId()->toString(), 'name' => $contact->getFullName()])
                 ->values()

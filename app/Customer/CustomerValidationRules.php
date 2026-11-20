@@ -7,6 +7,7 @@ namespace App\Customer;
 use App\Choice\ChoiceListEnum;
 use App\Customer\Properties\BillingType;
 use App\Customer\Properties\Currency;
+use App\Customer\Properties\DaysToPay;
 use App\Customer\Properties\Email;
 use App\Customer\Properties\Name;
 use App\Customer\Properties\Notes;
@@ -69,6 +70,7 @@ final class CustomerValidationRules
             Website::getNameForValidation() => Website::getValidationRulesForCreate($request),
             Status::getNameForValidation() => Status::getValidationRulesForCreate($request),
             BillingType::getNameForValidation() => BillingType::getValidationRulesForCreate($request),
+            DaysToPay::getNameForValidation() => DaysToPay::getValidationRulesForCreate($request),
             Currency::getNameForValidation() => [
                 ...Currency::getValidationRulesForCreate($request),
                 ...($current === null ? [] : [self::canSwitchCurrency($current)]),

@@ -14,7 +14,7 @@ export default function CreateInvoice({
     customerId,
     defaults,
 }: {
-    customers: (CustomerOption & { currency: string })[];
+    customers: (CustomerOption & { currency: string; days_to_pay: number })[];
     services: Service[];
     customerId: string | null;
     defaults: {

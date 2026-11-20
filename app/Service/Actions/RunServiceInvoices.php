@@ -10,7 +10,6 @@ use App\Customer\CustomerStatusEnum;
 use App\Customer\Properties\BillingType as CustomerBillingType;
 use App\Customer\Properties\Status as CustomerStatus;
 use App\Invoice\Actions\CreateInvoice;
-use App\Invoice\Controllers\CreateInvoiceController;
 use App\Invoice\Invoice;
 use App\InvoiceItem\Actions\FindInvoiceItem;
 use App\Rate\Actions\FindRate;
@@ -28,6 +27,8 @@ use App\Service\ServiceRelationship;
 use App\Service\ServiceStatusEnum;
 use App\Shared\CurrencyEnum;
 use App\Shared\Table;
+use App\Team\Actions\FindTeam;
+use App\Team\Properties\DaysToPay;
 use App\Team\Scopes\CurrentTeamScope;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
@@ -39,7 +40,8 @@ use Illuminate\Support\Facades\DB;
  * for each period of each active service that has started by the day of the
  * run and isn't on an invoice yet. A service whose rate has no price in the
  * customer's currency is left out. Running it again makes nothing new, since
- * a period already on an invoice that wasn't voided counts as billed.
+ * a period already on an invoice that wasn't voided counts as billed. Each
+ * draft is due by its customer's payment terms.
  */
 final readonly class RunServiceInvoices
 {
@@ -60,6 +62,8 @@ final readonly class RunServiceInvoices
         $billedThrough = FindInvoiceItem::billedThroughForServices(array_values($services->map(fn (Service $service): string => $service->getId()->toString())->all()));
         $customers = self::byCustomer($services->all());
         $currencies = FindCustomer::currenciesByIds(array_map(strval(...), array_keys($customers)));
+        $daysToPay = FindCustomer::daysToPayByIds(array_map(strval(...), array_keys($customers)));
+        $teams = [];
         $drafted = 0;
 
         foreach ($customers as $customerId => $customerServices) {
@@ -91,6 +95,8 @@ final readonly class RunServiceInvoices
             }
 
             $first = $customerServices[0];
+            $team = $teams[$first->getTeamId()->toString()] ??= FindTeam::byId($first->getTeamId()->toString());
+            $days = $daysToPay[$customerId] ?? $team->getDaysToPay()->toNullableInteger() ?? DaysToPay::DEFAULT;
 
             DB::transaction(fn (): Invoice => CreateInvoice::fromInvoice(
                 Invoice::new()
@@ -98,7 +104,7 @@ final readonly class RunServiceInvoices
                     ->setCustomerId($first->getCustomerId())
                     ->setCurrency($currency->value)
                     ->setIssuedOn($this->day)
-                    ->setDueOn($this->day->addDays(CreateInvoiceController::DEFAULT_DAYS_TO_PAY))
+                    ->setDueOn($this->day->addDays($days))
                     ->setTaxRateBasisPoints(self::TAX_RATE_BASIS_POINTS),
                 $items,
             ));
