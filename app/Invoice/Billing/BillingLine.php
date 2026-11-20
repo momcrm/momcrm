@@ -51,7 +51,10 @@ final readonly class BillingLine
             description: $charge->getDescription()->toString(),
             quantity: $charge->getQuantity()->toInteger(),
             unitPriceInCents: $charge->getUnitPriceInCents()->toInteger(),
+            serviceId: $charge->getServiceId()->toNullableString(),
             chargeId: $charge->getId()->toString(),
+            rentalStartsOn: $charge->getRentalStartsOn()->toNullableCarbon()?->toDateString(),
+            rentalEndsOn: $charge->getRentalEndsOn()->toNullableCarbon()?->toDateString(),
         );
     }
 

@@ -10,6 +10,8 @@ use App\Charge\Factories\ChargeFactory;
 use App\Charge\Properties\ChargedOn;
 use App\Charge\Properties\Id;
 use App\Charge\Properties\Quantity;
+use App\Charge\Properties\RentalEndsOn;
+use App\Charge\Properties\RentalStartsOn;
 use App\Charge\Properties\UnitPriceInCents;
 use App\Shared\Table;
 use App\Team\Scopes\CurrentTeamScope;
@@ -29,6 +31,9 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $id
  * @property string|null $product_id
  * @property int $quantity
+ * @property CarbonImmutable|null $rental_ends_on
+ * @property CarbonImmutable|null $rental_starts_on
+ * @property string|null $service_id
  * @property string $team_id
  * @property int $unit_price_in_cents
  * @property CarbonImmutable|null $updated_at
@@ -67,6 +72,8 @@ final class ChargeEloquentModel extends Model implements Auditable
         return [
             ChargedOn::getDatabaseTableColumnName() => 'immutable_date',
             Quantity::getDatabaseTableColumnName() => 'integer',
+            RentalEndsOn::getDatabaseTableColumnName() => 'immutable_date',
+            RentalStartsOn::getDatabaseTableColumnName() => 'immutable_date',
             UnitPriceInCents::getDatabaseTableColumnName() => 'integer',
         ];
     }

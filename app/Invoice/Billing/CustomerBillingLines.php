@@ -85,6 +85,26 @@ final class CustomerBillingLines
     }
 
     /**
+     * The next period of one service due by the day, as Single Service
+     * Billing bills it, or null when every period starting by then is billed
+     * or waiting, or its rate has no price in the customer's currency.
+     */
+    public static function nextForService(Service $service, CurrencyEnum $currency, CarbonImmutable $day): ?BillingLine
+    {
+        $rate = FindRate::byIds([$service->getRateId()->toString()])[$service->getRateId()->toString()] ?? null;
+        $price = $rate?->priceIn($currency);
+
+        if ($rate === null || $price === null || $service->getBillingStartsOn()->toCarbon()->gt($day)) {
+            return null;
+        }
+
+        $billedThrough = FindInvoiceItem::billedThroughForServices([$service->getId()->toString()])[$service->getId()->toString()] ?? null;
+        $period = ServiceBillingPeriod::dueBy($service, $rate, $price, $billedThrough, $day, limit: 1)[0] ?? null;
+
+        return $period === null ? null : BillingLine::forPeriod($service, $period);
+    }
+
+    /**
      * @return list<BillingLine>
      */
     public static function forCustomer(string $customerId, CarbonImmutable $day): array

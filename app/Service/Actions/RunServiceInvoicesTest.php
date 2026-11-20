@@ -144,3 +144,25 @@ it('bills a charge again once the invoice it was on is voided', function (): voi
     expect(RunServiceInvoices::on(CarbonImmutable::parse('2026-12-02')))->toBe(1)
         ->and(InvoiceItemEloquentModel::query()->withoutGlobalScopes()->where('charge_id', $charge->id)->count())->toBe(2);
 });
+
+it('bills a service period waiting from Single Service Billing once, as its own line, and the period again once that line is deleted', function (): void {
+    [$team, $customer, $rate] = invoiceRunSetup();
+    $service = ServiceEloquentModel::factory()->create(['team_id' => $team->id, 'customer_id' => $customer->id, 'rate_id' => $rate->id, 'name' => 'Backup', 'billing_starts_on' => '2026-12-01']);
+    $waiting = ChargeEloquentModel::factory()->forCustomer($customer)->create([
+        'service_id' => $service->id, 'description' => 'Backup · December', 'unit_price_in_cents' => 2500,
+        'charged_on' => '2026-12-01', 'rental_starts_on' => '2026-12-01', 'rental_ends_on' => '2026-12-31',
+    ]);
+
+    RunServiceInvoices::on(CarbonImmutable::parse('2026-12-02'));
+
+    expect(InvoiceItemEloquentModel::query()->withoutGlobalScopes()->get(['description', 'unit_price_in_cents', 'service_id', 'charge_id'])->toArray())->toBe([
+        ['description' => 'Backup · December', 'unit_price_in_cents' => 2500, 'service_id' => $service->id, 'charge_id' => $waiting->id],
+    ]);
+
+    InvoiceEloquentModel::query()->withoutGlobalScopes()->update(['status' => 'void']);
+    $waiting->delete();
+    RunServiceInvoices::on(CarbonImmutable::parse('2026-12-02'));
+
+    $draft = InvoiceEloquentModel::query()->withoutGlobalScopes()->where('status', 'draft')->sole();
+    expect(InvoiceItemEloquentModel::query()->withoutGlobalScopes()->where('invoice_id', $draft->id)->pluck('description')->all())->toBe(['Backup · 1 Dec 2026 – 31 Dec 2026']);
+});
