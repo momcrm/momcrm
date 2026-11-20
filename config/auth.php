@@ -42,6 +42,12 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+
+        // Customers' contacts signed in to the customer portal.
+        'portal' => [
+            'driver' => 'session',
+            'provider' => 'contacts',
+        ],
     ],
 
     /*
@@ -65,6 +71,12 @@ return [
         'users' => [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', UserEloquentModel::class),
+        ],
+
+        // Always contacts (App\Portal\PortalContactUserProvider), so it names
+        // no model here: staff requests' user stays a staff user to Larastan.
+        'contacts' => [
+            'driver' => 'portal-contacts',
         ],
 
         // 'users' => [

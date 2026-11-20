@@ -13,7 +13,14 @@ const marks: Record<
  * "Or continue with" Google / Microsoft. Only providers with keys configured
  * are offered. These are full page loads: the provider's page is not an Inertia page.
  */
-export default function SocialButtons({ providers }: { providers: Option[] }) {
+export default function SocialButtons({
+    providers,
+    hrefFor = (provider) => `/auth/${provider}/redirect`,
+}: {
+    providers: Option[];
+    /** Where each button goes; the customer portal has its own. */
+    hrefFor?: (provider: string) => string;
+}) {
     if (providers.length === 0) {
         return null;
     }
@@ -32,7 +39,7 @@ export default function SocialButtons({ providers }: { providers: Option[] }) {
                     return (
                         <a
                             key={provider.value}
-                            href={`/auth/${provider.value}/redirect`}
+                            href={hrefFor(provider.value)}
                             className="flex flex-col items-center gap-1.5 rounded-lg border px-3 py-3 text-sm font-medium transition-colors hover:bg-accent"
                         >
                             {Mark && <Mark />}

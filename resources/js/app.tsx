@@ -7,6 +7,7 @@ import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
 import CustomerLayout from '@/layouts/customer/layout';
 import OnboardingLayout from '@/layouts/onboarding-layout';
+import PortalLayout from '@/layouts/portal-layout';
 import ServiceLayout from '@/layouts/service/layout';
 import SettingsLayout from '@/layouts/settings/layout';
 
@@ -23,7 +24,10 @@ void createInertiaApp({
                     ? AppLayout
                     : null;
             case name.startsWith('auth/'):
+            case name.startsWith('portal/auth/'):
                 return AuthLayout;
+            case name.startsWith('portal/'):
+                return PortalLayout;
             case name.startsWith('onboarding/'):
                 return OnboardingLayout;
             case name.startsWith('settings/'):

@@ -7,12 +7,12 @@ namespace App\Activity\Listeners;
 use App\Activity\Actions\RecordActivity;
 use App\Activity\ActivityTypeEnum;
 use App\Shared\Types;
+use App\User\UserEloquentModel;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Events\Verified;
-use Illuminate\Contracts\Auth\Authenticatable;
 use Laravel\Fortify\Events\RecoveryCodesGenerated;
 use Laravel\Fortify\Events\TwoFactorAuthenticationConfirmed;
 use Laravel\Fortify\Events\TwoFactorAuthenticationDisabled;
@@ -22,7 +22,9 @@ use Laravel\Passkeys\Events\PasskeyDeleted;
 use Laravel\Passkeys\Events\PasskeyRegistered;
 
 /**
- * Records account-level activity (no team) for authentication and security events.
+ * Records account-level activity (no team) for authentication and security events
+ * of staff accounts. Contacts signing in to the customer portal are not staff
+ * and have no account activity.
  */
 final class RecordAccountActivity
 {
@@ -50,7 +52,7 @@ final class RecordAccountActivity
         $type = self::typeFor($event);
         $user = property_exists($event, 'user') ? $event->user : null;
 
-        if ($type === null || ! $user instanceof Authenticatable) {
+        if ($type === null || ! $user instanceof UserEloquentModel) {
             return;
         }
 

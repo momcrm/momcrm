@@ -25,8 +25,11 @@ Route::middleware('guest')->group(function () {
     Route::post('signup/profile', CreateAccountController::class)->name('signup.profile.store');
 
     Route::get('auth/{provider}/redirect', RedirectToProviderController::class)->name('auth.social.redirect');
-    Route::get('auth/{provider}/callback', HandleProviderCallbackController::class)->name('auth.social.callback');
 });
+
+// Outside the guest group: staff who are signed in can still sign in to the
+// customer portal with Google or Microsoft, which comes back here too.
+Route::get('auth/{provider}/callback', HandleProviderCallbackController::class)->name('auth.social.callback');
 
 Route::middleware('auth')->group(function () {
     Route::post('user/confirm-with-code/send', SendConfirmationCodeController::class)

@@ -3,16 +3,20 @@
 declare(strict_types=1);
 
 use App\Auth\AuthSession;
+use App\Contact\ContactEloquentModel;
 use App\EmailCode\Notifications\EmailCodeNotification;
+use App\Portal\PortalSession;
 use App\SocialAccount\SocialAccountEloquentModel;
 use App\User\UserEloquentModel;
 use Illuminate\Support\Facades\Notification;
 use Laravel\Socialite\Socialite;
 use Laravel\Socialite\Two\User as SocialUser;
 
+use function Pest\Laravel\actingAs;
 use function Pest\Laravel\assertAuthenticatedAs;
 use function Pest\Laravel\assertGuest;
 use function Pest\Laravel\get;
+use function Pest\Laravel\withSession;
 
 beforeEach(function (): void {
     config([
@@ -88,4 +92,45 @@ it('does not handle providers without keys', function (): void {
     config(['services.microsoft.client_id' => null]);
 
     get(route('auth.social.callback', 'microsoft'))->assertNotFound();
+});
+
+it('signs a contact in to the portal with a verified Google address', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create(['email' => 'sam@acme.test']);
+    $contact = ContactEloquentModel::factory()->withPortalAccess()->create(['email' => 'sam@acme.test']);
+    fakeProviderUser('google', ['email_verified' => true]);
+
+    withSession([PortalSession::SOCIAL => true])
+        ->get(route('auth.social.callback', 'google'))
+        ->assertRedirect(route('portal.home'));
+
+    assertAuthenticatedAs($contact, 'portal');
+    assertGuest('web');
+    expect(SocialAccountEloquentModel::query()->exists())->toBeFalse();
+    expect($user->fresh())->not->toBeNull();
+});
+
+it('emails a portal code before trusting a Microsoft address for the portal', function (): void {
+    ContactEloquentModel::factory()->withPortalAccess()->create(['email' => 'sam@acme.test']);
+    fakeProviderUser('microsoft', []);
+
+    withSession([PortalSession::SOCIAL => true])
+        ->get(route('auth.social.callback', 'microsoft'))
+        ->assertRedirectToRoute('portal.login.code')
+        ->assertSessionHas(PortalSession::PENDING_EMAIL, 'sam@acme.test');
+
+    assertGuest('portal');
+    Notification::assertSentOnDemand(EmailCodeNotification::class, fn (EmailCodeNotification $notification): bool => $notification->purpose->value === 'portal_sign_in');
+});
+
+it('lets signed-in staff sign in to the portal with Google too', function (): void {
+    $staff = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $contact = ContactEloquentModel::factory()->withPortalAccess()->create(['email' => 'sam@acme.test']);
+    fakeProviderUser('google', ['email_verified' => true]);
+
+    actingAs($staff)
+        ->withSession([PortalSession::SOCIAL => true])
+        ->get(route('auth.social.callback', 'google'))
+        ->assertRedirect(route('portal.home'));
+
+    assertAuthenticatedAs($contact, 'portal');
 });
