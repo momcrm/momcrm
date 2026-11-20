@@ -11,6 +11,7 @@ use App\Team\Properties\BillingAddress;
 use App\Team\Properties\BillingEmail;
 use App\Team\Properties\BillingName;
 use App\Team\Properties\BillingPhone;
+use App\Team\Properties\InvoicePrefix;
 use App\Team\Properties\PaymentDetails;
 use App\Team\Properties\TaxId;
 use App\Team\Properties\TaxIdLabel;
@@ -62,6 +63,7 @@ final class UpdateBillingDetailsFormRequest extends FormRequest
             BillingPhone::getNameForValidation() => BillingPhone::getValidationRulesForUpdate($this),
             BillingAddress::getNameForValidation() => BillingAddress::getValidationRulesForUpdate($this),
             PaymentDetails::getNameForValidation() => PaymentDetails::getValidationRulesForUpdate($this),
+            InvoicePrefix::getNameForValidation() => InvoicePrefix::getValidationRulesForUpdate($this),
         ];
     }
 
@@ -72,6 +74,7 @@ final class UpdateBillingDetailsFormRequest extends FormRequest
     {
         return [
             TaxIdLabel::getNameForValidation().'.required_with' => __('Say what your tax ID is called, e.g. ABN or VAT.'),
+            InvoicePrefix::getNameForValidation().'.regex' => __('Use letters, numbers and - / _ . # only, with no spaces.'),
         ];
     }
 

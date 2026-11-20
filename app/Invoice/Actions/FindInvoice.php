@@ -50,7 +50,7 @@ final class FindInvoice
             ->with([InvoiceRelationship::Customer->value, InvoiceRelationship::Items->value])
             ->when($status, fn (Builder $query, InvoiceStatusEnum $status) => $query->where(Status::getDatabaseTableColumnName(), $status->value))
             ->when($customerId, fn (Builder $query, string $customerId) => $query->where(CustomerId::getDatabaseTableColumnName(), $customerId))
-            ->when($search, fn (Builder $query, string $search) => $query->where(Number::getDatabaseTableColumnName(), (int) preg_replace('/\D/', '', $search)))
+            ->when($search, fn (Builder $query, string $search) => $query->where(Number::getDatabaseTableColumnName(), Invoice::numberIn($search) ?? 0))
             ->orderByDesc(Number::getDatabaseTableColumnName())
             ->paginate($perPage)
             ->withQueryString()

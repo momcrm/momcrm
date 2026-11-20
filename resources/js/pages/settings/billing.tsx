@@ -1,4 +1,5 @@
 import { Form, Head } from '@inertiajs/react';
+import { useState } from 'react';
 import UpdateBillingDetailsController from '@/actions/App/Team/Controllers/UpdateBillingDetailsController';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
@@ -8,6 +9,41 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import type { TeamBilling } from '@/types';
+
+/**
+ * What invoice numbers start with, previewed as the next invoice would
+ * show it.
+ */
+function InvoicePrefixField({
+    defaultValue,
+    error,
+}: {
+    defaultValue: string;
+    error?: string;
+}) {
+    const [prefix, setPrefix] = useState(defaultValue);
+
+    return (
+        <div className="grid gap-2">
+            <Label htmlFor="invoice_prefix">Invoice number prefix</Label>
+            <Input
+                id="invoice_prefix"
+                name="invoice_prefix"
+                value={prefix}
+                onChange={(event) => setPrefix(event.target.value)}
+                maxLength={12}
+                className="w-40"
+            />
+            <p className="text-sm text-muted-foreground">
+                Invoices are numbered like{' '}
+                <span className="font-mono text-foreground">{prefix}0042</span>.
+                Leave it blank for plain numbers. Invoices already drafted keep
+                the prefix they were made with.
+            </p>
+            <InputError message={error} />
+        </div>
+    );
+}
 
 export default function Billing({
     teamName,
@@ -142,6 +178,11 @@ export default function Billing({
                                 </p>
                                 <InputError message={errors.payment_details} />
                             </div>
+
+                            <InvoicePrefixField
+                                defaultValue={billing.invoice_prefix}
+                                error={errors.invoice_prefix}
+                            />
 
                             <Button disabled={processing}>Save</Button>
                         </>
