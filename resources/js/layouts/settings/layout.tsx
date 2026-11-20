@@ -7,6 +7,7 @@ import {
     KeyRound,
     Landmark,
     Mail,
+    Package,
     Palette,
     Plug,
     Receipt,
@@ -27,6 +28,7 @@ import { index as connectorsIndex } from '@/routes/connectors';
 import { edit as editCustomObjects } from '@/routes/custom-objects';
 import { edit as editEnvironment } from '@/routes/environment';
 import { index as mailboxesIndex } from '@/routes/mailboxes';
+import { index as productsIndex } from '@/routes/products';
 import { edit } from '@/routes/profile';
 import { index as ratesIndex } from '@/routes/rates';
 import { edit as editSecurity } from '@/routes/security';
@@ -62,6 +64,12 @@ const billingItem: NavItem = {
     title: 'Billing details',
     href: editBilling(),
     icon: Building2,
+};
+
+const productsItem: NavItem = {
+    title: 'Products',
+    href: productsIndex(),
+    icon: Package,
 };
 
 const bankFeedsItem: NavItem = {
@@ -143,7 +151,7 @@ export default function SettingsLayout({
                       ...(canManageWorkflow ? [workflowItem] : []),
                       ...(canManageCustomObjects ? [customObjectsItem] : []),
                       ...(canManageBilling ? [billingItem] : []),
-                      ...(canManageRates ? [ratesItem] : []),
+                      ...(canManageRates ? [ratesItem, productsItem] : []),
                       ...(canManageBankFeeds ? [bankFeedsItem] : []),
                       ...(canManageEmail ? [emailItem] : []),
                       ...(canManageConnectors ? [connectorsItem] : []),

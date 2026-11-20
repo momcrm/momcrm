@@ -1112,3 +1112,12 @@ export type BankRule = {
     customer_id: string | null;
     customer_name: string | null;
 };
+
+/** Something sold once, such as a laptop or a call-out, priced per currency. */
+export type Product = {
+    id: string;
+    name: string;
+    description: string | null;
+    prices: RatePrice[];
+    is_archived: boolean;
+};

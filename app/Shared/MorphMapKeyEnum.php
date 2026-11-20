@@ -33,6 +33,7 @@ use App\Milestone\MilestoneEloquentModel;
 use App\Passkey\PasskeyEloquentModel;
 use App\Payment\PaymentEloquentModel;
 use App\PaymentAllocation\PaymentAllocationEloquentModel;
+use App\Product\ProductEloquentModel;
 use App\Project\ProjectEloquentModel;
 use App\Rate\RateEloquentModel;
 use App\Record\RecordEloquentModel;
@@ -87,6 +88,7 @@ enum MorphMapKeyEnum: string
     case Passkey = 'passkey';
     case Payment = 'payment';
     case PaymentAllocation = 'payment_allocation';
+    case Product = 'product';
     case Project = 'project';
     case Rate = 'rate';
     case Record = 'record';
@@ -154,6 +156,7 @@ enum MorphMapKeyEnum: string
             self::Passkey => PasskeyEloquentModel::class,
             self::Payment => PaymentEloquentModel::class,
             self::PaymentAllocation => PaymentAllocationEloquentModel::class,
+            self::Product => ProductEloquentModel::class,
             self::Project => ProjectEloquentModel::class,
             self::Rate => RateEloquentModel::class,
             self::Record => RecordEloquentModel::class,

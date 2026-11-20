@@ -41,6 +41,7 @@ enum Table: string
     case PaymentAllocations = 'payment_allocations';
     case Payments = 'payments';
     case ProjectUser = 'project_user';
+    case Products = 'products';
     case Projects = 'projects';
     case Rates = 'rates';
     case Records = 'records';
