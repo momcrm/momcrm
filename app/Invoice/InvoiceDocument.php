@@ -75,7 +75,7 @@ final readonly class InvoiceDocument
     }
 
     /**
-     * @return array{title: string, invoice: array<string, mixed>, items: array<int, array<string, mixed>>, totals: array{subtotal_in_cents: int, tax_in_cents: int, total_in_cents: int}, customer: array<string, mixed>, from: array<string, ?string>, payments: array<int, array<string, mixed>>}
+     * @return array{title: string, invoice: array<string, mixed>, items: array<int, array<string, mixed>>, totals: array{subtotal_in_cents: int, tax_in_cents: int, total_in_cents: int}, customer: array<string, mixed>, from: array<string, ?string>, customer_credit_in_cents: int, payments: array<int, array<string, mixed>>}
      */
     public function toArray(): array
     {
@@ -86,6 +86,7 @@ final readonly class InvoiceDocument
             'totals' => $this->totals->toArray(),
             'customer' => $this->customer->toSummary(),
             'from' => $this->team->toBillingSummary(),
+            'customer_credit_in_cents' => FindPayment::creditForCustomers($this->invoice->getTeamId()->toString(), [$this->invoice->getCustomerId()->toString()])[$this->invoice->getCustomerId()->toString()] ?? 0,
             'payments' => array_values(FindPayment::allocationsForInvoice($this->invoice->getId()->toString(), $this->invoice->getTeamId()->toString())
                 ->map(fn (PaymentAllocation $allocation): array => $allocation->toSummary())
                 ->all()),

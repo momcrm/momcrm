@@ -13,6 +13,7 @@ use App\CustomField\CustomFieldRelationEnum;
 use App\Invoice\Actions\FindInvoice;
 use App\Invoice\Invoice;
 use App\Invoice\InvoiceStatusEnum;
+use App\Payment\Actions\FindPayment;
 use App\Service\Actions\FindService;
 use App\Service\Service;
 use App\Ticket\Actions\FindTicket;
@@ -45,8 +46,11 @@ final class ShowCustomerController
         return Inertia::render('customers/workspace/dashboard', [
             ...$workspace->props($request),
             'linkedRecords' => FindLinkedRecords::to((string) $request->user()?->current_team_id, (string) $request->user()?->id, CustomFieldRelationEnum::Customer, $customerId),
-            'money' => FindInvoice::balancesForCustomers($workspace->teamId, [$customerId])[$customerId]
-                ?? ['balance_in_cents' => 0, 'current_in_cents' => 0, 'overdue_in_cents' => 0],
+            'money' => [
+                ...FindInvoice::balancesForCustomers($workspace->teamId, [$customerId])[$customerId]
+                    ?? ['balance_in_cents' => 0, 'current_in_cents' => 0, 'overdue_in_cents' => 0],
+                'credit_in_cents' => FindPayment::creditForCustomers($workspace->teamId, [$customerId])[$customerId] ?? 0,
+            ],
             'openTickets' => FindTicket::paginateForTeam($workspace->teamId, FindTicket::FILTER_OPEN, customerId: $customerId, perPage: self::CARD_ROWS)
                 ->getCollection()
                 ->map(fn (Ticket $ticket): array => ListTicketsController::listItem($ticket))

@@ -73,7 +73,7 @@ final class StorePaymentFormRequest extends FormRequest
 
     /**
      * The invoices paid must be this customer's and owed what is applied to
-     * them, and the whole amount must go to invoices.
+     * them. Whatever isn't applied is the customer's credit.
      *
      * @return array<int, Closure(Validator): void>
      */
@@ -88,14 +88,6 @@ final class StorePaymentFormRequest extends FormRequest
             $amount = Types::intOrZero($this->input(AmountInCents::getNameForValidation()));
 
             PaymentAllocationRules::check($validator, $customer, $amount, AmountInCents::getNameForValidation());
-
-            $allocated = array_sum(PaymentAllocationRules::allocations($this->all()));
-
-            if ($validator->errors()->isEmpty() && $allocated < $amount) {
-                $validator->errors()->add(AmountInCents::getNameForValidation(), __('Apply all of it to invoices: :left is left over.', [
-                    'left' => Number::currency(($amount - $allocated) / 100, $customer->getCurrency()->toEnum()->value),
-                ]));
-            }
         }];
     }
 
@@ -112,7 +104,9 @@ final class StorePaymentFormRequest extends FormRequest
             PaymentAllocationRules::allocations($validated),
         );
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __(':reference recorded.', ['reference' => $payment->getReferenceNumber()])]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => $payment->getUnallocatedInCents() > 0
+            ? __(':reference recorded. :amount is kept as credit.', ['reference' => $payment->getReferenceNumber(), 'amount' => Number::currency($payment->getUnallocatedInCents() / 100, $payment->getCurrency()->toEnum()->value)])
+            : __(':reference recorded.', ['reference' => $payment->getReferenceNumber()])]);
 
         return back();
     }

@@ -89,6 +89,65 @@ final class FindPayment
     }
 
     /**
+     * Each customer's credit: what they have paid that isn't applied to an
+     * invoice. Customers with none are left out.
+     *
+     * @param  array<int, string>  $customerIds
+     * @return array<string, int>
+     */
+    public static function creditForCustomers(string $teamId, array $customerIds): array
+    {
+        if ($customerIds === []) {
+            return [];
+        }
+
+        $credit = [];
+
+        self::query($teamId)
+            ->whereIn(CustomerId::getDatabaseTableColumnName(), $customerIds)
+            ->get()
+            ->each(function (PaymentEloquentModel $model) use (&$credit): void {
+                $payment = Payment::fromEloquentModel($model);
+                $customerId = $payment->getCustomerId()->toString();
+
+                if ($payment->getUnallocatedInCents() > 0) {
+                    $credit[$customerId] = ($credit[$customerId] ?? 0) + $payment->getUnallocatedInCents();
+                }
+            });
+
+        return $credit;
+    }
+
+    /**
+     * A customer's payments with some of them not yet applied, oldest paid
+     * first: the credit to use up on their invoices, in the order to use it.
+     */
+    public static function withCreditForCustomer(string $customerId, string $teamId): PaymentCollection
+    {
+        return Payment::collect(
+            self::query($teamId)
+                ->where(CustomerId::getDatabaseTableColumnName(), $customerId)
+                ->orderBy(PaidOn::getDatabaseTableColumnName())
+                ->orderBy(Number::getDatabaseTableColumnName())
+                ->get()
+                ->all(),
+            'fromEloquentModel',
+        )->filter(fn (Payment $payment): bool => $payment->getUnallocatedInCents() > 0)->values();
+    }
+
+    public static function allocationByIdForTeam(?string $id, ?string $teamId): PaymentAllocation
+    {
+        if ($id === null || $teamId === null) {
+            return PaymentAllocation::new();
+        }
+
+        return PaymentAllocation::fromEloquentModel(self::allocationQuery($teamId)
+            ->with(PaymentAllocationRelationship::Invoice->value)
+            ->whereKey($id)
+            ->first());
+    }
+
+    /**
      * The invoices a payment was applied to, in the order it was applied.
      */
     public static function allocationsFor(Payment $payment): PaymentAllocationCollection

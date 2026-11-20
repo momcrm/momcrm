@@ -1,5 +1,6 @@
 import { router, useHttp } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
+import StorePaymentAllocationsController from '@/actions/App/Payment/Controllers/StorePaymentAllocationsController';
 import StorePaymentController from '@/actions/App/Payment/Controllers/StorePaymentController';
 import FormField from '@/components/form-field';
 import InputError from '@/components/input-error';
@@ -19,7 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { formatCents } from '@/lib/money';
 import { cn } from '@/lib/utils';
 import { outstandingInvoices } from '@/routes/customers';
-import type { InvoiceListItem, OutstandingInvoices } from '@/types';
+import type { InvoiceListItem, OutstandingInvoices, Payment } from '@/types';
 
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
     dateStyle: 'medium',
@@ -82,12 +83,15 @@ function spread(
 /**
  * Records money a customer paid and splits it over their invoices still
  * owing, as Amphora's Pay screen does: the amount spreads over the ticked
- * invoices, oldest due first, and any line can be changed by hand. Opened
- * for an invoice, that invoice is ticked for what is owing on it.
+ * invoices, oldest due first, and any line can be changed by hand. What
+ * isn't applied is kept as their credit. Opened for an invoice, that
+ * invoice is ticked for what is owing on it. Given a payment, it applies
+ * what is left of that payment instead of recording a new one.
  */
 export default function RecordPaymentDialog({
     customerId,
     invoiceId,
+    payment,
     open,
     onOpenChange,
     onRecorded,
@@ -95,10 +99,13 @@ export default function RecordPaymentDialog({
     customerId: string;
     /** An invoice to pay off, ticked when the dialog opens. */
     invoiceId?: string;
+    /** A payment whose unapplied money to apply. */
+    payment?: Payment;
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onRecorded?: () => void;
 }) {
+    const isApplying = payment !== undefined;
     const http = useHttp<Record<string, never>, OutstandingInvoices>();
     const [data, setData] = useState<OutstandingInvoices | null>(null);
     const [amount, setAmount] = useState('');
@@ -118,7 +125,7 @@ export default function RecordPaymentDialog({
 
         setData(null);
         setErrors({});
-        setAmount('');
+        setAmount(payment ? toDollars(payment.unallocated_in_cents) : '');
         setPaidOn(today());
         setMethod('bank_transfer');
         setReference('');
@@ -136,7 +143,7 @@ export default function RecordPaymentDialog({
                     (candidate) => candidate.id === invoiceId,
                 );
 
-                if (invoice) {
+                if (invoice && !payment) {
                     setTicked(new Set([invoice.id]));
                     setAmount(toDollars(invoice.balance_in_cents));
                 }
@@ -202,16 +209,20 @@ export default function RecordPaymentDialog({
             }));
 
         router.post(
-            StorePaymentController.url(),
-            {
-                customer_id: customerId,
-                amount,
-                paid_on: paidOn,
-                method,
-                reference: reference || null,
-                notes: notes || null,
-                allocations,
-            },
+            payment
+                ? StorePaymentAllocationsController.url(payment.id)
+                : StorePaymentController.url(),
+            payment
+                ? { allocations }
+                : {
+                      customer_id: customerId,
+                      amount,
+                      paid_on: paidOn,
+                      method,
+                      reference: reference || null,
+                      notes: notes || null,
+                      allocations,
+                  },
             {
                 preserveScroll: true,
                 preserveState: true,
@@ -250,11 +261,17 @@ export default function RecordPaymentDialog({
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-3xl">
-                <DialogTitle>Record payment</DialogTitle>
+                <DialogTitle>
+                    {payment
+                        ? `Apply ${payment.reference_number}`
+                        : 'Record payment'}
+                </DialogTitle>
                 <DialogDescription>
-                    {data
-                        ? `Money ${data.customer.name} paid, applied to their invoices still owing.`
-                        : 'Loading…'}
+                    {!data
+                        ? 'Loading…'
+                        : payment
+                          ? `${money(payment.unallocated_in_cents)} of it isn't applied yet. Choose the invoices it pays.`
+                          : `Money ${data.customer.name} paid, applied to their invoices still owing. Anything not applied is kept as their credit.`}
                 </DialogDescription>
 
                 {data === null ? (
@@ -265,7 +282,13 @@ export default function RecordPaymentDialog({
                     </div>
                 ) : (
                     <form onSubmit={submit} className="mt-2 space-y-6">
-                        <div className="grid gap-4 sm:grid-cols-2">
+                        <InputError message={errors.allocations} />
+                        <div
+                            className={cn(
+                                'grid gap-4 sm:grid-cols-2',
+                                isApplying && 'hidden',
+                            )}
+                        >
                             <FormField
                                 id="payment-amount"
                                 label={`Amount (${currency})`}
@@ -282,7 +305,7 @@ export default function RecordPaymentDialog({
                                         setAmount(event.target.value)
                                     }
                                     required
-                                    autoFocus
+                                    autoFocus={!isApplying}
                                 />
                             </FormField>
                             <FormField
@@ -534,9 +557,11 @@ export default function RecordPaymentDialog({
                                             : 'text-muted-foreground',
                                     )}
                                 >
-                                    {leftOver > 0
-                                        ? `${money(leftOver)} is not applied to an invoice yet.`
-                                        : `The invoices take ${money(-leftOver)} more than the amount received.`}
+                                    {leftOver < 0
+                                        ? `The invoices take ${money(-leftOver)} more than ${isApplying ? 'is left to apply' : 'the amount received'}.`
+                                        : isApplying
+                                          ? `${money(leftOver)} stays unapplied.`
+                                          : `${money(leftOver)} will be kept as credit.`}
                                 </p>
                             )}
                         </section>
@@ -551,7 +576,7 @@ export default function RecordPaymentDialog({
                             </Button>
                             <Button type="submit" disabled={processing}>
                                 {processing && <Spinner />}
-                                Record payment
+                                {isApplying ? 'Apply' : 'Record payment'}
                             </Button>
                         </div>
                     </form>

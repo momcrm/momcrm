@@ -1,10 +1,12 @@
 import { Form, Link, router, useHttp, usePage } from '@inertiajs/react';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import UpdatePaymentController from '@/actions/App/Payment/Controllers/UpdatePaymentController';
 import FormField from '@/components/form-field';
+import InputError from '@/components/input-error';
 import NativeSelect from '@/components/native-select';
+import RecordPaymentDialog from '@/components/payments/record-payment-dialog';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -21,8 +23,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { formatCents } from '@/lib/money';
 import { show as showCustomer } from '@/routes/customers';
 import { show as showInvoice } from '@/routes/invoices';
+import {
+    destroy as destroyAllocation,
+    update as updateAllocation,
+} from '@/routes/payment-allocations';
 import { destroy, details } from '@/routes/payments';
-import type { PaymentDetails } from '@/types';
+import type { PaymentAllocation, PaymentDetails } from '@/types';
 
 /** The query parameter that keeps a payment open over the page. */
 const PAYMENT_PARAM = 'payment';
@@ -139,7 +145,8 @@ function DeletePayment({
 }
 
 /**
- * Changes when and how a payment was made, its reference and notes.
+ * Changes a payment's amount, when and how it was made, its reference and
+ * notes. The amount can't drop below what is applied to invoices.
  */
 function EditPayment({
     details: { payment, methods },
@@ -158,6 +165,31 @@ function EditPayment({
             {({ processing, errors }) => (
                 <>
                     <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="sm:col-span-2">
+                            <FormField
+                                id="edit-amount"
+                                label={`Amount (${payment.currency})`}
+                                hint={
+                                    payment.allocated_in_cents > 0
+                                        ? `${formatCents(payment.allocated_in_cents, payment.currency)} of it is applied to invoices. Anything more is credit.`
+                                        : 'Anything not applied to an invoice is credit.'
+                                }
+                                error={errors.amount_in_cents}
+                            >
+                                <Input
+                                    id="edit-amount"
+                                    name="amount"
+                                    type="number"
+                                    inputMode="decimal"
+                                    step="0.01"
+                                    min="0.01"
+                                    defaultValue={(
+                                        payment.amount_in_cents / 100
+                                    ).toFixed(2)}
+                                    required
+                                />
+                            </FormField>
+                        </div>
                         <FormField
                             id="edit-paid-on"
                             label="Paid on"
@@ -239,6 +271,137 @@ function EditPayment({
 }
 
 /**
+ * One invoice a payment went to. Someone who may edit the payment can change
+ * how much goes to it, or take the payment off it; either way what comes
+ * off is credit.
+ */
+function AllocationRow({
+    allocation,
+    currency,
+    canUpdate,
+    onChanged,
+}: {
+    allocation: PaymentAllocation;
+    currency: string;
+    canUpdate: boolean;
+    onChanged: () => void;
+}) {
+    const [isEditing, setIsEditing] = useState(false);
+    const [amount, setAmount] = useState('');
+    const [error, setError] = useState<string | undefined>();
+    const [processing, setProcessing] = useState(false);
+    const options = {
+        preserveScroll: true,
+        preserveState: true,
+        onStart: () => setProcessing(true),
+        onFinish: () => setProcessing(false),
+        onError: (errors: Record<string, string>) =>
+            setError(Object.values(errors)[0]),
+        onSuccess: () => {
+            setIsEditing(false);
+            onChanged();
+        },
+    };
+
+    return (
+        <li className="px-3 py-2">
+            <div className="flex items-center justify-between gap-3">
+                <Link
+                    href={showInvoice(allocation.invoice_id)}
+                    className="font-mono underline-offset-4 hover:underline"
+                >
+                    {allocation.invoice_reference}
+                </Link>
+                {isEditing ? (
+                    <form
+                        className="flex items-center gap-1.5"
+                        onSubmit={(event) => {
+                            event.preventDefault();
+                            router.put(
+                                updateAllocation.url(allocation.id),
+                                { amount },
+                                options,
+                            );
+                        }}
+                    >
+                        <Input
+                            aria-label={`Amount for ${allocation.invoice_reference}`}
+                            type="number"
+                            inputMode="decimal"
+                            step="0.01"
+                            min="0.01"
+                            className="h-8 w-28 text-right tabular-nums"
+                            value={amount}
+                            onChange={(event) => setAmount(event.target.value)}
+                            autoFocus
+                        />
+                        <Button size="sm" type="submit" disabled={processing}>
+                            Save
+                        </Button>
+                        <Button
+                            size="sm"
+                            type="button"
+                            variant="ghost"
+                            onClick={() => {
+                                setIsEditing(false);
+                                setError(undefined);
+                            }}
+                        >
+                            Cancel
+                        </Button>
+                    </form>
+                ) : (
+                    <div className="flex items-center gap-1">
+                        <span className="tabular-nums">
+                            {formatCents(allocation.amount_in_cents, currency)}
+                        </span>
+                        {canUpdate && (
+                            <>
+                                <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="size-7"
+                                    aria-label={`Change the amount for ${allocation.invoice_reference}`}
+                                    onClick={() => {
+                                        setAmount(
+                                            (
+                                                allocation.amount_in_cents / 100
+                                            ).toFixed(2),
+                                        );
+                                        setError(undefined);
+                                        setIsEditing(true);
+                                    }}
+                                >
+                                    <Pencil />
+                                </Button>
+                                <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="size-7"
+                                    aria-label={`Take it off ${allocation.invoice_reference}`}
+                                    disabled={processing}
+                                    onClick={() =>
+                                        router.delete(
+                                            destroyAllocation.url(
+                                                allocation.id,
+                                            ),
+                                            options,
+                                        )
+                                    }
+                                >
+                                    <X />
+                                </Button>
+                            </>
+                        )}
+                    </div>
+                )}
+            </div>
+            <InputError message={error} className="mt-1 text-right" />
+        </li>
+    );
+}
+
+/**
  * The payment named in the URL, opened over the page it was picked from:
  * its details, the invoices it paid, and editing or deleting it. Put one on
  * any page that opens payments with usePaymentDialog().
@@ -247,6 +410,7 @@ export default function PaymentDialog() {
     const { openPaymentId: paymentId, closePayment } = usePaymentDialog();
     const [loaded, setLoaded] = useState<PaymentDetails | null>(null);
     const [isEditing, setIsEditing] = useState(false);
+    const [isApplying, setIsApplying] = useState(false);
     const http = useHttp<Record<string, never>, PaymentDetails>();
 
     const load = useCallback(
@@ -360,7 +524,7 @@ export default function PaymentDialog() {
                                 />
                                 {payment.unallocated_in_cents > 0 && (
                                     <Detail
-                                        label="Not applied to an invoice"
+                                        label="Not applied (credit)"
                                         value={money(
                                             payment.unallocated_in_cents,
                                         )}
@@ -385,30 +549,39 @@ export default function PaymentDialog() {
                             ) : (
                                 <ul className="divide-y rounded-lg border text-sm">
                                     {shown.allocations.map((allocation) => (
-                                        <li
+                                        <AllocationRow
                                             key={allocation.id}
-                                            className="flex items-center justify-between gap-4 px-3 py-2"
-                                        >
-                                            <Link
-                                                href={showInvoice(
-                                                    allocation.invoice_id,
-                                                )}
-                                                className="font-mono underline-offset-4 hover:underline"
-                                            >
-                                                {allocation.invoice_reference}
-                                            </Link>
-                                            <span className="tabular-nums">
-                                                {money(
-                                                    allocation.amount_in_cents,
-                                                )}
-                                            </span>
-                                        </li>
+                                            allocation={allocation}
+                                            currency={payment.currency}
+                                            canUpdate={
+                                                shown.can.update ?? false
+                                            }
+                                            onChanged={() => load(payment.id)}
+                                        />
                                     ))}
                                 </ul>
                             )}
                         </section>
 
                         <div className="flex flex-wrap justify-end gap-2">
+                            {shown.can.update &&
+                                payment.unallocated_in_cents > 0 && (
+                                    <>
+                                        <Button
+                                            size="sm"
+                                            onClick={() => setIsApplying(true)}
+                                        >
+                                            Apply to invoices
+                                        </Button>
+                                        <RecordPaymentDialog
+                                            customerId={payment.customer_id}
+                                            payment={payment}
+                                            open={isApplying}
+                                            onOpenChange={setIsApplying}
+                                            onRecorded={() => load(payment.id)}
+                                        />
+                                    </>
+                                )}
                             {shown.can.delete && (
                                 <DeletePayment details={shown} />
                             )}

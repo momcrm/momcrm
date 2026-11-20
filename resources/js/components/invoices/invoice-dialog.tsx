@@ -134,6 +134,7 @@ export default function InvoiceDialog() {
                         <>
                             <InvoiceActions
                                 invoice={shown.invoice}
+                                creditInCents={shown.customer_credit_in_cents}
                                 onChanged={() => load(shown.invoice.id)}
                             />
                             <Tooltip>

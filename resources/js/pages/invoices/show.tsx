@@ -41,7 +41,12 @@ export default function ShowInvoice({
                 <PageHeader
                     title={invoice.reference}
                     description={customer.name}
-                    actions={<InvoiceActions invoice={invoice} />}
+                    actions={
+                        <InvoiceActions
+                            invoice={invoice}
+                            creditInCents={document.customer_credit_in_cents}
+                        />
+                    }
                 />
 
                 <InvoiceDocument document={document} />

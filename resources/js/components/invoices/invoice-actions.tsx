@@ -2,6 +2,7 @@ import { Link, router } from '@inertiajs/react';
 import { Banknote, Download, Pencil } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import ApplyInvoiceCreditController from '@/actions/App/Payment/Controllers/ApplyInvoiceCreditController';
 import MarkInvoiceSentController from '@/actions/App/Invoice/Controllers/MarkInvoiceSentController';
 import VoidInvoiceController from '@/actions/App/Invoice/Controllers/VoidInvoiceController';
 import RecordPaymentDialog from '@/components/payments/record-payment-dialog';
@@ -17,9 +18,12 @@ import type { Invoice } from '@/types';
  */
 export default function InvoiceActions({
     invoice,
+    creditInCents = 0,
     onChanged,
 }: {
     invoice: Pick<Invoice, 'id' | 'status' | 'customer_id' | 'paid_in_cents'>;
+    /** The customer's credit, offered to pay a sent invoice. */
+    creditInCents?: number;
     onChanged?: () => void;
 }) {
     const [processing, setProcessing] = useState(false);
@@ -46,9 +50,7 @@ export default function InvoiceActions({
         );
     };
 
-    const canVoid =
-        (invoice.status === 'draft' || invoice.status === 'sent') &&
-        invoice.paid_in_cents === 0;
+    const canVoid = invoice.status === 'draft' || invoice.status === 'sent';
 
     return (
         <div className="flex flex-wrap items-center gap-2">
@@ -89,6 +91,21 @@ export default function InvoiceActions({
             )}
             {invoice.status === 'sent' && (
                 <>
+                    {creditInCents > 0 && (
+                        <Button
+                            variant="outline"
+                            disabled={processing}
+                            onClick={() =>
+                                changeStatus(
+                                    ApplyInvoiceCreditController.url(
+                                        invoice.id,
+                                    ),
+                                )
+                            }
+                        >
+                            Apply credit
+                        </Button>
+                    )}
                     <Button onClick={() => setIsPaying(true)}>
                         <Banknote />
                         Record payment

@@ -10,6 +10,7 @@ use App\CustomField\CustomFieldTargetEnum;
 use App\CustomField\CustomFieldTypeEnum;
 use App\Invoice\InvoiceEloquentModel;
 use App\InvoiceItem\InvoiceItemEloquentModel;
+use App\Payment\PaymentEloquentModel;
 use App\Service\ServiceEloquentModel;
 use App\User\UserEloquentModel;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -75,7 +76,7 @@ it('filters customers by type, billing type and status, and finds them by prefix
         ->and(array_column($names(['search' => 'acm']), 'name'))->toBe(['Acme IT']);
 });
 
-it('shows what each customer owes on sent invoices and how many services they have, not counting archived ones', function (): void {
+it('shows what each customer owes on sent invoices, their credit and how many services they have, not counting archived ones', function (): void {
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
     $customer = CustomerEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
     $invoice = fn (string $status) => InvoiceEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'customer_id' => $customer->id, 'status' => $status, 'tax_rate_basis_points' => 1000]);
@@ -84,11 +85,13 @@ it('shows what each customer owes on sent invoices and how many services they ha
     }
     ServiceEloquentModel::factory()->count(3)->create(['team_id' => $user->current_team_id, 'customer_id' => $customer->id]);
     ServiceEloquentModel::factory()->archived()->create(['team_id' => $user->current_team_id, 'customer_id' => $customer->id]);
+    PaymentEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'customer_id' => $customer->id, 'amount_in_cents' => 1500]);
 
     actingAs($user)
         ->get(route('customers.index'))
         ->assertInertia(fn (Assert $page) => $page
             ->where('customers.data.0.balance_in_cents', 22000)
+            ->where('customers.data.0.credit_in_cents', 1500)
             ->where('customers.data.0.services_count', 3),
         );
 });
