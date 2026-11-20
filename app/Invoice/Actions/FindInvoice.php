@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Invoice\Actions;
 
 use App\Invoice\Invoice;
+use App\Invoice\InvoiceCollection;
 use App\Invoice\InvoiceEloquentModel;
 use App\Invoice\InvoiceRelationship;
 use App\Invoice\InvoiceStatusEnum;
 use App\Invoice\Properties\CustomerId;
 use App\Invoice\Properties\DueOn;
 use App\Invoice\Properties\Id;
+use App\Invoice\Properties\IssuedOn;
 use App\Invoice\Properties\Number;
 use App\Invoice\Properties\PaidInCents;
 use App\Invoice\Properties\Status;
@@ -110,6 +112,26 @@ final class FindInvoice
             ->filter(fn (array $item): bool => $item['balance_in_cents'] > 0)
             ->values()
             ->all();
+    }
+
+    /**
+     * What a customer has been billed: their sent and paid invoices, with
+     * their items, oldest issued first. Drafts and voided invoices are left
+     * out.
+     */
+    public static function billedToCustomer(string $customerId, string $teamId): InvoiceCollection
+    {
+        return Invoice::collect(
+            self::query($teamId)
+                ->with(InvoiceRelationship::Items->value)
+                ->where(CustomerId::getDatabaseTableColumnName(), $customerId)
+                ->whereIn(Status::getDatabaseTableColumnName(), [InvoiceStatusEnum::Sent->value, InvoiceStatusEnum::Paid->value])
+                ->orderBy(IssuedOn::getDatabaseTableColumnName())
+                ->orderBy(Number::getDatabaseTableColumnName())
+                ->get()
+                ->all(),
+            'fromEloquentModel',
+        );
     }
 
     /**

@@ -804,6 +804,33 @@ export type PaymentAllocation = {
     amount_in_cents: number;
 };
 
+/** One line of a customer's statement. */
+export type StatementEntry = {
+    date: string;
+    type: 'invoice' | 'payment';
+    id: string;
+    reference: string;
+    description: string;
+    debit_in_cents: number;
+    credit_in_cents: number;
+    /** What they owe after this line; below 0 is credit. */
+    balance_in_cents: number;
+};
+
+/** A customer's account over a period. */
+export type CustomerStatement = {
+    customer: { id: string; name: string };
+    currency: string;
+    from: string;
+    to: string;
+    opening_balance_in_cents: number;
+    entries: StatementEntry[];
+    closing_balance_in_cents: number;
+    /** What is owing today, by how long past due. */
+    ages: { key: string; label: string; amount_in_cents: number }[];
+    credit_in_cents: number;
+};
+
 /** A customer's contact a document can be emailed to. */
 export type ContactRecipient = {
     id: string;

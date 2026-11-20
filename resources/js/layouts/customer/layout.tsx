@@ -10,6 +10,7 @@ import {
     LayoutDashboard,
     MapPin,
     Receipt,
+    ScrollText,
     Server,
     Settings,
     Ticket,
@@ -39,6 +40,7 @@ import {
     secrets,
     services,
     show,
+    statement,
     tickets,
 } from '@/routes/customers';
 import type { Customer, CustomerWorkspace } from '@/types';
@@ -129,6 +131,7 @@ function links(workspace: CustomerWorkspace): WorkspaceLink[] {
             icon: Banknote,
             count: counts.payments,
         },
+        { title: 'Statement', href: statement(id), icon: ScrollText },
         { title: 'Settings', href: edit(id), icon: Settings },
     ];
 }
