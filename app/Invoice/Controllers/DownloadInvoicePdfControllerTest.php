@@ -17,6 +17,7 @@ it('shows the invoice as a PDF', function (): void {
         'tax_id' => '12 345 678 901',
         'billing_address' => "1 Hay St\nPerth WA 6000",
         'payment_details' => 'BSB 000-000, account 12345678',
+        'bpay_biller_code' => '123456',
     ]);
     $invoice = InvoiceEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'number' => 42]);
     InvoiceItemEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'invoice_id' => $invoice->id]);

@@ -742,6 +742,8 @@ export type InvoiceDocument = {
     customer_credit_in_cents: number;
     /** The payments applied to the invoice, oldest first. */
     payments: PaymentAllocation[];
+    /** How to pay by BPAY, when the team has a biller code. */
+    bpay: { biller_code: string; reference: string } | null;
 };
 
 /** The business details a team prints on its invoices. */
@@ -756,6 +758,7 @@ export type TeamBilling = {
     billing_phone: string | null;
     billing_address: string | null;
     payment_details: string | null;
+    bpay_biller_code: string | null;
     /** What invoice numbers start with, e.g. INV-; empty for none. */
     invoice_prefix: string;
 };
@@ -1048,6 +1051,7 @@ export type BankTransaction = {
     id: string;
     bank_account_id: string;
     bank_account_name: string | null;
+    bank_account_kind: string | null;
     currency: string | null;
     posted_on: string | null;
     amount_in_cents: number;

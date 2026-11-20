@@ -260,6 +260,7 @@ export default function CustomerDashboard({
     expiringServices,
     expiringContracts,
     linkedRecords,
+    bpayReference,
 }: {
     workspace: CustomerWorkspace;
     money: CustomerMoney;
@@ -269,6 +270,8 @@ export default function CustomerDashboard({
     expiringContracts: ContractItem[];
     /** What points at this customer through record-link custom fields. */
     linkedRecords: LinkedRecordGroup[];
+    /** Their BPAY customer reference number, when the team takes BPAY. */
+    bpayReference: string | null;
 }) {
     const { customer, counts } = workspace;
     const id = customer.id;
@@ -284,6 +287,7 @@ export default function CustomerDashboard({
             label: customer.tax_id_label ?? 'Tax ID',
             value: customer.tax_id,
         },
+        { label: 'BPAY reference', value: bpayReference },
         ...customFields
             .filter((field) =>
                 hasCustomFieldValue(field, customer.custom_fields[field.id]),

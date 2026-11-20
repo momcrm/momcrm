@@ -7,6 +7,7 @@ use App\Invoice\InvoiceEloquentModel;
 use App\InvoiceItem\InvoiceItemEloquentModel;
 use App\Payment\PaymentEloquentModel;
 use App\PaymentAllocation\PaymentAllocationEloquentModel;
+use App\Team\TeamEloquentModel;
 use App\User\UserEloquentModel;
 
 use function Pest\Laravel\actingAs;
@@ -25,7 +26,19 @@ it('sends the invoice dialog the invoice, its lines, totals, customer and team',
         ->assertJsonCount(1, 'items')
         ->assertJsonPath('totals', ['subtotal_in_cents' => 5000, 'tax_in_cents' => 500, 'total_in_cents' => 5500])
         ->assertJsonPath('customer.name', 'Acme')
-        ->assertJsonPath('from.name', $user->currentTeam->name);
+        ->assertJsonPath('from.name', $user->currentTeam->name)
+        ->assertJsonPath('bpay', null);
+});
+
+it('says how to pay by BPAY when the team has a biller code', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    TeamEloquentModel::query()->findOrFail($user->current_team_id)->update(['bpay_biller_code' => '123456']);
+    $customer = CustomerEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'number' => 42]);
+    $invoice = InvoiceEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'customer_id' => $customer->id]);
+
+    actingAs($user)
+        ->getJson(route('invoices.details', $invoice->id))
+        ->assertJsonPath('bpay', ['biller_code' => '123456', 'reference' => '422']);
 });
 
 it('lists the payments applied to the invoice with what was paid', function (): void {

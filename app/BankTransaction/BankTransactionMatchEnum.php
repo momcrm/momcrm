@@ -13,6 +13,7 @@ enum BankTransactionMatchEnum: string
 {
     use Enum;
 
+    case Crn = 'crn';
     case Manual = 'manual';
     case Name = 'name';
     case Number = 'number';
@@ -21,6 +22,7 @@ enum BankTransactionMatchEnum: string
     public function label(): string
     {
         return match ($this) {
+            self::Crn => 'Matched by BPAY reference',
             self::Manual => 'Picked by hand',
             self::Name => 'Matched by name',
             self::Number => 'Matched by invoice or customer number',

@@ -49,7 +49,7 @@ function MetaRow({ label, value }: { label: string; value: string }) {
  * the same layout.
  */
 export default function InvoiceDocument({
-    document: { title, invoice, items, totals, customer, from, payments },
+    document: { title, invoice, items, totals, customer, from, payments, bpay },
     className,
 }: {
     document: InvoiceDocumentData;
@@ -59,7 +59,7 @@ export default function InvoiceDocument({
     const isPaid = invoice.status === 'paid';
     const balance = Math.max(0, totals.total_in_cents - invoice.paid_in_cents);
     const showsPaymentDetails =
-        from.payment_details !== null &&
+        (from.payment_details !== null || bpay !== null) &&
         (invoice.status === 'draft' || invoice.status === 'sent');
 
     return (
@@ -311,9 +311,24 @@ export default function InvoiceDocument({
                 {showsPaymentDetails && (
                     <section className="rounded-lg border border-l-[3px] border-l-primary px-4 py-3">
                         <Eyebrow>How to pay</Eyebrow>
-                        <p className="mt-1.5 text-sm whitespace-pre-line">
-                            {from.payment_details}
-                        </p>
+                        {bpay && (
+                            <p className="mt-1.5 text-sm">
+                                <span className="font-semibold">BPAY</span> ·
+                                Biller code{' '}
+                                <span className="font-mono">
+                                    {bpay.biller_code}
+                                </span>{' '}
+                                · Ref{' '}
+                                <span className="font-mono">
+                                    {bpay.reference}
+                                </span>
+                            </p>
+                        )}
+                        {from.payment_details && (
+                            <p className="mt-1.5 text-sm whitespace-pre-line">
+                                {from.payment_details}
+                            </p>
+                        )}
                     </section>
                 )}
 

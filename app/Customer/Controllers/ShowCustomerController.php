@@ -6,6 +6,7 @@ namespace App\Customer\Controllers;
 
 use App\Contract\Actions\FindContract;
 use App\Contract\Contract;
+use App\Customer\BpayReference;
 use App\Customer\CustomerWorkspace;
 use App\Customer\Exceptions\CouldNotFindCustomer;
 use App\CustomField\Actions\FindLinkedRecords;
@@ -16,6 +17,7 @@ use App\Invoice\InvoiceStatusEnum;
 use App\Payment\Actions\FindPayment;
 use App\Service\Actions\FindService;
 use App\Service\Service;
+use App\Team\Actions\FindTeam;
 use App\Ticket\Actions\FindTicket;
 use App\Ticket\Controllers\ListTicketsController;
 use App\Ticket\Ticket;
@@ -45,6 +47,9 @@ final class ShowCustomerController
 
         return Inertia::render('customers/workspace/dashboard', [
             ...$workspace->props($request),
+            'bpayReference' => FindTeam::byId($workspace->teamId)->getBpayBillerCode()->isNull()
+                ? null
+                : BpayReference::forCustomerNumber($workspace->customer->getNumber()->toInteger()),
             'linkedRecords' => FindLinkedRecords::to((string) $request->user()?->current_team_id, (string) $request->user()?->id, CustomFieldRelationEnum::Customer, $customerId),
             'money' => [
                 ...FindInvoice::balancesForCustomers($workspace->teamId, [$customerId])[$customerId]

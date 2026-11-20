@@ -96,7 +96,7 @@ final class BankTransaction extends AbstractData
      * The fields the bank feed list shows, with its account, customer and
      * payment when they were loaded.
      *
-     * @return array{id: string, bank_account_id: string, bank_account_name: ?string, currency: ?string, posted_on: ?string, amount_in_cents: int, description: string, crn: ?string, payer_name: ?string, customer_id: ?string, customer_name: ?string, matched_by: ?string, matched_by_label: ?string, payment_id: ?string, payment_reference_number: ?string, status: string, status_label: string}
+     * @return array{id: string, bank_account_id: string, bank_account_name: ?string, bank_account_kind: ?string, currency: ?string, posted_on: ?string, amount_in_cents: int, description: string, crn: ?string, payer_name: ?string, customer_id: ?string, customer_name: ?string, matched_by: ?string, matched_by_label: ?string, payment_id: ?string, payment_reference_number: ?string, status: string, status_label: string}
      */
     public function toSummary(): array
     {
@@ -107,6 +107,7 @@ final class BankTransaction extends AbstractData
             'id' => $this->getId()->toString(),
             'bank_account_id' => $this->getBankAccountId()->toString(),
             'bank_account_name' => $account?->getName()->toString(),
+            'bank_account_kind' => $account?->getKind()->toEnum()->value,
             'currency' => $account?->getCurrency()->toEnum()->value,
             'posted_on' => $this->getPostedOn()->toNullableCarbon()?->toDateString(),
             'amount_in_cents' => $this->getAmountInCents()->toInteger(),

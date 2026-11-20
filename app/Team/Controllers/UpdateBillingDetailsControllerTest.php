@@ -21,6 +21,7 @@ it('saves the details printed on invoices', function (): void {
             'billing_phone' => '08 9000 0000',
             'billing_address' => "1 Hay St\nPerth WA 6000",
             'payment_details' => 'BSB 000-000, account 12345678',
+            'bpay_biller_code' => '123456',
             'invoice_prefix' => 'CEB-',
         ])
         ->assertSessionHasNoErrors()
@@ -34,6 +35,7 @@ it('saves the details printed on invoices', function (): void {
         ->billing_phone->toBe('08 9000 0000')
         ->billing_address->toBe("1 Hay St\nPerth WA 6000")
         ->payment_details->toBe('BSB 000-000, account 12345678')
+        ->bpay_biller_code->toBe('123456')
         ->invoice_prefix->toBe('CEB-');
 });
 
@@ -82,3 +84,12 @@ it('forbids members from changing the billing details', function (): void {
 
     expect($team->refresh()->tax_id)->toBeNull();
 });
+
+it('refuses a BPAY biller code that is not 3 to 10 digits', function (string $code): void {
+    $team = TeamEloquentModel::factory()->create();
+    $admin = UserEloquentModel::factory()->inTeam($team->id, TeamRoleEnum::Admin)->create();
+
+    actingAs($admin)
+        ->patch(route('billing.update'), ['bpay_biller_code' => $code])
+        ->assertSessionHasErrors(['bpay_biller_code' => 'A BPAY biller code is 3 to 10 digits.']);
+})->with(['12', '12345678901', '12-345']);
