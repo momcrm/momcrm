@@ -1,3 +1,4 @@
+import Image from '@tiptap/extension-image';
 import { TableKit } from '@tiptap/extension-table';
 import { Placeholder } from '@tiptap/extensions';
 import { EditorContent, useEditor, useEditorState } from '@tiptap/react';
@@ -11,6 +12,7 @@ import {
     Heading2,
     Heading3,
     Heading4,
+    ImagePlus,
     Italic,
     Link2,
     List,
@@ -27,7 +29,7 @@ import {
     Undo2,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -44,10 +46,56 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 const isMac =
     typeof navigator !== 'undefined' && /Mac/.test(navigator.platform);
 const mod = isMac ? '⌘' : 'Ctrl+';
+
+const imageTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
+const maxImageBytes = 10 * 1024 * 1024;
+
+/** Keeps the address of a stored picture; gets it from the server. */
+export type UploadImage = (file: File) => Promise<string>;
+
+function imagesIn(files: FileList | null | undefined): File[] {
+    return Array.from(files ?? []).filter((file) =>
+        file.type.startsWith('image/'),
+    );
+}
+
+/**
+ * Uploads pictures one at a time and puts each into the body, at `position`
+ * when given (where they were dropped), else at the cursor.
+ */
+async function insertImages(
+    editor: Editor,
+    files: File[],
+    upload: UploadImage,
+    position?: number,
+) {
+    for (const file of files) {
+        if (!imageTypes.includes(file.type) || file.size > maxImageBytes) {
+            toast.error(
+                `${file.name} wasn't added. Pictures can be PNG, JPEG, GIF or WebP, up to 10 MB.`,
+            );
+            continue;
+        }
+
+        try {
+            const src = await upload(file);
+            const image = { type: 'image', attrs: { src, alt: file.name } };
+
+            if (position === undefined) {
+                editor.chain().focus().insertContent(image).run();
+            } else {
+                editor.chain().focus().insertContentAt(position, image).run();
+            }
+        } catch {
+            toast.error(`${file.name} couldn't be uploaded. Try again.`);
+        }
+    }
+}
 
 function ToolbarButton({
     label,
@@ -160,8 +208,15 @@ function LinkDialog({
     );
 }
 
-function Toolbar({ editor }: { editor: Editor }) {
+function Toolbar({
+    editor,
+    uploadImage,
+}: {
+    editor: Editor;
+    uploadImage?: UploadImage;
+}) {
     const [isLinkOpen, setIsLinkOpen] = useState(false);
+    const fileInput = useRef<HTMLInputElement>(null);
     const state = useEditorState({
         editor,
         selector: ({ editor }) => ({
@@ -277,6 +332,30 @@ function Toolbar({ editor }: { editor: Editor }) {
                 />
             </ToolbarGroup>
             <ToolbarGroup>
+                {uploadImage && (
+                    <>
+                        <ToolbarButton
+                            label="Picture"
+                            icon={ImagePlus}
+                            onClick={() => fileInput.current?.click()}
+                        />
+                        <input
+                            ref={fileInput}
+                            type="file"
+                            accept={imageTypes.join(',')}
+                            multiple
+                            hidden
+                            onChange={(event) => {
+                                void insertImages(
+                                    editor,
+                                    imagesIn(event.target.files),
+                                    uploadImage,
+                                );
+                                event.target.value = '';
+                            }}
+                        />
+                    </>
+                )}
                 <ToolbarButton
                     label="Table"
                     icon={Table}
@@ -350,12 +429,19 @@ export default function RichTextEditor({
     onChange,
     placeholder = 'Write the article…',
     ariaLabel = 'Body',
+    uploadImage,
 }: {
     value: string;
     onChange: (html: string) => void;
     placeholder?: string;
     ariaLabel?: string;
+    /** Where pasted, dropped or chosen pictures go; without it there are none. */
+    uploadImage?: UploadImage;
 }) {
+    const editorRef = useRef<Editor | null>(null);
+    const uploadRef = useRef(uploadImage);
+    uploadRef.current = uploadImage;
+
     const editor = useEditor({
         immediatelyRender: false,
         extensions: [
@@ -369,6 +455,7 @@ export default function RichTextEditor({
                 },
             }),
             TableKit.configure({ table: { resizable: false } }),
+            Image.configure({ allowBase64: false }),
             Placeholder.configure({ placeholder }),
         ],
         content: value,
@@ -377,10 +464,54 @@ export default function RichTextEditor({
                 'aria-label': ariaLabel,
                 class: 'article-body min-h-80 px-4 py-3 outline-none',
             },
+            handlePaste: (_view, event) => {
+                const files = imagesIn(event.clipboardData?.files);
+
+                if (
+                    !editorRef.current ||
+                    !uploadRef.current ||
+                    files.length === 0
+                ) {
+                    return false;
+                }
+
+                event.preventDefault();
+                void insertImages(editorRef.current, files, uploadRef.current);
+
+                return true;
+            },
+            handleDrop: (view, event, _slice, moved) => {
+                const files = imagesIn(event.dataTransfer?.files);
+
+                if (
+                    moved ||
+                    !editorRef.current ||
+                    !uploadRef.current ||
+                    files.length === 0
+                ) {
+                    return false;
+                }
+
+                event.preventDefault();
+                const position = view.posAtCoords({
+                    left: event.clientX,
+                    top: event.clientY,
+                })?.pos;
+                void insertImages(
+                    editorRef.current,
+                    files,
+                    uploadRef.current,
+                    position,
+                );
+
+                return true;
+            },
         },
         onUpdate: ({ editor }) =>
             onChange(editor.isEmpty ? '' : editor.getHTML()),
     });
+
+    editorRef.current = editor;
 
     useEffect(() => {
         if (!editor) {
@@ -398,7 +529,7 @@ export default function RichTextEditor({
         <div className="rounded-lg border border-border-strong bg-card focus-within:border-primary focus-within:ring-[3px] focus-within:ring-primary/10">
             {editor ? (
                 <>
-                    <Toolbar editor={editor} />
+                    <Toolbar editor={editor} uploadImage={uploadImage} />
                     <EditorContent editor={editor} />
                 </>
             ) : (

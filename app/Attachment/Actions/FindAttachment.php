@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Attachment\Actions;
 
+use App\Article\Actions\FindArticle;
 use App\Attachment\Attachment;
 use App\Attachment\AttachmentCollection;
 use App\Attachment\AttachmentEloquentModel;
@@ -45,6 +46,7 @@ final class FindAttachment
         }
 
         $isVisible = match ($attachment->attachable_type) {
+            MorphMapKeyEnum::Article->value => FindArticle::visibleByIdForTeam($attachment->attachable_id, $teamId, $userId)->isNotNull(),
             MorphMapKeyEnum::Project->value => FindProject::visibleByIdForTeam($attachment->attachable_id, $teamId, $userId)->isNotNull(),
             MorphMapKeyEnum::Ticket->value => self::ticketIsVisible($attachment->attachable_id, $teamId, $userId),
             default => true,

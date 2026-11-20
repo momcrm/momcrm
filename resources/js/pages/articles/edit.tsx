@@ -1,4 +1,4 @@
-import { Head, Link, setLayoutProps, useForm } from '@inertiajs/react';
+import { Head, Link, setLayoutProps, useForm, useHttp } from '@inertiajs/react';
 import { Eye } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { edit, index, show, update } from '@/routes/articles';
+import { store as storeImage } from '@/routes/articles/images';
 import type {
     Article,
     ArticleClassificationOption,
@@ -43,6 +44,15 @@ export default function ArticleEdit({
         classification: article.classification as string,
     });
     const [saved, setSaved] = useState(form.data);
+    const imageUpload = useHttp<{ image: File | null }, { src: string }>({
+        image: null,
+    });
+    const uploadImage = async (file: File) => {
+        imageUpload.transform(() => ({ image: file }));
+        const { src } = await imageUpload.post(storeImage.url(article.id));
+
+        return src;
+    };
     const changes = countChanges(form.data, saved);
     const isPublished = article.status === 'published';
 
@@ -191,6 +201,7 @@ export default function ArticleEdit({
                     <RichTextEditor
                         value={form.data.body}
                         onChange={(html) => form.setData('body', html)}
+                        uploadImage={uploadImage}
                     />
                     <InputError message={form.errors.body} />
                 </div>

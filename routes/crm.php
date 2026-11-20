@@ -8,7 +8,9 @@ use App\Article\Controllers\EditArticleController;
 use App\Article\Controllers\ListArticlesController;
 use App\Article\Controllers\RestoreArticleController;
 use App\Article\Controllers\ShowArticleController;
+use App\Article\Controllers\ShowArticleImageController;
 use App\Article\Controllers\StoreArticleController;
+use App\Article\Controllers\StoreArticleImageController;
 use App\Article\Controllers\UpdateArticleController;
 use App\Asset\Controllers\CreateAssetController;
 use App\Asset\Controllers\DeleteAssetController;
@@ -235,6 +237,8 @@ Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function 
     Route::put('articles/{article}', UpdateArticleController::class)->whereUuid('article')->name('articles.update');
     Route::post('articles/{article}/archive', ArchiveArticleController::class)->whereUuid('article')->name('articles.archive');
     Route::post('articles/{article}/restore', RestoreArticleController::class)->whereUuid('article')->name('articles.restore');
+    Route::post('articles/{article}/images', StoreArticleImageController::class)->whereUuid('article')->name('articles.images.store');
+    Route::get('articles/{article}/images/{image}', ShowArticleImageController::class)->whereUuid(['article', 'image'])->name('articles.images.show');
     Route::delete('articles/{article}', DeleteArticleController::class)->whereUuid('article')->name('articles.destroy');
 
     Route::get('contacts', ListContactsController::class)->name('contacts.index');

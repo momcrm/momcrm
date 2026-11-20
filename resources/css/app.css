@@ -495,7 +495,19 @@ html[data-density='compact'] {
             font-weight: 600;
         }
 
+        & img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
         /* The editor's own state. */
+        & img.ProseMirror-selectednode {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+
         & .selectedCell {
             background: color-mix(in srgb, var(--primary) 10%, transparent);
         }
