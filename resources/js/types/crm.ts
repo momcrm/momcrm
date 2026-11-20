@@ -1198,6 +1198,7 @@ export type BillingRunCustomer = {
 export type ArticleStatus = 'draft' | 'published';
 
 export type ArticleClassification =
+    | 'customer'
     | 'internal'
     | 'confidential'
     | 'strictly_confidential';

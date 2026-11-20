@@ -121,3 +121,13 @@ export type PortalAsset = {
     is_active: boolean;
     location_name: string | null;
 };
+
+/** A knowledge-base article in the portal list. */
+export type PortalArticleItem = {
+    id: string;
+    title: string;
+    summary: string | null;
+    /** Written for this customer alone. */
+    is_for_customer: boolean;
+    updated_at: string | null;
+};

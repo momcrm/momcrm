@@ -20,7 +20,7 @@ it('opens the editor with the classifications the person may choose', function (
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->component('articles/edit')
             ->where('article.id', $article->id)
-            ->where('classifications', fn ($options): bool => collect($options)->pluck('value')->all() === ['internal', 'confidential']));
+            ->where('classifications', fn ($options): bool => collect($options)->pluck('value')->all() === ['customer', 'internal', 'confidential']));
 });
 
 it("won't edit an archived article", function (): void {
