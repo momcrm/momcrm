@@ -38,6 +38,8 @@ declare module '@inertiajs/core' {
                 }[];
                 objects: import('./crm').CustomObject[];
             } | null;
+            /** Whether the signed-in staff member's email can also sign in to a customer portal. */
+            canOpenPortal?: boolean;
             gettingStarted?: GettingStarted | null;
             choices?: Record<
                 import('./crm').ChoiceList,

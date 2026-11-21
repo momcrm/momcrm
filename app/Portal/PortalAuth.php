@@ -30,6 +30,17 @@ final class PortalAuth
     }
 
     /**
+     * Whether this browser is signed in as a customer's contact: signed in to
+     * the portal, and not as staff unless a staff member is viewing the
+     * portal as them.
+     */
+    public static function isSignedInAsContact(): bool
+    {
+        return Auth::guard(self::GUARD)->check()
+            && (! Auth::guard('web')->check() || PortalAccess::isViewingAs());
+    }
+
+    /**
      * Whether this request is being served to a portal contact: the portal's
      * own pages make the portal guard the one every check uses.
      */

@@ -21,7 +21,7 @@ final class StopViewingPortalAsContactController
         $contact = PortalAuth::contact();
 
         Auth::guard(PortalAuth::GUARD)->logout();
-        $request->session()->forget([PortalSession::VIEWING_AS, PortalSession::VERIFIED_EMAIL]);
+        $request->session()->forget(PortalSession::VIEWING_AS);
 
         return $contact === null ? to_route('dashboard') : to_route('contacts.edit', $contact->id);
     }

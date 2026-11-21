@@ -35,13 +35,10 @@ final class EmailCodeNotification extends Notification
         $minutes = CreateEmailCode::MINUTES_VALID;
 
         return new MailMessage()
-            ->subject($this->purpose === EmailCodePurposeEnum::PortalSignIn
-                ? __('Your customer portal code is :code', ['code' => $this->code])
-                : __('Your MomCRM code is :code', ['code' => $this->code]))
+            ->subject(__('Your MomCRM code is :code', ['code' => $this->code]))
             ->greeting(__('Your code is :code', ['code' => $this->code]))
             ->line(match ($this->purpose) {
                 EmailCodePurposeEnum::Confirm => __('Enter it in MomCRM to confirm it\'s you.'),
-                EmailCodePurposeEnum::PortalSignIn => __('Enter it on the customer portal sign-in page to continue.'),
                 EmailCodePurposeEnum::SignIn => __('Enter it in MomCRM to continue.'),
             })
             ->line(__('It works for :minutes minutes and only once.', ['minutes' => $minutes]))

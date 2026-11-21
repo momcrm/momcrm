@@ -13,25 +13,19 @@ use App\Portal\Controllers\ListPortalReceiptsController;
 use App\Portal\Controllers\ListPortalServicesController;
 use App\Portal\Controllers\ListPortalTicketsController;
 use App\Portal\Controllers\LogOutOfPortalController;
-use App\Portal\Controllers\RedirectPortalToProviderController;
 use App\Portal\Controllers\ReopenPortalTicketController;
-use App\Portal\Controllers\SendPortalCodeController;
 use App\Portal\Controllers\ShowPortalArticleController;
 use App\Portal\Controllers\ShowPortalArticleImageController;
 use App\Portal\Controllers\ShowPortalChoiceController;
-use App\Portal\Controllers\ShowPortalCodeController;
 use App\Portal\Controllers\ShowPortalDashboardController;
 use App\Portal\Controllers\ShowPortalFileController;
-use App\Portal\Controllers\ShowPortalLoginController;
 use App\Portal\Controllers\ShowPortalStatementController;
 use App\Portal\Controllers\ShowPortalTicketController;
 use App\Portal\Controllers\StopViewingPortalAsContactController;
 use App\Portal\Controllers\StorePortalTicketController;
 use App\Portal\Controllers\StorePortalTicketFilesController;
 use App\Portal\Controllers\StorePortalTicketReplyController;
-use App\Portal\Controllers\VerifyPortalCodeController;
 use App\Portal\Middleware\AuthenticatePortalContact;
-use App\Portal\Middleware\RedirectIfInPortal;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -39,16 +33,8 @@ use Illuminate\Support\Facades\Route;
  * company's tickets, billing, services, assets and articles.
  */
 Route::prefix('portal')->name('portal.')->group(function () {
-    Route::middleware(RedirectIfInPortal::class)->group(function () {
-        Route::get('login', ShowPortalLoginController::class)->name('login');
-        Route::post('login/code', SendPortalCodeController::class)->middleware('throttle:email-code-send')->name('login.code.send');
-        Route::get('login/code', ShowPortalCodeController::class)->name('login.code');
-        Route::post('login/code/verify', VerifyPortalCodeController::class)->middleware('throttle:email-code-verify')->name('login.code.verify');
-        Route::get('auth/{provider}/redirect', RedirectPortalToProviderController::class)->name('social.redirect');
-    });
-
     Route::get('choose', ShowPortalChoiceController::class)->name('choose');
-    Route::post('choose/{contact}', ChoosePortalContactController::class)->name('choose.store');
+    Route::post('choose/{contact}', ChoosePortalContactController::class)->whereUuid('contact')->name('choose.store');
 
     Route::middleware(AuthenticatePortalContact::class)->group(function () {
         Route::get('/', ShowPortalDashboardController::class)->name('home');

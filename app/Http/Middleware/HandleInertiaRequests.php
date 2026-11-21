@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Auth\Actions\FindProvenEmail;
 use App\Choice\Actions\FindChoice;
 use App\Choice\ChoiceListEnum;
 use App\CustomField\Actions\FindCustomField;
@@ -14,6 +15,7 @@ use App\Group\Actions\FindGroup;
 use App\Inbox\Actions\FindNotifications;
 use App\Onboarding\Actions\GetGettingStartedProgress;
 use App\Onboarding\Actions\RemoveSampleData;
+use App\Portal\Actions\FindPortalContacts;
 use App\Portal\PortalProps;
 use App\Project\Actions\FindProject;
 use App\Team\Actions\FindTeam;
@@ -83,6 +85,7 @@ class HandleInertiaRequests extends Middleware
             'sidebarCounts' => fn (): ?array => $this->sidebarCounts($request),
             'choices' => fn (): ?array => $this->choices($request),
             'customFields' => fn (): ?array => $this->customFields($request),
+            'canOpenPortal' => fn (): bool => FindPortalContacts::existForEmail(FindProvenEmail::forRequest($request)),
             'gettingStarted' => fn (): ?array => $request->user() instanceof UserEloquentModel
                 ? GetGettingStartedProgress::forUser($request->user())
                 : null,

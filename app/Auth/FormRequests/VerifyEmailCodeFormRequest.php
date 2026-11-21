@@ -4,22 +4,19 @@ declare(strict_types=1);
 
 namespace App\Auth\FormRequests;
 
-use App\Auth\Actions\LogInUser;
+use App\Auth\Actions\SignInProvenEmail;
 use App\Auth\AuthSession;
 use App\EmailCode\Actions\VerifyEmailCode;
 use App\EmailCode\EmailCodeCheckEnum;
 use App\EmailCode\EmailCodePurposeEnum;
-use App\SocialAccount\Actions\LinkSocialAccount;
-use App\User\Properties\Email;
-use App\User\UserEloquentModel;
-use Illuminate\Auth\Events\Verified;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Checks the emailed code. An existing account is logged in; a new address
- * moves on to "What should we call you?".
+ * Checks the emailed code, then signs in whoever the address belongs to:
+ * staff, a customer's contact, or a new address on to "What should we call
+ * you?".
  */
 final class VerifyEmailCodeFormRequest extends FormRequest
 {
@@ -63,21 +60,6 @@ final class VerifyEmailCodeFormRequest extends FormRequest
 
         $this->session()->forget(AuthSession::PENDING_EMAIL);
 
-        $user = UserEloquentModel::query()->where(Email::getDatabaseTableColumnName(), $email)->first();
-
-        if ($user === null) {
-            $this->session()->put(AuthSession::VERIFIED_EMAIL, $email);
-
-            return to_route('signup.profile');
-        }
-
-        if ($user->email_verified_at === null) {
-            $user->markEmailAsVerified();
-            event(new Verified($user));
-        }
-
-        LinkSocialAccount::fromSession($this->session(), $user);
-
-        return LogInUser::andRedirect($this, $user);
+        return SignInProvenEmail::andRedirect($this, $email);
     }
 }
