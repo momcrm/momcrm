@@ -2,7 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
 import ArticleBody from '@/components/articles/article-body';
 import { timeAgo } from '@/lib/format';
-import { index } from '@/routes/portal/articles';
+import { index } from '@/routes/articles';
 
 /**
  * One knowledge-base article.

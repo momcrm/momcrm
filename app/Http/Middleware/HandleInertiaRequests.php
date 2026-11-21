@@ -16,6 +16,7 @@ use App\Inbox\Actions\FindNotifications;
 use App\Onboarding\Actions\GetGettingStartedProgress;
 use App\Onboarding\Actions\RemoveSampleData;
 use App\Portal\Actions\FindPortalContacts;
+use App\Portal\PortalAuth;
 use App\Portal\PortalProps;
 use App\Project\Actions\FindProject;
 use App\Team\Actions\FindTeam;
@@ -56,7 +57,7 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        if ($request->routeIs('portal.*')) {
+        if (PortalAuth::isServingContactPage($request)) {
             return $this->sharePortal($request);
         }
 
@@ -94,7 +95,7 @@ class HandleInertiaRequests extends Middleware
 
     /**
      * The customer portal shares nothing about the team's own workspace, even
-     * when the browser is also signed in to it as staff.
+     * to a staff member viewing it as a contact.
      *
      * @return array<string, mixed>
      */

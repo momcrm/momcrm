@@ -95,7 +95,7 @@ it('signs the only portal contact for the address in to the portal', function ()
 
     withSession([AuthSession::PENDING_EMAIL => 'sam@acme.test'])
         ->post(route('auth.code.verify'), ['code' => '123456'])
-        ->assertRedirect(route('portal.home'));
+        ->assertRedirect(route('home'));
 
     assertAuthenticatedAs($contact, 'portal');
     assertGuest('web');

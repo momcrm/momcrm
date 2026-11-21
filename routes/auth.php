@@ -11,7 +11,10 @@ use App\Auth\Controllers\ShowContinueController;
 use App\Auth\Controllers\ShowCreateAccountController;
 use App\Auth\Controllers\ShowEmailCodeController;
 use App\Auth\Controllers\VerifyEmailCodeController;
+use App\Portal\Controllers\LogOutOfPortalController;
+use App\Portal\StaffOrContact;
 use Illuminate\Support\Facades\Route;
+use Laravel\Fortify\Http\Controllers\AuthenticatedSessionController;
 
 // Notion-style sign-in: an email, then a code. Log-in (/login) is Fortify's route rendering the same page.
 Route::middleware('guest')->group(function () {
@@ -33,6 +36,10 @@ Route::middleware('guest')->group(function () {
 Route::get('auth/{provider}/callback', HandleProviderCallbackController::class)->name('auth.social.callback');
 
 Route::post('choose/workspace', ChooseWorkspaceController::class)->name('choose.workspace');
+
+// Replaces Fortify's log-out, so a customer's contact can sign out of the
+// portal at the same address.
+Route::post('logout', StaffOrContact::serve([AuthenticatedSessionController::class, 'destroy'], contact: LogOutOfPortalController::class, staffMiddleware: ['auth:web']))->name('logout');
 
 Route::middleware('auth')->group(function () {
     Route::post('user/confirm-with-code/send', SendConfirmationCodeController::class)

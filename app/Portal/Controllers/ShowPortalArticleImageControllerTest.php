@@ -20,10 +20,10 @@ it("shows a customer article's picture, but not an internal article's", function
     $hidden = AttachmentEloquentModel::factory()->create(['team_id' => $contact->team_id, 'attachable_type' => 'article', 'attachable_id' => $internal->id, 'path' => 'attachments/pic.png', 'mime_type' => 'image/png']);
 
     actingAs($contact, 'portal')
-        ->get(route('portal.articles.images.show', [$article->id, $picture->id]))
+        ->get(route('articles.images.show', [$article->id, $picture->id]))
         ->assertOk()
         ->assertHeader('Content-Type', 'image/png');
 
-    actingAs($contact, 'portal')->get(route('portal.articles.images.show', [$internal->id, $hidden->id]))->assertNotFound();
-    actingAs($contact, 'portal')->get(route('portal.articles.images.show', [$article->id, $hidden->id]))->assertNotFound();
+    actingAs($contact, 'portal')->get(route('articles.images.show', [$internal->id, $hidden->id]))->assertNotFound();
+    actingAs($contact, 'portal')->get(route('articles.images.show', [$article->id, $hidden->id]))->assertNotFound();
 });

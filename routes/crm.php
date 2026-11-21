@@ -125,7 +125,6 @@ use App\Milestone\Controllers\StoreMilestoneController;
 use App\Milestone\Controllers\ToggleMilestoneController;
 use App\Milestone\Controllers\UpdateMilestoneController;
 use App\Onboarding\Controllers\RemoveSampleDataController;
-use App\Onboarding\Middleware\EnsureOnboarded;
 use App\Payment\Controllers\ApplyInvoiceCreditController;
 use App\Payment\Controllers\DeletePaymentController;
 use App\Payment\Controllers\DownloadPaymentReceiptController;
@@ -139,7 +138,17 @@ use App\Payment\Controllers\StorePaymentController;
 use App\Payment\Controllers\UpdatePaymentController;
 use App\PaymentAllocation\Controllers\DeletePaymentAllocationController;
 use App\PaymentAllocation\Controllers\UpdatePaymentAllocationController;
+use App\Portal\Controllers\DownloadPortalInvoicePdfController;
+use App\Portal\Controllers\ListPortalArticlesController;
+use App\Portal\Controllers\ListPortalInvoicesController;
+use App\Portal\Controllers\ListPortalServicesController;
+use App\Portal\Controllers\ListPortalTicketsController;
+use App\Portal\Controllers\ShowPortalArticleController;
+use App\Portal\Controllers\ShowPortalArticleImageController;
+use App\Portal\Controllers\ShowPortalTicketController;
+use App\Portal\Controllers\StorePortalTicketController;
 use App\Portal\Controllers\ViewPortalAsContactController;
+use App\Portal\StaffOrContact;
 use App\Project\Controllers\ArchiveProjectController;
 use App\Project\Controllers\DeleteProjectController;
 use App\Project\Controllers\ListProjectsController;
@@ -194,7 +203,11 @@ use App\Ticket\Controllers\StoreSubtaskController;
 use App\Ticket\Controllers\StoreTicketController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function () {
+/*
+ * The app's own pages. Those whose address customers' contacts share in the
+ * portal (StaffOrContact) serve a signed-in contact the portal's page.
+ */
+Route::middleware(StaffOrContact::STAFF_MIDDLEWARE)->group(function () {
     Route::get('customers', ListCustomersController::class)->name('customers.index');
     Route::get('customers/form-options', ListCustomerFormOptionsController::class)->name('customers.form-options');
     Route::post('customers', StoreCustomerController::class)->name('customers.store');
@@ -240,15 +253,15 @@ Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function 
     Route::put('customers/{customer}', UpdateCustomerController::class)->whereUuid('customer')->name('customers.update');
     Route::delete('customers/{customer}', DeleteCustomerController::class)->whereUuid('customer')->name('customers.destroy');
 
-    Route::get('articles', ListArticlesController::class)->name('articles.index');
+    Route::get('articles', StaffOrContact::serve(ListArticlesController::class, contact: ListPortalArticlesController::class))->name('articles.index');
     Route::post('articles', StoreArticleController::class)->name('articles.store');
-    Route::get('articles/{article}', ShowArticleController::class)->whereUuid('article')->name('articles.show');
+    Route::get('articles/{article}', StaffOrContact::serve(ShowArticleController::class, contact: ShowPortalArticleController::class))->whereUuid('article')->name('articles.show');
     Route::get('articles/{article}/edit', EditArticleController::class)->whereUuid('article')->name('articles.edit');
     Route::put('articles/{article}', UpdateArticleController::class)->whereUuid('article')->name('articles.update');
     Route::post('articles/{article}/archive', ArchiveArticleController::class)->whereUuid('article')->name('articles.archive');
     Route::post('articles/{article}/restore', RestoreArticleController::class)->whereUuid('article')->name('articles.restore');
     Route::post('articles/{article}/images', StoreArticleImageController::class)->whereUuid('article')->name('articles.images.store');
-    Route::get('articles/{article}/images/{image}', ShowArticleImageController::class)->whereUuid(['article', 'image'])->name('articles.images.show');
+    Route::get('articles/{article}/images/{image}', StaffOrContact::serve(ShowArticleImageController::class, contact: ShowPortalArticleImageController::class))->whereUuid(['article', 'image'])->name('articles.images.show');
     Route::get('articles/{article}/history', ShowArticleHistoryController::class)->whereUuid('article')->name('articles.history');
     Route::post('articles/{article}/versions/{version}/restore', RestoreArticleVersionController::class)->whereUuid(['article', 'version'])->name('articles.versions.restore');
     Route::post('articles/{article}/review', ReviewArticleController::class)->whereUuid('article')->name('articles.review');
@@ -279,7 +292,7 @@ Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function 
     Route::put('assets/{asset}', UpdateAssetController::class)->whereUuid('asset')->name('assets.update');
     Route::delete('assets/{asset}', DeleteAssetController::class)->whereUuid('asset')->name('assets.destroy');
 
-    Route::get('services', ListServicesController::class)->name('services.index');
+    Route::get('services', StaffOrContact::serve(ListServicesController::class, contact: ListPortalServicesController::class))->name('services.index');
     Route::patch('services/bulk', BulkUpdateServicesController::class)->name('services.bulk.update');
     Route::post('services/bulk/change', BulkChangeServicesController::class)->name('services.bulk.change');
     Route::post('customers/{customer}/services', StoreServiceController::class)->whereUuid('customer')->name('services.store');
@@ -297,7 +310,7 @@ Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function 
     Route::put('services/{service}/auto-renew', SetServiceAutoRenewController::class)->whereUuid('service')->name('services.auto-renew');
     Route::put('services/{service}/rate', ChangeServiceRateController::class)->whereUuid('service')->name('services.rate');
 
-    Route::get('tickets', ListTicketsController::class)->name('tickets.index');
+    Route::get('tickets', StaffOrContact::serve(ListTicketsController::class, contact: ListPortalTicketsController::class))->name('tickets.index');
     Route::get('my-tickets', ListMyTicketsController::class)->name('tickets.mine');
     Route::get('objects/{object}', ListRecordsController::class)->whereUuid('object')->name('records.index');
     Route::post('objects/{object}/records', StoreRecordController::class)->whereUuid('object')->name('records.store');
@@ -309,10 +322,10 @@ Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function 
 
     Route::get('custom-fields/{customField}/records', ListCustomFieldRecordsController::class)->whereUuid('customField')->name('custom-fields.records');
     Route::get('tickets/form-options', ListTicketFormOptionsController::class)->name('tickets.form-options');
-    Route::post('tickets', StoreTicketController::class)->name('tickets.store');
+    Route::post('tickets', StaffOrContact::serve(StoreTicketController::class, contact: StorePortalTicketController::class))->name('tickets.store');
     Route::patch('tickets/bulk', BulkUpdateTicketsController::class)->name('tickets.bulk.update');
     Route::post('tickets/bulk/archive', BulkArchiveTicketsController::class)->name('tickets.bulk.archive');
-    Route::get('tickets/{ticket}', ShowTicketController::class)->whereUuid('ticket')->name('tickets.show');
+    Route::get('tickets/{ticket}', StaffOrContact::serve(ShowTicketController::class, contact: ShowPortalTicketController::class))->whereUuid('ticket')->name('tickets.show');
     Route::patch('tickets/{ticket}', PatchTicketController::class)->whereUuid('ticket')->name('tickets.patch');
     Route::post('tickets/{ticket}/subtasks', StoreSubtaskController::class)->whereUuid('ticket')->name('tickets.subtasks.store');
     Route::put('tickets/{ticket}/move', MoveTicketController::class)->whereUuid('ticket')->name('tickets.move');
@@ -363,7 +376,7 @@ Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function 
     Route::patch('milestones/{milestone}', UpdateMilestoneController::class)->whereUuid('milestone')->name('milestones.update');
     Route::delete('milestones/{milestone}', DeleteMilestoneController::class)->whereUuid('milestone')->name('milestones.destroy');
 
-    Route::get('invoices', ListInvoicesController::class)->name('invoices.index');
+    Route::get('invoices', StaffOrContact::serve(ListInvoicesController::class, contact: ListPortalInvoicesController::class))->name('invoices.index');
     Route::get('invoices/create', CreateInvoiceController::class)->name('invoices.create');
     Route::get('invoices/run', ShowBillingRunController::class)->name('invoices.run');
     Route::post('invoices/run', RunBillingController::class)->name('invoices.run.store');
@@ -371,7 +384,7 @@ Route::middleware(['auth', 'verified', EnsureOnboarded::class])->group(function 
     Route::get('invoices/{invoice}', ShowInvoiceController::class)->whereUuid('invoice')->name('invoices.show');
     Route::get('invoices/{invoice}/edit', EditInvoiceController::class)->whereUuid('invoice')->name('invoices.edit');
     Route::get('invoices/{invoice}/details', ShowInvoiceDetailsController::class)->whereUuid('invoice')->name('invoices.details');
-    Route::get('invoices/{invoice}/pdf', DownloadInvoicePdfController::class)->whereUuid('invoice')->name('invoices.pdf');
+    Route::get('invoices/{invoice}/pdf', StaffOrContact::serve(DownloadInvoicePdfController::class, contact: DownloadPortalInvoicePdfController::class))->whereUuid('invoice')->name('invoices.pdf');
     Route::put('invoices/{invoice}', UpdateInvoiceController::class)->whereUuid('invoice')->name('invoices.update');
     Route::post('invoices/{invoice}/sent', MarkInvoiceSentController::class)->whereUuid('invoice')->name('invoices.sent');
     Route::post('invoices/{invoice}/void', VoidInvoiceController::class)->whereUuid('invoice')->name('invoices.void');

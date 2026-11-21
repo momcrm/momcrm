@@ -15,7 +15,7 @@ it("lists the customer's services without archived ones, staff notes or other cu
     ServiceEloquentModel::factory()->create(['team_id' => $contact->team_id]);
 
     actingAs($contact, 'portal')
-        ->get(route('portal.services.index'))
+        ->get(route('services.index'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('portal/services')
@@ -29,5 +29,5 @@ it('is forbidden when no rule lets contacts see services', function (): void {
     $contact = portalContact();
     AccessRuleEloquentModel::query()->withoutGlobalScopes()->where('team_id', $contact->team_id)->where('audience', 'contact')->delete();
 
-    actingAs($contact, 'portal')->get(route('portal.services.index'))->assertForbidden();
+    actingAs($contact, 'portal')->get(route('services.index'))->assertForbidden();
 });

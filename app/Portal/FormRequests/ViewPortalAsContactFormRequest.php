@@ -81,6 +81,6 @@ final class ViewPortalAsContactFormRequest extends FormRequest
         Auth::guard(PortalAuth::GUARD)->login($model);
         $this->session()->put(PortalSession::VIEWING_AS, (string) $this->user()?->id);
 
-        return to_route('portal.home');
+        return to_route('home');
     }
 }

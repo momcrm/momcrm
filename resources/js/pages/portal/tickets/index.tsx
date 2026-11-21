@@ -5,7 +5,8 @@ import StatusPill from '@/components/status-pill';
 import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { timeAgo } from '@/lib/format';
-import { create, index, show } from '@/routes/portal/tickets';
+import { create } from '@/routes/portal/tickets';
+import { index, show } from '@/routes/tickets';
 import type { PortalTicket } from '@/types';
 
 type Props = {

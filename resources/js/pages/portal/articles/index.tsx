@@ -4,7 +4,7 @@ import { useState } from 'react';
 import EmptyState from '@/components/empty-state';
 import SoftBadge from '@/components/soft-badge';
 import { Input } from '@/components/ui/input';
-import { index, show } from '@/routes/portal/articles';
+import { index, show } from '@/routes/articles';
 import type { PortalArticleItem } from '@/types';
 
 /**

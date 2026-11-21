@@ -49,6 +49,6 @@ final class LogInContact
         $request->session()->regenerate();
         $request->session()->forget(PortalSession::VIEWING_AS);
 
-        return redirect()->intended(route('portal.home'));
+        return redirect()->intended(route('home'));
     }
 }

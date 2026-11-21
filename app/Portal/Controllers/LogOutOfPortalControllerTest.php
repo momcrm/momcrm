@@ -17,7 +17,7 @@ it('signs a staff member viewing as a contact out of the portal but not out of t
     actingAs($staff)
         ->actingAs($contact, 'portal')
         ->withSession([PortalSession::VIEWING_AS => $staff->id])
-        ->post(route('portal.logout'))
+        ->post(route('logout'))
         ->assertRedirectToRoute('login');
 
     assertGuest('portal');

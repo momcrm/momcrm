@@ -14,14 +14,15 @@ import {
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { useInitials } from '@/hooks/use-initials';
 import { cn } from '@/lib/utils';
-import { choose, home, logout, statement } from '@/routes/portal';
+import { home, logout } from '@/routes';
+import { choose, statement } from '@/routes/portal';
 import { stop as stopViewingAs } from '@/routes/portal/view-as';
-import { index as articles } from '@/routes/portal/articles';
+import { index as articles } from '@/routes/articles';
 import { index as assets } from '@/routes/portal/assets';
-import { index as invoices } from '@/routes/portal/invoices';
+import { index as invoices } from '@/routes/invoices';
 import { index as receipts } from '@/routes/portal/receipts';
-import { index as services } from '@/routes/portal/services';
-import { index as tickets } from '@/routes/portal/tickets';
+import { index as services } from '@/routes/services';
+import { index as tickets } from '@/routes/tickets';
 import type { PortalSection, PortalShared } from '@/types';
 
 /**

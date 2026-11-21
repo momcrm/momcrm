@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { formatDay } from '@/lib/dates';
 import { formatCents } from '@/lib/money';
 import { cn } from '@/lib/utils';
-import { pdf as invoicePdf } from '@/routes/portal/invoices';
+import { pdf as invoicePdf } from '@/routes/invoices';
 import { pdf as receiptPdf } from '@/routes/portal/receipts';
 import { statement as statementPage } from '@/routes/portal';
 import { pdf } from '@/routes/portal/statement';

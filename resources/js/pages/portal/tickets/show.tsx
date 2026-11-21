@@ -13,8 +13,9 @@ import { useInitials } from '@/hooks/use-initials';
 import { formatBytes, timeAgo } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import StorePortalTicketReplyController from '@/actions/App/Portal/Controllers/StorePortalTicketReplyController';
-import { close, index, reopen } from '@/routes/portal/tickets';
+import { close, reopen } from '@/routes/portal/tickets';
 import { store as storeFiles } from '@/routes/portal/tickets/files';
+import { index } from '@/routes/tickets';
 import type { PortalFile, PortalTicket, PortalTicketMessage } from '@/types';
 
 type Props = {
