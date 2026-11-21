@@ -18,7 +18,7 @@ it('lets an admin view the portal as a contact, read-only and on record', functi
 
     actingAs($admin)
         ->post(route('contacts.view-in-portal', $contact->id))
-        ->assertRedirectToRoute('portal.home')
+        ->assertRedirectToRoute('home')
         ->assertSessionHas(PortalSession::VIEWING_AS, $admin->id);
 
     assertAuthenticatedAs($contact, 'portal');
@@ -26,13 +26,13 @@ it('lets an admin view the portal as a contact, read-only and on record', functi
 
     auth()->shouldUse('portal');
 
-    $this->get(route('portal.tickets.show', $ticket->id))
+    $this->get(route('tickets.show', $ticket->id))
         ->assertInertia(fn (Assert $page) => $page
             ->where('portal.viewingAs', true)
             ->where('can', ['reply' => false, 'attach' => false, 'close' => false, 'reopen' => false]));
 
     $this->post(route('portal.tickets.replies.store', $ticket->id), ['body' => 'Hi'])->assertForbidden();
-    $this->post(route('portal.tickets.store'), ['title' => 'From staff'])->assertForbidden();
+    $this->post(route('tickets.store'), ['title' => 'From staff'])->assertForbidden();
 });
 
 it('is only for owners and admins, and only for contacts with portal access', function (): void {

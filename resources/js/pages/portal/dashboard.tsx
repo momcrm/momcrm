@@ -6,7 +6,8 @@ import { usePortal } from '@/layouts/portal-layout';
 import { timeAgo } from '@/lib/format';
 import { formatCents } from '@/lib/money';
 import { statement } from '@/routes/portal';
-import { create, index, show } from '@/routes/portal/tickets';
+import { create } from '@/routes/portal/tickets';
+import { index, show } from '@/routes/tickets';
 import type { PortalTicket } from '@/types';
 
 type Props = {

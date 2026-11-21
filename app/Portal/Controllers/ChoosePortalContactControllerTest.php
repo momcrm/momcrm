@@ -17,7 +17,7 @@ it('signs in as the chosen customer', function (): void {
 
     withSession([AuthSession::PROVEN_EMAIL => 'sam@acme.test'])
         ->post(route('portal.choose.store', $second->id))
-        ->assertRedirect(route('portal.home'));
+        ->assertRedirect(route('home'));
 
     assertAuthenticatedAs($second, 'portal');
 });
@@ -39,7 +39,7 @@ it('lets a signed-in contact switch to their other customer', function (): void 
     actingAs($first, 'portal')
         ->withSession([AuthSession::PROVEN_EMAIL => 'sam@acme.test'])
         ->post(route('portal.choose.store', $second->id))
-        ->assertRedirect(route('portal.home'));
+        ->assertRedirect(route('home'));
 
     assertAuthenticatedAs($second, 'portal');
 });
@@ -50,7 +50,7 @@ it('signs staff out when they choose a customer portal', function (): void {
 
     actingAs($staff)
         ->post(route('portal.choose.store', $contact->id))
-        ->assertRedirect(route('portal.home'));
+        ->assertRedirect(route('home'));
 
     assertAuthenticatedAs($contact, 'portal');
     assertGuest('web');

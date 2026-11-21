@@ -6,6 +6,8 @@ namespace App\Portal;
 
 use App\Contact\ContactEloquentModel;
 use App\Shared\RequestMemo;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Auth;
 
 /**
@@ -38,6 +40,24 @@ final class PortalAuth
     {
         return Auth::guard(self::GUARD)->check()
             && (! Auth::guard('web')->check() || PortalAccess::isViewingAs());
+    }
+
+    /**
+     * Whether this request gets one of the portal's pages: a contact is
+     * signed in, and it is the portal's own page or an address staff share.
+     * A staff member viewing the portal as a contact still gets the app's own
+     * pages.
+     */
+    public static function isServingContactPage(Request $request): bool
+    {
+        if (! self::isSignedInAsContact()) {
+            return false;
+        }
+
+        $route = $request->route();
+
+        return $request->routeIs('portal.*')
+            || ($route instanceof Route && $route->getAction(StaffOrContact::CONTACT) !== null);
     }
 
     /**

@@ -41,7 +41,7 @@ final class TicketReplyInPortalNotification extends Notification implements Shou
             ->subject(__('Re: [#:number] :title', ['number' => $this->number, 'title' => $this->title]))
             ->greeting(__(':name replied to your ticket', ['name' => $this->authorName]))
             ->line($this->body)
-            ->action(__('View the ticket'), route('portal.tickets.show', $this->ticketId))
+            ->action(__('View the ticket'), route('tickets.show', $this->ticketId))
             ->line(__('Reply in the customer portal to keep the conversation going.'))
             ->salutation(__('Thanks, :team', ['team' => $this->teamName]));
     }

@@ -6,8 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
-import StorePortalTicketController from '@/actions/App/Portal/Controllers/StorePortalTicketController';
-import { index } from '@/routes/portal/tickets';
+import { index, store } from '@/routes/tickets';
 import type { Option } from '@/types';
 
 type Props = {
@@ -35,10 +34,7 @@ export default function PortalTicketCreate({
 
             <h1 className="text-xl font-semibold">New ticket</h1>
 
-            <Form
-                {...StorePortalTicketController.form()}
-                className="max-w-2xl space-y-5"
-            >
+            <Form {...store.form()} className="max-w-2xl space-y-5">
                 {({ processing, errors }) => (
                     <>
                         <FormField

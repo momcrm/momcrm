@@ -95,7 +95,7 @@ it('signs a contact in to the portal with a verified Google address', function (
     $contact = ContactEloquentModel::factory()->withPortalAccess()->create(['email' => 'sam@acme.test']);
     fakeProviderUser('google', ['email_verified' => true]);
 
-    get(route('auth.social.callback', 'google'))->assertRedirect(route('portal.home'));
+    get(route('auth.social.callback', 'google'))->assertRedirect(route('home'));
 
     assertAuthenticatedAs($contact, 'portal');
     assertGuest('web');

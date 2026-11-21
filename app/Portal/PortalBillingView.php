@@ -32,7 +32,7 @@ final class PortalBillingView
             'currency' => $invoice->getCurrency()->toEnum()->value,
             'total_in_cents' => $totals->toArray()['total_in_cents'],
             'balance_in_cents' => $invoice->balanceAfter($totals),
-            'pdf_url' => route('portal.invoices.pdf', $invoice->getId()->toString()),
+            'pdf_url' => route('invoices.pdf', $invoice->getId()->toString()),
         ];
     }
 

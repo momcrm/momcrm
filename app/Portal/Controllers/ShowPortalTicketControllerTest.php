@@ -17,7 +17,7 @@ it('shows the conversation with the customer and shared files, never internal no
     AttachmentEloquentModel::factory()->create(['team_id' => $contact->team_id, 'attachable_type' => 'ticket', 'attachable_id' => $ticket->id]);
 
     actingAs($contact, 'portal')
-        ->get(route('portal.tickets.show', $ticket->id))
+        ->get(route('tickets.show', $ticket->id))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('portal/tickets/show')
@@ -34,5 +34,5 @@ it("doesn't show another customer's ticket", function (): void {
     $contact = portalContact();
     $other = portalTicket(portalContact());
 
-    actingAs($contact, 'portal')->get(route('portal.tickets.show', $other->id))->assertNotFound();
+    actingAs($contact, 'portal')->get(route('tickets.show', $other->id))->assertNotFound();
 });

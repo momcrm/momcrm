@@ -23,7 +23,7 @@ final class ShowPortalArticleController
                 'id' => $found->getId()->toString(),
                 'title' => $found->getTitle()->toString(),
                 'summary' => $found->getSummary()->toNullableString(),
-                'body' => str_replace('src="/articles/', 'src="/portal/articles/', $found->getBody()->toNullableString() ?? ''),
+                'body' => $found->getBody()->toNullableString() ?? '',
                 'updated_at' => $found->getUpdatedAt()->toNullableISOString(),
             ],
         ]);

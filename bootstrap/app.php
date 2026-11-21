@@ -21,7 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
         // A customer's contact who opens a staff page goes to the portal's home.
-        $middleware->redirectGuestsTo(fn (): string => PortalAuth::isSignedInAsContact() ? route('portal.home') : route('login'));
+        $middleware->redirectGuestsTo(fn (): string => PortalAuth::isSignedInAsContact() ? route('home') : route('login'));
 
         $middleware->web(append: [
             HandleAppearance::class,

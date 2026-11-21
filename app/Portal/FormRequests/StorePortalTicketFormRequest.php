@@ -118,7 +118,7 @@ final class StorePortalTicketFormRequest extends FormRequest
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Ticket #:number raised.', ['number' => $ticket->getNumber()->toInteger()])]);
 
-        return to_route('portal.tickets.show', $ticket->getId()->toString());
+        return to_route('tickets.show', $ticket->getId()->toString());
     }
 
     /**

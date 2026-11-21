@@ -1,8 +1,11 @@
 <?php
 
 use App\Dashboard\Controllers\ShowDashboardController;
+use App\Dashboard\Controllers\ShowWelcomeController;
 use App\Onboarding\Controllers\DismissGettingStartedController;
 use App\Onboarding\Middleware\EnsureOnboarded;
+use App\Portal\Controllers\ShowPortalDashboardController;
+use App\Portal\StaffOrContact;
 use App\Search\Controllers\SearchWorkspaceController;
 use App\Team\Controllers\SwitchCurrentTeamController;
 use App\TeamInvitation\Controllers\AcceptTeamInvitationController;
@@ -11,7 +14,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Inertia\Response;
 
-Route::get('/', fn (): Response => Inertia::render('welcome'))->name('home');
+Route::get('/', StaffOrContact::serve(ShowWelcomeController::class, contact: ShowPortalDashboardController::class, staffMiddleware: []))->name('home');
 
 Route::get('invitations/{token}', ShowTeamInvitationController::class)->name('team-invitations.show');
 Route::post('invitations/{token}/accept', AcceptTeamInvitationController::class)

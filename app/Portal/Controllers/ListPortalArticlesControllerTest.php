@@ -19,7 +19,7 @@ it("lists published customer articles for every customer or theirs, never intern
     ArticleEloquentModel::factory()->classified(ArticleClassificationEnum::Customer)->create([...$team, 'title' => 'Draft']);
 
     actingAs($contact, 'portal')
-        ->get(route('portal.articles.index'))
+        ->get(route('articles.index'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('portal/articles/index')
@@ -33,7 +33,7 @@ it('searches titles', function (): void {
     ArticleEloquentModel::factory()->published()->classified(ArticleClassificationEnum::Customer)->create(['team_id' => $contact->team_id, 'title' => 'Printing']);
 
     actingAs($contact, 'portal')
-        ->get(route('portal.articles.index', ['search' => 'pass']))
+        ->get(route('articles.index', ['search' => 'pass']))
         ->assertInertia(fn (Assert $page) => $page->has('articles', 1)->where('articles.0.title', 'Resetting your password'));
 });
 
@@ -41,5 +41,5 @@ it('is forbidden when no rule lets contacts see articles', function (): void {
     $contact = portalContact();
     AccessRuleEloquentModel::query()->withoutGlobalScopes()->where('team_id', $contact->team_id)->where('audience', 'contact')->delete();
 
-    actingAs($contact, 'portal')->get(route('portal.articles.index'))->assertForbidden();
+    actingAs($contact, 'portal')->get(route('articles.index'))->assertForbidden();
 });

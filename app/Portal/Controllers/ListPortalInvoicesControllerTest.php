@@ -17,7 +17,7 @@ it("lists the customer's sent and paid invoices, never drafts, voided ones or ot
     InvoiceEloquentModel::factory()->create(['team_id' => $contact->team_id, 'status' => 'sent']);
 
     actingAs($contact, 'portal')
-        ->get(route('portal.invoices.index'))
+        ->get(route('invoices.index'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('portal/invoices')
@@ -30,5 +30,5 @@ it("lists the customer's sent and paid invoices, never drafts, voided ones or ot
 });
 
 it('is forbidden to a contact who is neither primary nor gets invoices', function (): void {
-    actingAs(portalContact(), 'portal')->get(route('portal.invoices.index'))->assertForbidden();
+    actingAs(portalContact(), 'portal')->get(route('invoices.index'))->assertForbidden();
 });

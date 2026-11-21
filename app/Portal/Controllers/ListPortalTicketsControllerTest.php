@@ -15,7 +15,7 @@ it("lists the customer's open tickets, not other customers' or closed ones", fun
     portalTicket($contact, ['title' => 'Someone else', 'customer_id' => portalContact()->customer_id]);
 
     actingAs($contact, 'portal')
-        ->get(route('portal.tickets.index'))
+        ->get(route('tickets.index'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('portal/tickets/index')
@@ -32,7 +32,7 @@ it('lists closed tickets on request', function (): void {
     $closed = TicketEloquentModel::factory()->closed()->create(['team_id' => $contact->team_id, 'customer_id' => $contact->customer_id]);
 
     actingAs($contact, 'portal')
-        ->get(route('portal.tickets.index', ['status' => 'closed']))
+        ->get(route('tickets.index', ['status' => 'closed']))
         ->assertInertia(fn (Assert $page) => $page->has('tickets', 1)->where('tickets.0.id', $closed->id));
 });
 
@@ -49,7 +49,7 @@ it('shows only the tickets they raised when a rule says so', function (): void {
     portalTicket($contact);
 
     actingAs($contact, 'portal')
-        ->get(route('portal.tickets.index'))
+        ->get(route('tickets.index'))
         ->assertInertia(fn (Assert $page) => $page->has('tickets', 1)->where('tickets.0.id', $theirs->id)->where('canCreate', false));
 });
 
@@ -57,5 +57,5 @@ it('is forbidden when no rule lets the contact see tickets', function (): void {
     $contact = portalContact();
     AccessRuleEloquentModel::query()->withoutGlobalScopes()->where('team_id', $contact->team_id)->where('audience', 'contact')->delete();
 
-    actingAs($contact, 'portal')->get(route('portal.tickets.index'))->assertForbidden();
+    actingAs($contact, 'portal')->get(route('tickets.index'))->assertForbidden();
 });
