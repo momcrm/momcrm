@@ -29,7 +29,7 @@ it('lets the contact into the portal and emails them a link to sign in', functio
     Notification::assertSentOnDemand(
         PortalInvitationNotification::class,
         fn (PortalInvitationNotification $notification, array $channels, object $notifiable): bool => $notifiable->routes['mail'] === 'sam@acme.test'
-            && str_contains($notification->toMail($notifiable)->actionUrl, '/portal/login?email=sam%40acme.test'),
+            && str_contains($notification->toMail($notifiable)->actionUrl, '/login?email=sam%40acme.test'),
     );
 });
 

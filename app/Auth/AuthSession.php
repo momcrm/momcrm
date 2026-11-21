@@ -20,6 +20,14 @@ final class AuthSession
     public const string VERIFIED_EMAIL = 'auth.verified_email';
 
     /**
+     * The address someone proved with a code, Google or Microsoft this
+     * session. It lets them choose between their workspace and the customer
+     * portals their address can sign in to, now and later, without proving it
+     * again.
+     */
+    public const string PROVEN_EMAIL = 'auth.proven_email';
+
+    /**
      * A suggested name for the new account, from Google or Microsoft.
      */
     public const string SUGGESTED_NAME = 'auth.suggested_name';

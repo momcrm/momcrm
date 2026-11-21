@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Portal\FormRequests;
 
+use App\Auth\Actions\FindProvenEmail;
 use App\Contact\Contact;
 use App\Portal\Actions\FindPortalContacts;
 use App\Portal\Actions\LogInContact;
@@ -27,7 +28,7 @@ final class ChoosePortalContactFormRequest extends FormRequest
 
     public function process(): RedirectResponse
     {
-        $contact = FindPortalContacts::forEmail(LogInContact::provenEmail($this))
+        $contact = FindPortalContacts::forEmail(FindProvenEmail::forRequest($this))
             ->first(fn (Contact $contact): bool => $contact->getId()->equalsTo($this->route('contact')));
 
         if ($contact->isNull()) {

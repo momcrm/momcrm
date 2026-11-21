@@ -40,7 +40,7 @@ final class PortalInvitationNotification extends Notification
                 ? __(':team has given you access to their customer portal for :customer.', ['team' => $this->teamName, 'customer' => $this->customerName])
                 : __(':name at :team has given you access to their customer portal for :customer.', ['name' => $this->invitedByName, 'team' => $this->teamName, 'customer' => $this->customerName]))
             ->line(__('There you can raise and follow tickets, and see what your access allows, such as invoices and services.'))
-            ->action(__('Open the customer portal'), route('portal.login', ['email' => $this->email]))
+            ->action(__('Open the customer portal'), route('login', ['email' => $this->email]))
             ->line(__("You sign in with a code we email you, so there's no password to remember."))
             ->salutation(__('Thanks, :team', ['team' => $this->teamName]));
     }

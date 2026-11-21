@@ -3,6 +3,7 @@
 use App\Http\Middleware\AddRequestContext;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Portal\PortalAuth;
 use App\Team\Middleware\EnsureCurrentTeam;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -18,6 +19,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
+
+        // A customer's contact who opens a staff page goes to the portal's home.
+        $middleware->redirectGuestsTo(fn (): string => PortalAuth::isSignedInAsContact() ? route('portal.home') : route('login'));
 
         $middleware->web(append: [
             HandleAppearance::class,

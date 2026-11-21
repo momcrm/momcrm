@@ -1,5 +1,6 @@
 <?php
 
+use App\Auth\Controllers\ChooseWorkspaceController;
 use App\Auth\Controllers\ConfirmWithCodeController;
 use App\Auth\Controllers\CreateAccountController;
 use App\Auth\Controllers\HandleProviderCallbackController;
@@ -27,9 +28,11 @@ Route::middleware('guest')->group(function () {
     Route::get('auth/{provider}/redirect', RedirectToProviderController::class)->name('auth.social.redirect');
 });
 
-// Outside the guest group: staff who are signed in can still sign in to the
-// customer portal with Google or Microsoft, which comes back here too.
+// Outside the guest group, so a customer's contact signed in to the portal can
+// sign in again, as staff or as one of their other contacts.
 Route::get('auth/{provider}/callback', HandleProviderCallbackController::class)->name('auth.social.callback');
+
+Route::post('choose/workspace', ChooseWorkspaceController::class)->name('choose.workspace');
 
 Route::middleware('auth')->group(function () {
     Route::post('user/confirm-with-code/send', SendConfirmationCodeController::class)

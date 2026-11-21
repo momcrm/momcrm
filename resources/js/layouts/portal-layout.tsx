@@ -160,7 +160,7 @@ export default function PortalLayout({ children }: { children: ReactNode }) {
                                         className="w-full cursor-pointer"
                                     >
                                         <ArrowLeftRight className="mr-2" />
-                                        Switch customer
+                                        Switch account
                                     </Link>
                                 </DropdownMenuItem>
                             )}

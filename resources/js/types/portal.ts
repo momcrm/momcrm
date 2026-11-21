@@ -18,7 +18,7 @@ export type PortalShared = {
     /** The provider whose portal this is. */
     team: { name: string };
     sections: Record<PortalSection, boolean>;
-    /** Whether their email is a portal contact at other customers too. */
+    /** Whether their email can also sign in as staff, or at other customers. */
     canSwitch: boolean;
     /** A staff member is looking at the portal as them, read-only. */
     viewingAs: boolean;

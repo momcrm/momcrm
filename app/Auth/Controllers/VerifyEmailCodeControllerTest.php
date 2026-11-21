@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Auth\AuthSession;
+use App\Contact\ContactEloquentModel;
 use App\EmailCode\Actions\VerifyEmailCode;
 use App\EmailCode\EmailCodeEloquentModel;
 use App\User\UserEloquentModel;
@@ -86,4 +87,51 @@ it('only accepts a code once', function (): void {
     withSession([AuthSession::PENDING_EMAIL => 'sam@acme.test'])
         ->post(route('auth.code.verify'), ['code' => '123456'])
         ->assertSessionHasErrors(['code' => 'That code has expired. Send a new one.']);
+});
+
+it('signs the only portal contact for the address in to the portal', function (): void {
+    $contact = ContactEloquentModel::factory()->withPortalAccess()->create(['email' => 'sam@acme.test']);
+    emailCodeFor('sam@acme.test');
+
+    withSession([AuthSession::PENDING_EMAIL => 'sam@acme.test'])
+        ->post(route('auth.code.verify'), ['code' => '123456'])
+        ->assertRedirect(route('portal.home'));
+
+    assertAuthenticatedAs($contact, 'portal');
+    assertGuest('web');
+    expect(UserEloquentModel::query()->where('email', 'sam@acme.test')->exists())->toBeFalse();
+});
+
+it('asks which customer when the address is a portal contact at several', function (): void {
+    ContactEloquentModel::factory()->withPortalAccess()->count(2)->create(['email' => 'sam@acme.test']);
+    emailCodeFor('sam@acme.test');
+
+    withSession([AuthSession::PENDING_EMAIL => 'sam@acme.test'])
+        ->post(route('auth.code.verify'), ['code' => '123456'])
+        ->assertRedirectToRoute('portal.choose')
+        ->assertSessionHas(AuthSession::PROVEN_EMAIL, 'sam@acme.test');
+
+    assertGuest('portal');
+});
+
+it('asks where to go when the address is both staff and a portal contact', function (): void {
+    UserEloquentModel::factory()->withPersonalTeam()->create(['email' => 'sam@acme.test']);
+    ContactEloquentModel::factory()->withPortalAccess()->create(['email' => 'sam@acme.test']);
+    emailCodeFor('sam@acme.test');
+
+    withSession([AuthSession::PENDING_EMAIL => 'sam@acme.test'])
+        ->post(route('auth.code.verify'), ['code' => '123456'])
+        ->assertRedirectToRoute('portal.choose');
+
+    assertGuest('web');
+    assertGuest('portal');
+});
+
+it('treats a contact without portal access as a new address', function (): void {
+    ContactEloquentModel::factory()->create(['email' => 'sam@acme.test']);
+    emailCodeFor('sam@acme.test');
+
+    withSession([AuthSession::PENDING_EMAIL => 'sam@acme.test'])
+        ->post(route('auth.code.verify'), ['code' => '123456'])
+        ->assertRedirectToRoute('signup.profile');
 });

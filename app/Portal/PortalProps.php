@@ -7,10 +7,13 @@ namespace App\Portal;
 use App\AccessRule\AccessActionEnum;
 use App\AccessRule\AccessResourceEnum;
 use App\AccessRule\Engine\AccessEvaluator;
+use App\Auth\Actions\FindProvenEmail;
 use App\Contact\Contact;
 use App\Customer\Actions\FindCustomer;
 use App\Portal\Actions\FindPortalContacts;
 use App\Team\Actions\FindTeam;
+use App\User\Properties\Email;
+use App\User\UserEloquentModel;
 
 /**
  * What every portal page knows: who is signed in, for which customer of which
@@ -62,8 +65,24 @@ final class PortalProps
                 fn (AccessResourceEnum $resource): bool => AccessEvaluator::contactMayOnSome($model->id, $resource, AccessActionEnum::View),
                 self::SECTIONS,
             ),
-            'canSwitch' => ! PortalAccess::isViewingAs() && FindPortalContacts::forEmail($model->email)->count() > 1,
+            'canSwitch' => self::canSwitch(),
             'viewingAs' => PortalAccess::isViewingAs(),
         ];
+    }
+
+    /**
+     * Whether the address they proved can sign in somewhere else too: as
+     * staff, or as a contact at another customer.
+     */
+    private static function canSwitch(): bool
+    {
+        $email = FindProvenEmail::forRequest(request());
+
+        if ($email === null) {
+            return false;
+        }
+
+        return FindPortalContacts::forEmail($email)->count() > 1
+            || UserEloquentModel::query()->where(Email::getDatabaseTableColumnName(), $email)->exists();
     }
 }

@@ -48,15 +48,17 @@ it('shows what is open and what is owing, as far as the contact may see', functi
             ->where('owing.overdue_in_cents', 11000));
 });
 
-it('sends someone who is not signed in to the portal sign-in page', function (): void {
-    get(route('portal.home'))->assertRedirectToRoute('portal.login');
+it('sends someone who is not signed in to sign in, and back here after', function (): void {
+    get(route('portal.home'))
+        ->assertRedirectToRoute('login')
+        ->assertSessionHas('url.intended', route('portal.home'));
 });
 
 it('keeps staff out of the portal and contacts out of the app', function (): void {
     $contact = portalContact();
     $staff = UserEloquentModel::factory()->withPersonalTeam()->create();
 
-    actingAs($staff)->get(route('portal.home'))->assertRedirectToRoute('portal.login');
+    actingAs($staff)->get(route('portal.home'))->assertRedirectToRoute('dashboard');
 
     auth()->forgetGuards();
     actingAs($contact, 'portal');
@@ -64,7 +66,7 @@ it('keeps staff out of the portal and contacts out of the app', function (): voi
     // which a real request never does.
     auth()->shouldUse('web');
 
-    get(route('dashboard'))->assertRedirectToRoute('login');
+    get(route('dashboard'))->assertRedirectToRoute('portal.home');
 });
 
 it('signs out a contact whose portal access was turned off', function (): void {
@@ -72,7 +74,7 @@ it('signs out a contact whose portal access was turned off', function (): void {
 
     actingAs($contact, 'portal')
         ->get(route('portal.home'))
-        ->assertRedirectToRoute('portal.login')
+        ->assertRedirectToRoute('login')
         ->assertSessionHasErrors('email');
 
     expect(auth('portal')->check())->toBeFalse();
