@@ -87,6 +87,17 @@ final class TeamPolicy
     }
 
     /**
+     * Owners and admins see everyone's time and correct shifts. Everyone
+     * clocks themselves in and out and sees their own time.
+     */
+    public function manageAttendance(UserEloquentModel $user, Team $team): Response
+    {
+        return $this->isOwnerOrAdmin($user, $team)
+            ? Response::allow()
+            : Response::deny('Only team owners and admins can see and correct other people’s time.');
+    }
+
+    /**
      * Owners and admins keep the team's price list, which services are billed from.
      */
     public function manageRates(UserEloquentModel $user, Team $team): Response

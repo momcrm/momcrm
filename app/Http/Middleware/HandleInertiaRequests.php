@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Attendance\AttendanceClock;
 use App\Auth\Actions\FindProvenEmail;
 use App\Choice\Actions\FindChoice;
 use App\Choice\ChoiceListEnum;
@@ -85,6 +86,7 @@ class HandleInertiaRequests extends Middleware
                 && Gate::forUser($request->user())->allows('manage', EnvironmentVariables::class),
             'sidebarCounts' => fn (): ?array => $this->sidebarCounts($request),
             'choices' => fn (): ?array => $this->choices($request),
+            'attendanceClock' => fn (): ?array => $this->attendanceClock($request),
             'customFields' => fn (): ?array => $this->customFields($request),
             'canOpenPortal' => fn (): bool => FindPortalContacts::existForEmail(FindProvenEmail::forRequest($request)),
             'gettingStarted' => fn (): ?array => $request->user() instanceof UserEloquentModel
@@ -137,6 +139,23 @@ class HandleInertiaRequests extends Middleware
         $team = FindTeam::byIdForMember(id: $user->current_team_id, userId: $user->id);
 
         return $team->isNotNull() && Gate::forUser($user)->allows($ability, $team);
+    }
+
+    /**
+     * Whether the signed-in member is clocked in or on a break, for the
+     * clock in the header.
+     *
+     * @return array{shift_id: ?string, clocked_in_at: ?string, on_break_since: ?string, break_seconds: int}|null
+     */
+    private function attendanceClock(Request $request): ?array
+    {
+        $user = $request->user();
+
+        if (! $user instanceof UserEloquentModel || ! is_string($user->current_team_id)) {
+            return null;
+        }
+
+        return AttendanceClock::forMember($user->current_team_id, $user->id);
     }
 
     /**

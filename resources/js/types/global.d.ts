@@ -49,6 +49,8 @@ declare module '@inertiajs/core' {
                 import('./crm').CustomFieldTarget,
                 import('./crm').CustomField[]
             > | null;
+            /** Whether the signed-in member is clocked in, for the header clock. */
+            attendanceClock?: import('./attendance').AttendanceClock | null;
             /** The signed-in contact, on customer portal pages only. */
             portal?: import('./portal').PortalShared | null;
             [key: string]: unknown;

@@ -53,6 +53,8 @@ enum Table: string
     case Records = 'records';
     case Secrets = 'secrets';
     case Services = 'services';
+    case ShiftBreaks = 'shift_breaks';
+    case Shifts = 'shifts';
     case SocialAccounts = 'social_accounts';
     case TeamInvitations = 'team_invitations';
     case TeamUser = 'team_user';

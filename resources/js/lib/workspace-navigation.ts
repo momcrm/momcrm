@@ -4,6 +4,7 @@ import {
     Banknote,
     BookOpen,
     CalendarDays,
+    Clock,
     GanttChart,
     Inbox,
     Landmark,
@@ -21,6 +22,7 @@ import {
     Ticket,
     Users,
 } from 'lucide-react';
+import { index as attendanceIndex } from '@/routes/attendance';
 import {
     activity,
     archive,
@@ -135,6 +137,11 @@ export function workspaceNavigation(
                     href: articlesIndex(),
                     icon: BookOpen,
                     shortcut: 'n',
+                },
+                {
+                    title: 'Attendance',
+                    href: attendanceIndex(),
+                    icon: Clock,
                 },
                 {
                     title: 'Members',
