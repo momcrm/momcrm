@@ -1,0 +1,17 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Timesheet\Properties;
+
+use App\Shared\Abstracts\AbstractUuid;
+
+final class ReviewedBy extends AbstractUuid
+{
+    public static bool $includeInEloquentFactory = false;
+
+    public static function getName(): string
+    {
+        return 'reviewed_by';
+    }
+}

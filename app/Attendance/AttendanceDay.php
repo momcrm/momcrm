@@ -40,6 +40,8 @@ final class AttendanceDay
 
     public const string OVERTIME = 'overtime';
 
+    public const string ON_LEAVE = ExpectedDay::ON_LEAVE;
+
     /**
      * @param  ShiftCollection  $shifts  the member's shifts with this work date
      * @param  ShiftBreakCollection  $breaks  breaks of those shifts

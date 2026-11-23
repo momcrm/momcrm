@@ -5,6 +5,8 @@ declare(strict_types=1);
 use App\Holiday\HolidayEloquentModel;
 use App\Shift\ShiftEloquentModel;
 use App\ShiftBreak\ShiftBreakEloquentModel;
+use App\TeamUser\TeamRoleEnum;
+use App\Timesheet\TimesheetEloquentModel;
 use App\User\UserEloquentModel;
 use App\WorkSchedule\WorkScheduleEloquentModel;
 use Carbon\CarbonImmutable;
@@ -111,4 +113,27 @@ it('does not find people outside the team', function (): void {
     $outsider = UserEloquentModel::factory()->withPersonalTeam()->create();
 
     actingAs($owner)->get(route('attendance.time', ['member' => $outsider->id]))->assertNotFound();
+});
+
+it('lets members add their own time only while the week’s timesheet is open', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $member = UserEloquentModel::factory()->inTeam($owner->current_team_id, TeamRoleEnum::Member)->create(['timezone' => 'UTC']);
+    TimesheetEloquentModel::factory()->forUser($member)->period('2026-11-16')->create();
+
+    actingAs($member)
+        ->get(route('attendance.time'))
+        ->assertInertia(fn (Assert $page) => $page->where('canAddOwn', true)->where('isLocked', false)->where('timesheet', ['starts_on' => '2026-11-23', 'status' => 'open']));
+
+    actingAs($member)
+        ->get(route('attendance.time', ['week' => '2026-11-16']))
+        ->assertInertia(fn (Assert $page) => $page->where('canAddOwn', false)->where('timesheet.status', 'submitted'));
+});
+
+it('locks a week in an approved timesheet for owners too', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    TimesheetEloquentModel::factory()->forUser($owner)->period('2026-11-16')->approved()->create();
+
+    actingAs($owner)
+        ->get(route('attendance.time', ['week' => '2026-11-16']))
+        ->assertInertia(fn (Assert $page) => $page->where('isLocked', true)->where('canAddOwn', false));
 });

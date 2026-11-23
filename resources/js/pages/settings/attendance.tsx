@@ -27,6 +27,7 @@ import {
     destroy as destroySchedule,
     makeDefault,
 } from '@/routes/work-schedules';
+import { settings as timesheetSettings } from '@/routes/timesheets';
 import { edit as editWorkflow } from '@/routes/workflow';
 import type { HolidaySummary, WorkScheduleSummary } from '@/types';
 
@@ -347,6 +348,36 @@ function Holidays({ holidays }: { holidays: HolidaySummary[] }) {
 }
 
 /**
+ * How long a pay period is: what one timesheet covers. Saves straight away.
+ */
+function PayPeriods({ period }: { period: 'weekly' | 'fortnightly' }) {
+    return (
+        <section className="space-y-3">
+            <Heading
+                variant="small"
+                title="Timesheets"
+                description="How long each timesheet is. Both start on a Monday; fortnights count from the week you switch."
+            />
+            <NativeSelect
+                aria-label="Pay period"
+                className="w-48"
+                value={period}
+                onChange={(event) =>
+                    router.put(
+                        timesheetSettings.url(),
+                        { timesheet_period: event.target.value },
+                        { preserveScroll: true },
+                    )
+                }
+            >
+                <option value="weekly">Weekly</option>
+                <option value="fortnightly">Fortnightly</option>
+            </NativeSelect>
+        </section>
+    );
+}
+
+/**
  * Where the kinds of leave are kept: with the team's other lists.
  */
 function LeaveTypes() {
@@ -377,10 +408,12 @@ function LeaveTypes() {
 }
 
 export default function AttendanceSettings({
+    timesheetPeriod,
     schedules,
     members,
     holidays,
 }: {
+    timesheetPeriod: 'weekly' | 'fortnightly';
     schedules: WorkScheduleSummary[];
     members: Member[];
     holidays: HolidaySummary[];
@@ -400,6 +433,8 @@ export default function AttendanceSettings({
             <Holidays holidays={holidays} />
 
             <LeaveTypes />
+
+            <PayPeriods period={timesheetPeriod} />
         </>
     );
 }

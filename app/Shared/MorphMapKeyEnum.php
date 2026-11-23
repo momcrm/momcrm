@@ -54,6 +54,7 @@ use App\Team\TeamEloquentModel;
 use App\TeamInvitation\TeamInvitationEloquentModel;
 use App\TeamUser\TeamUserEloquentModel;
 use App\Ticket\TicketEloquentModel;
+use App\Timesheet\TimesheetEloquentModel;
 use App\User\UserEloquentModel;
 use App\WorkSchedule\WorkScheduleEloquentModel;
 use Illuminate\Database\Eloquent\Model;
@@ -118,6 +119,7 @@ enum MorphMapKeyEnum: string
     case TeamInvitation = 'team_invitation';
     case TeamUser = 'team_user';
     case Ticket = 'ticket';
+    case Timesheet = 'timesheet';
     case User = 'user';
     case WorkSchedule = 'work_schedule';
 
@@ -196,6 +198,7 @@ enum MorphMapKeyEnum: string
             self::TeamInvitation => TeamInvitationEloquentModel::class,
             self::TeamUser => TeamUserEloquentModel::class,
             self::Ticket => TicketEloquentModel::class,
+            self::Timesheet => TimesheetEloquentModel::class,
             self::User => UserEloquentModel::class,
             self::WorkSchedule => WorkScheduleEloquentModel::class,
         };

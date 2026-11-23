@@ -8,12 +8,15 @@ use App\Shift\Actions\FindShift;
 use App\Shift\Properties\ClockedInAt;
 use App\Shift\Properties\ClockedOutAt;
 use App\Shift\Properties\Note;
+use App\Timesheet\TimesheetLock;
 use Carbon\CarbonImmutable;
 use Illuminate\Validation\Validator;
 
 /**
- * The form an owner or admin fills in to add or correct a shift. Times are
- * wall-clock times in the member's timezone, as the member would read them.
+ * The form an owner or admin fills in to add or correct a shift, or a member
+ * fills in to add one they forgot. Times are wall-clock times in the
+ * member's timezone, as the member would read them. Days in an approved
+ * timesheet can't change; a member can't add to a submitted one either.
  */
 final readonly class ShiftCorrection
 {
@@ -28,6 +31,8 @@ final readonly class ShiftCorrection
         private string $userId,
         private string $timezone,
         private ?string $shiftId = null,
+        private ?string $currentWorkDate = null,
+        private bool $byMember = false,
     ) {}
 
     /**
@@ -95,11 +100,28 @@ final readonly class ShiftCorrection
 
         $this->checkBreaks($validator, $this->breaks($data), $in, $out);
 
-        if ($validator->errors()->isEmpty() && FindShift::overlapsForMember($this->teamId, $this->userId, $in, $out, $this->shiftId)) {
-            $validator->errors()->add(ClockedInAt::getNameForValidation(), $out instanceof CarbonImmutable
-                ? __('This overlaps another of their shifts.')
-                : __('They already have a shift running at this time.'));
+        if ($validator->errors()->isEmpty() && $this->isLocked($in->setTimezone($this->timezone)->toDateString())) {
+            $validator->errors()->add(ClockedInAt::getNameForValidation(), $this->byMember
+                ? __('Your timesheet for this day has been submitted. Ask an owner or admin to change it.')
+                : __('This day is in an approved timesheet, so its time can’t change.'));
         }
+
+        if ($validator->errors()->isEmpty() && FindShift::overlapsForMember($this->teamId, $this->userId, $in, $out, $this->shiftId)) {
+            $validator->errors()->add(ClockedInAt::getNameForValidation(), match (true) {
+                $this->byMember => __('This overlaps another of your shifts.'),
+                $out instanceof CarbonImmutable => __('This overlaps another of their shifts.'),
+                default => __('They already have a shift running at this time.'),
+            });
+        }
+    }
+
+    /**
+     * Whether the shift's new day, or the day it is moving from, is locked.
+     */
+    private function isLocked(string $workDate): bool
+    {
+        return TimesheetLock::isLocked($this->teamId, $this->userId, $workDate, $this->byMember)
+            || ($this->currentWorkDate !== null && TimesheetLock::isLocked($this->teamId, $this->userId, $this->currentWorkDate, $this->byMember));
     }
 
     /**

@@ -168,3 +168,37 @@ export type LeaveCalendarEntry = {
     ends_on: string;
     part: LeavePart;
 };
+
+export type TimesheetStatus = 'open' | 'submitted' | 'approved' | 'rejected';
+
+/** A member's pay period and what it adds up to. */
+export type TimesheetSummary = {
+    starts_on: string;
+    ends_on: string;
+    timesheet_id: string | null;
+    status: TimesheetStatus;
+    submitted_at: string | null;
+    reviewed_by_name: string | null;
+    review_note: string | null;
+    worked_seconds: number;
+    expected_seconds: number;
+    overtime_seconds: number;
+    leave_days: number;
+    late_days: number;
+    absent_days: number;
+};
+
+/** A day on a timesheet: how it went, without its shifts. */
+export type TimesheetDay = AttendanceDayResult & { date: string };
+
+/** Attendance in brief on a member's profile. */
+export type MemberAttendance = {
+    week_worked_seconds: number;
+    week_expected_seconds: number;
+    leave_days_this_year: number;
+    last_timesheet: {
+        starts_on: string;
+        ends_on: string;
+        status: TimesheetStatus;
+    } | null;
+};

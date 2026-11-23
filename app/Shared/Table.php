@@ -62,6 +62,7 @@ enum Table: string
     case TeamUser = 'team_user';
     case Teams = 'teams';
     case Tickets = 'tickets';
+    case Timesheets = 'timesheets';
     case Users = 'users';
     case WorkSchedules = 'work_schedules';
 }

@@ -94,6 +94,6 @@ final class UpdateShiftFormRequest extends FormRequest
     {
         $userId = $this->shift->getUserId()->toString();
 
-        return new ShiftCorrection($this->shift->getTeamId()->toString(), $userId, AttendanceTimezone::forUserId($userId), $this->shift->getId()->toString());
+        return new ShiftCorrection($this->shift->getTeamId()->toString(), $userId, AttendanceTimezone::forUserId($userId), $this->shift->getId()->toString(), $this->shift->getWorkDate()->toDateString());
     }
 }

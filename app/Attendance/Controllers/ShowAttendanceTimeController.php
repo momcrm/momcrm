@@ -9,6 +9,9 @@ use App\Attendance\AttendanceTimezone;
 use App\Attendance\AttendanceWeek;
 use App\Team\Actions\FindTeam;
 use App\Team\Exceptions\CouldNotViewTeam;
+use App\Timesheet\Actions\FindTimesheet;
+use App\Timesheet\TimesheetPeriods;
+use App\Timesheet\TimesheetStatusEnum;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -18,8 +21,9 @@ use Throwable;
 
 /**
  * A member's week of shifts and breaks, each day measured against their
- * schedule. Everyone sees their own; owners and admins can pick anyone in
- * the team and correct their shifts.
+ * schedule. Everyone sees their own, and can add a shift they forgot while
+ * its timesheet is open; owners and admins can pick anyone in the team and
+ * correct their shifts until the timesheet is approved.
  */
 final class ShowAttendanceTimeController
 {
@@ -56,6 +60,9 @@ final class ShowAttendanceTimeController
         $monday = AttendanceWeek::startOf($this->day($request->query('week'), $now, $timezone));
         $calendar = AttendanceCalendar::forTeam($teamId, $members, $monday->toDateString(), $monday->addDays(6)->toDateString());
         $schedule = $calendar->scheduleFor($memberId);
+        $timesheet = FindTimesheet::coveringForMember($teamId, $memberId, $monday->toDateString());
+        $timesheetStatus = $timesheet->getStatus()->toNullableEnum();
+        $period = TimesheetPeriods::forTeam($team)->containing($monday->toDateString());
 
         return Inertia::render('attendance/time', [
             'member' => $member,
@@ -64,6 +71,9 @@ final class ShowAttendanceTimeController
             'schedule' => $schedule->isNull() ? null : $schedule->toSummary(),
             'members' => $canManage ? $members->values()->all() : [],
             'canManage' => $canManage,
+            'timesheet' => ['starts_on' => $period['starts_on'], 'status' => $timesheetStatus->value ?? 'open'],
+            'isLocked' => $timesheetStatus === TimesheetStatusEnum::Approved,
+            'canAddOwn' => ! $canManage && $memberId === $viewerId && $timesheetStatus?->locksMember() !== true,
         ]);
     }
 

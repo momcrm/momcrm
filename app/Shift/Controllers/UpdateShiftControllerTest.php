@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\AuditLog\AuditLogEloquentModel;
 use App\Shift\ShiftEloquentModel;
 use App\ShiftBreak\ShiftBreakEloquentModel;
+use App\Timesheet\TimesheetEloquentModel;
 use App\User\UserEloquentModel;
 use Carbon\CarbonImmutable;
 
@@ -74,4 +75,17 @@ it('does not find another team’s shift', function (): void {
         'clocked_in_at' => '2026-11-20T08:00',
         'clocked_out_at' => '2026-11-20T17:00',
     ])->assertNotFound();
+});
+
+it('won’t move a shift out of an approved timesheet', function (): void {
+    [$owner, $member] = ownerAndPerthMember();
+    $shift = ShiftEloquentModel::factory()->forUser($member)->between(CarbonImmutable::parse('2026-11-10 01:00'), 8)->create(['work_date' => '2026-11-10']);
+    TimesheetEloquentModel::factory()->forUser($member)->period('2026-11-09')->approved()->create();
+
+    actingAs($owner)->put(route('shifts.update', $shift->id), [
+        'clocked_in_at' => '2026-11-17T09:00',
+        'clocked_out_at' => '2026-11-17T17:00',
+    ])->assertSessionHasErrors('clocked_in_at');
+
+    expect($shift->refresh()->work_date)->toStartWith('2026-11-10');
 });

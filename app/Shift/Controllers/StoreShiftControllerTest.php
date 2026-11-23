@@ -6,6 +6,7 @@ use App\AuditLog\AuditLogEloquentModel;
 use App\Shift\ShiftEloquentModel;
 use App\ShiftBreak\ShiftBreakEloquentModel;
 use App\TeamUser\TeamRoleEnum;
+use App\Timesheet\TimesheetEloquentModel;
 use App\User\UserEloquentModel;
 use Carbon\CarbonImmutable;
 
@@ -15,19 +16,6 @@ use function Pest\Laravel\travelTo;
 beforeEach(function (): void {
     travelTo('2026-11-23 12:00:00');
 });
-
-/**
- * An owner and a member of the owner's team who works in Perth (UTC+8).
- *
- * @return array{0: UserEloquentModel, 1: UserEloquentModel}
- */
-function ownerAndPerthMember(): array
-{
-    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
-    $member = UserEloquentModel::factory()->inTeam($owner->current_team_id)->create(['timezone' => 'Australia/Perth']);
-
-    return [$owner, $member];
-}
 
 it('adds a forgotten shift with its breaks, read in the member’s timezone', function (): void {
     [$owner, $member] = ownerAndPerthMember();
@@ -56,17 +44,49 @@ it('adds a forgotten shift with its breaks, read in the member’s timezone', fu
         ->and(AuditLogEloquentModel::query()->where('auditable_id', $shift->id)->where('event', 'created')->where('user_id', $owner->id)->exists())->toBeTrue();
 });
 
-it('refuses members', function (): void {
+it('refuses members adding shifts for someone else', function (): void {
     $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
     $member = UserEloquentModel::factory()->inTeam($owner->current_team_id, TeamRoleEnum::Member)->create();
 
     actingAs($member)->post(route('shifts.store'), [
-        'user_id' => $member->id,
+        'user_id' => $owner->id,
         'clocked_in_at' => '2026-11-20T09:00',
         'clocked_out_at' => '2026-11-20T17:00',
     ])->assertForbidden();
 
     expect(ShiftEloquentModel::query()->count())->toBe(0);
+});
+
+it('lets members add a shift they forgot while its timesheet is open', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $member = UserEloquentModel::factory()->inTeam($owner->current_team_id, TeamRoleEnum::Member)->create(['timezone' => 'UTC']);
+    TimesheetEloquentModel::factory()->forUser($member)->period('2026-11-09')->create();
+
+    actingAs($member)->post(route('shifts.store'), [
+        'user_id' => $member->id,
+        'clocked_in_at' => '2026-11-20T09:00',
+        'clocked_out_at' => '2026-11-20T17:00',
+    ])->assertSessionHasNoErrors();
+
+    actingAs($member)->post(route('shifts.store'), [
+        'user_id' => $member->id,
+        'clocked_in_at' => '2026-11-10T09:00',
+        'clocked_out_at' => '2026-11-10T17:00',
+    ])->assertSessionHasErrors(['clocked_in_at' => 'Your timesheet for this day has been submitted. Ask an owner or admin to change it.']);
+
+    expect(ShiftEloquentModel::query()->pluck('work_date')->map(fn ($date): string => substr((string) $date, 0, 10))->all())->toBe(['2026-11-20']);
+});
+
+it('keeps days in an approved timesheet from changing, but not a submitted one', function (): void {
+    [$owner, $member] = ownerAndPerthMember();
+    TimesheetEloquentModel::factory()->forUser($member)->period('2026-11-09')->approved()->create();
+    TimesheetEloquentModel::factory()->forUser($member)->period('2026-11-16')->create();
+    $form = fn (string $day): array => ['user_id' => $member->id, 'clocked_in_at' => "{$day}T09:00", 'clocked_out_at' => "{$day}T17:00"];
+
+    actingAs($owner)->post(route('shifts.store'), $form('2026-11-10'))->assertSessionHasErrors(['clocked_in_at' => 'This day is in an approved timesheet, so its time can’t change.']);
+    actingAs($owner)->post(route('shifts.store'), $form('2026-11-17'))->assertSessionHasNoErrors();
+
+    expect(ShiftEloquentModel::query()->count())->toBe(1);
 });
 
 it('only adds shifts for people in the team', function (): void {

@@ -24,20 +24,26 @@ import {
 } from '@/components/ui/dropdown-menu';
 import {
     describeWeek,
+    timesheetStatuses,
     formatClockTime,
     formatDuration,
     secondsSince,
     useNow,
 } from '@/lib/attendance';
-import { addDays, formatDay, parseDay } from '@/lib/dates';
+import { addDays, formatDay, parseDay, today } from '@/lib/dates';
 import { cn } from '@/lib/utils';
-import { index as attendanceIndex, time } from '@/routes/attendance';
+import {
+    index as attendanceIndex,
+    time,
+    timesheet as timesheetRoute,
+} from '@/routes/attendance';
 import { edit as editAttendanceSettings } from '@/routes/attendance-settings';
 import { destroy } from '@/routes/shifts';
 import type {
     AttendanceMember,
     AttendanceWeek,
     ShiftSummary,
+    TimesheetStatus,
     WorkScheduleSummary,
 } from '@/types';
 
@@ -156,6 +162,9 @@ export default function AttendanceTime({
     schedule,
     members,
     canManage,
+    timesheet,
+    isLocked,
+    canAddOwn,
 }: {
     member: AttendanceMember;
     isYou: boolean;
@@ -163,7 +172,16 @@ export default function AttendanceTime({
     schedule: WorkScheduleSummary | null;
     members: AttendanceMember[];
     canManage: boolean;
+    /** The pay period holding this week, and where its timesheet is. */
+    timesheet: { starts_on: string; status: TimesheetStatus };
+    /** Approved: nobody can change this week's time. */
+    isLocked: boolean;
+    /** Whether a member may add a shift they forgot to their own week. */
+    canAddOwn: boolean;
 }) {
+    const canEdit = canManage && !isLocked;
+    const todayDate = today();
+    const sheetStatus = timesheetStatuses[timesheet.status];
     const running = week.days.some((day) =>
         day.shifts.some((shift) => shift.is_open),
     );
@@ -278,10 +296,19 @@ export default function AttendanceTime({
                             : 'No work schedule'}
                         {!isYou && ` · Times in ${member.timezone}`}
                     </span>
+                    <Link
+                        href={timesheetRoute([member.id, timesheet.starts_on])}
+                        className="ml-auto flex shrink-0 items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+                    >
+                        Timesheet
+                        <StatusPill tone={sheetStatus.tone}>
+                            {sheetStatus.label}
+                        </StatusPill>
+                    </Link>
                     {canManage && (
                         <Link
                             href={editAttendanceSettings()}
-                            className="ml-auto shrink-0 text-sm text-muted-foreground hover:text-foreground hover:underline"
+                            className="shrink-0 text-sm text-muted-foreground hover:text-foreground hover:underline"
                         >
                             {schedule ? 'Schedules' : 'Set up schedules'}
                         </Link>
@@ -339,7 +366,9 @@ export default function AttendanceTime({
                                                 )}
                                             </span>
                                         )}
-                                        {canManage && (
+                                        {(canEdit ||
+                                            (canAddOwn &&
+                                                day.date <= todayDate)) && (
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
@@ -365,7 +394,7 @@ export default function AttendanceTime({
                                                 timezone={member.timezone}
                                                 now={now}
                                                 loadedAt={loadedAt}
-                                                canManage={canManage}
+                                                canManage={canEdit}
                                                 onEdit={() =>
                                                     setEditing({
                                                         shift,

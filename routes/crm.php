@@ -215,6 +215,12 @@ use App\Ticket\Controllers\ShowTicketController;
 use App\Ticket\Controllers\ShowTimelineController;
 use App\Ticket\Controllers\StoreSubtaskController;
 use App\Ticket\Controllers\StoreTicketController;
+use App\Timesheet\Controllers\ApproveTimesheetController;
+use App\Timesheet\Controllers\ExportTimesheetsController;
+use App\Timesheet\Controllers\RejectTimesheetController;
+use App\Timesheet\Controllers\ShowTimesheetController;
+use App\Timesheet\Controllers\ShowTimesheetsController;
+use App\Timesheet\Controllers\SubmitTimesheetController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -373,6 +379,12 @@ Route::middleware(StaffOrContact::STAFF_MIDDLEWARE)->group(function () {
     Route::delete('groups/{group}', DeleteGroupController::class)->whereUuid('group')->name('groups.destroy');
     Route::get('attendance', ShowAttendanceController::class)->name('attendance.index');
     Route::get('attendance/time', ShowAttendanceTimeController::class)->name('attendance.time');
+    Route::get('attendance/timesheets', ShowTimesheetsController::class)->name('attendance.timesheets');
+    Route::get('attendance/timesheets/export', ExportTimesheetsController::class)->name('attendance.timesheets.export');
+    Route::get('attendance/timesheets/{member}/{startsOn}', ShowTimesheetController::class)->whereUuid('member')->where('startsOn', '\\d{4}-\\d{2}-\\d{2}')->name('attendance.timesheet');
+    Route::post('attendance/timesheets', SubmitTimesheetController::class)->name('timesheets.submit');
+    Route::post('attendance/timesheets/{timesheet}/approve', ApproveTimesheetController::class)->whereUuid('timesheet')->name('timesheets.approve');
+    Route::post('attendance/timesheets/{timesheet}/reject', RejectTimesheetController::class)->whereUuid('timesheet')->name('timesheets.reject');
     Route::get('attendance/leave', ShowAttendanceLeaveController::class)->name('attendance.leave');
     Route::post('attendance/leave', StoreLeaveRequestController::class)->name('leave-requests.store');
     Route::post('attendance/leave/{leaveRequest}/approve', ApproveLeaveRequestController::class)->whereUuid('leaveRequest')->name('leave-requests.approve');

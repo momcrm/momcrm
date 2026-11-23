@@ -75,6 +75,7 @@ use App\Team\Controllers\UpdateTeamController;
 use App\TeamInvitation\Controllers\DeleteTeamInvitationController;
 use App\TeamInvitation\Controllers\ResendTeamInvitationController;
 use App\TeamInvitation\Controllers\StoreTeamInvitationController;
+use App\Timesheet\Controllers\UpdateTimesheetSettingsController;
 use App\User\Controllers\DeleteProfileController;
 use App\User\Controllers\EditProfileController;
 use App\User\Controllers\EditSecurityController;
@@ -150,6 +151,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('settings/work-schedules/{workSchedule}', UpdateWorkScheduleController::class)->whereUuid('workSchedule')->name('work-schedules.update');
     Route::delete('settings/work-schedules/{workSchedule}', DeleteWorkScheduleController::class)->whereUuid('workSchedule')->name('work-schedules.destroy');
     Route::post('settings/work-schedules/{workSchedule}/default', MakeDefaultWorkScheduleController::class)->whereUuid('workSchedule')->name('work-schedules.make-default');
+    Route::put('settings/attendance/timesheets', UpdateTimesheetSettingsController::class)->name('timesheets.settings');
     Route::put('settings/attendance/members/{member}', AssignWorkScheduleController::class)->whereUuid('member')->name('work-schedules.assign');
     Route::post('settings/holidays', StoreHolidayController::class)->name('holidays.store');
     Route::delete('settings/holidays/{holiday}', DeleteHolidayController::class)->whereUuid('holiday')->name('holidays.destroy');

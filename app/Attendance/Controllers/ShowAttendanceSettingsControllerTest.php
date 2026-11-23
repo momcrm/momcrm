@@ -29,6 +29,7 @@ it('shows the team’s schedules, who works to which, and its holidays from last
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('settings/attendance')
+            ->where('timesheetPeriod', 'weekly')
             ->has('schedules', 2)
             ->where('schedules.0.id', $nights->id)
             ->where('schedules.0.days.mon', ['starts_at' => '22:00', 'ends_at' => '06:00', 'break_minutes' => 0])

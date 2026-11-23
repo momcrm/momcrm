@@ -202,3 +202,16 @@ function officeHoursForm(array $overrides = []): array
         ...$overrides,
     ];
 }
+
+/**
+ * An owner and a member of the owner's team who works in Perth (UTC+8).
+ *
+ * @return array{0: UserEloquentModel, 1: UserEloquentModel}
+ */
+function ownerAndPerthMember(): array
+{
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $member = UserEloquentModel::factory()->inTeam($owner->current_team_id)->create(['timezone' => 'Australia/Perth']);
+
+    return [$owner, $member];
+}

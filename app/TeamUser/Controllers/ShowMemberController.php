@@ -10,6 +10,7 @@ use App\Activity\Properties\CreatedAt as ActivityCreatedAt;
 use App\Activity\Properties\TeamId as ActivityTeamId;
 use App\Activity\Properties\Type as ActivityType;
 use App\Activity\Properties\UserId as ActivityUserId;
+use App\Attendance\MemberAttendanceSummary;
 use App\CustomField\Actions\FindLinkedRecords;
 use App\CustomField\CustomFieldRelationEnum;
 use App\Dashboard\WorkspaceNumbers;
@@ -42,6 +43,7 @@ use App\Ticket\TicketRelationship;
 use App\Ticket\TicketStatusCategoryEnum;
 use App\User\User;
 use App\User\UserEloquentModel;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -121,6 +123,9 @@ final class ShowMemberController
                     ->values()
                     ->all(),
             ],
+            'attendance' => $user->getId()->equalsTo($viewer->id) || Gate::allows('manageAttendance', $team)
+                ? MemberAttendanceSummary::forMember($teamId, $member, CarbonImmutable::now())
+                : null,
             'stats' => [
                 'active_projects' => $projects->count(),
                 'open_tickets' => $open()->count(),
