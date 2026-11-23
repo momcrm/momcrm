@@ -14,7 +14,9 @@ import {
 type Action = { action: string; method: 'post' | 'delete' };
 
 /**
- * A delete button that asks for confirmation in a dialog first.
+ * A delete button that asks for confirmation in a dialog first. Pass
+ * `trigger={null}` with `open` and `onOpenChange` to open it from elsewhere,
+ * such as a "…" menu.
  */
 export default function ConfirmDelete({
     action,
@@ -22,18 +24,24 @@ export default function ConfirmDelete({
     description,
     trigger = 'Delete',
     confirmLabel = 'Delete',
+    open,
+    onOpenChange,
 }: {
     action: Action;
     title: string;
     description: ReactNode;
-    trigger?: string;
+    trigger?: string | null;
     confirmLabel?: string;
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
 }) {
     return (
-        <Dialog>
-            <DialogTrigger asChild>
-                <Button variant="outline">{trigger}</Button>
-            </DialogTrigger>
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            {trigger !== null && (
+                <DialogTrigger asChild>
+                    <Button variant="outline">{trigger}</Button>
+                </DialogTrigger>
+            )}
             <DialogContent>
                 <DialogTitle>{title}</DialogTitle>
                 <DialogDescription>{description}</DialogDescription>

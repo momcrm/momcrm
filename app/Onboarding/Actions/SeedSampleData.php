@@ -6,6 +6,21 @@ namespace App\Onboarding\Actions;
 
 use App\Activity\Actions\RecordActivity;
 use App\Activity\ActivityTypeEnum;
+use App\Article\Actions\CreateArticle;
+use App\Article\Actions\StoreArticleImage;
+use App\Article\Article;
+use App\Article\ArticleBody;
+use App\Article\ArticleClassificationEnum;
+use App\Article\ArticleEloquentModel;
+use App\Article\ArticleImages;
+use App\Article\ArticleStatusEnum;
+use App\Article\Properties\Id as ArticleId;
+use App\ArticleCategory\Actions\CreateArticleCategory;
+use App\ArticleCategory\Actions\FindArticleCategory;
+use App\ArticleCategory\ArticleCategory;
+use App\ArticleLink\Actions\CreateArticleLink;
+use App\ArticleLink\ArticleLink;
+use App\ArticleLink\ArticleLinkTargetEnum;
 use App\Asset\Actions\CreateAsset;
 use App\Asset\Asset;
 use App\Asset\AssetStatusEnum;
@@ -51,15 +66,18 @@ use App\Ticket\Actions\MoveTicket;
 use App\Ticket\Ticket;
 use App\Ticket\TicketEloquentModel;
 use Carbon\CarbonImmutable;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 
 /**
  * Fills a team with a few example customers, with contacts, locations, assets,
- * services, tickets and an invoice, plus projects with milestones, labels and
- * a group, so a new user has something to click around.
+ * services, tickets and an invoice, plus projects with milestones, labels, a
+ * group and a knowledge base article, so a new user has something to click
+ * around.
  *
  * Sample customers and projects are marked as sample; removing them removes
- * their tickets and the rest. Labels and the group stay, as team settings.
+ * their tickets, articles and the rest. Labels, article categories and the
+ * group stay, as team settings.
  */
 final readonly class SeedSampleData
 {
@@ -192,6 +210,77 @@ final readonly class SeedSampleData
         'Onboarding' => HuePalette::GREEN,
     ];
 
+    /**
+     * The sample article's category, as its parent and then itself.
+     *
+     * @var list<string>
+     */
+    private const array ARTICLE_CATEGORY = ['Networking', 'Remote access'];
+
+    /**
+     * The sample article's body. It uses every element the editor makes, so
+     * the article page shows them all; {image} is the diagram's address.
+     */
+    private const string ARTICLE_BODY = <<<'HTML'
+        <p>Each Coastal Logistics depot reaches head office over an <strong>IPsec site-to-site tunnel</strong> on its FortiGate. This article covers the <em>standard</em> setup, how to check the tunnel is healthy, and what to do when it drops. It replaces the <s>old PPTP guide</s>, which no longer applies, and the steps here are <u>the only supported way</u> to set a depot up.</p>
+        <p>Questions go to <a href="mailto:network@example.com">network@example.com</a>. The vendor's own reference is the <a href="https://docs.fortinet.com">Fortinet documentation</a>.</p>
+        <img src="{image}" alt="Diagram of a depot connected to head office over an IPsec tunnel">
+        <h2>Before you start</h2>
+        <p>You need:</p>
+        <ul>
+        <li><p>Admin access to the FortiGate at the depot and at head office</p></li>
+        <li><p>The pre-shared key, from the <code>Coastal VPN</code> secret on the customer</p></li>
+        <li><p>The depot's addresses:</p><ul><li><p>Public IP, from the internet service</p></li><li><p>Internal subnet, such as <code>10.20.0.0/16</code></p></li></ul></li>
+        <li><p>About 20 minutes per depot</p></li>
+        </ul>
+        <blockquote><p><strong>Change window.</strong> The depots scan freight between 6am and 6pm. Make changes outside those hours, and tell the depot manager first.</p></blockquote>
+        <h2>Set up the tunnel</h2>
+        <h3>Phase 1</h3>
+        <ol>
+        <li><p>Open <strong>VPN › IPsec Tunnels</strong> and choose <em>Create new › Custom</em>.</p></li>
+        <li><p>Name it after the depot, such as <code>depot-fremantle</code>.</p></li>
+        <li><p>Set the remote gateway to head office's static IP.<br>Use the backup address only if the primary is down.</p></li>
+        <li><p>Paste the pre-shared key and save.</p></li>
+        </ol>
+        <h3>Phase 2</h3>
+        <p>Carry on from step 5:</p>
+        <ol start="5">
+        <li><p>Add a phase 2 selector for the depot subnet.</p></li>
+        <li><p>Match the settings in the table below exactly.</p></li>
+        </ol>
+        <table>
+        <colgroup><col><col><col></colgroup>
+        <thead><tr><th><p>Setting</p></th><th><p>Phase 1</p></th><th><p>Phase 2</p></th></tr></thead>
+        <tbody>
+        <tr><td><p>Encryption</p></td><td colspan="2"><p>AES256 on both</p></td></tr>
+        <tr><td><p>Authentication</p></td><td><p>SHA256</p></td><td><p>SHA256</p></td></tr>
+        <tr><td><p>DH group</p></td><td rowspan="2"><p>14</p></td><td><p>14</p></td></tr>
+        <tr><td><p>PFS</p></td><td><p>On</p></td></tr>
+        <tr><td><p>Key lifetime</p></td><td><p>86400 s</p></td><td><p>43200 s</p></td></tr>
+        </tbody>
+        </table>
+        <h4>Firewall policies</h4>
+        <p>Add two policies, one each way, between the internal interface and the tunnel. Leave NAT <strong>off</strong>.</p>
+        <h2>Check it is working</h2>
+        <p>From the FortiGate CLI, list the tunnel:</p>
+        <pre><code>diagnose vpn tunnel list name depot-fremantle
+        # look for: status=up  and  bytes in/out increasing
+        execute ping-options source 10.20.0.1
+        execute ping 10.10.0.10</code></pre>
+        <p>If the output shows <code>status=up</code> and the ping replies, the tunnel is healthy.</p>
+        <hr>
+        <h2>Troubleshooting</h2>
+        <table>
+        <thead><tr><th><p>Symptom</p></th><th><p>Likely cause</p></th><th><p>Fix</p></th></tr></thead>
+        <tbody>
+        <tr><td><p>Tunnel never comes up</p></td><td><p>Pre-shared key or phase 1 mismatch</p></td><td><p>Re-paste the key; compare phase 1 settings on both ends</p></td></tr>
+        <tr><td><p>Up, but no traffic</p></td><td><p>Missing firewall policy or route</p></td><td><p>Add both policies and a static route to the remote subnet</p></td></tr>
+        <tr><td><p>Drops every afternoon</p></td><td><p>Key lifetime or ISP lease</p></td><td><p>Set DPD to on-idle; check the ISP's DHCP lease time</p></td></tr>
+        </tbody>
+        </table>
+        <p>Still stuck? Raise a ticket against the depot's <strong>Office firewall</strong> asset and attach the output of the commands above.</p>
+        HTML;
+
     public function __construct(
         private string $teamId,
         private string $userId,
@@ -220,9 +309,11 @@ final readonly class SeedSampleData
                 $projects[$key] = $this->seedProject($sample, $customerId, $groupId);
             }
 
+            $tickets = [];
+
             foreach (self::CUSTOMERS as $sample) {
                 foreach ($sample['tickets'] as $sampleTicket) {
-                    $this->seedTicket(
+                    $tickets[$sampleTicket['title']] = $this->seedTicket(
                         $sampleTicket,
                         projectId: isset($sampleTicket['project']) ? $projects[$sampleTicket['project']] : null,
                         labels: $labels,
@@ -233,9 +324,18 @@ final readonly class SeedSampleData
 
             foreach (self::PROJECTS as $key => $sample) {
                 foreach ($sample['tickets'] as $sampleTicket) {
-                    $this->seedTicket($sampleTicket, projectId: $projects[$key], labels: $labels);
+                    $tickets[$sampleTicket['title']] = $this->seedTicket($sampleTicket, projectId: $projects[$key], labels: $labels);
                 }
             }
+
+            $coastal = $customers['Coastal Logistics'];
+
+            $this->seedArticle($coastal['customer'], $labels, [
+                [ArticleLinkTargetEnum::Ticket, $tickets['VPN drops every afternoon']],
+                [ArticleLinkTargetEnum::Ticket, $tickets['Order replacement firewall']],
+                [ArticleLinkTargetEnum::Asset, $coastal['assets']['Office firewall']],
+                [ArticleLinkTargetEnum::Service, $coastal['service']],
+            ]);
 
             RecordActivity::for(type: ActivityTypeEnum::SampleDataAdded, userId: $this->userId, teamId: $this->teamId);
         });
@@ -281,7 +381,7 @@ final readonly class SeedSampleData
 
     /**
      * @param  array{name: string, email: string, phone: string, location: array{name: string, suburb: string, postcode: string}, contacts: array<int, array{first: string, last: string, position: string, email: string}>, assets: array<int, array{name: string, serial: string}>, service: array{name: string, quantity: int, cents: int}, tickets: array<int, array{title: string, status: string, priority: string, due?: int, labels?: array<int, string>, project?: string}>}  $sample
-     * @return array{customer: string, contact: string, location: string}
+     * @return array{customer: string, contact: string, location: string, assets: array<string, string>, service: string}
      */
     private function seedCustomer(array $sample, bool $sendsInvoice): array
     {
@@ -316,14 +416,16 @@ final readonly class SeedSampleData
                 ->setIsPrimary($index === 0));
         }
 
+        $assets = [];
+
         foreach ($sample['assets'] as $asset) {
-            CreateAsset::fromAsset(Asset::new()
+            $assets[$asset['name']] = CreateAsset::fromAsset(Asset::new()
                 ->setTeamId($this->teamId)
                 ->setCustomerId($customer->getId())
                 ->setLocationId($location->getId())
                 ->setName($asset['name'])
                 ->setSerialNumber($asset['serial'])
-                ->setStatus(AssetStatusEnum::Active));
+                ->setStatus(AssetStatusEnum::Active))->getId()->toString();
         }
 
         $service = CreateService::fromService(Service::new()
@@ -377,6 +479,8 @@ final readonly class SeedSampleData
             'customer' => $customer->getId()->toString(),
             'contact' => $contacts[0]->getId()->toString(),
             'location' => $location->getId()->toString(),
+            'assets' => $assets,
+            'service' => $service->getId()->toString(),
         ];
     }
 
@@ -440,9 +544,10 @@ final readonly class SeedSampleData
     /**
      * @param  array{title: string, status: string, priority: string, due?: int, labels?: array<int, string>}  $sample
      * @param  array<string, string>  $labels
-     * @param  array{customer: string, contact: string, location: string}|null  $customer
+     * @param  array{customer: string, contact: string, location: string, assets: array<string, string>, service: string}|null  $customer
+     * @return string the ticket's id
      */
-    private function seedTicket(array $sample, ?string $projectId, array $labels, ?array $customer = null): void
+    private function seedTicket(array $sample, ?string $projectId, array $labels, ?array $customer = null): string
     {
         $ticket = CreateTicket::fromTicket(Ticket::new()
             ->setTeamId($this->teamId)
@@ -467,5 +572,90 @@ final readonly class SeedSampleData
         if ($status->isNotNull() && ! $status->getId()->equalsTo($ticket->getStatusId()->toValue())) {
             MoveTicket::to($ticket, $status->getId()->toString(), PHP_INT_MAX, movedById: $this->userId);
         }
+
+        return $ticket->getId()->toString();
+    }
+
+    /**
+     * A published customer article for Coastal Logistics with a diagram,
+     * labels and a category, attached to its tickets, asset and service. It
+     * is due for review, so the reminder shows too.
+     *
+     * @param  array<string, string>  $labels
+     * @param  list<array{0: ArticleLinkTargetEnum, 1: string}>  $links
+     */
+    private function seedArticle(string $customerId, array $labels, array $links): void
+    {
+        $today = CarbonImmutable::today();
+        $articleId = ArticleId::generate()->toString();
+
+        $image = StoreArticleImage::for(
+            new UploadedFile(resource_path('sample-data/vpn-diagram.png'), 'vpn-diagram.png', 'image/png', test: true),
+            Article::new()->setId($articleId)->setTeamId($this->teamId),
+            $this->userId,
+        );
+        $body = ArticleBody::sanitise(str_replace(
+            '{image}',
+            ArticleImages::path($articleId, $image->getId()->toString()),
+            self::ARTICLE_BODY,
+        ));
+
+        $article = CreateArticle::fromArticle(Article::new()
+            ->setId($articleId)
+            ->setTeamId($this->teamId)
+            ->setCustomerId($customerId)
+            ->setCategoryId($this->articleCategoryId())
+            ->setAuthorId($this->userId)
+            ->setEditedById($this->userId)
+            ->setTitle('Site-to-site VPN: setup, checks and troubleshooting')
+            ->setSummary('How Coastal Logistics depots connect to head office over IPsec, how to tell the tunnel is healthy, and what to do when it drops.')
+            ->setBody($body)
+            ->setBodyText(ArticleBody::text($body))
+            ->setStatus(ArticleStatusEnum::Published)
+            ->setClassification(ArticleClassificationEnum::Customer)
+            ->setVersionMajor(1)
+            ->setVersionMinor(0)
+            ->setPublishedAt($today->subDays(120))
+            ->setLastReviewedOn($today->subDays(95))
+            ->setNextReviewOn($today->subDays(5)));
+
+        ArticleEloquentModel::query()
+            ->withoutGlobalScopes()
+            ->findOrFail($article->getId()->toString())
+            ->labels()
+            ->sync([$labels['Network'], $labels['Onboarding']]);
+
+        foreach ($links as [$target, $recordId]) {
+            CreateArticleLink::fromArticleLink(ArticleLink::new()
+                ->setTeamId($this->teamId)
+                ->setArticleId($articleId)
+                ->setLinkableType($target)
+                ->setLinkableId($recordId)
+                ->setCreatedById($this->userId));
+        }
+    }
+
+    /**
+     * The id of the sample article's category, adding it and its parent the
+     * first time.
+     */
+    private function articleCategoryId(): string
+    {
+        $categories = FindArticleCategory::listForTeam($this->teamId);
+        $parentId = null;
+
+        foreach (self::ARTICLE_CATEGORY as $name) {
+            $existing = $categories->first(fn (ArticleCategory $category): bool => $category->getName()->toString() === $name
+                && $category->getParentId()->toNullableString() === $parentId);
+
+            $parentId = ($existing->isNotNull()
+                ? $existing
+                : CreateArticleCategory::fromArticleCategory(ArticleCategory::new()
+                    ->setTeamId($this->teamId)
+                    ->setParentId($parentId)
+                    ->setName($name)))->getId()->toString();
+        }
+
+        return (string) $parentId;
     }
 }

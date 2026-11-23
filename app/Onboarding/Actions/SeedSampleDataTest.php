@@ -2,6 +2,11 @@
 
 declare(strict_types=1);
 
+use App\Article\ArticleEloquentModel;
+use App\ArticleCategory\ArticleCategoryEloquentModel;
+use App\ArticleLink\ArticleLinkEloquentModel;
+use App\Asset\AssetEloquentModel;
+use App\Attachment\AttachmentEloquentModel;
 use App\Choice\ChoiceEloquentModel;
 use App\Contact\ContactEloquentModel;
 use App\Customer\CustomerEloquentModel;
@@ -16,8 +21,12 @@ use App\Rate\RateEloquentModel;
 use App\Service\ServiceEloquentModel;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
+use Illuminate\Support\Facades\Storage;
+
+use function Pest\Laravel\travelTo;
 
 it('adds sample customers with contacts, tickets and a half-paid invoice to the team', function (): void {
+    Storage::fake('local');
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
 
     SeedSampleData::forTeam(teamId: $user->current_team_id, userId: $user->id);
@@ -38,6 +47,7 @@ it('adds sample customers with contacts, tickets and a half-paid invoice to the 
 });
 
 it('prices the sample services from rates added to the price list, reusing ones it already added', function (): void {
+    Storage::fake('local');
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
     RateEloquentModel::factory()->priced(['AUD' => 9900])->create(['team_id' => $user->current_team_id, 'name' => 'Cloud backup']);
 
@@ -51,6 +61,7 @@ it('prices the sample services from rates added to the price list, reusing ones 
 });
 
 it('adds sample projects with milestones, labelled tickets with due dates and a group', function (): void {
+    Storage::fake('local');
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
 
     SeedSampleData::forTeam(teamId: $user->current_team_id, userId: $user->id);
@@ -69,7 +80,8 @@ it('adds sample projects with milestones, labelled tickets with due dates and a 
     expect(TicketEloquentModel::query()->withoutGlobalScopes()->where('title', 'Reception printer offline')->sole()->labels->pluck('name')->all())->toBe(['Hardware']);
 });
 
-it('reuses the labels and group when sample data is added again, bringing back a deleted label', function (): void {
+it('reuses the labels, group and article categories when sample data is added again, bringing back a deleted label', function (): void {
+    Storage::fake('local');
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
     ChoiceEloquentModel::query()->withoutGlobalScopes()->where('list', 'label')->where('name', 'Network')->delete();
 
@@ -77,5 +89,40 @@ it('reuses the labels and group when sample data is added again, bringing back a
     SeedSampleData::forTeam(teamId: $user->current_team_id, userId: $user->id);
 
     expect(ChoiceEloquentModel::query()->withoutGlobalScopes()->where('list', 'label')->count())->toBe(6)
-        ->and(GroupEloquentModel::query()->withoutGlobalScopes()->count())->toBe(1);
+        ->and(GroupEloquentModel::query()->withoutGlobalScopes()->count())->toBe(1)
+        ->and(ArticleCategoryEloquentModel::query()->withoutGlobalScopes()->count())->toBe(2);
+});
+
+it('adds a published customer article with a diagram, labels and a category, attached to the sample records', function (): void {
+    Storage::fake('local');
+    travelTo('2026-11-23 09:00:00');
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+
+    SeedSampleData::forTeam(teamId: $user->current_team_id, userId: $user->id);
+
+    $article = ArticleEloquentModel::query()->withoutGlobalScopes()->sole();
+    expect($article)
+        ->team_id->toBe($user->current_team_id)
+        ->customer_id->toBe(CustomerEloquentModel::query()->withoutGlobalScopes()->where('name', 'Coastal Logistics')->sole()->id)
+        ->author_id->toBe($user->id)
+        ->status->toBe('published')
+        ->classification->toBe('customer')
+        ->next_review_on->toBe('2026-11-18');
+    expect($article->labels->pluck('name')->sort()->values()->all())->toBe(['Network', 'Onboarding']);
+    expect($article->category)
+        ->name->toBe('Remote access')
+        ->and($article->category->parent_id)->toBe(ArticleCategoryEloquentModel::query()->withoutGlobalScopes()->where('name', 'Networking')->sole()->id);
+
+    $image = AttachmentEloquentModel::query()->withoutGlobalScopes()->sole();
+    expect($image)
+        ->attachable_type->toBe('article')
+        ->attachable_id->toBe($article->id);
+    expect($article->body)->toContain("<img src=\"/articles/{$article->id}/images/{$image->id}\"");
+    Storage::disk('local')->assertExists($image->path);
+
+    $links = ArticleLinkEloquentModel::query()->withoutGlobalScopes()->where('article_id', $article->id)->get();
+    $tickets = TicketEloquentModel::query()->withoutGlobalScopes()->whereIn('title', ['VPN drops every afternoon', 'Order replacement firewall'])->pluck('id');
+    expect($links->where('linkable_type', 'ticket')->pluck('linkable_id')->sort()->values()->all())->toBe($tickets->sort()->values()->all())
+        ->and($links->where('linkable_type', 'asset')->pluck('linkable_id')->all())->toBe([AssetEloquentModel::query()->withoutGlobalScopes()->where('name', 'Office firewall')->sole()->id])
+        ->and($links->where('linkable_type', 'service')->pluck('linkable_id')->all())->toBe([ServiceEloquentModel::query()->withoutGlobalScopes()->where('name', 'Microsoft 365 Business Standard')->sole()->id]);
 });
