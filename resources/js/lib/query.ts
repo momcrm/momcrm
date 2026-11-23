@@ -8,7 +8,11 @@ type QueryValue = string | number | string[] | null | undefined;
  */
 export function visitWithQuery(
     changes: Record<string, QueryValue>,
-    options: { only?: string[]; keepPage?: boolean } = {},
+    options: {
+        only?: string[];
+        keepPage?: boolean;
+        onSuccess?: () => void;
+    } = {},
 ): void {
     const params = new URLSearchParams(window.location.search);
 
@@ -36,6 +40,7 @@ export function visitWithQuery(
             preserveState: true,
             preserveScroll: true,
             replace: true,
+            onSuccess: options.onSuccess,
         },
     );
 }
