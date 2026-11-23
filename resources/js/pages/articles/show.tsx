@@ -23,7 +23,12 @@ import {
     ClassificationBadge,
 } from '@/components/articles/article-badges';
 import ArticleBody from '@/components/articles/article-body';
+import {
+    ArticleSidebar,
+    SidePanel,
+} from '@/components/articles/article-sidebar';
 import MarkReviewedDialog from '@/components/articles/mark-reviewed-dialog';
+import { readingMinutes } from '@/components/articles/reading-time';
 import ConfirmDelete from '@/components/confirm-delete';
 import EmptyState from '@/components/empty-state';
 import { LabelChips } from '@/components/labels';
@@ -73,16 +78,6 @@ function formatDate(iso: string | null): string {
               year: 'numeric',
           })
         : '';
-}
-
-/** Minutes to read the body at about 220 words a minute, at least one. */
-function readingMinutes(html: string): number {
-    const words = html
-        .replace(/<[^>]+>/g, ' ')
-        .split(/\s+/u)
-        .filter(Boolean).length;
-
-    return Math.max(1, Math.round(words / 220));
 }
 
 export default function ArticleShow({
@@ -320,8 +315,8 @@ export default function ArticleShow({
                         </div>
                     </article>
 
-                    <aside className="space-y-4 lg:sticky lg:top-[calc(46px+1.5rem)] lg:-m-1 lg:max-h-[calc(100svh-46px-3rem)] lg:[scrollbar-width:thin] lg:self-start lg:overflow-y-auto lg:p-1">
-                        <Panel title="Details">
+                    <ArticleSidebar>
+                        <SidePanel title="Details">
                             <dl className="divide-y text-[13px]">
                                 <Fact label="Status">
                                     <ArticleStatusPill
@@ -400,10 +395,10 @@ export default function ArticleShow({
                                     <LabelChips labels={article.labels} />
                                 </div>
                             )}
-                        </Panel>
+                        </SidePanel>
 
                         {linkedTo.length > 0 && (
-                            <Panel title="Attached to">
+                            <SidePanel title="Attached to">
                                 <div className="space-y-3 px-4 pb-4">
                                     {linkedTo.map((group) => {
                                         const Icon =
@@ -443,9 +438,9 @@ export default function ArticleShow({
                                         );
                                     })}
                                 </div>
-                            </Panel>
+                            </SidePanel>
                         )}
-                    </aside>
+                    </ArticleSidebar>
                 </div>
             </div>
 
@@ -469,17 +464,6 @@ function Dotted({ children }: { children: ReactNode }) {
         <span className="flex items-center gap-3 before:size-[3px] before:rounded-full before:bg-border-strong">
             {children}
         </span>
-    );
-}
-
-function Panel({ title, children }: { title: string; children: ReactNode }) {
-    return (
-        <section className="rounded-xl border bg-card shadow-xs">
-            <h2 className="flex h-10 items-center px-4 text-[13px] font-medium">
-                {title}
-            </h2>
-            {children}
-        </section>
     );
 }
 

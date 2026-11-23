@@ -241,7 +241,7 @@ function Toolbar({
     const chain = () => editor.chain().focus();
 
     return (
-        <div className="sticky top-0 z-10 flex flex-wrap items-center gap-1 rounded-t-lg border-b bg-card px-1.5 py-1">
+        <div className="sticky top-[46px] z-10 flex flex-wrap items-center gap-1 rounded-t-lg border-b bg-card px-1.5 py-1">
             <ToolbarGroup>
                 <ToolbarButton
                     label="Heading"
@@ -430,11 +430,14 @@ export default function RichTextEditor({
     placeholder = 'Write the article…',
     ariaLabel = 'Body',
     uploadImage,
+    contentClassName,
 }: {
     value: string;
     onChange: (html: string) => void;
     placeholder?: string;
     ariaLabel?: string;
+    /** Added to the writing area, such as larger type or more padding. */
+    contentClassName?: string;
     /** Where pasted, dropped or chosen pictures go; without it there are none. */
     uploadImage?: UploadImage;
 }) {
@@ -462,7 +465,10 @@ export default function RichTextEditor({
         editorProps: {
             attributes: {
                 'aria-label': ariaLabel,
-                class: 'article-body min-h-80 px-4 py-3 outline-none',
+                class: cn(
+                    'article-body min-h-80 px-4 py-3 outline-none',
+                    contentClassName,
+                ),
             },
             handlePaste: (_view, event) => {
                 const files = imagesIn(event.clipboardData?.files);
