@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $team_id
  * @property string $user_id
  * @property string $role
+ * @property string|null $work_schedule_id
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  */

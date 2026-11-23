@@ -7,6 +7,7 @@ namespace App\TeamUser\Actions;
 use App\Shared\Table;
 use App\TeamUser\Properties\TeamId;
 use App\TeamUser\Properties\UserId;
+use App\TeamUser\Properties\WorkScheduleId;
 use App\User\Properties\Id;
 use App\User\Properties\Name;
 use App\User\Properties\Timezone;
@@ -32,9 +33,9 @@ final class FindTeamMembers
 
     /**
      * The team's members with the timezone they work from, if they set one,
-     * by name.
+     * and the schedule they work to, if not the team's default, by name.
      *
-     * @return Collection<int, array{id: string, name: string, timezone: ?string}>
+     * @return Collection<int, array{id: string, name: string, timezone: ?string, work_schedule_id: ?string}>
      */
     public static function withTimezonesForTeam(string $teamId): Collection
     {
@@ -42,11 +43,12 @@ final class FindTeamMembers
             ->join(Table::TeamUser->value, UserId::getDatabaseTableColumnNameWithTable(Table::TeamUser), '=', Id::getDatabaseTableColumnNameWithTable(Table::Users))
             ->where(TeamId::getDatabaseTableColumnNameWithTable(Table::TeamUser), $teamId)
             ->orderBy(Name::getDatabaseTableColumnNameWithTable(Table::Users))
-            ->get([Id::getDatabaseTableColumnNameWithTable(Table::Users), Name::getDatabaseTableColumnNameWithTable(Table::Users), Timezone::getDatabaseTableColumnNameWithTable(Table::Users)])
+            ->get([Id::getDatabaseTableColumnNameWithTable(Table::Users), Name::getDatabaseTableColumnNameWithTable(Table::Users), Timezone::getDatabaseTableColumnNameWithTable(Table::Users), WorkScheduleId::getDatabaseTableColumnNameWithTable(Table::TeamUser)])
             ->map(fn (UserEloquentModel $user): array => [
                 'id' => $user->id,
                 'name' => $user->name,
                 'timezone' => $user->timezone,
+                'work_schedule_id' => is_string($user->getAttribute(WorkScheduleId::getDatabaseTableColumnName())) ? $user->getAttribute(WorkScheduleId::getDatabaseTableColumnName()) : null,
             ]);
     }
 }

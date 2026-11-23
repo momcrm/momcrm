@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import AttendanceTabs from '@/components/attendance/attendance-tabs';
+import DayStatus from '@/components/attendance/day-status';
 import ShiftDialog from '@/components/attendance/shift-dialog';
 import ConfirmDelete from '@/components/confirm-delete';
 import NativeSelect from '@/components/native-select';
@@ -22,6 +23,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
+    describeWeek,
     formatClockTime,
     formatDuration,
     secondsSince,
@@ -30,8 +32,14 @@ import {
 import { addDays, formatDay, parseDay } from '@/lib/dates';
 import { cn } from '@/lib/utils';
 import { index as attendanceIndex, time } from '@/routes/attendance';
+import { edit as editAttendanceSettings } from '@/routes/attendance-settings';
 import { destroy } from '@/routes/shifts';
-import type { AttendanceMember, AttendanceWeek, ShiftSummary } from '@/types';
+import type {
+    AttendanceMember,
+    AttendanceWeek,
+    ShiftSummary,
+    WorkScheduleSummary,
+} from '@/types';
 
 const weekday = new Intl.DateTimeFormat(undefined, { weekday: 'short' });
 const dayOfMonth = new Intl.DateTimeFormat(undefined, {
@@ -145,12 +153,14 @@ export default function AttendanceTime({
     member,
     isYou,
     week,
+    schedule,
     members,
     canManage,
 }: {
     member: AttendanceMember;
     isYou: boolean;
     week: AttendanceWeek;
+    schedule: WorkScheduleSummary | null;
     members: AttendanceMember[];
     canManage: boolean;
 }) {
@@ -184,7 +194,16 @@ export default function AttendanceTime({
             <div className="mx-auto flex w-full max-w-4xl flex-col gap-5 p-4 md:p-6">
                 <PageHeader
                     title={isYou ? 'My time' : `${member.name}’s time`}
-                    description={`${formatDay(week.starts_on)} – ${formatDay(week.ends_on)} · ${formatDuration(week.worked_seconds)} worked${week.break_seconds > 0 ? ` · ${formatDuration(week.break_seconds)} on breaks` : ''}`}
+                    description={[
+                        `${formatDay(week.starts_on)} – ${formatDay(week.ends_on)}`,
+                        `${formatDuration(week.worked_seconds)} worked${week.expected_seconds > 0 ? ` of ${formatDuration(week.expected_seconds)}` : ''}`,
+                        week.break_seconds > 0 &&
+                            `${formatDuration(week.break_seconds)} on breaks`,
+                        week.overtime_seconds > 0 &&
+                            `${formatDuration(week.overtime_seconds)} overtime`,
+                    ]
+                        .filter(Boolean)
+                        .join(' · ')}
                     actions={
                         canManage && members.length > 0 ? (
                             <NativeSelect
@@ -253,10 +272,19 @@ export default function AttendanceTime({
                             <ChevronRight />
                         </Link>
                     </Button>
-                    {!isYou && (
-                        <span className="ml-2 text-sm text-muted-foreground">
-                            Times in {member.timezone}
-                        </span>
+                    <span className="ml-2 min-w-0 truncate text-sm text-muted-foreground">
+                        {schedule
+                            ? `${schedule.name}: ${describeWeek(schedule.days)}`
+                            : 'No work schedule'}
+                        {!isYou && ` · Times in ${member.timezone}`}
+                    </span>
+                    {canManage && (
+                        <Link
+                            href={editAttendanceSettings()}
+                            className="ml-auto shrink-0 text-sm text-muted-foreground hover:text-foreground hover:underline"
+                        >
+                            {schedule ? 'Schedules' : 'Set up schedules'}
+                        </Link>
                     )}
                 </div>
 
@@ -282,11 +310,27 @@ export default function AttendanceTime({
                                     <span className="text-muted-foreground">
                                         {dayOfMonth.format(date)}
                                     </span>
-                                    {day.shifts.length === 0 && (
-                                        <span className="text-muted-foreground">
-                                            · No shifts
-                                        </span>
-                                    )}
+                                    {day.expected_starts_at &&
+                                        day.expected_ends_at && (
+                                            <span className="text-muted-foreground tabular-nums">
+                                                {formatClockTime(
+                                                    day.expected_starts_at,
+                                                    member.timezone,
+                                                )}
+                                                –
+                                                {formatClockTime(
+                                                    day.expected_ends_at,
+                                                    member.timezone,
+                                                )}
+                                            </span>
+                                        )}
+                                    <DayStatus day={day} showOnTime={false} />
+                                    {day.shifts.length === 0 &&
+                                        day.status !== 'absent' && (
+                                            <span className="text-muted-foreground">
+                                                · No shifts
+                                            </span>
+                                        )}
                                     <span className="ml-auto flex items-center gap-1">
                                         {day.shifts.length > 0 && (
                                             <span className="w-16 text-right font-medium tabular-nums">

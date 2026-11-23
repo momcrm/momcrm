@@ -5,6 +5,8 @@ declare(strict_types=1);
 use App\Comment\Notifications\MentionedInRecordCommentNotification;
 use App\CustomObject\CustomObjectEloquentModel;
 use App\Record\RecordEloquentModel;
+use App\Shift\Notifications\ShiftStillOpenNotification;
+use App\Shift\ShiftEloquentModel;
 use App\Ticket\Notifications\TicketDueSoonNotification;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
@@ -39,5 +41,19 @@ it("links a mention on a custom object's record to the record's page", function 
             ->where('notifications.0.title', 'Van')
             ->where('notifications.0.project_name', 'Vehicles')
             ->where('notifications.0.url', route('records.show', [$vehicles->id, $van->id])),
+        );
+});
+
+it('links a reminder about a shift to the person’s time', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $shift = ShiftEloquentModel::factory()->forUser($user)->open()->create();
+    $user->notify(new ShiftStillOpenNotification($shift, 'Mon 23 Nov at 9:00 AM'));
+
+    actingAs($user)
+        ->get(route('notifications.index'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('notifications.0.subject_type', 'shift')
+            ->where('notifications.0.title', 'You’re still clocked in')
+            ->where('notifications.0.url', route('attendance.time')),
         );
 });

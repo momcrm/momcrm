@@ -10,8 +10,8 @@ use App\ShiftBreak\Actions\FindShiftBreak;
 use Carbon\CarbonImmutable;
 
 /**
- * One member's week, Monday to Sunday: each day's shifts and breaks with the
- * time worked, and the week's total.
+ * One member's week, Monday to Sunday: each day's shifts and breaks, how the
+ * day went against their schedule, and the week's totals.
  */
 final class AttendanceWeek
 {
@@ -24,9 +24,9 @@ final class AttendanceWeek
     }
 
     /**
-     * @return array{starts_on: string, ends_on: string, worked_seconds: int, break_seconds: int, days: list<array{date: string, worked_seconds: int, break_seconds: int, shifts: list<array<string, mixed>>}>}
+     * @return array{starts_on: string, ends_on: string, worked_seconds: int, break_seconds: int, expected_seconds: int, overtime_seconds: int, days: list<array<string, mixed>>}
      */
-    public static function forMember(string $teamId, string $userId, CarbonImmutable $monday, string $timezone, CarbonImmutable $now): array
+    public static function forMember(string $teamId, string $userId, CarbonImmutable $monday, string $timezone, AttendanceCalendar $calendar, CarbonImmutable $now): array
     {
         $from = $monday->toDateString();
         $to = $monday->addDays(6)->toDateString();
@@ -37,16 +37,12 @@ final class AttendanceWeek
 
         for ($offset = 0; $offset < 7; $offset++) {
             $date = $monday->addDays($offset)->toDateString();
-            $summaries = array_values($shifts
-                ->filter(fn (Shift $shift): bool => $shift->getWorkDate()->toDateString() === $date)
-                ->map(fn (Shift $shift): array => ShiftSummary::toArray($shift, $breaks, $timezone, $now))
-                ->all());
+            $ofDay = $shifts->filter(fn (Shift $shift): bool => $shift->getWorkDate()->toDateString() === $date)->values();
 
             $days[] = [
                 'date' => $date,
-                'worked_seconds' => array_sum(array_column($summaries, 'worked_seconds')),
-                'break_seconds' => array_sum(array_column($summaries, 'break_seconds')),
-                'shifts' => $summaries,
+                ...AttendanceDay::calculate($calendar->expectedOn($userId, $date, $timezone), $ofDay, $breaks, $now),
+                'shifts' => array_values($ofDay->map(fn (Shift $shift): array => ShiftSummary::toArray($shift, $breaks, $timezone, $now))->all()),
             ];
         }
 
@@ -55,6 +51,8 @@ final class AttendanceWeek
             'ends_on' => $to,
             'worked_seconds' => array_sum(array_column($days, 'worked_seconds')),
             'break_seconds' => array_sum(array_column($days, 'break_seconds')),
+            'expected_seconds' => array_sum(array_column($days, 'expected_seconds')),
+            'overtime_seconds' => array_sum(array_column($days, 'overtime_seconds')),
             'days' => $days,
         ];
     }

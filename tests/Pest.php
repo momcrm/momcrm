@@ -184,3 +184,21 @@ function temporaryEnvironmentFile(string $contents, int $backupsKept = 20): Envi
 
     return $file;
 }
+
+/**
+ * A work schedule form: Monday to Friday 9 to 5 with a 30-minute break.
+ *
+ * @param  array<string, mixed>  $overrides
+ * @return array<string, mixed>
+ */
+function officeHoursForm(array $overrides = []): array
+{
+    $day = ['starts_at' => '09:00', 'ends_at' => '17:00', 'break_minutes' => 30];
+
+    return [
+        'name' => 'Office hours',
+        'grace_minutes' => 5,
+        'days' => ['mon' => $day, 'tue' => $day, 'wed' => $day, 'thu' => $day, 'fri' => $day, 'sat' => null, 'sun' => null],
+        ...$overrides,
+    ];
+}

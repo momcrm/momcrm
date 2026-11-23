@@ -11,6 +11,7 @@ use App\TeamUser\Properties\Role;
 use App\TeamUser\Properties\TeamId;
 use App\TeamUser\Properties\UpdatedAt;
 use App\TeamUser\Properties\UserId;
+use App\TeamUser\Properties\WorkScheduleId;
 use BackedEnum;
 use Illuminate\Support\Collection;
 use Mom\Data\AbstractData;
@@ -29,6 +30,7 @@ final class TeamUser extends AbstractData
         public TeamId $teamId,
         public UpdatedAt $updatedAt,
         public UserId $userId,
+        public WorkScheduleId $workScheduleId,
     ) {}
 
     public function getPrimaryKey(): AbstractValue
@@ -156,6 +158,30 @@ final class TeamUser extends AbstractData
         }
 
         $this->userId = UserId::fromNullableUuid($userId);
+
+        return $this;
+    }
+
+    public function getWorkScheduleId(): WorkScheduleId
+    {
+        return $this->workScheduleId;
+    }
+
+    public function setWorkScheduleId(WorkScheduleId|AbstractUuid|string|null $workScheduleId): self
+    {
+        if ($workScheduleId instanceof WorkScheduleId) {
+            $this->workScheduleId = $workScheduleId;
+
+            return $this;
+        }
+
+        if ($workScheduleId instanceof AbstractUuid) {
+            $this->workScheduleId = WorkScheduleId::fromNullableUuid($workScheduleId->toNullableString());
+
+            return $this;
+        }
+
+        $this->workScheduleId = WorkScheduleId::fromNullableUuid($workScheduleId);
 
         return $this;
     }

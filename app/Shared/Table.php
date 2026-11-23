@@ -32,6 +32,7 @@ enum Table: string
     case Folders = 'folders';
     case GroupUser = 'group_user';
     case Groups = 'groups';
+    case Holidays = 'holidays';
     case InvoiceItems = 'invoice_items';
     case LabelArticle = 'label_article';
     case Invoices = 'invoices';
@@ -61,4 +62,5 @@ enum Table: string
     case Teams = 'teams';
     case Tickets = 'tickets';
     case Users = 'users';
+    case WorkSchedules = 'work_schedules';
 }

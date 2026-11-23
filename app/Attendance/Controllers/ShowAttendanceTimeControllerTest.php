@@ -2,9 +2,11 @@
 
 declare(strict_types=1);
 
+use App\Holiday\HolidayEloquentModel;
 use App\Shift\ShiftEloquentModel;
 use App\ShiftBreak\ShiftBreakEloquentModel;
 use App\User\UserEloquentModel;
+use App\WorkSchedule\WorkScheduleEloquentModel;
 use Carbon\CarbonImmutable;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -37,6 +39,32 @@ it('shows the member’s own week, Monday to Sunday, in their timezone', functio
             ->where('week.days.1.shifts.0.clocked_in_local', '2026-11-24T09:00')
             ->where('week.days.1.shifts.0.clocked_out_local', '2026-11-24T17:00')
             ->where('week.days.1.shifts.0.breaks.0.started_local', '2026-11-24T12:00'));
+});
+
+it('measures each day of the week against the member’s schedule', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create(['timezone' => 'UTC']);
+    $schedule = WorkScheduleEloquentModel::factory()->forTeam($user->current_team_id)->teamDefault()->weekdays('09:00', '17:00')->create(['name' => 'Office hours']);
+    HolidayEloquentModel::factory()->forTeam($user->current_team_id)->on('2026-11-24')->create(['name' => 'Founders’ Day']);
+    ShiftEloquentModel::factory()->forUser($user)->between(CarbonImmutable::parse('2026-11-23 09:30'), 8.5)->create();
+    ShiftEloquentModel::factory()->forUser($user)->between(CarbonImmutable::parse('2026-11-24 10:00'), 2)->create();
+    ShiftEloquentModel::factory()->forUser($user)->between(CarbonImmutable::parse('2026-11-25 09:00'))->create();
+
+    actingAs($user)
+        ->get(route('attendance.time'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('schedule.id', $schedule->id)
+            ->where('schedule.name', 'Office hours')
+            ->where('week.days.0.status', 'late')
+            ->where('week.days.0.flags', ['late', 'overtime'])
+            ->where('week.days.0.overtime_seconds', 30 * 60)
+            ->where('week.days.1.status', 'holiday')
+            ->where('week.days.1.holiday', 'Founders’ Day')
+            ->where('week.days.1.overtime_seconds', 2 * 3600)
+            ->where('week.days.2.status', 'present')
+            ->where('week.days.3.status', 'upcoming')
+            ->where('week.days.5.status', 'day_off')
+            ->where('week.expected_seconds', 4 * 8 * 3600)
+            ->where('week.overtime_seconds', (int) (2.5 * 3600)));
 });
 
 it('shows the week holding the day asked for', function (): void {

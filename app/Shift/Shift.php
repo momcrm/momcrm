@@ -11,6 +11,7 @@ use App\Shift\Properties\ClockInIp;
 use App\Shift\Properties\CreatedAt;
 use App\Shift\Properties\Id;
 use App\Shift\Properties\Note;
+use App\Shift\Properties\RemindedAt;
 use App\Shift\Properties\TeamId;
 use App\Shift\Properties\UpdatedAt;
 use App\Shift\Properties\UserId;
@@ -35,6 +36,7 @@ final class Shift extends AbstractData
         public CreatedAt $createdAt,
         public Id $id,
         public Note $note,
+        public RemindedAt $remindedAt,
         public TeamId $teamId,
         public UpdatedAt $updatedAt,
         public UserId $userId,
@@ -131,6 +133,11 @@ final class Shift extends AbstractData
         $this->note = new Note($note instanceof AbstractValue ? $note->toValue() : $note);
 
         return $this;
+    }
+
+    public function getRemindedAt(): RemindedAt
+    {
+        return $this->remindedAt;
     }
 
     public function getTeamId(): TeamId

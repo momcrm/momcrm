@@ -53,3 +53,15 @@ it('reads connected mailboxes every five minutes, one run at a time', function (
 it('queues the mailbox reads without errors', function (): void {
     artisan('mailboxes:sync')->expectsOutputToContain('0 mailboxes queued.')->assertSuccessful();
 });
+
+it('reminds members still clocked in every hour', function (): void {
+    $remind = collect(app(Schedule::class)->events())
+        ->first(fn (Event $event): bool => str_contains((string) $event->command, 'attendance:remind'));
+
+    expect($remind)->not->toBeNull()
+        ->and($remind->expression)->toBe('0 * * * *');
+});
+
+it('runs the clock-out reminder without errors', function (): void {
+    artisan('attendance:remind')->expectsOutputToContain('Nobody to remind.')->assertSuccessful();
+});
