@@ -4,6 +4,7 @@ import {
     BookOpen,
     Boxes,
     Building2,
+    Clock,
     FileCog,
     KeyRound,
     Landmark,
@@ -22,6 +23,7 @@ import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn, toUrl } from '@/lib/utils';
 import { index as accessRulesIndex } from '@/routes/access-rules';
 import { index as articleCategoriesIndex } from '@/routes/article-categories';
+import { edit as editAttendanceSettings } from '@/routes/attendance-settings';
 import { edit as editBilling } from '@/routes/billing';
 import { index as activityIndex } from '@/routes/activity';
 import { edit as editAppearance } from '@/routes/appearance';
@@ -42,6 +44,12 @@ const knowledgeBaseItem: NavItem = {
     title: 'Knowledge base',
     href: articleCategoriesIndex(),
     icon: BookOpen,
+};
+
+const attendanceItem: NavItem = {
+    title: 'Attendance',
+    href: editAttendanceSettings(),
+    icon: Clock,
 };
 
 const accessRulesItem: NavItem = {
@@ -135,6 +143,7 @@ export default function SettingsLayout({
     const { isCurrentOrParentUrl } = useCurrentUrl();
     const {
         canManageAccessRules,
+        canManageAttendance,
         canManageBankFeeds,
         canManageBilling,
         canManageConnectors,
@@ -160,6 +169,7 @@ export default function SettingsLayout({
                           ? [workflowItem, knowledgeBaseItem]
                           : []),
                       ...(canManageCustomObjects ? [customObjectsItem] : []),
+                      ...(canManageAttendance ? [attendanceItem] : []),
                       ...(canManageBilling ? [billingItem] : []),
                       ...(canManageRates ? [ratesItem, productsItem] : []),
                       ...(canManageBankFeeds ? [bankFeedsItem] : []),

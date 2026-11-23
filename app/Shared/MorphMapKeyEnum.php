@@ -29,6 +29,7 @@ use App\EmailCode\EmailCodeEloquentModel;
 use App\Favorite\FavoriteEloquentModel;
 use App\Folder\FolderEloquentModel;
 use App\Group\GroupEloquentModel;
+use App\Holiday\HolidayEloquentModel;
 use App\Invoice\InvoiceEloquentModel;
 use App\InvoiceItem\InvoiceItemEloquentModel;
 use App\Location\LocationEloquentModel;
@@ -53,6 +54,7 @@ use App\TeamInvitation\TeamInvitationEloquentModel;
 use App\TeamUser\TeamUserEloquentModel;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
+use App\WorkSchedule\WorkScheduleEloquentModel;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -91,6 +93,7 @@ enum MorphMapKeyEnum: string
     case Favorite = 'favorite';
     case Folder = 'folder';
     case Group = 'group';
+    case Holiday = 'holiday';
     case Invoice = 'invoice';
     case InvoiceItem = 'invoice_item';
     case Location = 'location';
@@ -114,6 +117,7 @@ enum MorphMapKeyEnum: string
     case TeamUser = 'team_user';
     case Ticket = 'ticket';
     case User = 'user';
+    case WorkSchedule = 'work_schedule';
 
     /**
      * The alias => model class map for Relation::enforceMorphMap().
@@ -166,6 +170,7 @@ enum MorphMapKeyEnum: string
             self::Favorite => FavoriteEloquentModel::class,
             self::Folder => FolderEloquentModel::class,
             self::Group => GroupEloquentModel::class,
+            self::Holiday => HolidayEloquentModel::class,
             self::Invoice => InvoiceEloquentModel::class,
             self::InvoiceItem => InvoiceItemEloquentModel::class,
             self::Location => LocationEloquentModel::class,
@@ -189,6 +194,7 @@ enum MorphMapKeyEnum: string
             self::TeamUser => TeamUserEloquentModel::class,
             self::Ticket => TicketEloquentModel::class,
             self::User => UserEloquentModel::class,
+            self::WorkSchedule => WorkScheduleEloquentModel::class,
         };
     }
 }

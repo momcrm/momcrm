@@ -16,8 +16,8 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * Who is working today, by the viewer's own day: who is in, on a break,
- * finished or not in yet.
+ * Who is working today: who is in, on a break, finished, not in yet or off.
+ * Owners and admins also see who is late or absent.
  */
 final class ShowAttendanceController
 {
@@ -36,10 +36,12 @@ final class ShowAttendanceController
         $now = CarbonImmutable::now();
         $today = $now->setTimezone(AttendanceTimezone::forUser(FindUser::byId($userId)))->toDateString();
 
+        $canManage = Gate::allows('manageAttendance', $team);
+
         return Inertia::render('attendance/today', [
             'today' => $today,
-            'members' => AttendanceBoard::forTeam($team->getId()->toString(), $today, $now),
-            'canManage' => Gate::allows('manageAttendance', $team),
+            'members' => AttendanceBoard::forTeam($team->getId()->toString(), $now, $userId, $canManage),
+            'canManage' => $canManage,
         ]);
     }
 }

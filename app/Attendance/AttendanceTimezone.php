@@ -36,7 +36,7 @@ final class AttendanceTimezone
     /**
      * The team's members with the timezone their days are counted in, by name.
      *
-     * @return Collection<int, array{id: string, name: string, timezone: string}>
+     * @return Collection<int, array{id: string, name: string, timezone: string, work_schedule_id: ?string}>
      */
     public static function membersOfTeam(string $teamId): Collection
     {

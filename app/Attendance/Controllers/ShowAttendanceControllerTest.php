@@ -2,10 +2,13 @@
 
 declare(strict_types=1);
 
+use App\Holiday\HolidayEloquentModel;
 use App\Shift\ShiftEloquentModel;
 use App\ShiftBreak\ShiftBreakEloquentModel;
 use App\TeamUser\TeamRoleEnum;
+use App\TeamUser\TeamUserEloquentModel;
 use App\User\UserEloquentModel;
+use App\WorkSchedule\WorkScheduleEloquentModel;
 use Carbon\CarbonImmutable;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -40,6 +43,56 @@ it('shows who is in, on a break, finished and not in yet today', function (): vo
             ->where('members.1', fn ($row): bool => $row['name'] === 'Ben' && $row['status'] === 'in' && $row['worked_seconds'] === 3 * 3600)
             ->where('members.2', fn ($row): bool => $row['name'] === 'Cy' && $row['status'] === 'break' && $row['on_break_since'] !== null && $row['worked_seconds'] === (int) (3.5 * 3600))
             ->where('members.3', fn ($row): bool => $row['name'] === 'Dee' && $row['status'] === 'out' && str_starts_with((string) $row['last_out_at'], '2026-11-23T10:00') && $row['worked_seconds'] === 4 * 3600));
+});
+
+it('shows owners who is late or off, each by their own day', function (): void {
+    travelTo('2026-11-23 10:00:00');
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create(['name' => 'Ada', 'timezone' => 'UTC']);
+    $late = UserEloquentModel::factory()->inTeam($owner->current_team_id)->create(['name' => 'Ben', 'timezone' => 'UTC']);
+    $perth = UserEloquentModel::factory()->inTeam($owner->current_team_id)->create(['name' => 'Cy', 'timezone' => 'Australia/Perth']);
+    $off = UserEloquentModel::factory()->inTeam($owner->current_team_id)->create(['name' => 'Dee', 'timezone' => 'UTC']);
+    WorkScheduleEloquentModel::factory()->forTeam($owner->current_team_id)->teamDefault()->weekdays('09:00', '17:00')->create();
+    $parttime = WorkScheduleEloquentModel::factory()->forTeam($owner->current_team_id)->create(['days' => ['tue' => ['starts_at' => '09:00', 'ends_at' => '13:00', 'break_minutes' => 0]]]);
+    TeamUserEloquentModel::query()->where('user_id', $off->id)->update(['work_schedule_id' => $parttime->id]);
+    ShiftEloquentModel::factory()->forUser($owner)->between(CarbonImmutable::parse('2026-11-23 08:58'))->create();
+    ShiftEloquentModel::factory()->forUser($late)->between(CarbonImmutable::parse('2026-11-23 09:30'))->create();
+    // Cy's Monday in Perth ran 9 to 5 (01:00 to 09:00 UTC).
+    ShiftEloquentModel::factory()->forUser($perth)->between(CarbonImmutable::parse('2026-11-23 01:00'), 8)->create(['work_date' => '2026-11-23']);
+
+    actingAs($owner)
+        ->get(route('attendance.index'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('members.0', fn ($row): bool => $row['name'] === 'Ada' && $row['day']['status'] === 'present')
+            ->where('members.1', fn ($row): bool => $row['name'] === 'Ben' && $row['status'] === 'in' && $row['day']['flags'] === ['late'] && $row['day']['late_seconds'] === 30 * 60)
+            ->where('members.2', fn ($row): bool => $row['name'] === 'Cy' && $row['work_date'] === '2026-11-23' && $row['status'] === 'out' && $row['day']['status'] === 'present')
+            ->where('members.3', fn ($row): bool => $row['name'] === 'Dee' && $row['status'] === 'off' && $row['day']['status'] === 'day_off'));
+});
+
+it('marks everyone off on a holiday', function (): void {
+    travelTo('2026-12-25 10:00:00');
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create(['timezone' => 'UTC']);
+    WorkScheduleEloquentModel::factory()->forTeam($owner->current_team_id)->teamDefault()->create();
+    HolidayEloquentModel::factory()->forTeam($owner->current_team_id)->on('2026-12-25')->create(['name' => 'Christmas Day']);
+
+    actingAs($owner)
+        ->get(route('attendance.index'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('members.0.status', 'off')
+            ->where('members.0.day.holiday', 'Christmas Day'));
+});
+
+it('shows members how their own day is going, but not anyone else’s', function (): void {
+    travelTo('2026-11-23 10:00:00');
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create(['name' => 'Ada', 'timezone' => 'UTC']);
+    $member = UserEloquentModel::factory()->inTeam($owner->current_team_id, TeamRoleEnum::Member)->create(['name' => 'Ben', 'timezone' => 'UTC']);
+    WorkScheduleEloquentModel::factory()->forTeam($owner->current_team_id)->teamDefault()->create();
+
+    actingAs($member)
+        ->get(route('attendance.index'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('members.0.name', 'Ada')
+            ->where('members.0.day', null)
+            ->where('members.1.day.flags', ['late']));
 });
 
 it('shares the signed-in member’s clock with every page', function (): void {

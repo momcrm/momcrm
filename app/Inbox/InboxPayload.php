@@ -6,6 +6,7 @@ namespace App\Inbox;
 
 use App\Project\ProjectEloquentModel;
 use App\Record\RecordEloquentModel;
+use App\Shift\ShiftEloquentModel;
 use App\Ticket\TicketEloquentModel;
 use App\Ticket\TicketRelationship;
 use App\User\UserEloquentModel;
@@ -77,6 +78,28 @@ final class InboxPayload
             'number' => $project->number,
             'title' => $project->name,
             'project_name' => $project->name,
+            'message' => $message,
+            'excerpt' => null,
+        ];
+    }
+
+    /**
+     * A notification about the member's own shift, which links to their time.
+     *
+     * @return array{kind: string, team_id: string, actor_id: ?string, actor_name: ?string, subject_type: string, subject_id: string, number: int, title: string, project_name: ?string, message: string, excerpt: ?string}
+     */
+    public static function forShift(InboxKindEnum $kind, ShiftEloquentModel $shift, string $title, string $message): array
+    {
+        return [
+            'kind' => $kind->value,
+            'team_id' => $shift->team_id,
+            'actor_id' => null,
+            'actor_name' => null,
+            'subject_type' => 'shift',
+            'subject_id' => $shift->id,
+            'number' => 0,
+            'title' => $title,
+            'project_name' => null,
             'message' => $message,
             'excerpt' => null,
         ];

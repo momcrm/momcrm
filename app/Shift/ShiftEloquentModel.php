@@ -11,6 +11,7 @@ use App\Shift\Factories\ShiftFactory;
 use App\Shift\Properties\ClockedInAt;
 use App\Shift\Properties\ClockedOutAt;
 use App\Shift\Properties\Id;
+use App\Shift\Properties\RemindedAt;
 use App\Shift\Properties\UserId;
 use App\ShiftBreak\Properties\ShiftId;
 use App\ShiftBreak\ShiftBreakEloquentModel;
@@ -33,6 +34,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $id
  * @property int|null $is_open
  * @property string|null $note
+ * @property CarbonImmutable|null $reminded_at
  * @property string $team_id
  * @property CarbonImmutable|null $updated_at
  * @property string $user_id
@@ -92,6 +94,7 @@ final class ShiftEloquentModel extends Model implements Auditable
         return [
             ClockedInAt::getDatabaseTableColumnName() => 'immutable_datetime',
             ClockedOutAt::getDatabaseTableColumnName() => 'immutable_datetime',
+            RemindedAt::getDatabaseTableColumnName() => 'immutable_datetime',
         ];
     }
 

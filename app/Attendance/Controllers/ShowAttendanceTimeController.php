@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Attendance\Controllers;
 
+use App\Attendance\AttendanceCalendar;
 use App\Attendance\AttendanceTimezone;
 use App\Attendance\AttendanceWeek;
 use App\Team\Actions\FindTeam;
@@ -16,8 +17,9 @@ use Inertia\Response;
 use Throwable;
 
 /**
- * A member's week of shifts and breaks. Everyone sees their own; owners and
- * admins can pick anyone in the team and correct their shifts.
+ * A member's week of shifts and breaks, each day measured against their
+ * schedule. Everyone sees their own; owners and admins can pick anyone in
+ * the team and correct their shifts.
  */
 final class ShowAttendanceTimeController
 {
@@ -51,11 +53,15 @@ final class ShowAttendanceTimeController
 
         $now = CarbonImmutable::now();
         $timezone = AttendanceTimezone::forUserId($memberId);
+        $monday = AttendanceWeek::startOf($this->day($request->query('week'), $now, $timezone));
+        $calendar = AttendanceCalendar::forTeam($teamId, $members, $monday->toDateString(), $monday->addDays(6)->toDateString());
+        $schedule = $calendar->scheduleFor($memberId);
 
         return Inertia::render('attendance/time', [
             'member' => $member,
             'isYou' => $memberId === $viewerId,
-            'week' => AttendanceWeek::forMember($teamId, $memberId, AttendanceWeek::startOf($this->day($request->query('week'), $now, $timezone)), $timezone, $now),
+            'week' => AttendanceWeek::forMember($teamId, $memberId, $monday, $timezone, $calendar, $now),
+            'schedule' => $schedule->isNull() ? null : $schedule->toSummary(),
             'members' => $canManage ? $members->values()->all() : [],
             'canManage' => $canManage,
         ]);

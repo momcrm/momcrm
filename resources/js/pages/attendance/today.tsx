@@ -1,6 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import { useState } from 'react';
 import AttendanceTabs from '@/components/attendance/attendance-tabs';
+import DayStatus from '@/components/attendance/day-status';
 import PageHeader from '@/components/page-header';
 import StatusPill from '@/components/status-pill';
 import { AssigneeAvatar } from '@/components/tickets/ticket-meta';
@@ -21,8 +22,9 @@ const groups: {
 }[] = [
     { status: 'in', title: 'In', tone: 'success' },
     { status: 'break', title: 'On a break', tone: 'warning' },
-    { status: 'not_in', title: 'Not in yet', tone: 'neutral' },
+    { status: 'not_in', title: 'Not in', tone: 'neutral' },
     { status: 'out', title: 'Finished', tone: 'info' },
+    { status: 'off', title: 'Off today', tone: 'neutral' },
 ];
 
 /**
@@ -36,8 +38,25 @@ function detail(row: AttendanceBoardRow, now: number): string {
             return `On a break for ${formatDuration(secondsSince(row.on_break_since ?? '', now))}`;
         case 'out':
             return `${formatClockTime(row.first_in_at ?? '')} – ${formatClockTime(row.last_out_at ?? '')}`;
-        default:
-            return '—';
+        case 'off':
+            return row.day?.holiday ?? 'Day off';
+        default: {
+            const startsAt = row.day?.expected_starts_at;
+            const endsAt = row.day?.expected_ends_at;
+
+            if (!startsAt || !endsAt) {
+                return '—';
+            }
+
+            switch (row.day?.status) {
+                case 'absent':
+                    return `Was due ${formatClockTime(startsAt)} – ${formatClockTime(endsAt)}`;
+                case 'late':
+                    return `Due at ${formatClockTime(startsAt)}`;
+                default:
+                    return `Starts ${formatClockTime(startsAt)}`;
+            }
+        }
     }
 }
 
@@ -73,7 +92,7 @@ export default function AttendanceToday({
         (row.status === 'in' ? Math.floor((now - loadedAt) / 1000) : 0);
 
     const inCount = members.filter(
-        (row) => row.status !== 'not_in' && row.status !== 'out',
+        (row) => row.status === 'in' || row.status === 'break',
     ).length;
 
     return (
@@ -126,24 +145,34 @@ export default function AttendanceToday({
                                             key={row.id}
                                             className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-3 py-2.5 text-sm"
                                         >
-                                            {canManage ? (
-                                                <Link
-                                                    href={time({
-                                                        query: {
-                                                            member: row.id,
-                                                        },
-                                                    })}
-                                                    className="min-w-0 hover:underline"
-                                                >
-                                                    {name}
-                                                </Link>
-                                            ) : (
-                                                name
-                                            )}
+                                            <span className="flex min-w-0 items-center gap-2">
+                                                {canManage ? (
+                                                    <Link
+                                                        href={time({
+                                                            query: {
+                                                                member: row.id,
+                                                            },
+                                                        })}
+                                                        className="min-w-0 hover:underline"
+                                                    >
+                                                        {name}
+                                                    </Link>
+                                                ) : (
+                                                    name
+                                                )}
+                                                {row.day &&
+                                                    row.status !== 'off' && (
+                                                        <DayStatus
+                                                            day={row.day}
+                                                            showOnTime={false}
+                                                        />
+                                                    )}
+                                            </span>
                                             <span className="flex items-center gap-4 text-muted-foreground">
                                                 <span>{detail(row, now)}</span>
                                                 <span className="w-16 text-right text-foreground tabular-nums">
-                                                    {row.status === 'not_in'
+                                                    {row.status === 'not_in' ||
+                                                    row.status === 'off'
                                                         ? ''
                                                         : formatDuration(
                                                               worked(row),

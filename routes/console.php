@@ -4,6 +4,7 @@ use App\Activity\ActivityEloquentModel;
 use App\AuditLog\AuditLogEloquentModel;
 use App\Mailbox\Actions\SyncMailboxes;
 use App\Service\Actions\RunServiceInvoices;
+use App\Shift\Actions\RemindOpenShifts;
 use App\Ticket\Actions\RemindDueTickets;
 use App\User\Actions\SetPlatformAdmin;
 use Carbon\CarbonImmutable;
@@ -43,6 +44,16 @@ Artisan::command('tickets:remind-due', function (): int {
 })->purpose('Notify assignees of open tickets due tomorrow');
 
 Schedule::command('tickets:remind-due')->dailyAt('07:00');
+
+// Tells members still clocked in well after their day should have ended.
+// It never clocks anyone out: a guessed time would end up in payroll.
+Artisan::command('attendance:remind', function (): int {
+    $this->components->info(trans_choice('{0} Nobody to remind.|{1} 1 reminder sent.|[2,*] :count reminders sent.', RemindOpenShifts::run()));
+
+    return Command::SUCCESS;
+})->purpose('Remind members who are still clocked in after their day');
+
+Schedule::command('attendance:remind')->hourly();
 
 // Reads new mail from every connected mailbox, one queued job per mailbox.
 Artisan::command('mailboxes:sync', function (): int {

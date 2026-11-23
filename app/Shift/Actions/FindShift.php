@@ -45,14 +45,14 @@ final class FindShift
     }
 
     /**
-     * Every shift worked on this day, plus any still open from an earlier
-     * one, earliest first.
+     * Every shift with a work date from one day to another, inclusive, plus
+     * any still open from an earlier one, earliest first.
      */
-    public static function forTeamOnDay(string $teamId, string $workDate): ShiftCollection
+    public static function forTeamBetweenOrOpen(string $teamId, string $from, string $to): ShiftCollection
     {
         return Shift::collect(self::query($teamId)
             ->where(fn (Builder $query) => $query
-                ->where(WorkDate::getDatabaseTableColumnName(), $workDate)
+                ->whereBetween(WorkDate::getDatabaseTableColumnName(), [$from, $to])
                 ->orWhereNull(ClockedOutAt::getDatabaseTableColumnName()))
             ->orderBy(ClockedInAt::getDatabaseTableColumnName())
             ->get()->all(), 'fromEloquentModel');
