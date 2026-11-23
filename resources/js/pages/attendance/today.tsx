@@ -22,7 +22,7 @@ const groups: {
 }[] = [
     { status: 'in', title: 'In', tone: 'success' },
     { status: 'break', title: 'On a break', tone: 'warning' },
-    { status: 'not_in', title: 'Not in yet', tone: 'neutral' },
+    { status: 'not_in', title: 'Not in', tone: 'neutral' },
     { status: 'out', title: 'Finished', tone: 'info' },
     { status: 'off', title: 'Off today', tone: 'neutral' },
 ];
@@ -40,10 +40,23 @@ function detail(row: AttendanceBoardRow, now: number): string {
             return `${formatClockTime(row.first_in_at ?? '')} – ${formatClockTime(row.last_out_at ?? '')}`;
         case 'off':
             return row.day?.holiday ?? 'Day off';
-        default:
-            return row.day?.expected_starts_at
-                ? `Starts ${formatClockTime(row.day.expected_starts_at)}`
-                : '—';
+        default: {
+            const startsAt = row.day?.expected_starts_at;
+            const endsAt = row.day?.expected_ends_at;
+
+            if (!startsAt || !endsAt) {
+                return '—';
+            }
+
+            switch (row.day?.status) {
+                case 'absent':
+                    return `Was due ${formatClockTime(startsAt)} – ${formatClockTime(endsAt)}`;
+                case 'late':
+                    return `Due at ${formatClockTime(startsAt)}`;
+                default:
+                    return `Starts ${formatClockTime(startsAt)}`;
+            }
+        }
     }
 }
 
