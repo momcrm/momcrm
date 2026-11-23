@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Inbox;
 
+use App\LeaveRequest\LeaveRequestEloquentModel;
 use App\Project\ProjectEloquentModel;
 use App\Record\RecordEloquentModel;
 use App\Shift\ShiftEloquentModel;
@@ -102,6 +103,28 @@ final class InboxPayload
             'project_name' => null,
             'message' => $message,
             'excerpt' => null,
+        ];
+    }
+
+    /**
+     * A notification about a leave request, which links to the Leave page.
+     *
+     * @return array{kind: string, team_id: string, actor_id: ?string, actor_name: ?string, subject_type: string, subject_id: string, number: int, title: string, project_name: ?string, message: string, excerpt: ?string}
+     */
+    public static function forLeave(InboxKindEnum $kind, LeaveRequestEloquentModel $leave, ?UserEloquentModel $actor, string $title, string $message, ?string $excerpt = null): array
+    {
+        return [
+            'kind' => $kind->value,
+            'team_id' => $leave->team_id,
+            'actor_id' => $actor?->id,
+            'actor_name' => $actor?->name,
+            'subject_type' => 'leave',
+            'subject_id' => $leave->id,
+            'number' => 0,
+            'title' => $title,
+            'project_name' => null,
+            'message' => $message,
+            'excerpt' => $excerpt,
         ];
     }
 }

@@ -32,6 +32,7 @@ use App\Group\GroupEloquentModel;
 use App\Holiday\HolidayEloquentModel;
 use App\Invoice\InvoiceEloquentModel;
 use App\InvoiceItem\InvoiceItemEloquentModel;
+use App\LeaveRequest\LeaveRequestEloquentModel;
 use App\Location\LocationEloquentModel;
 use App\Mailbox\MailboxEloquentModel;
 use App\MailboxMessage\MailboxMessageEloquentModel;
@@ -96,6 +97,7 @@ enum MorphMapKeyEnum: string
     case Holiday = 'holiday';
     case Invoice = 'invoice';
     case InvoiceItem = 'invoice_item';
+    case LeaveRequest = 'leave_request';
     case Location = 'location';
     case Mailbox = 'mailbox';
     case MailboxMessage = 'mailbox_message';
@@ -173,6 +175,7 @@ enum MorphMapKeyEnum: string
             self::Holiday => HolidayEloquentModel::class,
             self::Invoice => InvoiceEloquentModel::class,
             self::InvoiceItem => InvoiceItemEloquentModel::class,
+            self::LeaveRequest => LeaveRequestEloquentModel::class,
             self::Location => LocationEloquentModel::class,
             self::Mailbox => MailboxEloquentModel::class,
             self::MailboxMessage => MailboxMessageEloquentModel::class,

@@ -1,4 +1,4 @@
-import { Form, Head, router } from '@inertiajs/react';
+import { Form, Head, Link, router, usePage } from '@inertiajs/react';
 import { MoreHorizontal, Pencil, Plus, Star, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 import WorkScheduleDialog from '@/components/attendance/work-schedule-dialog';
@@ -27,6 +27,7 @@ import {
     destroy as destroySchedule,
     makeDefault,
 } from '@/routes/work-schedules';
+import { edit as editWorkflow } from '@/routes/workflow';
 import type { HolidaySummary, WorkScheduleSummary } from '@/types';
 
 type Member = { id: string; name: string; work_schedule_id: string | null };
@@ -345,6 +346,36 @@ function Holidays({ holidays }: { holidays: HolidaySummary[] }) {
     );
 }
 
+/**
+ * Where the kinds of leave are kept: with the team's other lists.
+ */
+function LeaveTypes() {
+    const types = (usePage().props.choices?.leave_type ?? []).filter(
+        (type) => !type.is_archived,
+    );
+
+    return (
+        <section className="space-y-3">
+            <Heading
+                variant="small"
+                title="Leave types"
+                description="The kinds of time off people can ask for. They’re kept with the team’s other lists."
+            />
+            <p className="text-sm text-muted-foreground">
+                {types.length > 0
+                    ? types.map((type) => type.name).join(', ')
+                    : 'None yet.'}{' '}
+                <Link
+                    href={editWorkflow({ query: { list: 'leave_type' } })}
+                    className="text-foreground underline"
+                >
+                    {types.length > 0 ? 'Edit leave types' : 'Add leave types'}
+                </Link>
+            </p>
+        </section>
+    );
+}
+
 export default function AttendanceSettings({
     schedules,
     members,
@@ -367,6 +398,8 @@ export default function AttendanceSettings({
             )}
 
             <Holidays holidays={holidays} />
+
+            <LeaveTypes />
         </>
     );
 }

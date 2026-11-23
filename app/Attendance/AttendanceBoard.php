@@ -11,7 +11,9 @@ use Carbon\CarbonImmutable;
 
 /**
  * Who is working today: each member with whether they are in, on a break,
- * finished, not in yet or off, and their hours so far. Each member's today
+ * finished, not in yet or off, and their hours so far. Everyone sees why
+ * someone is off (`away`: day_off, holiday or on_leave), but not the kind of
+ * leave. Each member's today
  * is the date in their own timezone.
  *
  * How the day is going against their schedule (late, absent, overtime) is
@@ -31,7 +33,7 @@ final class AttendanceBoard
     public const string OFF = 'off';
 
     /**
-     * @return list<array{id: string, name: string, timezone: string, work_schedule_id: ?string, work_date: string, status: string, first_in_at: ?string, clocked_in_at: ?string, last_out_at: ?string, on_break_since: ?string, worked_seconds: int, day: ?array<string, mixed>}>
+     * @return list<array{id: string, name: string, timezone: string, work_schedule_id: ?string, work_date: string, status: string, first_in_at: ?string, clocked_in_at: ?string, last_out_at: ?string, on_break_since: ?string, worked_seconds: int, away: ?string, holiday: ?string, day: ?array<string, mixed>}>
      */
     public static function forTeam(string $teamId, CarbonImmutable $now, string $viewerId, bool $canSeeEveryone): array
     {
@@ -62,7 +64,7 @@ final class AttendanceBoard
                         $openBreak?->isNotNull() === true => self::ON_BREAK,
                         $open->isNotNull() => self::IN,
                         $own->isNotEmpty() => self::OUT,
-                        in_array($expected->kind, [ExpectedDay::DAY_OFF, ExpectedDay::HOLIDAY], true) => self::OFF,
+                        in_array($expected->kind, [ExpectedDay::DAY_OFF, ExpectedDay::HOLIDAY, ExpectedDay::ON_LEAVE], true) => self::OFF,
                         default => self::NOT_IN,
                     },
                     'first_in_at' => $own->first()->getClockedInAt()->toNullableISOString(),
@@ -70,6 +72,8 @@ final class AttendanceBoard
                     'last_out_at' => $open->isNull() ? $last->getClockedOutAt()->toNullableISOString() : null,
                     'on_break_since' => $openBreak?->getStartedAt()->toNullableISOString(),
                     'worked_seconds' => $day['worked_seconds'],
+                    'away' => in_array($expected->kind, [ExpectedDay::DAY_OFF, ExpectedDay::HOLIDAY, ExpectedDay::ON_LEAVE], true) ? $expected->kind : null,
+                    'holiday' => $expected->holiday,
                     'day' => $canSeeEveryone || $member['id'] === $viewerId ? $day : null,
                 ];
             })

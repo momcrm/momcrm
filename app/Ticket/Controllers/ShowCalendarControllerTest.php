@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
+use App\LeaveRequest\LeaveRequestEloquentModel;
 use App\Project\ProjectEloquentModel;
+use App\TeamUser\TeamRoleEnum;
 use App\Ticket\TicketEloquentModel;
 use App\Ticket\TicketStatusCategoryEnum;
 use App\User\UserEloquentModel;
@@ -79,4 +81,24 @@ it("shows a project's calendar on its page", function (): void {
     actingAs($user)
         ->get(route('projects.show', ['project' => $project->id, 'view' => 'calendar', 'date' => '2026-12-10']))
         ->assertInertia(fn (Assert $page) => $page->where('tab', 'calendar')->has('tickets', 1)->where('tickets.0.title', 'In project'));
+});
+
+it('shows approved leave in the window, with its kind only for owners, admins and the person on leave', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create(['name' => 'Ada']);
+    $member = UserEloquentModel::factory()->inTeam($owner->current_team_id, TeamRoleEnum::Member)->create(['name' => 'Ben']);
+    $ownLeave = LeaveRequestEloquentModel::factory()->forUser($owner)->between('2026-12-14', '2026-12-18')->approved()->create();
+    LeaveRequestEloquentModel::factory()->forUser($member)->between('2026-12-21')->approved()->create();
+    LeaveRequestEloquentModel::factory()->forUser($member)->between('2026-12-22')->create();
+    LeaveRequestEloquentModel::factory()->forUser($member)->between('2027-02-01')->approved()->create();
+
+    actingAs($member)
+        ->get(route('calendar', ['date' => '2026-12-10']))
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('leave', 2)
+            ->where('leave.0', fn ($leave): bool => $leave['id'] === $ownLeave->id && $leave['name'] === 'Ada' && $leave['leave_type'] === null && $leave['ends_on'] === '2026-12-18')
+            ->where('leave.1', fn ($leave): bool => $leave['name'] === 'Ben' && $leave['leave_type'] === 'Annual leave'));
+
+    actingAs($owner)
+        ->get(route('calendar', ['date' => '2026-12-10']))
+        ->assertInertia(fn (Assert $page) => $page->where('leave.0.leave_type', 'Annual leave'));
 });

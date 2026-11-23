@@ -39,7 +39,15 @@ function detail(row: AttendanceBoardRow, now: number): string {
         case 'out':
             return `${formatClockTime(row.first_in_at ?? '')} – ${formatClockTime(row.last_out_at ?? '')}`;
         case 'off':
-            return row.day?.holiday ?? 'Day off';
+            if (row.day?.leave) {
+                return row.day.leave;
+            }
+
+            return row.away === 'holiday'
+                ? (row.holiday ?? 'Holiday')
+                : row.away === 'on_leave'
+                  ? 'On leave'
+                  : 'Day off';
         default: {
             const startsAt = row.day?.expected_starts_at;
             const endsAt = row.day?.expected_ends_at;

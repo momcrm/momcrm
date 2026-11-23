@@ -80,6 +80,7 @@ final class FindNotifications
             'url' => match ($data['subject_type'] ?? null) {
                 'project' => route('projects.show', Types::string($data['subject_id'])),
                 'shift' => route('attendance.time'),
+                'leave' => route('attendance.leave'),
                 'record' => route('records.show', [Types::string($data['object_id'] ?? ''), Types::string($data['subject_id'])]),
                 default => route('tickets.index', ['ticket' => Types::string($data['subject_id'] ?? '')]),
             },

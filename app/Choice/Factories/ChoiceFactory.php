@@ -70,4 +70,12 @@ final class ChoiceFactory extends Factory
             Category::getDatabaseTableColumnName() => null,
         ]);
     }
+
+    public function leaveType(): self
+    {
+        return $this->state([
+            ListName::getDatabaseTableColumnName() => ChoiceListEnum::LeaveType->value,
+            Category::getDatabaseTableColumnName() => null,
+        ]);
+    }
 }

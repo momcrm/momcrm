@@ -1,15 +1,15 @@
 import { Link } from '@inertiajs/react';
 import { cn } from '@/lib/utils';
-import { index as today, time } from '@/routes/attendance';
+import { leave, index as today, time } from '@/routes/attendance';
 
 /**
- * Switches between the Today board and a member's week.
+ * Switches between the Today board, a member's week and leave.
  */
 export default function AttendanceTabs({
     current,
 }: {
     /** The tab showing, or null for someone else's week. */
-    current: 'today' | 'time' | null;
+    current: 'today' | 'time' | 'leave' | null;
 }) {
     return (
         <nav aria-label="Attendance" className="flex gap-4 border-b text-sm">
@@ -17,6 +17,7 @@ export default function AttendanceTabs({
                 [
                     ['today', 'Today', today()],
                     ['time', 'My time', time()],
+                    ['leave', 'Leave', leave()],
                 ] as const
             ).map(([value, label, href]) => (
                 <Link
