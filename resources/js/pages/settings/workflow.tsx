@@ -244,9 +244,12 @@ function ListEditor({ list }: { list: WorkflowList }) {
     return (
         <UsageNoun.Provider
             value={
-                list.value === 'label'
-                    ? { one: 'record', many: 'records' }
-                    : { one: 'ticket', many: 'tickets' }
+                {
+                    label: { one: 'record', many: 'records' },
+                    contact_role: { one: 'contact', many: 'contacts' },
+                    customer_type: { one: 'customer', many: 'customers' },
+                    leave_type: { one: 'request', many: 'requests' },
+                }[list.value as string] ?? { one: 'ticket', many: 'tickets' }
             }
         >
             <div className="space-y-6">
@@ -738,6 +741,7 @@ function AddChoice({
         contact_role: 'role',
         customer_type: 'type',
         label: 'label',
+        leave_type: 'type',
         ticket_priority: 'priority',
         ticket_status: 'status',
         ticket_type: 'type',

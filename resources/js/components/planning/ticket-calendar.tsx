@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Palmtree, Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { DragEvent } from 'react';
 import { useCreateTicket } from '@/components/tickets/create-ticket-dialog';
@@ -15,7 +15,12 @@ import { hueStyle } from '@/lib/colors';
 import { addDays, addMonths, eachDay, parseDay, today } from '@/lib/dates';
 import { visitWithQuery } from '@/lib/query';
 import { cn } from '@/lib/utils';
-import type { CalendarWindow, ProjectOption, TicketListItem } from '@/types';
+import type {
+    CalendarWindow,
+    LeaveCalendarEntry,
+    ProjectOption,
+    TicketListItem,
+} from '@/types';
 
 const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const monthFormatter = new Intl.DateTimeFormat(undefined, {
@@ -48,9 +53,12 @@ export default function TicketCalendar({
     favoriteIds,
     fullBleed = false,
     projectId,
+    leave = [],
 }: {
     calendar: CalendarWindow;
     tickets: TicketListItem[];
+    /** Approved leave to show above each day's tickets. */
+    leave?: LeaveCalendarEntry[];
     projects: ProjectOption[];
     favoriteIds: string[];
     fullBleed?: boolean;
@@ -80,6 +88,8 @@ export default function TicketCalendar({
         },
         {},
     );
+    const leaveOn = (day: string) =>
+        leave.filter((entry) => entry.starts_on <= day && day <= entry.ends_on);
     const usedProjects = projects.filter((project) =>
         items.some((ticket) => ticket.project_id === project.id),
     );
@@ -260,6 +270,12 @@ export default function TicketCalendar({
                                         >
                                             {parseDay(day).getDate()}
                                         </span>
+                                        {leaveOn(day).map((entry) => (
+                                            <LeaveChip
+                                                key={entry.id}
+                                                entry={entry}
+                                            />
+                                        ))}
                                         {shown.map((ticket) => (
                                             <MonthChip
                                                 key={ticket.id}
@@ -342,6 +358,12 @@ export default function TicketCalendar({
                                         </Button>
                                     </div>
                                     <div className="flex flex-1 flex-col gap-1.5 p-1.5">
+                                        {leaveOn(day).map((entry) => (
+                                            <LeaveChip
+                                                key={entry.id}
+                                                entry={entry}
+                                            />
+                                        ))}
                                         {dayTickets.length === 0 ? (
                                             <span className="px-1 py-0.5 text-xs text-subtle-foreground">
                                                 No tickets
@@ -369,6 +391,36 @@ export default function TicketCalendar({
                 )}
             </div>
         </div>
+    );
+}
+
+/**
+ * Someone away that day: their name and, for those allowed to see it, the
+ * kind of leave in its colour.
+ */
+function LeaveChip({ entry }: { entry: LeaveCalendarEntry }) {
+    const label = [
+        entry.name,
+        entry.leave_type ?? 'away',
+        entry.part !== 'full' && entry.part,
+    ]
+        .filter(Boolean)
+        .join(' · ');
+
+    return (
+        <span
+            title={label}
+            className={cn(
+                'flex h-[22px] w-full min-w-0 shrink-0 items-center gap-1.5 rounded-[5px] border border-dashed px-1.5 text-xs',
+                entry.hue === null
+                    ? 'border-border bg-muted text-muted-foreground'
+                    : 'hue-tint',
+            )}
+            style={entry.hue === null ? undefined : hueStyle(entry.hue)}
+        >
+            <Palmtree className="size-3 shrink-0" />
+            <span className="truncate">{label}</span>
+        </span>
     );
 }
 

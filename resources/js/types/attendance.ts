@@ -18,6 +18,7 @@ export type AttendanceDayStatus =
     | 'upcoming'
     | 'holiday'
     | 'day_off'
+    | 'on_leave'
     | 'unscheduled';
 
 export type AttendanceFlag = 'late' | 'left_early' | 'absent' | 'overtime';
@@ -27,6 +28,8 @@ export type AttendanceDayResult = {
     status: AttendanceDayStatus;
     flags: AttendanceFlag[];
     holiday: string | null;
+    /** The leave taken that day, such as "Annual leave (morning)". */
+    leave: string | null;
     expected_starts_at: string | null;
     expected_ends_at: string | null;
     expected_seconds: number;
@@ -50,6 +53,9 @@ export type AttendanceBoardRow = {
     last_out_at: string | null;
     on_break_since: string | null;
     worked_seconds: number;
+    /** Why they're off today, for everyone to see. */
+    away: 'day_off' | 'holiday' | 'on_leave' | null;
+    holiday: string | null;
     /** How their day is going; only for owners and admins, or yourself. */
     day: AttendanceDayResult | null;
 };
@@ -123,4 +129,42 @@ export type HolidaySummary = {
     id: string;
     date: string;
     name: string;
+};
+
+export type LeaveStatus = 'pending' | 'approved' | 'declined' | 'cancelled';
+
+export type LeavePart = 'full' | 'morning' | 'afternoon';
+
+/** A leave request on the Leave page. */
+export type LeaveSummary = {
+    id: string;
+    user_id: string;
+    user_name: string;
+    leave_type_id: string;
+    leave_type: string;
+    hue: number | null;
+    starts_on: string;
+    ends_on: string;
+    part: LeavePart;
+    /** Working days it takes, or null when there's no schedule to count. */
+    days: number | null;
+    status: LeaveStatus;
+    reason: string | null;
+    reviewed_by_name: string | null;
+    reviewed_at: string | null;
+    review_note: string | null;
+    created_at: string | null;
+    can_cancel: boolean;
+};
+
+/** Approved leave on the calendar. The kind shows only to those allowed. */
+export type LeaveCalendarEntry = {
+    id: string;
+    user_id: string;
+    name: string;
+    leave_type: string | null;
+    hue: number | null;
+    starts_on: string;
+    ends_on: string;
+    part: LeavePart;
 };

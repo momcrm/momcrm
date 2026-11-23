@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import type {
     AttendanceDayStatus,
+    LeavePart,
+    LeaveStatus,
     Tone,
     WeekdayKey,
     WorkScheduleDay,
@@ -94,6 +96,7 @@ export const dayStatuses: Record<
     upcoming: { label: 'Scheduled', tone: 'neutral' },
     holiday: { label: 'Holiday', tone: 'info' },
     day_off: { label: 'Day off', tone: 'neutral' },
+    on_leave: { label: 'On leave', tone: 'info' },
     unscheduled: { label: '', tone: 'neutral' },
 };
 
@@ -152,4 +155,48 @@ export function describeWeek(
                 `${weekdays[group.from].short}${group.to > group.from ? `–${weekdays[group.to].short}` : ''} ${group.hours}`,
         )
         .join(' · ');
+}
+
+export const leaveStatuses: Record<LeaveStatus, { label: string; tone: Tone }> =
+    {
+        pending: { label: 'Waiting for approval', tone: 'warning' },
+        approved: { label: 'Approved', tone: 'success' },
+        declined: { label: 'Declined', tone: 'destructive' },
+        cancelled: { label: 'Cancelled', tone: 'neutral' },
+    };
+
+const leaveDay = new Intl.DateTimeFormat(undefined, {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+});
+
+/**
+ * Leave's days in words: "Mon, Dec 1", "Mon, Dec 1 (morning)" or
+ * "Mon, Dec 1 – Fri, Dec 5".
+ */
+export function describeLeaveDays(
+    startsOn: string,
+    endsOn: string,
+    part: LeavePart,
+): string {
+    const [first, last] = [startsOn, endsOn].map((day) => {
+        const [year, month, date] = day.split('-').map(Number);
+
+        return leaveDay.format(new Date(year, month - 1, date));
+    });
+
+    if (startsOn === endsOn) {
+        return part === 'full' ? first : `${first} (${part})`;
+    }
+
+    return `${first} – ${last}`;
+}
+
+/** A number of working days, such as "1 day", "½ day" or "4½ days". */
+export function formatLeaveDays(days: number): string {
+    const whole = Math.floor(days);
+    const text = `${whole > 0 ? whole : ''}${days % 1 ? '½' : ''}`;
+
+    return `${text} ${days <= 1 ? 'day' : 'days'}`;
 }

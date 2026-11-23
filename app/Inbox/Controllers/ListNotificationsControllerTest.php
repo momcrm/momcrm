@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use App\Comment\Notifications\MentionedInRecordCommentNotification;
 use App\CustomObject\CustomObjectEloquentModel;
+use App\LeaveRequest\LeaveRequestEloquentModel;
+use App\LeaveRequest\Notifications\LeaveRequestedNotification;
 use App\Record\RecordEloquentModel;
 use App\Shift\Notifications\ShiftStillOpenNotification;
 use App\Shift\ShiftEloquentModel;
@@ -55,5 +57,22 @@ it('links a reminder about a shift to the person’s time', function (): void {
             ->where('notifications.0.subject_type', 'shift')
             ->where('notifications.0.title', 'You’re still clocked in')
             ->where('notifications.0.url', route('attendance.time')),
+        );
+});
+
+it('links a leave request to the Leave page', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $member = UserEloquentModel::factory()->inTeam($owner->current_team_id)->create(['name' => 'Ben']);
+    $leave = LeaveRequestEloquentModel::factory()->forUser($member)->create(['reason' => 'Wedding']);
+    $owner->notify(new LeaveRequestedNotification($leave, $member, 'Annual leave', 'Mon 30 Nov'));
+
+    actingAs($owner)
+        ->get(route('notifications.index'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('notifications.0.subject_type', 'leave')
+            ->where('notifications.0.title', 'Annual leave: Mon 30 Nov')
+            ->where('notifications.0.actor_name', 'Ben')
+            ->where('notifications.0.excerpt', 'Wedding')
+            ->where('notifications.0.url', route('attendance.leave')),
         );
 });

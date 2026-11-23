@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Holiday\HolidayEloquentModel;
+use App\LeaveRequest\LeaveRequestEloquentModel;
 use App\Shift\ShiftEloquentModel;
 use App\ShiftBreak\ShiftBreakEloquentModel;
 use App\TeamUser\TeamRoleEnum;
@@ -93,6 +94,27 @@ it('shows members how their own day is going, but not anyone else’s', function
             ->where('members.0.name', 'Ada')
             ->where('members.0.day', null)
             ->where('members.1.day.flags', ['late']));
+});
+
+it('shows everyone who is on leave, but only owners which kind', function (): void {
+    travelTo('2026-11-23 10:00:00');
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create(['name' => 'Ada', 'timezone' => 'UTC']);
+    $member = UserEloquentModel::factory()->inTeam($owner->current_team_id, TeamRoleEnum::Member)->create(['name' => 'Ben', 'timezone' => 'UTC']);
+    WorkScheduleEloquentModel::factory()->forTeam($owner->current_team_id)->teamDefault()->create();
+    LeaveRequestEloquentModel::factory()->forUser($owner)->between('2026-11-23')->approved()->create();
+
+    actingAs($member)
+        ->get(route('attendance.index'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('members.0.status', 'off')
+            ->where('members.0.away', 'on_leave')
+            ->where('members.0.day', null));
+
+    actingAs($owner)
+        ->get(route('attendance.index'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('members.0.day.status', 'on_leave')
+            ->where('members.0.day.leave', 'Annual leave'));
 });
 
 it('shares the signed-in member’s clock with every page', function (): void {

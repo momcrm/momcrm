@@ -304,6 +304,7 @@ export type ChoiceList =
     | 'contact_role'
     | 'customer_type'
     | 'label'
+    | 'leave_type'
     | 'ticket_priority'
     | 'ticket_status'
     | 'ticket_type';

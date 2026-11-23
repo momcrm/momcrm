@@ -23,6 +23,7 @@ enum ChoiceListEnum: string
     case ContactRole = 'contact_role';
     case CustomerType = 'customer_type';
     case Label = 'label';
+    case LeaveType = 'leave_type';
     case TicketPriority = 'ticket_priority';
     case TicketStatus = 'ticket_status';
     case TicketType = 'ticket_type';
@@ -33,6 +34,7 @@ enum ChoiceListEnum: string
             self::ContactRole => 'Contact roles',
             self::CustomerType => 'Customer types',
             self::Label => 'Labels',
+            self::LeaveType => 'Leave types',
             self::TicketPriority => 'Ticket priorities',
             self::TicketStatus => 'Ticket statuses',
             self::TicketType => 'Ticket types',
@@ -48,6 +50,7 @@ enum ChoiceListEnum: string
             self::ContactRole => "What a customer's contact looks after, so portal access rules can give each role its own access.",
             self::CustomerType => 'What kind of customer someone is, for sorting and filtering the customer list.',
             self::Label => 'Tags for sorting and finding tickets, projects, assets and articles. Each can have several.',
+            self::LeaveType => 'The kinds of time off people can ask for, such as annual or sick leave.',
             self::TicketPriority => 'How urgent a ticket is, most urgent first.',
             self::TicketStatus => 'Where a ticket is in its life, grouped by whether it is still open.',
             self::TicketType => 'What kind of request a ticket is.',
@@ -63,7 +66,7 @@ enum ChoiceListEnum: string
     public function categoryEnum(): ?string
     {
         return match ($this) {
-            self::ContactRole, self::CustomerType, self::Label, self::TicketPriority, self::TicketType => null,
+            self::ContactRole, self::CustomerType, self::Label, self::LeaveType, self::TicketPriority, self::TicketType => null,
             self::TicketStatus => TicketStatusCategoryEnum::class,
         };
     }
@@ -76,7 +79,7 @@ enum ChoiceListEnum: string
     public function categoryOptions(): array
     {
         return match ($this) {
-            self::ContactRole, self::CustomerType, self::Label, self::TicketPriority, self::TicketType => [],
+            self::ContactRole, self::CustomerType, self::Label, self::LeaveType, self::TicketPriority, self::TicketType => [],
             self::TicketStatus => TicketStatusCategoryEnum::options(),
         };
     }
@@ -90,7 +93,7 @@ enum ChoiceListEnum: string
     {
         return match ($this) {
             self::TicketPriority => ['chevrons-up', 'chevron-up', 'equal', 'chevron-down', 'minus'],
-            self::ContactRole, self::CustomerType, self::Label, self::TicketStatus, self::TicketType => [],
+            self::ContactRole, self::CustomerType, self::Label, self::LeaveType, self::TicketStatus, self::TicketType => [],
         };
     }
 
@@ -110,6 +113,7 @@ enum ChoiceListEnum: string
                 fn (LabelTargetEnum $target): array => ['table' => $target->table(), 'column' => 'label_id', 'isPivot' => true],
                 LabelTargetEnum::cases(),
             )),
+            self::LeaveType => [['table' => Table::LeaveRequests, 'column' => 'leave_type_id', 'isPivot' => false]],
             self::TicketPriority => [['table' => Table::Tickets, 'column' => 'priority_id', 'isPivot' => false]],
             self::TicketStatus => [['table' => Table::Tickets, 'column' => 'status_id', 'isPivot' => false]],
             self::TicketType => [['table' => Table::Tickets, 'column' => 'type_id', 'isPivot' => false]],
@@ -126,7 +130,7 @@ enum ChoiceListEnum: string
     {
         return match ($this) {
             self::ContactRole, self::CustomerType, self::Label, self::TicketType => true,
-            self::TicketPriority, self::TicketStatus => false,
+            self::LeaveType, self::TicketPriority, self::TicketStatus => false,
         };
     }
 
@@ -168,6 +172,12 @@ enum ChoiceListEnum: string
                 ['name' => 'Security', 'hue' => HuePalette::RED, 'icon' => null, 'category' => null, 'is_default' => false],
                 ['name' => 'Billing', 'hue' => HuePalette::VIOLET, 'icon' => null, 'category' => null, 'is_default' => false],
                 ['name' => 'Onboarding', 'hue' => HuePalette::GREEN, 'icon' => null, 'category' => null, 'is_default' => false],
+            ],
+            self::LeaveType => [
+                ['name' => 'Annual leave', 'hue' => HuePalette::GREEN, 'icon' => null, 'category' => null, 'is_default' => true],
+                ['name' => 'Sick leave', 'hue' => HuePalette::ROSE, 'icon' => null, 'category' => null, 'is_default' => false],
+                ['name' => 'Personal leave', 'hue' => HuePalette::VIOLET, 'icon' => null, 'category' => null, 'is_default' => false],
+                ['name' => 'Unpaid leave', 'hue' => null, 'icon' => null, 'category' => null, 'is_default' => false],
             ],
             self::TicketPriority => [
                 ['name' => 'Urgent', 'hue' => HuePalette::ROSE, 'icon' => 'chevrons-up', 'category' => null, 'is_default' => false],

@@ -19,7 +19,7 @@ use Carbon\CarbonImmutable;
  * - left_early: clocked out for the day before the end less grace
  * - absent: a workday that ended with no time worked
  * - upcoming: a workday that has not started yet
- * - holiday, day_off: nothing expected; any time worked is overtime
+ * - holiday, day_off, on_leave: nothing expected; any time worked is overtime
  * - unscheduled: the team has no schedules, so nothing is measured
  *
  * Flags list every problem (a day can be both late and left early) plus
@@ -43,7 +43,7 @@ final class AttendanceDay
     /**
      * @param  ShiftCollection  $shifts  the member's shifts with this work date
      * @param  ShiftBreakCollection  $breaks  breaks of those shifts
-     * @return array{status: string, flags: list<string>, holiday: ?string, expected_starts_at: ?string, expected_ends_at: ?string, expected_seconds: int, worked_seconds: int, break_seconds: int, overtime_seconds: int, late_seconds: int}
+     * @return array{status: string, flags: list<string>, holiday: ?string, leave: ?string, expected_starts_at: ?string, expected_ends_at: ?string, expected_seconds: int, worked_seconds: int, break_seconds: int, overtime_seconds: int, late_seconds: int}
      */
     public static function calculate(ExpectedDay $expected, ShiftCollection $shifts, ShiftBreakCollection $breaks, CarbonImmutable $now): array
     {
@@ -73,6 +73,7 @@ final class AttendanceDay
             'status' => self::status($expected, $flags, $shifts, $now),
             'flags' => $flags,
             'holiday' => $expected->holiday,
+            'leave' => $expected->leave,
             'expected_starts_at' => $expected->startsAt?->toISOString(),
             'expected_ends_at' => $expected->endsAt?->toISOString(),
             'expected_seconds' => $expectedSeconds,

@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { calendar as calendarRoute } from '@/routes';
 import type {
     CalendarWindow,
+    LeaveCalendarEntry,
     ProjectOption,
     TicketDrawerData,
     TicketFilters,
@@ -22,6 +23,7 @@ export default function CalendarPage({
     tickets,
     projects,
     favoriteTicketIds,
+    leave,
     options,
     drawer,
 }: {
@@ -30,6 +32,7 @@ export default function CalendarPage({
     tickets: TicketListItem[];
     projects: ProjectOption[];
     favoriteTicketIds: string[];
+    leave: LeaveCalendarEntry[];
     options: TicketPickerOptions;
     drawer: TicketDrawerData | null;
 }) {
@@ -43,7 +46,7 @@ export default function CalendarPage({
                 <div className="px-4 pt-6 pb-3 md:px-6">
                     <PageHeader
                         title="Calendar"
-                        description="Tickets on the day they're due. Drag one to another day to reschedule it."
+                        description="Tickets on the day they're due, and who is on leave. Drag a ticket to another day to reschedule it."
                         actions={
                             <Button onClick={() => openCreateTicket()}>
                                 <Plus />
@@ -62,6 +65,7 @@ export default function CalendarPage({
                     tickets={tickets}
                     projects={projects}
                     favoriteIds={favoriteTicketIds}
+                    leave={leave}
                     fullBleed
                 />
             </div>

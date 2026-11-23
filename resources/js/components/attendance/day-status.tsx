@@ -22,7 +22,7 @@ export default function DayStatus({
         (showOnTime || day.status !== 'present');
     const overtime = day.flags.includes('overtime');
 
-    if (!showStatus && !overtime) {
+    if (!showStatus && !overtime && !day.leave) {
         return null;
     }
 
@@ -32,9 +32,11 @@ export default function DayStatus({
                 <StatusPill tone={status.tone}>
                     {day.status === 'holiday' && day.holiday
                         ? day.holiday
-                        : day.status === 'late' && day.late_seconds > 0
-                          ? `Late ${formatDuration(day.late_seconds)}`
-                          : status.label}
+                        : day.status === 'on_leave' && day.leave
+                          ? day.leave
+                          : day.status === 'late' && day.late_seconds > 0
+                            ? `Late ${formatDuration(day.late_seconds)}`
+                            : status.label}
                 </StatusPill>
             )}
             {day.flags.includes('left_early') &&

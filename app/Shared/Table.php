@@ -36,6 +36,7 @@ enum Table: string
     case InvoiceItems = 'invoice_items';
     case LabelArticle = 'label_article';
     case Invoices = 'invoices';
+    case LeaveRequests = 'leave_requests';
     case LabelAsset = 'label_asset';
     case LabelProject = 'label_project';
     case LabelTicket = 'label_ticket';
