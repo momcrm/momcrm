@@ -81,6 +81,7 @@ final class FindNotifications
                 'project' => route('projects.show', Types::string($data['subject_id'])),
                 'shift' => route('attendance.time'),
                 'leave' => route('attendance.leave'),
+                'timesheet' => route('attendance.timesheet', [Types::string($data['member_id'] ?? ''), mb_substr(Types::string($data['starts_on'] ?? ''), 0, 10)]),
                 'record' => route('records.show', [Types::string($data['object_id'] ?? ''), Types::string($data['subject_id'])]),
                 default => route('tickets.index', ['ticket' => Types::string($data['subject_id'] ?? '')]),
             },

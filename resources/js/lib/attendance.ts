@@ -3,6 +3,7 @@ import type {
     AttendanceDayStatus,
     LeavePart,
     LeaveStatus,
+    TimesheetStatus,
     Tone,
     WeekdayKey,
     WorkScheduleDay,
@@ -199,4 +200,29 @@ export function formatLeaveDays(days: number): string {
     const text = `${whole > 0 ? whole : ''}${days % 1 ? '½' : ''}`;
 
     return `${text} ${days <= 1 ? 'day' : 'days'}`;
+}
+
+export const timesheetStatuses: Record<
+    TimesheetStatus,
+    { label: string; tone: Tone }
+> = {
+    open: { label: 'Not submitted', tone: 'neutral' },
+    submitted: { label: 'Submitted', tone: 'warning' },
+    approved: { label: 'Approved', tone: 'success' },
+    rejected: { label: 'Sent back', tone: 'destructive' },
+};
+
+/** A pay period in words: "Nov 16 – Nov 22". */
+export function describePeriod(startsOn: string, endsOn: string): string {
+    const day = new Intl.DateTimeFormat(undefined, {
+        day: 'numeric',
+        month: 'short',
+    });
+    const parse = (value: string) => {
+        const [year, month, date] = value.split('-').map(Number);
+
+        return new Date(year, month - 1, date);
+    };
+
+    return `${day.format(parse(startsOn))} – ${day.format(parse(endsOn))}`;
 }

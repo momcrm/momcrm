@@ -24,7 +24,8 @@ use Illuminate\Validation\Validator;
 use Inertia\Inertia;
 
 /**
- * Adds a shift a member forgot to clock, on their behalf. Owners and admins only.
+ * Adds a shift a member forgot to clock. Owners and admins can add one for
+ * anyone; members can add their own while that day's timesheet is open.
  */
 final class StoreShiftFormRequest extends FormRequest
 {
@@ -48,7 +49,7 @@ final class StoreShiftFormRequest extends FormRequest
             throw CouldNotViewTeam::notFound();
         }
 
-        return Gate::authorize('manageAttendance', $this->team);
+        return $this->isOwn() ? Response::allow() : Gate::authorize('manageAttendance', $this->team);
     }
 
     /**
@@ -97,7 +98,17 @@ final class StoreShiftFormRequest extends FormRequest
 
     private function correction(): ShiftCorrection
     {
-        return new ShiftCorrection($this->team->getId()->toString(), $this->memberId(), AttendanceTimezone::forUserId($this->memberId()));
+        return new ShiftCorrection(
+            $this->team->getId()->toString(),
+            $this->memberId(),
+            AttendanceTimezone::forUserId($this->memberId()),
+            byMember: Gate::denies('manageAttendance', $this->team),
+        );
+    }
+
+    private function isOwn(): bool
+    {
+        return $this->memberId() === (string) $this->user()?->id;
     }
 
     private function memberId(): string

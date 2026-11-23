@@ -21,6 +21,8 @@ use App\Team\Properties\OwnerId;
 use App\Team\Properties\PaymentDetails;
 use App\Team\Properties\TaxId;
 use App\Team\Properties\TaxIdLabel;
+use App\Team\Properties\TimesheetPeriod;
+use App\Team\Properties\TimesheetStartsOn;
 use App\Team\Properties\UpdatedAt;
 use Illuminate\Support\Collection;
 use Mom\Data\AbstractBoolean;
@@ -49,6 +51,8 @@ final class Team extends AbstractData
         public IsPersonal $isPersonal,
         public Name $name,
         public OwnerId $ownerId,
+        public TimesheetPeriod $timesheetPeriod,
+        public TimesheetStartsOn $timesheetStartsOn,
         public UpdatedAt $updatedAt,
     ) {}
 
@@ -273,6 +277,30 @@ final class Team extends AbstractData
     public function setBpayBillerCode(mixed $bpayBillerCode): self
     {
         $this->bpayBillerCode = new BpayBillerCode($bpayBillerCode instanceof AbstractValue ? $bpayBillerCode->toValue() : $bpayBillerCode);
+
+        return $this;
+    }
+
+    public function getTimesheetPeriod(): TimesheetPeriod
+    {
+        return $this->timesheetPeriod;
+    }
+
+    public function setTimesheetPeriod(mixed $timesheetPeriod): self
+    {
+        $this->timesheetPeriod = new TimesheetPeriod($timesheetPeriod instanceof AbstractValue ? $timesheetPeriod->toValue() : $timesheetPeriod);
+
+        return $this;
+    }
+
+    public function getTimesheetStartsOn(): TimesheetStartsOn
+    {
+        return $this->timesheetStartsOn;
+    }
+
+    public function setTimesheetStartsOn(mixed $timesheetStartsOn): self
+    {
+        $this->timesheetStartsOn = new TimesheetStartsOn($timesheetStartsOn instanceof AbstractValue ? $timesheetStartsOn->toValue() : $timesheetStartsOn);
 
         return $this;
     }

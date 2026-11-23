@@ -48,11 +48,19 @@ import { index as ticketsIndex, patch } from '@/routes/tickets';
 import type {
     ActivityItem,
     LinkedRecordGroup,
+    MemberAttendance,
     ProjectStatus,
     TicketDrawerData,
     TicketListItem,
     TicketPickerOptions,
 } from '@/types';
+import {
+    describePeriod,
+    formatDuration,
+    formatLeaveDays,
+    timesheetStatuses,
+} from '@/lib/attendance';
+import { timesheet as attendanceTimesheet } from '@/routes/attendance';
 
 type Member = {
     id: string;
@@ -132,7 +140,10 @@ export default function ShowMember({
     options,
     drawer,
     linkedRecords,
+    attendance,
 }: {
+    /** This week's hours, leave and timesheet; for owners, admins and themselves. */
+    attendance: MemberAttendance | null;
     teamName: string;
     /** What points at this person through record-link custom fields. */
     linkedRecords: LinkedRecordGroup[];
@@ -447,6 +458,65 @@ export default function ShowMember({
                                 </ul>
                             )}
                         </Panel>
+
+                        {attendance && (
+                            <Panel title="Attendance">
+                                <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 px-4 pb-4 text-sm">
+                                    <dt className="text-muted-foreground">
+                                        This week
+                                    </dt>
+                                    <dd>
+                                        {formatDuration(
+                                            attendance.week_worked_seconds,
+                                        )}
+                                        {attendance.week_expected_seconds > 0 &&
+                                            ` of ${formatDuration(attendance.week_expected_seconds)}`}
+                                    </dd>
+                                    <dt className="text-muted-foreground">
+                                        Leave this year
+                                    </dt>
+                                    <dd>
+                                        {attendance.leave_days_this_year > 0
+                                            ? formatLeaveDays(
+                                                  attendance.leave_days_this_year,
+                                              )
+                                            : 'None'}
+                                    </dd>
+                                    <dt className="text-muted-foreground">
+                                        Last timesheet
+                                    </dt>
+                                    <dd>
+                                        {attendance.last_timesheet ? (
+                                            <Link
+                                                href={attendanceTimesheet([
+                                                    member.id,
+                                                    attendance.last_timesheet
+                                                        .starts_on,
+                                                ])}
+                                                className="hover:underline"
+                                            >
+                                                {describePeriod(
+                                                    attendance.last_timesheet
+                                                        .starts_on,
+                                                    attendance.last_timesheet
+                                                        .ends_on,
+                                                )}{' '}
+                                                ·{' '}
+                                                {
+                                                    timesheetStatuses[
+                                                        attendance
+                                                            .last_timesheet
+                                                            .status
+                                                    ].label
+                                                }
+                                            </Link>
+                                        ) : (
+                                            'None yet'
+                                        )}
+                                    </dd>
+                                </dl>
+                            </Panel>
+                        )}
 
                         <Panel title="Recent activity">
                             {activity.length === 0 ? (

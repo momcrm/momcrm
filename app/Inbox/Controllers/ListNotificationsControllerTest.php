@@ -11,6 +11,8 @@ use App\Shift\Notifications\ShiftStillOpenNotification;
 use App\Shift\ShiftEloquentModel;
 use App\Ticket\Notifications\TicketDueSoonNotification;
 use App\Ticket\TicketEloquentModel;
+use App\Timesheet\Notifications\TimesheetSubmittedNotification;
+use App\Timesheet\TimesheetEloquentModel;
 use App\User\UserEloquentModel;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -74,5 +76,20 @@ it('links a leave request to the Leave page', function (): void {
             ->where('notifications.0.actor_name', 'Ben')
             ->where('notifications.0.excerpt', 'Wedding')
             ->where('notifications.0.url', route('attendance.leave')),
+        );
+});
+
+it('links a submitted timesheet to the timesheet', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $member = UserEloquentModel::factory()->inTeam($owner->current_team_id)->create();
+    $timesheet = TimesheetEloquentModel::factory()->forUser($member)->period('2026-11-16')->create();
+    $owner->notify(new TimesheetSubmittedNotification($timesheet, $member, 'Mon 16 Nov – Sun 22 Nov'));
+
+    actingAs($owner)
+        ->get(route('notifications.index'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('notifications.0.subject_type', 'timesheet')
+            ->where('notifications.0.title', 'Timesheet: Mon 16 Nov – Sun 22 Nov')
+            ->where('notifications.0.url', route('attendance.timesheet', [$member->id, '2026-11-16'])),
         );
 });

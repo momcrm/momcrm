@@ -27,6 +27,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property string $id
  * @property string $owner_id
  * @property string $name
+ * @property string $timesheet_period
+ * @property string|null $timesheet_starts_on
  * @property string|null $billing_name
  * @property string|null $tax_id_label
  * @property string|null $tax_id

@@ -8,15 +8,22 @@ use App\CustomField\CustomFieldEloquentModel;
 use App\CustomField\CustomFieldRelationEnum;
 use App\CustomObject\CustomObjectEloquentModel;
 use App\Group\GroupEloquentModel;
+use App\LeaveRequest\LeaveRequestEloquentModel;
 use App\Project\ProjectEloquentModel;
 use App\Record\RecordEloquentModel;
+use App\Shift\ShiftEloquentModel;
+use App\TeamUser\TeamRoleEnum;
 use App\TeamUser\TeamUserEloquentModel;
 use App\Ticket\TicketEloquentModel;
+use App\Timesheet\TimesheetEloquentModel;
 use App\User\UserEloquentModel;
+use App\WorkSchedule\WorkScheduleEloquentModel;
+use Carbon\CarbonImmutable;
 use Inertia\Testing\AssertableInertia;
 use Inertia\Testing\AssertableInertia as Assert;
 
 use function Pest\Laravel\actingAs;
+use function Pest\Laravel\travelTo;
 
 function teammate(UserEloquentModel $owner, array $attributes = [], string $role = 'member'): UserEloquentModel
 {
@@ -125,4 +132,26 @@ it('lists what links to the member', function (): void {
             ->where('linkedRecords.0.field', 'Linked member')
             ->where('linkedRecords.0.records.0', ['id' => $van->id, 'title' => 'Van', 'url' => route('records.show', [$vehicles->id, $van->id])]),
         );
+});
+
+it('shows owners and the member themselves their attendance, but not other members', function (): void {
+    travelTo('2026-11-25 12:00:00');
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create(['timezone' => 'UTC']);
+    $member = UserEloquentModel::factory()->inTeam($owner->current_team_id, TeamRoleEnum::Member)->create(['timezone' => 'UTC']);
+    $other = UserEloquentModel::factory()->inTeam($owner->current_team_id, TeamRoleEnum::Member)->create();
+    WorkScheduleEloquentModel::factory()->forTeam($owner->current_team_id)->teamDefault()->weekdays('09:00', '17:00')->create();
+    ShiftEloquentModel::factory()->forUser($member)->between(CarbonImmutable::parse('2026-11-24 09:00'), 8)->create();
+    LeaveRequestEloquentModel::factory()->forUser($member)->between('2026-12-21', '2026-12-25')->approved()->create();
+    TimesheetEloquentModel::factory()->forUser($member)->period('2026-11-16')->approved()->create();
+
+    actingAs($owner)
+        ->get(route('members.show', $member->id))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('attendance.week_worked_seconds', 8 * 3600)
+            ->where('attendance.week_expected_seconds', 5 * 8 * 3600)
+            ->where('attendance.leave_days_this_year', 5)
+            ->where('attendance.last_timesheet', ['starts_on' => '2026-11-16', 'ends_on' => '2026-11-22', 'status' => 'approved']));
+
+    actingAs($member)->get(route('members.show', $member->id))->assertInertia(fn (Assert $page) => $page->has('attendance'));
+    actingAs($other)->get(route('members.show', $member->id))->assertInertia(fn (Assert $page) => $page->where('attendance', null));
 });
