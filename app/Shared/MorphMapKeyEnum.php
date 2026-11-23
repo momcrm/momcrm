@@ -45,6 +45,8 @@ use App\Record\RecordEloquentModel;
 use App\Secret\SecretEloquentModel;
 use App\Service\ServiceEloquentModel;
 use App\Shared\Traits\Enum;
+use App\Shift\ShiftEloquentModel;
+use App\ShiftBreak\ShiftBreakEloquentModel;
 use App\SocialAccount\SocialAccountEloquentModel;
 use App\Team\TeamEloquentModel;
 use App\TeamInvitation\TeamInvitationEloquentModel;
@@ -104,6 +106,8 @@ enum MorphMapKeyEnum: string
     case Record = 'record';
     case Secret = 'secret';
     case Service = 'service';
+    case Shift = 'shift';
+    case ShiftBreak = 'shift_break';
     case SocialAccount = 'social_account';
     case Team = 'team';
     case TeamInvitation = 'team_invitation';
@@ -177,6 +181,8 @@ enum MorphMapKeyEnum: string
             self::Record => RecordEloquentModel::class,
             self::Secret => SecretEloquentModel::class,
             self::Service => ServiceEloquentModel::class,
+            self::Shift => ShiftEloquentModel::class,
+            self::ShiftBreak => ShiftBreakEloquentModel::class,
             self::SocialAccount => SocialAccountEloquentModel::class,
             self::Team => TeamEloquentModel::class,
             self::TeamInvitation => TeamInvitationEloquentModel::class,

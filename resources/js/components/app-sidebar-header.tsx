@@ -11,6 +11,7 @@ import {
     UserPlus,
     UserRound,
 } from 'lucide-react';
+import { ClockControl } from '@/components/attendance/clock-control';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { useCommandPalette } from '@/components/command-palette';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -179,6 +180,7 @@ export function AppSidebarHeader({
                         {isMac ? '⌘K' : 'Ctrl K'}
                     </kbd>
                 </button>
+                <ClockControl />
                 <Bell />
                 <NewMenu />
                 <AccountMenu />
