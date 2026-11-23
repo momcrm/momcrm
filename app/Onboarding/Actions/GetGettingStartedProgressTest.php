@@ -11,6 +11,7 @@ use App\TeamUser\Actions\CreateTeamUser;
 use App\TeamUser\TeamRoleEnum;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * @return array<string, bool>
@@ -42,6 +43,7 @@ it('ticks steps off as the real records appear', function (): void {
 });
 
 it('does not count sample data', function (): void {
+    Storage::fake('local');
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
     SeedSampleData::forTeam(teamId: $user->current_team_id, userId: $user->id);
 

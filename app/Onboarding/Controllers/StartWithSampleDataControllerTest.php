@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 use App\Customer\CustomerEloquentModel;
 use App\User\UserEloquentModel;
+use Illuminate\Support\Facades\Storage;
 
 use function Pest\Laravel\actingAs;
 
 it('fills the workspace with sample data and finishes onboarding', function (): void {
+    Storage::fake('local');
     $user = UserEloquentModel::factory()->notOnboarded()->withPersonalTeam()->create();
 
     actingAs($user)

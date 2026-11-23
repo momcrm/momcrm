@@ -6,6 +6,10 @@ namespace App\Onboarding\Actions;
 
 use App\Activity\Actions\RecordActivity;
 use App\Activity\ActivityTypeEnum;
+use App\Article\Actions\DeleteArticle;
+use App\Article\Article;
+use App\Article\ArticleEloquentModel;
+use App\Article\Properties\CustomerId as ArticleCustomerId;
 use App\Customer\CustomerEloquentModel;
 use App\Customer\Properties\IsSample;
 use App\Customer\Properties\TeamId;
@@ -19,9 +23,11 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Deletes a team's sample projects (with their tickets) and sample customers.
- * The customers' contacts, locations, assets, services, tickets and invoices
- * go with them through cascading foreign keys,
- * which the audit trail does not see, so one activity entry records the removal.
+ * The customers' articles are deleted first, with their pictures, as an
+ * article only loses its customer when the customer goes. Their contacts,
+ * locations, assets, services, tickets and invoices go with them through
+ * cascading foreign keys, which the audit trail does not see, so one activity
+ * entry records the removal.
  */
 final readonly class RemoveSampleData
 {
@@ -50,6 +56,12 @@ final readonly class RemoveSampleData
                 ->whereIn(TicketProjectId::getDatabaseTableColumnName(), $projects->modelKeys())
                 ->get()
                 ->each(fn (TicketEloquentModel $ticket): ?bool => $ticket->delete());
+
+            ArticleEloquentModel::query()
+                ->withoutGlobalScope(CurrentTeamScope::class)
+                ->whereIn(ArticleCustomerId::getDatabaseTableColumnName(), $customers->modelKeys())
+                ->get()
+                ->each(fn (ArticleEloquentModel $article) => DeleteArticle::fromArticle(Article::fromEloquentModel($article)));
 
             $projects->each(fn (ProjectEloquentModel $project): ?bool => $project->delete());
             $customers->each(fn (CustomerEloquentModel $customer): ?bool => $customer->delete());
