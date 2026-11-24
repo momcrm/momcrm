@@ -180,8 +180,8 @@ export function AppSidebarHeader({
                         {isMac ? '⌘K' : 'Ctrl K'}
                     </kbd>
                 </button>
-                <ClockControl />
                 <Bell />
+                <ClockControl />
                 <NewMenu />
                 <AccountMenu />
             </div>

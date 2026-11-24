@@ -14,7 +14,7 @@ export default function PageHeader({
 }) {
     return (
         <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
+            <div className="min-w-0 flex-[1_1_20rem]">
                 <h1 className="text-[23px] leading-[1.2] font-semibold tracking-[-0.022em] text-balance">
                     {title}
                 </h1>
@@ -25,7 +25,7 @@ export default function PageHeader({
                 )}
             </div>
             {actions && (
-                <div className="ml-auto flex flex-wrap items-center gap-1.5">
+                <div className="ml-auto flex shrink-0 flex-wrap items-center gap-1.5">
                     {actions}
                 </div>
             )}
