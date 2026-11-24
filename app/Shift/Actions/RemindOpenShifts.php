@@ -10,7 +10,9 @@ use App\Shift\Notifications\ShiftStillOpenNotification;
 use App\Shift\Properties\ClockedInAt;
 use App\Shift\Properties\ClockedOutAt;
 use App\Shift\Properties\RemindedAt;
+use App\Shift\Properties\TeamId;
 use App\Shift\ShiftEloquentModel;
+use App\Team\Actions\FindTeam;
 use App\Team\Scopes\CurrentTeamScope;
 use App\User\UserEloquentModel;
 use Carbon\CarbonImmutable;
@@ -20,7 +22,7 @@ use Illuminate\Support\Collection;
  * Tells members who are still clocked in two hours after their scheduled end,
  * or after twelve hours on a day they weren't scheduled. Each shift is
  * reminded about once. Nobody is clocked out for them: a guessed time would
- * end up in payroll. Runs hourly.
+ * end up in payroll. Suspended teams are skipped. Runs hourly.
  */
 final class RemindOpenShifts
 {
@@ -37,6 +39,7 @@ final class RemindOpenShifts
 
         return ShiftEloquentModel::query()
             ->withoutGlobalScope(CurrentTeamScope::class)
+            ->whereNotIn(TeamId::getDatabaseTableColumnName(), FindTeam::suspendedIds())
             ->whereNull(ClockedOutAt::getDatabaseTableColumnName())
             ->whereNull(RemindedAt::getDatabaseTableColumnName())
             ->where(ClockedInAt::getDatabaseTableColumnName(), '<=', $now->subHours(self::HOURS_AFTER_END)->utc()->toDateTimeString())
