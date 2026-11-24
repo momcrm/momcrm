@@ -9,11 +9,13 @@ use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Database\ClassMorphViolationException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Support\Facades\Route;
 use Inertia\Testing\AssertableInertia as Assert;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\get;
 use function Pest\Laravel\getJson;
+use function Pest\Laravel\post;
 
 /**
  * Every Eloquent model class under app/, found from its *EloquentModel.php file.
@@ -107,4 +109,12 @@ it('keeps JSON errors for JSON requests', function (): void {
         ->assertNotFound()
         ->assertHeaderMissing('X-Inertia')
         ->assertJsonStructure(['message']);
+});
+
+it('returns 403, not a broken error page, for a forbidden request outside the web routes', function (): void {
+    Route::post('_test/webhook', fn () => abort(403, 'Invalid webhook signature.'));
+
+    post('/_test/webhook')
+        ->assertForbidden()
+        ->assertHeaderMissing('X-Inertia');
 });

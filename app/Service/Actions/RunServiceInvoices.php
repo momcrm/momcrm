@@ -64,6 +64,12 @@ final readonly class RunServiceInvoices
             $teamId = $customer->getTeamId()->toString();
             $team = $teams[$teamId] ??= FindTeam::byId($teamId);
 
+            // A suspended team is read-only. What it is owed is drafted by the
+            // first run after it is reactivated.
+            if ($team->isSuspended()) {
+                continue;
+            }
+
             DB::transaction(fn (): Invoice => DraftCustomerInvoice::from($customer, $team, $customerLines, $this->day));
 
             $drafted++;

@@ -6,6 +6,7 @@ use App\AuditLog\AuditLogEloquentModel;
 use App\Shift\Actions\RemindOpenShifts;
 use App\Shift\Notifications\ShiftStillOpenNotification;
 use App\Shift\ShiftEloquentModel;
+use App\Team\TeamEloquentModel;
 use App\User\UserEloquentModel;
 use App\WorkSchedule\WorkScheduleEloquentModel;
 use Carbon\CarbonImmutable;
@@ -46,6 +47,17 @@ it('leaves finished shifts alone', function (): void {
     ShiftEloquentModel::factory()->forUser($user)->between(CarbonImmutable::parse('2026-11-23 09:00'), 8)->create();
 
     expect(RemindOpenShifts::run(CarbonImmutable::parse('2026-11-25 09:00')))->toBe(0);
+
+    Notification::assertNothingSent();
+});
+
+it('reminds nobody in a suspended team', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create(['timezone' => 'UTC']);
+    $shift = ShiftEloquentModel::factory()->forUser($user)->between(CarbonImmutable::parse('2026-11-28 10:00'))->create();
+    TeamEloquentModel::query()->whereKey($user->current_team_id)->update(['suspended_at' => now()]);
+
+    expect(RemindOpenShifts::run(CarbonImmutable::parse('2026-11-28 22:00')))->toBe(0)
+        ->and($shift->refresh()->reminded_at)->toBeNull();
 
     Notification::assertNothingSent();
 });
