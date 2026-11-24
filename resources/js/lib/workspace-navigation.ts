@@ -208,7 +208,8 @@ export function workspaceNavigation(
 }
 
 /**
- * The links pinned to the bottom of the sidebar.
+ * Destinations kept out of the sidebar but still reachable from the ⌘K
+ * palette and the "G then key" shortcuts.
  */
 export function footerNavigation(): NavItem[] {
     return [
