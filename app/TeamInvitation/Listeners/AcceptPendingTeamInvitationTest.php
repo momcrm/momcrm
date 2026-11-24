@@ -16,7 +16,7 @@ it('joins the team when a guest who opened the invitation signs up', function ()
     withSession([
         AcceptPendingTeamInvitation::SESSION_KEY => 'secret-token',
         AuthSession::VERIFIED_EMAIL => 'sam@acme.test',
-    ])->post(route('signup.profile.store'), ['name' => 'Sam Lee']);
+    ])->post(route('signup.profile.store'), ['first_name' => 'Sam', 'last_name' => 'Lee']);
 
     $user = UserEloquentModel::query()->where('email', 'sam@acme.test')->sole();
     expect(FindTeamUser::byTeamAndUser(teamId: $invitation->team_id, userId: $user->id)->isNotNull())->toBeTrue()

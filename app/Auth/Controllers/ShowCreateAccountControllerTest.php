@@ -8,14 +8,14 @@ use Inertia\Testing\AssertableInertia as Assert;
 use function Pest\Laravel\get;
 use function Pest\Laravel\withSession;
 
-it('asks what to call a person whose email is proven', function (): void {
-    withSession([AuthSession::VERIFIED_EMAIL => 'sam@acme.test', AuthSession::SUGGESTED_NAME => 'Sam Lee'])
+it('asks the name of a person whose email is proven', function (): void {
+    withSession([AuthSession::VERIFIED_EMAIL => 'sam@acme.test', AuthSession::SUGGESTED_NAME => ['first_name' => 'Sam', 'last_name' => 'Lee']])
         ->get(route('signup.profile'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('auth/create-account')
             ->where('email', 'sam@acme.test')
-            ->where('suggestedName', 'Sam Lee'),
+            ->where('suggestedName', ['first_name' => 'Sam', 'last_name' => 'Lee']),
         );
 });
 

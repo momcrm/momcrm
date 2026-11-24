@@ -46,10 +46,20 @@ it('starts sign-up with a verified Google address, suggesting the Google name', 
     get(route('auth.social.callback', 'google'))
         ->assertRedirectToRoute('signup.profile')
         ->assertSessionHas(AuthSession::VERIFIED_EMAIL, 'sam@acme.test')
-        ->assertSessionHas(AuthSession::SUGGESTED_NAME, 'Sam Lee');
+        ->assertSessionHas(AuthSession::SUGGESTED_NAME, ['first_name' => 'Sam', 'last_name' => 'Lee']);
 
     Notification::assertNothingSent();
 });
+
+it('suggests the first and last name the provider has', function (string $provider, array $raw): void {
+    fakeProviderUser($provider, ['name' => 'Mary Jane Watson', 'email_verified' => true, ...$raw]);
+
+    get(route('auth.social.callback', $provider))
+        ->assertSessionHas(AuthSession::SUGGESTED_NAME, ['first_name' => 'Mary Jane', 'last_name' => 'Watson']);
+})->with([
+    'google' => ['google', ['given_name' => 'Mary Jane', 'family_name' => 'Watson']],
+    'microsoft' => ['microsoft', ['givenName' => 'Mary Jane', 'surname' => 'Watson']],
+]);
 
 it('links a verified Google address to the existing account with that email', function (): void {
     $user = UserEloquentModel::factory()->withPersonalTeam()->create(['email' => 'sam@acme.test']);

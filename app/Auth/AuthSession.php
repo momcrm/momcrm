@@ -28,7 +28,8 @@ final class AuthSession
     public const string PROVEN_EMAIL = 'auth.proven_email';
 
     /**
-     * A suggested name for the new account, from Google or Microsoft.
+     * A suggested name for the new account, from Google or Microsoft:
+     * array{first_name: string, last_name: string}.
      */
     public const string SUGGESTED_NAME = 'auth.suggested_name';
 

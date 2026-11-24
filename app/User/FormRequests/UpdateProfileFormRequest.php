@@ -8,7 +8,9 @@ use App\Activity\Actions\RecordActivity;
 use App\Activity\ActivityTypeEnum;
 use App\User\Actions\UpdateUser;
 use App\User\Properties\Email;
+use App\User\Properties\FirstName;
 use App\User\Properties\JobTitle;
+use App\User\Properties\LastName;
 use App\User\Properties\Name;
 use App\User\Properties\Timezone;
 use App\User\User;
@@ -25,7 +27,8 @@ final class UpdateProfileFormRequest extends FormRequest
     public function rules(): array
     {
         return [
-            Name::getNameForValidation() => Name::getValidationRulesForUpdate($this),
+            FirstName::getNameForValidation() => FirstName::getValidationRulesForUpdate($this),
+            LastName::getNameForValidation() => LastName::getValidationRulesForUpdate($this),
             Email::getNameForValidation() => Email::getValidationRulesForUpdate($this),
             JobTitle::getNameForValidation() => JobTitle::getValidationRulesForUpdate($this),
             Timezone::getNameForValidation() => Timezone::getValidationRulesForUpdate($this),
@@ -40,7 +43,10 @@ final class UpdateProfileFormRequest extends FormRequest
         $previousJobTitle = $user->getJobTitle()->toNullableString();
         $previousTimezone = $user->getTimezone()->toNullableString();
 
-        $user->setPropertyIfExists($this->validated());
+        $user->setPropertyIfExists($this->validated())->setFirstAndLastName(
+            $this->string(FirstName::getNameForValidation())->toString(),
+            $this->string(LastName::getNameForValidation())->toString(),
+        );
 
         if ($user->getEmail()->toString() !== $previousEmail) {
             $user->setEmailVerifiedAt(null);

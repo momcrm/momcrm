@@ -38,6 +38,8 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 /**
  * @property string $id
  * @property string $name
+ * @property string|null $first_name
+ * @property string|null $last_name
  * @property string|null $job_title
  * @property string|null $timezone
  * @property bool $is_platform_admin

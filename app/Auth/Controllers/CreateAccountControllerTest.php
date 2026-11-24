@@ -19,12 +19,14 @@ use function Pest\Laravel\withSession;
 
 it('creates a verified, passwordless account with a personal team and starts onboarding', function (): void {
     withSession([AuthSession::VERIFIED_EMAIL => 'ada@acme.test'])
-        ->post(route('signup.profile.store'), ['name' => 'Ada Lovelace'])
+        ->post(route('signup.profile.store'), ['first_name' => ' Ada ', 'last_name' => 'Lovelace'])
         ->assertRedirect(route('dashboard'));
 
     $user = UserEloquentModel::query()->where('email', 'ada@acme.test')->sole();
     expect($user)
         ->name->toBe('Ada Lovelace')
+        ->first_name->toBe('Ada')
+        ->last_name->toBe('Lovelace')
         ->password->toBeNull()
         ->email_verified_at->not->toBeNull()
         ->onboarded_at->toBeNull();
@@ -36,7 +38,7 @@ it('creates a verified, passwordless account with a personal team and starts onb
 
 it('saves an optional password, hashed', function (): void {
     withSession([AuthSession::VERIFIED_EMAIL => 'ada@acme.test'])
-        ->post(route('signup.profile.store'), ['name' => 'Ada', 'password' => 'a-long-passphrase']);
+        ->post(route('signup.profile.store'), ['first_name' => 'Ada', 'last_name' => 'Lovelace', 'password' => 'a-long-passphrase']);
 
     expect(Hash::check('a-long-passphrase', (string) UserEloquentModel::query()->sole()->password))->toBeTrue();
 });
@@ -44,7 +46,7 @@ it('saves an optional password, hashed', function (): void {
 it('announces the new account so listeners such as invitations run', function (): void {
     Event::fake([Registered::class]);
 
-    withSession([AuthSession::VERIFIED_EMAIL => 'ada@acme.test'])->post(route('signup.profile.store'), ['name' => 'Ada']);
+    withSession([AuthSession::VERIFIED_EMAIL => 'ada@acme.test'])->post(route('signup.profile.store'), ['first_name' => 'Ada', 'last_name' => 'Lovelace']);
 
     Event::assertDispatched(Registered::class, fn (Registered $event): bool => $event->user->email === 'ada@acme.test');
 });
@@ -53,7 +55,7 @@ it('links the Google or Microsoft account that started the sign-up', function ()
     withSession([
         AuthSession::VERIFIED_EMAIL => 'ada@acme.test',
         AuthSession::PENDING_SOCIAL => ['provider' => 'google', 'provider_user_id' => 'g-123', 'email' => 'ada@acme.test'],
-    ])->post(route('signup.profile.store'), ['name' => 'Ada']);
+    ])->post(route('signup.profile.store'), ['first_name' => 'Ada', 'last_name' => 'Lovelace']);
 
     expect(SocialAccountEloquentModel::query()->sole())
         ->provider->toBe('google')
@@ -61,16 +63,16 @@ it('links the Google or Microsoft account that started the sign-up', function ()
         ->user_id->toBe(UserEloquentModel::query()->sole()->id);
 });
 
-it('requires a name', function (): void {
+it('requires a first and a last name', function (): void {
     withSession([AuthSession::VERIFIED_EMAIL => 'ada@acme.test'])
-        ->post(route('signup.profile.store'), ['name' => ''])
-        ->assertSessionHasErrors(['name' => 'Tell us what to call you.']);
+        ->post(route('signup.profile.store'), ['first_name' => '', 'last_name' => ''])
+        ->assertSessionHasErrors(['first_name' => 'Enter your first name.', 'last_name' => 'Enter your last name.']);
 
     expect(UserEloquentModel::query()->exists())->toBeFalse();
 });
 
 it('creates nothing without a proven email', function (): void {
-    post(route('signup.profile.store'), ['name' => 'Ada'])->assertRedirectToRoute('signup');
+    post(route('signup.profile.store'), ['first_name' => 'Ada', 'last_name' => 'Lovelace'])->assertRedirectToRoute('signup');
 
     expect(UserEloquentModel::query()->exists())->toBeFalse();
     assertGuest();

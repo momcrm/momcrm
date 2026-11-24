@@ -9,7 +9,9 @@ use App\TeamUser\Actions\CreateTeamUser;
 use App\TeamUser\TeamRoleEnum;
 use App\User\Properties\Email;
 use App\User\Properties\EmailVerifiedAt;
+use App\User\Properties\FirstName;
 use App\User\Properties\IsPlatformAdmin;
+use App\User\Properties\LastName;
 use App\User\Properties\Name;
 use App\User\Properties\OnboardedAt;
 use App\User\Properties\Password;
@@ -36,8 +38,13 @@ final class UserFactory extends Factory
      */
     public function definition(): array
     {
+        $firstName = fake()->firstName();
+        $lastName = fake()->lastName();
+
         return [
-            Name::getDatabaseTableColumnName() => fake()->name(),
+            Name::getDatabaseTableColumnName() => "{$firstName} {$lastName}",
+            FirstName::getDatabaseTableColumnName() => $firstName,
+            LastName::getDatabaseTableColumnName() => $lastName,
             Email::getDatabaseTableColumnName() => fake()->unique()->safeEmail(),
             EmailVerifiedAt::getDatabaseTableColumnName() => now(),
             OnboardedAt::getDatabaseTableColumnName() => now(),

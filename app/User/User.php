@@ -10,10 +10,12 @@ use App\User\Properties\CreatedAt;
 use App\User\Properties\CurrentTeamId;
 use App\User\Properties\Email;
 use App\User\Properties\EmailVerifiedAt;
+use App\User\Properties\FirstName;
 use App\User\Properties\GettingStartedDismissedAt;
 use App\User\Properties\Id;
 use App\User\Properties\IsPlatformAdmin;
 use App\User\Properties\JobTitle;
+use App\User\Properties\LastName;
 use App\User\Properties\Name;
 use App\User\Properties\OnboardedAt;
 use App\User\Properties\OnboardingRole;
@@ -40,10 +42,12 @@ final class User extends AbstractData
         public CurrentTeamId $currentTeamId,
         public Email $email,
         public EmailVerifiedAt $emailVerifiedAt,
+        public FirstName $firstName,
         public GettingStartedDismissedAt $gettingStartedDismissedAt,
         public Id $id,
         public IsPlatformAdmin $isPlatformAdmin,
         public JobTitle $jobTitle,
+        public LastName $lastName,
         public Name $name,
         public OnboardedAt $onboardedAt,
         public OnboardingRole $onboardingRole,
@@ -263,6 +267,49 @@ final class User extends AbstractData
         $this->name = Name::fromNullableString($name->toNullableString());
 
         return $this;
+    }
+
+    public function getFirstName(): FirstName
+    {
+        return $this->firstName;
+    }
+
+    public function setFirstName(FirstName|AbstractString|string|null $firstName): self
+    {
+        $this->firstName = $firstName instanceof FirstName
+            ? $firstName
+            : FirstName::fromNullableString($firstName instanceof AbstractString ? $firstName->toNullableString() : $firstName);
+
+        return $this;
+    }
+
+    public function getLastName(): LastName
+    {
+        return $this->lastName;
+    }
+
+    public function setLastName(LastName|AbstractString|string|null $lastName): self
+    {
+        $this->lastName = $lastName instanceof LastName
+            ? $lastName
+            : LastName::fromNullableString($lastName instanceof AbstractString ? $lastName->toNullableString() : $lastName);
+
+        return $this;
+    }
+
+    /**
+     * Sets the first and last name, and the name shown everywhere from them,
+     * e.g. "Ada" and "Lovelace" make "Ada Lovelace".
+     */
+    public function setFirstAndLastName(string $firstName, string $lastName): self
+    {
+        $firstName = trim($firstName);
+        $lastName = trim($lastName);
+
+        return $this
+            ->setFirstName($firstName)
+            ->setLastName($lastName)
+            ->setName(trim("{$firstName} {$lastName}"));
     }
 
     public function getOnboardedAt(): OnboardedAt
