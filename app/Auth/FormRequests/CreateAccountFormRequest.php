@@ -9,7 +9,8 @@ use App\Auth\Actions\LogInUser;
 use App\Auth\AuthSession;
 use App\SocialAccount\Actions\LinkSocialAccount;
 use App\User\Properties\Email;
-use App\User\Properties\Name;
+use App\User\Properties\FirstName;
+use App\User\Properties\LastName;
 use App\User\UserEloquentModel;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Foundation\Http\FormRequest;
@@ -17,7 +18,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Validation\Rules\Password;
 
 /**
- * "What should we call you?": creates the account for a proven email address.
+ * "What's your name?": creates the account for a proven email address. Like a
+ * Microsoft account, it needs both a first and a last name.
  */
 final class CreateAccountFormRequest extends FormRequest
 {
@@ -27,7 +29,8 @@ final class CreateAccountFormRequest extends FormRequest
     public function rules(): array
     {
         return [
-            Name::getNameForValidation() => Name::getValidationRulesForCreate($this),
+            FirstName::getNameForValidation() => FirstName::getValidationRulesForCreate($this),
+            LastName::getNameForValidation() => LastName::getValidationRulesForCreate($this),
             'password' => ['nullable', 'string', Password::default()],
         ];
     }
@@ -38,7 +41,8 @@ final class CreateAccountFormRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required' => __('Tell us what to call you.'),
+            'first_name.required' => __('Enter your first name.'),
+            'last_name.required' => __('Enter your last name.'),
         ];
     }
 
@@ -55,7 +59,8 @@ final class CreateAccountFormRequest extends FormRequest
         if ($user === null) {
             $user = CreateAccount::for(
                 email: $email,
-                name: $this->string(Name::getNameForValidation())->trim()->toString(),
+                firstName: $this->string(FirstName::getNameForValidation())->trim()->toString(),
+                lastName: $this->string(LastName::getNameForValidation())->trim()->toString(),
                 password: $this->filled('password') ? $this->string('password')->toString() : null,
             );
 

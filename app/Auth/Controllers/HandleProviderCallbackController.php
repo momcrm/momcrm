@@ -17,6 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
+use Laravel\Socialite\AbstractUser;
 use Laravel\Socialite\Contracts\User as SocialUser;
 use Laravel\Socialite\Socialite;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -70,7 +71,7 @@ final class HandleProviderCallbackController
             'provider_user_id' => (string) $socialUser->getId(),
             'email' => $email,
         ]);
-        $request->session()->put(AuthSession::SUGGESTED_NAME, $socialUser->getName());
+        $request->session()->put(AuthSession::SUGGESTED_NAME, self::suggestedName($socialUser));
 
         if (self::emailIsVerified($found, $socialUser)) {
             return SignInProvenEmail::andRedirect($request, $email);
@@ -85,6 +86,28 @@ final class HandleProviderCallbackController
         ])]);
 
         return to_route('auth.code');
+    }
+
+    /**
+     * The first and last name the provider has for the person: Google's
+     * given_name and family_name, Microsoft's givenName and surname, or else
+     * their full name split at the first space.
+     *
+     * @return array{first_name: string, last_name: string}
+     */
+    private static function suggestedName(SocialUser $socialUser): array
+    {
+        $raw = $socialUser instanceof AbstractUser ? $socialUser->getRaw() : [];
+        $firstName = $raw['given_name'] ?? $raw['givenName'] ?? null;
+        $lastName = $raw['family_name'] ?? $raw['surname'] ?? null;
+
+        if (is_string($firstName) && is_string($lastName)) {
+            return ['first_name' => trim($firstName), 'last_name' => trim($lastName)];
+        }
+
+        $parts = explode(' ', trim((string) $socialUser->getName()), 2);
+
+        return ['first_name' => $parts[0], 'last_name' => trim($parts[1] ?? '')];
     }
 
     private static function emailIsVerified(SocialProviderEnum $provider, SocialUser $socialUser): bool

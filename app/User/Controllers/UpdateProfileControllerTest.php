@@ -15,7 +15,8 @@ it('updates the name and email and clears email verification', function (): void
 
     actingAs($user)
         ->patch(route('profile.update'), [
-            'name' => 'Test User',
+            'first_name' => ' Test ',
+            'last_name' => 'User',
             'email' => 'test@example.com',
         ])
         ->assertSessionHasNoErrors()
@@ -23,7 +24,7 @@ it('updates the name and email and clears email verification', function (): void
 
     $user->refresh();
 
-    expect($user->name)->toBe('Test User')
+    expect($user->only(['first_name', 'last_name', 'name']))->toBe(['first_name' => 'Test', 'last_name' => 'User', 'name' => 'Test User'])
         ->and($user->email)->toBe('test@example.com')
         ->and($user->email_verified_at)->toBeNull();
 });
@@ -33,7 +34,8 @@ it('stores the email in lowercase so the user can still log in', function (): vo
 
     actingAs($user)
         ->patch(route('profile.update'), [
-            'name' => 'Test User',
+            'first_name' => 'Test',
+            'last_name' => 'User',
             'email' => 'Test@Example.com',
         ])
         ->assertSessionHasNoErrors();
@@ -50,13 +52,25 @@ it('stores the email in lowercase so the user can still log in', function (): vo
     assertAuthenticatedAs($user);
 });
 
+it('requires a first and a last name', function (): void {
+    $user = UserEloquentModel::factory()->create(['name' => 'Ada Lovelace', 'first_name' => 'Ada', 'last_name' => 'Lovelace']);
+
+    actingAs($user)
+        ->from(route('profile.edit'))
+        ->patch(route('profile.update'), ['first_name' => 'Ada', 'last_name' => ' ', 'email' => $user->email])
+        ->assertSessionHasErrors('last_name');
+
+    expect($user->refresh()->name)->toBe('Ada Lovelace');
+});
+
 it('rejects an email already taken regardless of case', function (): void {
     UserEloquentModel::factory()->create(['email' => 'taken@example.com']);
 
     actingAs(UserEloquentModel::factory()->create())
         ->from(route('profile.edit'))
         ->patch(route('profile.update'), [
-            'name' => 'Test User',
+            'first_name' => 'Test',
+            'last_name' => 'User',
             'email' => 'Taken@Example.com',
         ])
         ->assertSessionHasErrors('email')
@@ -68,7 +82,8 @@ it('keeps the email verified when the email address is unchanged', function (): 
 
     actingAs($user)
         ->patch(route('profile.update'), [
-            'name' => 'Test User',
+            'first_name' => 'Test',
+            'last_name' => 'User',
             'email' => $user->email,
         ])
         ->assertSessionHasNoErrors()
@@ -81,7 +96,8 @@ it('records which profile fields changed, without their values', function (): vo
     $user = UserEloquentModel::factory()->create();
 
     actingAs($user)->patch(route('profile.update'), [
-        'name' => 'Brand New Name',
+        'first_name' => 'Brand',
+        'last_name' => 'New',
         'email' => $user->email,
     ]);
 
@@ -94,7 +110,8 @@ it('records nothing when the profile is saved unchanged', function (): void {
     $user = UserEloquentModel::factory()->create();
 
     actingAs($user)->patch(route('profile.update'), [
-        'name' => $user->name,
+        'first_name' => $user->first_name,
+        'last_name' => $user->last_name,
         'email' => $user->email,
     ]);
 
@@ -103,7 +120,7 @@ it('records nothing when the profile is saved unchanged', function (): void {
 
 it('saves a job title and timezone, and clears them when left empty', function (): void {
     $user = UserEloquentModel::factory()->create();
-    $profile = ['name' => $user->name, 'email' => $user->email];
+    $profile = ['first_name' => $user->first_name, 'last_name' => $user->last_name, 'email' => $user->email];
 
     actingAs($user)
         ->patch(route('profile.update'), [...$profile, 'job_title' => '  Head of Support ', 'timezone' => 'Australia/Perth'])
@@ -122,7 +139,7 @@ it('keeps the job title and timezone when a save leaves them out', function (): 
     $user = UserEloquentModel::factory()->create(['job_title' => 'Designer', 'timezone' => 'Europe/London']);
 
     actingAs($user)
-        ->patch(route('profile.update'), ['name' => 'New Name', 'email' => $user->email])
+        ->patch(route('profile.update'), ['first_name' => 'New', 'last_name' => 'Name', 'email' => $user->email])
         ->assertSessionHasNoErrors();
 
     expect($user->refresh()->only(['job_title', 'timezone']))->toBe(['job_title' => 'Designer', 'timezone' => 'Europe/London']);
@@ -133,7 +150,7 @@ it('rejects a timezone that does not exist', function (): void {
 
     actingAs($user)
         ->from(route('profile.edit'))
-        ->patch(route('profile.update'), ['name' => $user->name, 'email' => $user->email, 'timezone' => 'Mars/Olympus'])
+        ->patch(route('profile.update'), ['first_name' => $user->first_name, 'last_name' => $user->last_name, 'email' => $user->email, 'timezone' => 'Mars/Olympus'])
         ->assertSessionHasErrors('timezone');
 
     expect($user->refresh()->timezone)->toBeNull();

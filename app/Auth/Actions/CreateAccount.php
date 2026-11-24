@@ -19,7 +19,8 @@ final readonly class CreateAccount
 {
     public function __construct(
         private string $email,
-        private string $name,
+        private string $firstName,
+        private string $lastName,
         private ?string $password,
     ) {}
 
@@ -27,7 +28,7 @@ final readonly class CreateAccount
     {
         return DB::transaction(function (): UserEloquentModel {
             $user = User::new()
-                ->setName($this->name)
+                ->setFirstAndLastName($this->firstName, $this->lastName)
                 ->setEmail($this->email)
                 ->setEmailVerifiedAt(CarbonImmutable::now());
 
@@ -42,9 +43,9 @@ final readonly class CreateAccount
         });
     }
 
-    public static function for(string $email, string $name, ?string $password): UserEloquentModel
+    public static function for(string $email, string $firstName, string $lastName, ?string $password): UserEloquentModel
     {
-        return new self($email, $name, $password)->handle();
+        return new self($email, $firstName, $lastName, $password)->handle();
     }
 
     public function handle(): UserEloquentModel

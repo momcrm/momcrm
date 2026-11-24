@@ -8,12 +8,13 @@ import CreateAccountController from '@/actions/App/Auth/Controllers/CreateAccoun
 
 type Props = {
     email: string;
-    suggestedName: string | null;
+    suggestedName: { first_name: string; last_name: string } | null;
     passwordRules: string;
 };
 
 /**
- * Notion's "What should we call you?": a name, and a password only if you want one.
+ * Microsoft's "What's your name?": a first and last name, both required, and a
+ * password only if you want one.
  */
 export default function CreateAccount({
     email,
@@ -36,22 +37,44 @@ export default function CreateAccount({
             >
                 {({ processing, errors }) => (
                     <>
-                        <FormField
-                            id="name"
-                            label="What should we call you?"
-                            hint="A first name or nickname works. It's how MomCRM and your team will see you."
-                            error={errors.name}
-                        >
-                            <Input
-                                id="name"
-                                name="name"
-                                defaultValue={suggestedName ?? ''}
-                                required
-                                autoFocus
-                                autoComplete="name"
-                                placeholder="Jane"
-                            />
-                        </FormField>
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <FormField
+                                id="first_name"
+                                label="First name"
+                                error={errors.first_name}
+                            >
+                                <Input
+                                    id="first_name"
+                                    name="first_name"
+                                    defaultValue={
+                                        suggestedName?.first_name ?? ''
+                                    }
+                                    required
+                                    autoFocus
+                                    maxLength={100}
+                                    autoComplete="given-name"
+                                    placeholder="Jane"
+                                />
+                            </FormField>
+
+                            <FormField
+                                id="last_name"
+                                label="Last name"
+                                error={errors.last_name}
+                            >
+                                <Input
+                                    id="last_name"
+                                    name="last_name"
+                                    defaultValue={
+                                        suggestedName?.last_name ?? ''
+                                    }
+                                    required
+                                    maxLength={100}
+                                    autoComplete="family-name"
+                                    placeholder="Smith"
+                                />
+                            </FormField>
+                        </div>
 
                         <FormField
                             id="password"
