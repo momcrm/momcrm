@@ -52,6 +52,7 @@ use App\Service\Service;
 use App\Service\ServicePolicy;
 use App\Shared\MorphMapKeyEnum;
 use App\Shared\SettingsNavigation;
+use App\Team\SuspendedTeamAction;
 use App\Team\Team;
 use App\Team\TeamPolicy;
 use App\TeamInvitation\Listeners\AcceptPendingTeamInvitation;
@@ -101,6 +102,7 @@ class AppServiceProvider extends ServiceProvider
                 ->register(new MicrosoftConnector, new GoogleConnector, new ImapConnector);
         });
         $this->app->singleton(SettingsNavigation::class);
+        $this->app->singleton(SuspendedTeamAction::class);
         $this->app->bind(EnvironmentFile::class, fn (): EnvironmentFile => new EnvironmentFile(
             path: $this->app->environmentFilePath(),
             backupDirectory: storage_path('app/private/environment-backups'),
