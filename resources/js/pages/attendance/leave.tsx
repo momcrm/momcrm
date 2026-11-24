@@ -206,27 +206,33 @@ export default function AttendanceLeave({
                 <PageHeader
                     title="Leave"
                     description="Time off, asked for and approved here. Approved leave shows on the calendar and keeps people from showing as absent."
+                />
+
+                <AttendanceTabs
+                    current="leave"
                     actions={
                         hasTypes ? (
-                            <div className="flex gap-2">
+                            <>
                                 {canManage && (
                                     <Button
                                         variant="outline"
+                                        size="sm"
                                         onClick={() => setDialog('record')}
                                     >
                                         Record leave
                                     </Button>
                                 )}
-                                <Button onClick={() => setDialog('request')}>
+                                <Button
+                                    size="sm"
+                                    onClick={() => setDialog('request')}
+                                >
                                     <Plus />
                                     Request leave
                                 </Button>
-                            </div>
+                            </>
                         ) : undefined
                     }
                 />
-
-                <AttendanceTabs current="leave" />
 
                 {!hasTypes && (
                     <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
