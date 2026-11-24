@@ -14,6 +14,13 @@ declare module '@inertiajs/core' {
             auth: Auth;
             sidebarOpen: boolean;
             hasSampleData?: boolean;
+            /** Settings pages added by installed packages. */
+            settingsNavigation?: {
+                section: string;
+                title: string;
+                href: string;
+                icon?: string;
+            }[];
             canRemoveSampleData?: boolean;
             canManageAccessRules?: boolean;
             canManageAttendance?: boolean;

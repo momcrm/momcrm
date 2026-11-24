@@ -5,6 +5,7 @@ import {
     Boxes,
     Building2,
     Clock,
+    CreditCard,
     FileCog,
     KeyRound,
     Landmark,
@@ -12,6 +13,7 @@ import {
     Package,
     Palette,
     Plug,
+    Puzzle,
     Receipt,
     Shield,
     UserRound,
@@ -112,6 +114,15 @@ const environmentItem: NavItem = {
     icon: FileCog,
 };
 
+/**
+ * The icons a package may ask for by name for its settings page. Any other
+ * name, or none, gets the puzzle piece.
+ */
+const packageIcons: Record<string, NavItem['icon']> = {
+    'credit-card': CreditCard,
+    'users-round': UsersRound,
+};
+
 const sections: { title: string; items: NavItem[] }[] = [
     {
         title: 'Account',
@@ -152,8 +163,9 @@ export default function SettingsLayout({
         canManageEnvironment,
         canManageRates,
         canManageWorkflow,
+        settingsNavigation = [],
     } = usePage().props;
-    const visibleSections = [
+    const appSections = [
         ...sections,
         // The .env belongs to the whole installation, not to a team.
         ...(canManageEnvironment
@@ -179,6 +191,25 @@ export default function SettingsLayout({
                   ],
               }
             : section,
+    );
+    // Packages add their own pages: to the section they name, or a new one.
+    const visibleSections = settingsNavigation.reduce(
+        (all, { section, title, href, icon }) => {
+            const item = {
+                title,
+                href,
+                icon: packageIcons[icon ?? ''] ?? Puzzle,
+            };
+
+            return all.some((existing) => existing.title === section)
+                ? all.map((existing) =>
+                      existing.title === section
+                          ? { ...existing, items: [...existing.items, item] }
+                          : existing,
+                  )
+                : [...all, { title: section, items: [item] }];
+        },
+        appSections,
     );
 
     return (
