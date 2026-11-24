@@ -43,3 +43,6 @@ yarn-error.log
 /boost.json
 /opencode.json
 /opencode.jsonc
+
+# Settings pages published by installed packages.
+/resources/js/pages/settings/vendor

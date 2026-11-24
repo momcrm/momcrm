@@ -20,6 +20,7 @@ use App\Portal\Actions\FindPortalContacts;
 use App\Portal\PortalAuth;
 use App\Portal\PortalProps;
 use App\Project\Actions\FindProject;
+use App\Shared\SettingsNavigation;
 use App\Team\Actions\FindTeam;
 use App\Team\Team;
 use App\Ticket\Actions\FindTicket;
@@ -38,6 +39,10 @@ class HandleInertiaRequests extends Middleware
      * @var string
      */
     protected $rootView = 'app';
+
+    public function __construct(
+        private readonly SettingsNavigation $settingsNavigation,
+    ) {}
 
     /**
      * Determines the current asset version.
@@ -85,6 +90,7 @@ class HandleInertiaRequests extends Middleware
             'canManageWorkflow' => fn (): bool => $this->allowsOnCurrentTeam($request, 'manageWorkflow'),
             'canManageEnvironment' => fn (): bool => $request->user() instanceof UserEloquentModel
                 && Gate::forUser($request->user())->allows('manage', EnvironmentVariables::class),
+            'settingsNavigation' => fn (): array => $this->settingsNavigation->for($request),
             'sidebarCounts' => fn (): ?array => $this->sidebarCounts($request),
             'choices' => fn (): ?array => $this->choices($request),
             'attendanceClock' => fn (): ?array => $this->attendanceClock($request),
