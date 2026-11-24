@@ -11,6 +11,7 @@ use App\Team\Factories\TeamFactory;
 use App\Team\Properties\Id;
 use App\Team\Properties\IsPersonal;
 use App\Team\Properties\OwnerId;
+use App\Team\Properties\SuspendedAt;
 use App\TeamUser\Properties\Role;
 use App\TeamUser\Properties\TeamId;
 use App\TeamUser\Properties\UserId;
@@ -39,6 +40,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property int $days_to_pay
  * @property string|null $bpay_biller_code
  * @property bool $personal_team
+ * @property CarbonImmutable|null $suspended_at
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  */
@@ -108,6 +110,7 @@ final class TeamEloquentModel extends Model implements Auditable
     {
         return [
             IsPersonal::getDatabaseTableColumnName() => 'boolean',
+            SuspendedAt::getDatabaseTableColumnName() => 'immutable_datetime',
         ];
     }
 

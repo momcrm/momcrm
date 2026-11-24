@@ -17,6 +17,7 @@ export type User = {
 export type Team = {
     id: string;
     name: string;
+    is_suspended: boolean;
 };
 
 export type Auth = {

@@ -19,6 +19,7 @@ use App\Team\Properties\IsPersonal;
 use App\Team\Properties\Name;
 use App\Team\Properties\OwnerId;
 use App\Team\Properties\PaymentDetails;
+use App\Team\Properties\SuspendedAt;
 use App\Team\Properties\TaxId;
 use App\Team\Properties\TaxIdLabel;
 use App\Team\Properties\TimesheetPeriod;
@@ -51,6 +52,7 @@ final class Team extends AbstractData
         public IsPersonal $isPersonal,
         public Name $name,
         public OwnerId $ownerId,
+        public SuspendedAt $suspendedAt,
         public TimesheetPeriod $timesheetPeriod,
         public TimesheetStartsOn $timesheetStartsOn,
         public UpdatedAt $updatedAt,
@@ -81,13 +83,14 @@ final class Team extends AbstractData
     /**
      * The minimal shape the frontend needs to show and switch teams.
      *
-     * @return array{id: string, name: string}
+     * @return array{id: string, name: string, is_suspended: bool}
      */
     public function toSummary(): array
     {
         return [
             'id' => $this->getId()->toString(),
             'name' => $this->getName()->toString(),
+            'is_suspended' => $this->isSuspended(),
         ];
     }
 
@@ -190,6 +193,26 @@ final class Team extends AbstractData
         $this->ownerId = OwnerId::fromNullableUuid($ownerId);
 
         return $this;
+    }
+
+    public function getSuspendedAt(): SuspendedAt
+    {
+        return $this->suspendedAt;
+    }
+
+    public function setSuspendedAt(mixed $suspendedAt): self
+    {
+        $this->suspendedAt = new SuspendedAt($suspendedAt instanceof AbstractValue ? $suspendedAt->toValue() : $suspendedAt);
+
+        return $this;
+    }
+
+    /**
+     * Whether the team is read-only for now. See SuspendTeam.
+     */
+    public function isSuspended(): bool
+    {
+        return $this->suspendedAt->isNotNull();
     }
 
     public function getUpdatedAt(): UpdatedAt

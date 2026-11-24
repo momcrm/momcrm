@@ -9,10 +9,12 @@ use App\Choice\Actions\SeedDefaultChoices;
 use App\Team\Properties\IsPersonal;
 use App\Team\Properties\Name;
 use App\Team\Properties\OwnerId;
+use App\Team\Properties\SuspendedAt;
 use App\Team\TeamEloquentModel;
 use App\TeamUser\Actions\CreateTeamUser;
 use App\TeamUser\TeamRoleEnum;
 use App\User\UserEloquentModel;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -32,6 +34,16 @@ final class TeamFactory extends Factory
             Name::getDatabaseTableColumnName() => fake()->company(),
             IsPersonal::getDatabaseTableColumnName() => false,
         ];
+    }
+
+    /**
+     * A team that is read-only until it is reactivated.
+     */
+    public function suspended(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            SuspendedAt::getDatabaseTableColumnName() => CarbonImmutable::now(),
+        ]);
     }
 
     /**
