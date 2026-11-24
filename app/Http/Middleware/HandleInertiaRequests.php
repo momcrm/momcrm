@@ -225,7 +225,7 @@ class HandleInertiaRequests extends Middleware
     }
 
     /**
-     * @return array{id: string, name: string}|null
+     * @return array{id: string, name: string, is_suspended: bool}|null
      */
     private function currentTeam(Request $request): ?array
     {
@@ -241,7 +241,7 @@ class HandleInertiaRequests extends Middleware
     }
 
     /**
-     * @return array<int, array{id: string, name: string}>
+     * @return array<int, array{id: string, name: string, is_suspended: bool}>
      */
     private function teams(Request $request): array
     {

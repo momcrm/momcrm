@@ -4,6 +4,7 @@ import { AppSidebar } from '@/components/app-sidebar';
 import { AppSidebarHeader } from '@/components/app-sidebar-header';
 import { CommandPaletteProvider } from '@/components/command-palette';
 import SampleDataBanner from '@/components/sample-data-banner';
+import SuspendedTeamBanner from '@/components/suspended-team-banner';
 import { CreateContactProvider } from '@/components/contacts/create-contact-dialog';
 import { CreateCustomerProvider } from '@/components/customers/create-customer-dialog';
 import { CreateTicketProvider } from '@/components/tickets/create-ticket-dialog';
@@ -25,6 +26,7 @@ export default function AppSidebarLayout({
                                 className="min-w-0 overflow-x-clip"
                             >
                                 <AppSidebarHeader breadcrumbs={breadcrumbs} />
+                                <SuspendedTeamBanner />
                                 <SampleDataBanner />
                                 {children}
                             </AppContent>
