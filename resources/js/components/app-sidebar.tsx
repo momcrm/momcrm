@@ -13,10 +13,7 @@ import {
     SidebarHeader,
     SidebarTrigger,
 } from '@/components/ui/sidebar';
-import {
-    footerNavigation,
-    workspaceNavigation,
-} from '@/lib/workspace-navigation';
+import { workspaceNavigation } from '@/lib/workspace-navigation';
 
 export function AppSidebar() {
     const { sidebarCounts } = usePage().props;
@@ -45,11 +42,7 @@ export function AppSidebar() {
                 {sidebarCounts && <NavObjects />}
             </SidebarContent>
 
-            <SidebarFooter className="gap-1 p-2">
-                <NavSection
-                    section={{ items: footerNavigation() }}
-                    className="p-0"
-                />
+            <SidebarFooter className="gap-1 border-t border-sidebar-border p-2">
                 <NavUser />
             </SidebarFooter>
         </Sidebar>
