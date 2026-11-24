@@ -18,12 +18,17 @@ Requirements: PHP 8.4+, Composer, Node.js 22+, MySQL 8+.
 git clone <repo-url> momcrm
 cd momcrm
 composer install
-npm install
-cp .env.example .env
-php artisan key:generate
-# create a `momcrm` database and update the DB_* values in .env as needed
-php artisan migrate
+php artisan momcrm:install
 composer run dev
+```
+
+`momcrm:install` asks for the address, database and mail server, writes them to `.env`, creates the database and its tables, makes your account and builds the front-end assets. It is safe to run again: it starts from the current settings and only writes what changed.
+
+For a scripted install, put the settings in `.env` or the environment and run it without questions:
+
+```bash
+php artisan momcrm:install --no-interaction \
+    --email=you@example.com --first-name=Ada --last-name=Lovelace --password='a strong password'
 ```
 
 The app runs at http://localhost:8000.
