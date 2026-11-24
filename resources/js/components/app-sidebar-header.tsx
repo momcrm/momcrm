@@ -181,8 +181,8 @@ export function AppSidebarHeader({
                     </kbd>
                 </button>
                 <Bell />
-                <ClockControl />
                 <NewMenu />
+                <ClockControl />
                 <AccountMenu />
             </div>
         </header>
