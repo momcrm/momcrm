@@ -14,6 +14,8 @@ declare module '@inertiajs/core' {
             auth: Auth;
             sidebarOpen: boolean;
             hasSampleData?: boolean;
+            /** What to do about the current team being suspended, if anything. */
+            suspendedTeamAction?: { label: string; href: string } | null;
             /** Settings pages added by installed packages. */
             settingsNavigation?: {
                 section: string;

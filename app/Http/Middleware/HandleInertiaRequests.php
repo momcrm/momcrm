@@ -22,6 +22,7 @@ use App\Portal\PortalProps;
 use App\Project\Actions\FindProject;
 use App\Shared\SettingsNavigation;
 use App\Team\Actions\FindTeam;
+use App\Team\SuspendedTeamAction;
 use App\Team\Team;
 use App\Ticket\Actions\FindTicket;
 use App\User\UserEloquentModel;
@@ -42,6 +43,7 @@ class HandleInertiaRequests extends Middleware
 
     public function __construct(
         private readonly SettingsNavigation $settingsNavigation,
+        private readonly SuspendedTeamAction $suspendedTeamAction,
     ) {}
 
     /**
@@ -91,6 +93,7 @@ class HandleInertiaRequests extends Middleware
             'canManageEnvironment' => fn (): bool => $request->user() instanceof UserEloquentModel
                 && Gate::forUser($request->user())->allows('manage', EnvironmentVariables::class),
             'settingsNavigation' => fn (): array => $this->settingsNavigation->for($request),
+            'suspendedTeamAction' => fn (): ?array => $this->suspendedTeamAction($request),
             'sidebarCounts' => fn (): ?array => $this->sidebarCounts($request),
             'choices' => fn (): ?array => $this->choices($request),
             'attendanceClock' => fn (): ?array => $this->attendanceClock($request),
@@ -244,6 +247,24 @@ class HandleInertiaRequests extends Middleware
         $team = FindTeam::byIdForMember(id: $user->current_team_id, userId: $user->id);
 
         return $team->isNull() ? null : $team->toSummary();
+    }
+
+    /**
+     * What the signed-in member can do about their current team being suspended.
+     *
+     * @return ?array{label: string, href: string}
+     */
+    private function suspendedTeamAction(Request $request): ?array
+    {
+        $user = $request->user();
+
+        if (! $user instanceof UserEloquentModel) {
+            return null;
+        }
+
+        $team = FindTeam::byIdForMember(id: $user->current_team_id, userId: $user->id);
+
+        return $team->isNull() ? null : $this->suspendedTeamAction->for($request, $team);
     }
 
     /**
