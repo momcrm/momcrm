@@ -43,8 +43,14 @@ export function useCurrentUrl(): UseCurrentUrlReturn {
         const urlToCompare = currentUrl ?? currentUrlPath;
         const urlString = toUrl(urlToCheck);
 
+        // A parent matches its own pages only: /settings/team is the parent
+        // of /settings/team/activity, but not of /settings/teams.
         const comparePath = (path: string): boolean =>
-            startsWith ? urlToCompare.startsWith(path) : path === urlToCompare;
+            path === urlToCompare ||
+            (startsWith &&
+                urlToCompare.startsWith(
+                    path.endsWith('/') ? path : `${path}/`,
+                ));
 
         if (!urlString.startsWith('http')) {
             return comparePath(urlString);
