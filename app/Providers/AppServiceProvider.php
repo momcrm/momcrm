@@ -130,7 +130,8 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Shows not-found and forbidden errors, and in production server errors,
      * as the app's own error page instead of Laravel's. JSON requests keep
-     * their JSON errors, and local debugging keeps the full error page.
+     * their JSON errors, requests without a session keep Laravel's plain
+     * errors, and local debugging keeps the full error page.
      */
     protected function configureErrorPages(): void
     {
@@ -139,6 +140,12 @@ class AppServiceProvider extends ServiceProvider
             $request = $response->request;
 
             if ($request->expectsJson() && $request->header('X-Inertia') === null) {
+                return null;
+            }
+
+            // The page is drawn around the app, which needs the session. A
+            // route outside the web group, such as a webhook, has none.
+            if (! $request->hasSession()) {
                 return null;
             }
 
