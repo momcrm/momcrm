@@ -7,6 +7,7 @@ namespace App\Team\Actions;
 use App\Shared\Table;
 use App\Team\Properties\Id;
 use App\Team\Properties\Name;
+use App\Team\Properties\SuspendedAt;
 use App\Team\Team;
 use App\Team\TeamCollection;
 use App\Team\TeamEloquentModel;
@@ -54,6 +55,22 @@ final class FindTeam
             ->first();
 
         return Team::fromEloquentModel($team);
+    }
+
+    /**
+     * The ids of every suspended team. Scheduled work runs outside any
+     * request, so nothing stops it changing a team that is read-only; it
+     * asks here and leaves those teams alone.
+     *
+     * @return list<string>
+     */
+    public static function suspendedIds(): array
+    {
+        return array_values(TeamEloquentModel::query()
+            ->whereNotNull(SuspendedAt::getDatabaseTableColumnName())
+            ->get([Id::getDatabaseTableColumnName()])
+            ->map(fn (TeamEloquentModel $team): string => $team->id)
+            ->all());
     }
 
     public static function allForMember(string $userId): TeamCollection

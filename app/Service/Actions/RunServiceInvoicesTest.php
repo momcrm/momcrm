@@ -166,3 +166,16 @@ it('bills a service period waiting from Single Service Billing once, as its own 
     $draft = InvoiceEloquentModel::query()->withoutGlobalScopes()->where('status', 'draft')->sole();
     expect(InvoiceItemEloquentModel::query()->withoutGlobalScopes()->where('invoice_id', $draft->id)->pluck('description')->all())->toBe(['Backup · 1 Dec 2026 – 31 Dec 2026']);
 });
+
+it('drafts nothing for a suspended team until it is reactivated', function (): void {
+    [$team, $customer, $rate] = invoiceRunSetup();
+    ServiceEloquentModel::factory()->create(['team_id' => $team->id, 'customer_id' => $customer->id, 'rate_id' => $rate->id, 'billing_starts_on' => '2026-12-01']);
+    $team->forceFill(['suspended_at' => now()])->save();
+
+    expect(RunServiceInvoices::on(CarbonImmutable::parse('2026-12-02')))->toBe(0)
+        ->and(InvoiceEloquentModel::query()->withoutGlobalScopes()->count())->toBe(0);
+
+    $team->forceFill(['suspended_at' => null])->save();
+
+    expect(RunServiceInvoices::on(CarbonImmutable::parse('2026-12-03')))->toBe(1);
+});
