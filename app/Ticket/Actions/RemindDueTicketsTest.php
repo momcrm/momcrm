@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Team\TeamEloquentModel;
 use App\Ticket\Actions\RemindDueTickets;
 use App\Ticket\Notifications\TicketDueSoonNotification;
 use App\Ticket\TicketEloquentModel;
@@ -22,4 +23,15 @@ it('reminds assignees of open tickets due tomorrow', function (): void {
 
     Notification::assertSentTo($user, TicketDueSoonNotification::class, fn (TicketDueSoonNotification $notification): bool => $notification->ticket->is($due));
     Notification::assertCount(1);
+});
+
+it('reminds nobody in a suspended team', function (): void {
+    Notification::fake();
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    TicketEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'assignee_id' => $user->id, 'due_on' => '2026-12-02']);
+    TeamEloquentModel::query()->whereKey($user->current_team_id)->update(['suspended_at' => now()]);
+
+    expect(RemindDueTickets::run(CarbonImmutable::parse('2026-12-01')))->toBe(0);
+
+    Notification::assertNothingSent();
 });

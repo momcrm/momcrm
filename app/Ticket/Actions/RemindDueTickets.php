@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Ticket\Actions;
 
+use App\Team\Actions\FindTeam;
 use App\Team\Scopes\CurrentTeamScope;
 use App\Ticket\Notifications\TicketDueSoonNotification;
 use App\Ticket\Properties\ArchivedAt;
 use App\Ticket\Properties\AssigneeId;
 use App\Ticket\Properties\DueOn;
 use App\Ticket\Properties\StatusId;
+use App\Ticket\Properties\TeamId;
 use App\Ticket\TicketEloquentModel;
 use App\Ticket\TicketRelationship;
 use App\Ticket\TicketStatusCategoryEnum;
@@ -17,8 +19,8 @@ use App\User\UserEloquentModel;
 use Carbon\CarbonImmutable;
 
 /**
- * Tells each assignee about their open tickets due tomorrow, in every team.
- * Runs daily. The notifications are queued, so they take the models.
+ * Tells each assignee about their open tickets due tomorrow, in every team
+ * that is not suspended. Runs daily. The notifications are queued, so they take the models.
  */
 final class RemindDueTickets
 {
@@ -30,6 +32,7 @@ final class RemindDueTickets
         $tickets = TicketEloquentModel::query()
             ->withoutGlobalScope(CurrentTeamScope::class)
             ->with(TicketRelationship::Project->value)
+            ->whereNotIn(TeamId::getDatabaseTableColumnName(), FindTeam::suspendedIds())
             ->whereNull(ArchivedAt::getDatabaseTableColumnName())
             ->whereNotNull(AssigneeId::getDatabaseTableColumnName())
             ->whereIn(StatusId::getDatabaseTableColumnName(), TicketStatusCategoryEnum::Open->statusIds())
