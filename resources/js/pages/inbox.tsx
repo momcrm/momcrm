@@ -27,6 +27,7 @@ import type {
 
 const tabs: { value: InboxKind | null; label: string; count: string }[] = [
     { value: null, label: 'All', count: 'all' },
+    { value: 'new_ticket', label: 'New tickets', count: 'new_ticket' },
     { value: 'mention', label: 'Mentions', count: 'mention' },
     { value: 'assignment', label: 'Assignments', count: 'assignment' },
     { value: 'comment', label: 'Comments', count: 'comment' },

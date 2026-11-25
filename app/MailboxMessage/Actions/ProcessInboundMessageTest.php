@@ -16,6 +16,7 @@ use App\MailboxMessage\MailboxMessage;
 use App\MailboxMessage\MailboxMessageEloquentModel;
 use App\Team\TeamEloquentModel;
 use App\Ticket\Actions\UpdateTicket;
+use App\Ticket\Notifications\TicketRaisedNotification;
 use App\Ticket\Ticket;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
@@ -71,6 +72,40 @@ it('opens a ticket for mail from someone who is not a contact, keeping who wrote
         ->to_recipients->toBe(['support@helpdesk.test'])
         ->subject->toBe('Printer offline')
         ->body_text->toBe('The printer on level 2 is offline.');
+});
+
+it("tells the mailbox group's members a ticket arrived, and nobody else", function (): void {
+    $team = TeamEloquentModel::factory()->create();
+    $group = GroupEloquentModel::factory()->create(['team_id' => $team->id]);
+    $member = UserEloquentModel::factory()->inTeam($team->id)->create();
+    $outsider = UserEloquentModel::factory()->inTeam($team->id)->create();
+    $leaver = UserEloquentModel::factory()->create();
+    $group->members()->attach([$member->id => ['role' => 'member'], $leaver->id => ['role' => 'member']]);
+    $mailbox = MailboxEloquentModel::factory()->create(['team_id' => $team->id, 'group_id' => $group->id]);
+    Notification::fake();
+
+    takeInEmail($mailbox);
+
+    Notification::assertSentTo($member, function (TicketRaisedNotification $notification) use ($member): bool {
+        $payload = $notification->toArray($member);
+
+        return $payload['kind'] === 'new_ticket'
+            && $payload['actor_name'] === 'Sam Lee'
+            && $payload['message'] === 'raised it by email'
+            && $payload['excerpt'] === 'The printer on level 2 is offline.';
+    });
+    Notification::assertNotSentTo([$outsider, $leaver], TicketRaisedNotification::class);
+});
+
+it('tells everyone in the team a ticket arrived when the mailbox has no group', function (): void {
+    $team = TeamEloquentModel::factory()->create();
+    $members = UserEloquentModel::factory()->inTeam($team->id)->count(2)->create();
+    $mailbox = MailboxEloquentModel::factory()->create(['team_id' => $team->id, 'group_id' => null]);
+    Notification::fake();
+
+    takeInEmail($mailbox);
+
+    Notification::assertSentTo($members, TicketRaisedNotification::class);
 });
 
 it('gives the ticket the contact and customer the sender is, whatever the letter case', function (): void {
@@ -220,6 +255,27 @@ it('adds a reply to the ticket it answers, without the quoted thread, and tells 
             && $payload['message'] === 'replied by email'
             && $payload['excerpt'] === 'Still offline this morning.';
     });
+});
+
+it('tells the group about a reply only while nobody is assigned the ticket', function (): void {
+    $team = TeamEloquentModel::factory()->create();
+    $group = GroupEloquentModel::factory()->create(['team_id' => $team->id]);
+    $member = UserEloquentModel::factory()->inTeam($team->id)->create();
+    $group->members()->attach($member->id, ['role' => 'member']);
+    $mailbox = MailboxEloquentModel::factory()->create(['team_id' => $team->id, 'group_id' => $group->id]);
+    takeInEmail($mailbox);
+    Notification::fake();
+
+    takeInEmail($mailbox, replyEmail());
+
+    Notification::assertSentTo($member, TicketCommentedNotification::class);
+
+    TicketEloquentModel::query()->withoutGlobalScopes()->sole()->update(['assignee_id' => UserEloquentModel::factory()->inTeam($team->id)->create()->id]);
+    Notification::fake();
+
+    takeInEmail($mailbox, replyEmail(['id' => 'graph-reply-2', 'internetMessageId' => '<reply-2@acme.test>']));
+
+    Notification::assertNotSentTo($member, TicketCommentedNotification::class);
 });
 
 it('follows the thread back to the nearest message that is on a ticket', function (): void {

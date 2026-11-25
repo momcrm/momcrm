@@ -9,8 +9,8 @@ use App\User\UserEloquentModel;
 
 /**
  * Which kinds of inbox notification someone is also emailed. Until they
- * choose, it is the ones that ask something of them: mentions, assignments
- * and direct messages.
+ * choose, it is the ones that ask something of them: new tickets, mentions,
+ * assignments and direct messages.
  */
 final class NotificationEmails
 {
@@ -19,7 +19,7 @@ final class NotificationEmails
      */
     public static function defaults(): array
     {
-        return [InboxKindEnum::Mention, InboxKindEnum::Assignment, InboxKindEnum::Message];
+        return [InboxKindEnum::NewTicket, InboxKindEnum::Mention, InboxKindEnum::Assignment, InboxKindEnum::Message];
     }
 
     /**

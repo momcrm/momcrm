@@ -9,10 +9,11 @@ use App\AccessRule\AccessResourceEnum;
 use App\Attachment\Actions\CreateAttachment;
 use App\Attachment\AttachmentValidationRules;
 use App\Choice\ChoiceListEnum;
-use App\Portal\Actions\NotifyStaffOfPortalTicket;
+use App\Inbox\Actions\NotifyTicketWatchers;
 use App\Portal\PortalAccess;
 use App\Portal\PortalContact;
 use App\Ticket\Actions\CreateTicket;
+use App\Ticket\Notifications\TicketRaisedNotification;
 use App\Ticket\Properties\Description;
 use App\Ticket\Properties\PriorityId;
 use App\Ticket\Properties\Title;
@@ -111,7 +112,7 @@ final class StorePortalTicketFormRequest extends FormRequest
                 CreateAttachment::fromPortal($file, $model, $contact->getId()->toString(), $name);
             }
 
-            NotifyStaffOfPortalTicket::send($model, $name);
+            NotifyTicketWatchers::sendFromCustomer($model, new TicketRaisedNotification($model, $name, isFromPortal: true));
 
             return $ticket;
         });

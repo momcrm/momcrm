@@ -62,6 +62,17 @@ it('tells mentioned people, and the other watchers, but not the author', functio
     Notification::assertNothingSentTo($user);
 });
 
+it('does not tell the team about a teammate comment on a ticket nobody is assigned', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $teammate = teammateOf($user);
+    $ticket = TicketEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'assignee_id' => null]);
+    Notification::fake();
+
+    actingAs($user)->post(route('comments.store', $ticket->id), ['body' => 'Looking into it.']);
+
+    Notification::assertNotSentTo($teammate, TicketCommentedNotification::class);
+});
+
 it('rejects an empty comment and mentions outside the team', function (): void {
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
     $ticket = TicketEloquentModel::factory()->create(['team_id' => $user->current_team_id]);

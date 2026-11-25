@@ -10,6 +10,7 @@ use App\Comment\Actions\CreateComment;
 use App\Comment\Comment;
 use App\Comment\CommentVisibilityEnum;
 use App\Contact\Actions\FindContact;
+use App\Inbox\Actions\NotifyTicketWatchers;
 use App\Mailbox\Mailbox;
 use App\MailboxMessage\MailboxMessage;
 use App\MailboxMessage\MailboxMessageDirectionEnum;
@@ -18,8 +19,10 @@ use App\MailboxMessage\Properties\InternetMessageId;
 use App\Ticket\Actions\CreateTicket;
 use App\Ticket\Actions\FindTicket;
 use App\Ticket\Actions\UpdateTicket;
+use App\Ticket\Notifications\TicketRaisedNotification;
 use App\Ticket\Properties\Title;
 use App\Ticket\Ticket;
+use App\Ticket\TicketEloquentModel;
 use App\Ticket\TicketStatusCategoryEnum;
 use Illuminate\Support\Facades\DB;
 
@@ -183,13 +186,14 @@ final readonly class ProcessInboundMessage
     /**
      * A ticket from the message: its subject as the title, its text as the
      * description and its sender as the requester. A sender who is one of the
-     * team's contacts also gives the ticket its contact and customer.
+     * team's contacts also gives the ticket its contact and customer. The
+     * people who should pick it up are told it arrived.
      */
     private function openTicket(string $teamId, string $from): Ticket
     {
         $contact = FindContact::byEmailForTeam($from, $teamId);
 
-        return CreateTicket::fromTicket(
+        $ticket = CreateTicket::fromTicket(
             Ticket::new()
                 ->setTeamId($teamId)
                 ->setTitle(mb_substr($this->message->getSubject()->toNullableString() ?? '(no subject)', 0, Title::MAX_LENGTH))
@@ -201,6 +205,11 @@ final readonly class ProcessInboundMessage
                 ->setContactId($contact->getId())
                 ->setCustomerId($contact->getCustomerId()),
         );
+
+        $model = TicketEloquentModel::query()->withoutGlobalScopes()->findOrFail($ticket->getId()->toString());
+        NotifyTicketWatchers::sendFromCustomer($model, new TicketRaisedNotification($model, $ticket->getRequesterName()->toNullableString() ?? $from));
+
+        return $ticket;
     }
 
     private static function description(?string $text): ?string

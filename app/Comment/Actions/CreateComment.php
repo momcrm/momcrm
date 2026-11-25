@@ -20,8 +20,10 @@ use Illuminate\Support\Str;
 
 /**
  * Adds a comment to a ticket. Everyone @mentioned is told so; the ticket's
- * other watchers are told there's a new comment. A comment that arrived by
- * email has no author in the team, so its sender is named in their place.
+ * other watchers are told there's a new comment. A comment from the customer,
+ * by email or in the portal, has no author in the team, so its sender is
+ * named in their place, and while nobody is assigned the ticket the people
+ * who should pick it up are told too.
  */
 final readonly class CreateComment
 {
@@ -61,12 +63,11 @@ final readonly class CreateComment
                 Notification::send($mentioned, new MentionedInCommentNotification($ticket, $author, $excerpt));
             }
 
-            NotifyTicketWatchers::send(
-                $ticket,
-                new TicketCommentedNotification($ticket, $author, $excerpt, senderName: $author === null ? $sender : null, isFromPortal: $model->contact_id !== null),
-                actorId: $model->user_id,
-                except: $mentionedIds,
-            );
+            if ($model->user_id === null) {
+                NotifyTicketWatchers::sendFromCustomer($ticket, new TicketCommentedNotification($ticket, null, $excerpt, senderName: $sender, isFromPortal: $model->contact_id !== null));
+            } else {
+                NotifyTicketWatchers::send($ticket, new TicketCommentedNotification($ticket, $author, $excerpt), actorId: $model->user_id, except: $mentionedIds);
+            }
 
             return Comment::fromEloquentModel($model->refresh());
         });
