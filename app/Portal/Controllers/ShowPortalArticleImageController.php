@@ -32,11 +32,11 @@ final class ShowPortalArticleImageController
         $path = $attachment->getPath()->toString();
         $mimeType = $attachment->getMimeType()->toString();
 
-        if ($attachment->isNull() || ! in_array($mimeType, ArticleImages::MIME_TYPES, true) || ! Storage::disk(CreateAttachment::DISK)->exists($path)) {
+        if ($attachment->isNull() || ! in_array($mimeType, ArticleImages::MIME_TYPES, true) || ! Storage::disk(CreateAttachment::disk())->exists($path)) {
             throw new NotFoundHttpException;
         }
 
-        return Storage::disk(CreateAttachment::DISK)->response($path, $attachment->getName()->toString(), [
+        return Storage::disk(CreateAttachment::disk())->response($path, $attachment->getName()->toString(), [
             'Content-Type' => $mimeType,
             'X-Content-Type-Options' => 'nosniff',
             'Content-Security-Policy' => "default-src 'none'; sandbox",

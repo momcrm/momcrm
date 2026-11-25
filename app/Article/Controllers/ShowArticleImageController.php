@@ -38,12 +38,12 @@ final class ShowArticleImageController
             || $attachment->getAttachableType()->toNullableEnum() !== MorphMapKeyEnum::Article
             || ! $attachment->getAttachableId()->equalsTo($found->getId()->toString())
             || ! in_array($mimeType, ArticleImages::MIME_TYPES, true)
-            || ! Storage::disk(CreateAttachment::DISK)->exists($path)
+            || ! Storage::disk(CreateAttachment::disk())->exists($path)
         ) {
             throw CouldNotFindArticle::notFound();
         }
 
-        return Storage::disk(CreateAttachment::DISK)->response($path, $attachment->getName()->toString(), [
+        return Storage::disk(CreateAttachment::disk())->response($path, $attachment->getName()->toString(), [
             'Content-Type' => $mimeType,
             'X-Content-Type-Options' => 'nosniff',
             'Content-Security-Policy' => "default-src 'none'; sandbox",

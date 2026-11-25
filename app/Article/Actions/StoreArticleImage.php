@@ -29,7 +29,7 @@ final readonly class StoreArticleImage
     {
         $teamId = $this->article->getTeamId()->toString();
         $id = Id::generate();
-        $path = $this->file->storeAs("attachments/{$teamId}", $id->toString().'.'.($this->file->guessExtension() ?? 'bin'), CreateAttachment::DISK);
+        $path = $this->file->storeAs("attachments/{$teamId}", $id->toString().'.'.($this->file->guessExtension() ?? 'bin'), CreateAttachment::disk());
 
         $model = AttachmentEloquentModel::query()->create(
             Attachment::new()

@@ -58,7 +58,7 @@ final readonly class DeleteTeam
                 ->each(fn (UserEloquentModel $member) => CreatePersonalTeam::fromUser(User::fromEloquentModel($member)));
         });
 
-        Storage::disk(CreateAttachment::DISK)->deleteDirectory("attachments/{$teamId}");
+        Storage::disk(CreateAttachment::disk())->deleteDirectory("attachments/{$teamId}");
     }
 
     /**
