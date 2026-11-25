@@ -57,6 +57,7 @@ export type SidebarCounts = {
     openTickets: number;
     myOpenTickets: number;
     unreadNotifications: number;
+    unreadMessages: number;
 };
 
 /**
@@ -79,7 +80,9 @@ export function workspaceNavigation(
                     title: 'Inbox',
                     href: inbox(),
                     icon: Inbox,
-                    badge: counts?.unreadNotifications,
+                    badge: counts
+                        ? counts.unreadNotifications + counts.unreadMessages
+                        : undefined,
                     highlightBadge: true,
                     shortcut: 'i',
                 },

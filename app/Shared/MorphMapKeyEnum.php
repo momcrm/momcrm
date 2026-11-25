@@ -22,6 +22,8 @@ use App\Comment\CommentEloquentModel;
 use App\Connector\ConnectorEloquentModel;
 use App\Contact\ContactEloquentModel;
 use App\Contract\ContractEloquentModel;
+use App\Conversation\ConversationEloquentModel;
+use App\ConversationParticipant\ConversationParticipantEloquentModel;
 use App\Customer\CustomerEloquentModel;
 use App\CustomField\CustomFieldEloquentModel;
 use App\CustomObject\CustomObjectEloquentModel;
@@ -36,6 +38,7 @@ use App\LeaveRequest\LeaveRequestEloquentModel;
 use App\Location\LocationEloquentModel;
 use App\Mailbox\MailboxEloquentModel;
 use App\MailboxMessage\MailboxMessageEloquentModel;
+use App\Message\MessageEloquentModel;
 use App\Milestone\MilestoneEloquentModel;
 use App\Passkey\PasskeyEloquentModel;
 use App\Payment\PaymentEloquentModel;
@@ -88,6 +91,8 @@ enum MorphMapKeyEnum: string
     case Connector = 'connector';
     case Contact = 'contact';
     case Contract = 'contract';
+    case Conversation = 'conversation';
+    case ConversationParticipant = 'conversation_participant';
     case Customer = 'customer';
     case CustomField = 'custom_field';
     case CustomObject = 'custom_object';
@@ -102,6 +107,7 @@ enum MorphMapKeyEnum: string
     case Location = 'location';
     case Mailbox = 'mailbox';
     case MailboxMessage = 'mailbox_message';
+    case Message = 'message';
     case Milestone = 'milestone';
     case Passkey = 'passkey';
     case Payment = 'payment';
@@ -167,6 +173,8 @@ enum MorphMapKeyEnum: string
             self::Connector => ConnectorEloquentModel::class,
             self::Contact => ContactEloquentModel::class,
             self::Contract => ContractEloquentModel::class,
+            self::Conversation => ConversationEloquentModel::class,
+            self::ConversationParticipant => ConversationParticipantEloquentModel::class,
             self::Customer => CustomerEloquentModel::class,
             self::CustomField => CustomFieldEloquentModel::class,
             self::CustomObject => CustomObjectEloquentModel::class,
@@ -181,6 +189,7 @@ enum MorphMapKeyEnum: string
             self::Location => LocationEloquentModel::class,
             self::Mailbox => MailboxEloquentModel::class,
             self::MailboxMessage => MailboxMessageEloquentModel::class,
+            self::Message => MessageEloquentModel::class,
             self::Milestone => MilestoneEloquentModel::class,
             self::Passkey => PasskeyEloquentModel::class,
             self::Payment => PaymentEloquentModel::class,

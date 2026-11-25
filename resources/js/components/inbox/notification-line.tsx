@@ -1,4 +1,10 @@
-import { AtSign, Bell, MessageSquare, UserPlus } from 'lucide-react';
+import {
+    AtSign,
+    Bell,
+    MessageSquare,
+    MessagesSquare,
+    UserPlus,
+} from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { timeAgo } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -9,6 +15,7 @@ export const kindIcons: Record<InboxKind, LucideIcon> = {
     assignment: UserPlus,
     comment: MessageSquare,
     update: Bell,
+    message: MessagesSquare,
 };
 
 /**

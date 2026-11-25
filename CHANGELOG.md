@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Audit and activity retention (365 and 180 days by default, `AUDIT_LOG_RETENTION_DAYS` / `ACTIVITY_RETENTION_DAYS`), pruned daily by the scheduler.
 - Team-based tenancy: every user gets a personal team, can switch their current team from the sidebar, and owners can rename it under Settings → Team. Team-owned models are isolated with `CurrentTeamScope`.
 - Notification emails: inbox notifications can also be emailed, with who did what, the comment it came with and a link to open it. Under Settings → Notifications each person chooses which kinds (mentions, assignments, comments, updates) they are emailed; mentions and assignments until they choose.
+- Direct messages: members message one teammate or several from the inbox's new Messages tab, with unread counts on the tab and the sidebar's Inbox badge. An open inbox checks for new messages every few seconds. Sending to the same people again continues their conversation. Messages can be emailed too (on until someone chooses otherwise): the email waits five minutes, is skipped if the message has been read by then, and is sent once per run of unread messages.
 
 ### Changed
 

@@ -1,6 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { CheckCheck, ChevronLeft, Maximize2 } from 'lucide-react';
 import EmptyState from '@/components/empty-state';
+import InboxViews from '@/components/inbox/inbox-views';
 import NotificationLine from '@/components/inbox/notification-line';
 import TicketConversation from '@/components/tickets/ticket-conversation';
 import {
@@ -123,6 +124,7 @@ export default function Inbox({
                             <CheckCheck />
                         </Button>
                     </div>
+                    <InboxViews current="notifications" />
                     <nav
                         aria-label="Kinds"
                         className="flex gap-3 overflow-x-auto border-b px-4 text-sm"

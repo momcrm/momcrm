@@ -32,6 +32,12 @@ const kinds: { value: InboxKind; label: string; description: string }[] = [
         description:
             'A ticket you watch changes status or is due tomorrow, a project is at risk, or your leave or timesheet is reviewed.',
     },
+    {
+        value: 'message',
+        label: 'Direct messages',
+        description:
+            'A teammate messages you. Sent a few minutes later, and only if you haven’t read it by then.',
+    },
 ];
 
 /**

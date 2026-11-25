@@ -579,7 +579,12 @@ export type AttachmentItem = {
     url: string;
 };
 
-export type InboxKind = 'mention' | 'assignment' | 'comment' | 'update';
+export type InboxKind =
+    | 'mention'
+    | 'assignment'
+    | 'comment'
+    | 'update'
+    | 'message';
 
 export type NotificationItem = {
     id: string;
@@ -1276,3 +1281,36 @@ export type AttachedArticle = {
 };
 
 export type ArticleLinkTarget = 'ticket' | 'asset' | 'service';
+
+/**
+ * One of the person's direct-message conversations, as the inbox lists it.
+ */
+export type ConversationSummary = {
+    id: string;
+    /** Everyone in it but the person looking. */
+    participants: CustomerOption[];
+    last_message: {
+        body: string;
+        author_id: string | null;
+        created_at: string | null;
+    } | null;
+    last_message_at: string | null;
+    unread: number;
+};
+
+export type DirectMessage = {
+    id: string;
+    body: string;
+    author_id: string | null;
+    author_name: string | null;
+    created_at: string | null;
+};
+
+/**
+ * The conversation open in the inbox.
+ */
+export type ConversationThread = {
+    id: string;
+    participants: CustomerOption[];
+    messages: DirectMessage[];
+};

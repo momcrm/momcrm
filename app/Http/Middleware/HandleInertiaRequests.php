@@ -6,6 +6,7 @@ use App\Attendance\AttendanceClock;
 use App\Auth\Actions\FindProvenEmail;
 use App\Choice\Actions\FindChoice;
 use App\Choice\ChoiceListEnum;
+use App\Conversation\Actions\FindConversation;
 use App\CustomField\Actions\FindCustomField;
 use App\CustomField\CustomFieldTargetEnum;
 use App\CustomObject\Actions\FindCustomObject;
@@ -223,6 +224,7 @@ class HandleInertiaRequests extends Middleware
             'openTickets' => FindTicket::countOpenForTeam($user->current_team_id),
             'myOpenTickets' => FindTicket::countOpenForTeam($user->current_team_id, $user->id),
             'unreadNotifications' => FindNotifications::countUnread($user),
+            'unreadMessages' => FindConversation::countUnreadMessages($user->current_team_id, $user->id),
             'groups' => FindGroup::optionsForTeam($user->current_team_id),
             'objects' => FindCustomObject::listForTeam($user->current_team_id)->toSummaries(),
             'projects' => FindProject::forSidebar(

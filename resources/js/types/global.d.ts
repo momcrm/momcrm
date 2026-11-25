@@ -39,6 +39,7 @@ declare module '@inertiajs/core' {
                 openTickets: number;
                 myOpenTickets: number;
                 unreadNotifications: number;
+                unreadMessages: number;
                 projects: import('./crm').SidebarProject[];
                 groups: {
                     id: string;

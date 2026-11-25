@@ -8,13 +8,13 @@ use Inertia\Testing\AssertableInertia as Assert;
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\get;
 
-it('shows mentions and assignments as emailed until the person chooses', function (): void {
+it('shows mentions, assignments and messages as emailed until the person chooses', function (): void {
     actingAs(UserEloquentModel::factory()->withPersonalTeam()->create())
         ->get(route('notification-settings.edit'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('settings/notifications')
-            ->where('emailed', ['mention', 'assignment']),
+            ->where('emailed', ['mention', 'assignment', 'message']),
         );
 });
 
