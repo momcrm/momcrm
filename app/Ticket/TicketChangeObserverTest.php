@@ -105,3 +105,40 @@ it("doesn't tell any ticket about a file on something else", function (): void {
 
     Event::assertNotDispatched(TicketChanged::class);
 });
+
+it("tells the customer's portal about a change to their ticket", function (): void {
+    $ticket = portalTicket(portalContact());
+    defer()->invoke();
+    Event::fake([TicketChanged::class]);
+
+    CommentEloquentModel::factory()->create(['ticket_id' => $ticket->id, 'team_id' => $ticket->team_id]);
+    defer()->invoke();
+
+    Event::assertDispatched(TicketChanged::class, fn (TicketChanged $event): bool => $event->customerId === $ticket->customer_id);
+});
+
+it('tells the portal of the customer a ticket moved away from, and of the one it moved to', function (): void {
+    $contact = portalContact();
+    $ticket = portalTicket($contact);
+    $to = CustomerEloquentModel::factory()->create(['team_id' => $contact->team_id]);
+    defer()->invoke();
+    Event::fake([TicketChanged::class]);
+
+    $ticket->update(['customer_id' => $to->id]);
+    defer()->invoke();
+
+    $customerIds = Event::dispatched(TicketChanged::class)->map(fn (array $dispatch): ?string => $dispatch[0]->customerId)->sort()->values()->all();
+    expect($customerIds)->toBe(collect([$contact->customer_id, $to->id])->sort()->values()->all());
+});
+
+it('tells the customer\'s portal when their ticket is deleted', function (): void {
+    $contact = portalContact();
+    $ticket = portalTicket($contact);
+    defer()->invoke();
+    Event::fake([TicketChanged::class]);
+
+    $ticket->delete();
+    defer()->invoke();
+
+    Event::assertDispatched(TicketChanged::class, fn (TicketChanged $event): bool => $event->customerId === $contact->customer_id);
+});

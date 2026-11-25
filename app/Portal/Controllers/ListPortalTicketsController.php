@@ -10,6 +10,7 @@ use App\Portal\Actions\FindPortalTickets;
 use App\Portal\PortalAccess;
 use App\Portal\PortalContact;
 use App\Portal\PortalTicketView;
+use App\Ticket\Events\TicketChanged;
 use App\Ticket\Ticket;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
@@ -21,6 +22,12 @@ use Inertia\Response;
  */
 final class ListPortalTicketsController
 {
+    /**
+     * Each open list reloads at most this often, however many of the
+     * customer's tickets change.
+     */
+    private const int LIVE_THROTTLE_MS = 2000;
+
     /**
      * @throws AuthorizationException
      */
@@ -40,7 +47,11 @@ final class ListPortalTicketsController
 
         return Inertia::render('portal/tickets/index', [
             'status' => $isClosed ? 'closed' : 'open',
-            'tickets' => $tickets->map(fn (Ticket $ticket): array => PortalTicketView::item($ticket, $statuses))->values()->all(),
+            'tickets' => TicketChanged::liveForPortalCustomer(
+                $contact->getCustomerId()->toString(),
+                fn (): array => $tickets->map(fn (Ticket $ticket): array => PortalTicketView::item($ticket, $statuses))->values()->all(),
+                throttle: self::LIVE_THROTTLE_MS,
+            ),
             'canCreate' => PortalAccess::allows(AccessResourceEnum::Ticket, AccessActionEnum::Create),
         ]);
     }

@@ -36,3 +36,14 @@ it("doesn't show another customer's ticket", function (): void {
 
     actingAs($contact, 'portal')->get(route('tickets.show', $other->id))->assertNotFound();
 });
+
+it('reloads the ticket, its conversation, files and actions when it changes', function (): void {
+    $contact = portalContact();
+    $ticket = portalTicket($contact);
+
+    $response = actingAs($contact, 'portal')->get(route('tickets.show', $ticket->id))->assertOk();
+
+    foreach (['ticket', 'conversation', 'files', 'can'] as $prop) {
+        expect(liveListeners($response, $prop))->toBe(["private-portal.tickets.{$ticket->id} ticket.changed"]);
+    }
+});
