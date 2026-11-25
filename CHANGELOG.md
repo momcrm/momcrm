@@ -48,6 +48,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Tests for application code live beside it in `app/` (e.g. `UpdateTeamControllerTest.php` next to `UpdateTeamController.php`) and use Pest's functional style; `tests/` keeps the test bootstrap and Fortify flow tests.
 - Backend code is organised by domain (`app/User`, `app/Team`, `app/TeamUser`) with mom/data DTOs, single-action controllers and actions, replacing the starter kit's `app/Models`, `app/Http/Controllers/Settings`, `app/Http/Requests`, `app/Actions` and `app/Concerns`.
 - MomCRM has its own logo, a mother holding a baby, in place of the Laravel one: in the app, the browser tab icon and the home-screen icon.
+- Emails have MomCRM's own look in place of Laravel's: the app's warm neutrals and indigo, a white card on a soft background, left-aligned buttons and a dark mode. Emails a team sends its customers (invoices, receipts, statements, portal invitations and ticket replies) carry the team's name instead of MomCRM's, and show the amount up front. Sign-in codes are shown large and spaced out.
 
 [Unreleased]: https://github.com/momcrm/momcrm/commits/main
 

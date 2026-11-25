@@ -1,0 +1,393 @@
+/* MomCRM's email look: the app's warm neutrals and indigo, inlined into every email. */
+
+/* Base */
+
+body,
+body *:not(html):not(style):not(br):not(tr):not(code) {
+    box-sizing: border-box;
+    font-family: Geist, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+    position: relative;
+}
+
+body {
+    -webkit-text-size-adjust: none;
+    background-color: #f6f5f2;
+    color: #3f3c37;
+    height: 100%;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+    width: 100% !important;
+}
+
+p,
+ul,
+ol,
+blockquote {
+    line-height: 1.6;
+    text-align: left;
+}
+
+a {
+    color: #4b5bd6;
+}
+
+a img {
+    border: none;
+}
+
+/* Typography */
+
+h1 {
+    color: #1d1c1a;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.2px;
+    line-height: 1.35;
+    margin-top: 0;
+    margin-bottom: 16px;
+    text-align: left;
+}
+
+h2 {
+    color: #1d1c1a;
+    font-size: 16px;
+    font-weight: 600;
+    margin-top: 0;
+    text-align: left;
+}
+
+h3 {
+    color: #1d1c1a;
+    font-size: 14px;
+    font-weight: 600;
+    margin-top: 0;
+    text-align: left;
+}
+
+p {
+    color: #3f3c37;
+    font-size: 15px;
+    line-height: 1.6;
+    margin-top: 0;
+    margin-bottom: 16px;
+    text-align: left;
+}
+
+p.sub {
+    font-size: 12px;
+}
+
+img {
+    max-width: 100%;
+}
+
+/* Layout */
+
+.wrapper {
+    -premailer-cellpadding: 0;
+    -premailer-cellspacing: 0;
+    -premailer-width: 100%;
+    background-color: #f6f5f2;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+}
+
+.content {
+    -premailer-cellpadding: 0;
+    -premailer-cellspacing: 0;
+    -premailer-width: 100%;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+}
+
+/* Header */
+
+.header {
+    padding: 40px 0 20px;
+}
+
+.header-inner {
+    -premailer-cellpadding: 0;
+    -premailer-cellspacing: 0;
+    -premailer-width: 570px;
+    margin: 0 auto;
+    padding: 0;
+    width: 570px;
+}
+
+.header-inner td {
+    vertical-align: middle;
+}
+
+.header a {
+    text-decoration: none;
+}
+
+.logo {
+    border-radius: 7px;
+    display: block;
+    height: 28px;
+    width: 28px;
+}
+
+.monogram {
+    background-color: #4b5bd6;
+    border-radius: 7px;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 600;
+    height: 28px;
+    line-height: 28px;
+    text-align: center;
+    width: 28px;
+}
+
+.brand-name {
+    color: #1d1c1a;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.2px;
+    padding-left: 10px;
+}
+
+/* Body */
+
+.body {
+    -premailer-cellpadding: 0;
+    -premailer-cellspacing: 0;
+    -premailer-width: 100%;
+    background-color: #f6f5f2;
+    border-bottom: 0;
+    border-top: 0;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+}
+
+.inner-body {
+    -premailer-cellpadding: 0;
+    -premailer-cellspacing: 0;
+    -premailer-width: 570px;
+    background-color: #ffffff;
+    border: 1px solid #e9e7e2;
+    border-radius: 12px;
+    margin: 0 auto;
+    padding: 0;
+    width: 570px;
+}
+
+.inner-body a {
+    word-break: break-all;
+}
+
+/* Subcopy */
+
+.subcopy {
+    border-top: 1px solid #f0eeea;
+    margin-top: 28px;
+    padding-top: 20px;
+}
+
+.subcopy p {
+    color: #8c8880;
+    font-size: 12px;
+    line-height: 1.5;
+    margin-bottom: 0;
+}
+
+/* Footer */
+
+.footer {
+    -premailer-cellpadding: 0;
+    -premailer-cellspacing: 0;
+    -premailer-width: 570px;
+    margin: 0 auto;
+    padding: 0;
+    text-align: center;
+    width: 570px;
+}
+
+.footer p {
+    color: #8c8880;
+    font-size: 12px;
+    line-height: 1.5;
+    margin-bottom: 0;
+    text-align: center;
+}
+
+.footer a {
+    color: #8c8880;
+    text-decoration: underline;
+}
+
+/* Tables */
+
+.table table {
+    -premailer-cellpadding: 0;
+    -premailer-cellspacing: 0;
+    -premailer-width: 100%;
+    margin: 24px auto;
+    width: 100%;
+}
+
+.table th {
+    border-bottom: 1px solid #e9e7e2;
+    color: #8c8880;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.6px;
+    margin: 0;
+    padding-bottom: 8px;
+    text-transform: uppercase;
+}
+
+.table td {
+    border-bottom: 1px solid #f0eeea;
+    color: #3f3c37;
+    font-size: 14px;
+    line-height: 1.5;
+    margin: 0;
+    padding: 10px 0;
+}
+
+.content-cell {
+    max-width: 100vw;
+    padding: 36px 40px;
+}
+
+.footer .content-cell {
+    padding: 24px 40px 40px;
+}
+
+/* Buttons */
+
+.action {
+    -premailer-cellpadding: 0;
+    -premailer-cellspacing: 0;
+    -premailer-width: 100%;
+    float: unset;
+    margin: 28px auto;
+    padding: 0;
+    text-align: left;
+    width: 100%;
+}
+
+.button {
+    -webkit-text-size-adjust: none;
+    border-radius: 8px;
+    color: #ffffff;
+    display: inline-block;
+    font-size: 15px;
+    font-weight: 600;
+    overflow: hidden;
+    text-decoration: none;
+}
+
+.button-blue,
+.button-primary {
+    background-color: #4b5bd6;
+    border-bottom: 12px solid #4b5bd6;
+    border-left: 22px solid #4b5bd6;
+    border-right: 22px solid #4b5bd6;
+    border-top: 12px solid #4b5bd6;
+}
+
+.button-green,
+.button-success {
+    background-color: #25754b;
+    border-bottom: 12px solid #25754b;
+    border-left: 22px solid #25754b;
+    border-right: 22px solid #25754b;
+    border-top: 12px solid #25754b;
+}
+
+.button-red,
+.button-error {
+    background-color: #b23c30;
+    border-bottom: 12px solid #b23c30;
+    border-left: 22px solid #b23c30;
+    border-right: 22px solid #b23c30;
+    border-top: 12px solid #b23c30;
+}
+
+/* Panels */
+
+.panel {
+    border-left: 3px solid #4b5bd6;
+    margin: 0 0 24px;
+}
+
+.panel-content {
+    background-color: #f7f6f3;
+    color: #3f3c37;
+    padding: 16px;
+}
+
+.panel-content p {
+    color: #3f3c37;
+}
+
+.panel-item {
+    padding: 0;
+}
+
+.panel-item p:last-of-type {
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+/* Highlight: the one thing the email is about, such as a code or an amount. */
+
+.highlight {
+    -premailer-cellpadding: 0;
+    -premailer-cellspacing: 0;
+    -premailer-width: 100%;
+    margin: 4px 0 24px;
+    width: 100%;
+}
+
+.highlight-content {
+    background-color: #f7f6f3;
+    border: 1px solid #f0eeea;
+    border-radius: 10px;
+    padding: 20px 24px;
+}
+
+.highlight-label {
+    color: #8c8880;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    line-height: 1.4;
+    text-transform: uppercase;
+}
+
+.highlight-value {
+    color: #1d1c1a;
+    font-size: 30px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    line-height: 1.25;
+    padding-top: 6px;
+}
+
+.highlight-code {
+    font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    letter-spacing: 6px;
+}
+
+.highlight-detail {
+    color: #6b6760;
+    font-size: 13px;
+    line-height: 1.5;
+    padding-top: 6px;
+}
+
+/* Utilities */
+
+.break-all {
+    word-break: break-all;
+}

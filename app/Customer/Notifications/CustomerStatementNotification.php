@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Customer\Notifications;
 
 use App\Customer\CustomerStatement;
+use App\Shared\BrandedMailMessage;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -34,13 +35,23 @@ final class CustomerStatementNotification extends Notification
         $team = $this->statement->team;
         $closing = $this->statement->closingBalanceInCents;
 
-        $message = new MailMessage()
+        $message = new BrandedMailMessage()
+            ->sentBy($team->getNameOnInvoices())
             ->subject(__('Statement from :team, :from to :to', [
                 'team' => $team->getNameOnInvoices(),
                 'from' => $this->statement->from->format('j M Y'),
                 'to' => $this->statement->to->format('j M Y'),
             ]))
             ->greeting(__('Your statement'))
+            ->highlight(
+                match (true) {
+                    $closing > 0 => __('Balance owing'),
+                    $closing < 0 => __('In credit'),
+                    default => __('Balance'),
+                },
+                $this->statement->money(abs($closing)),
+                __(':from to :to', ['from' => $this->statement->from->format('j M Y'), 'to' => $this->statement->to->format('j M Y')]),
+            )
             ->line(__('Here is the statement of :customer\'s account from :from to :to.', [
                 'customer' => $this->statement->customer->getName()->toString(),
                 'from' => $this->statement->from->format('j M Y'),

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Invoice\Notifications;
 
 use App\Invoice\InvoiceDocument;
+use App\Shared\BrandedMailMessage;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -35,15 +36,24 @@ final class InvoiceNotification extends Notification
         $invoice = $this->document->invoice;
         $team = $this->document->team;
         $owing = $invoice->balanceAfter($this->document->totals);
+        $dueOn = $invoice->getDueOn()->toCarbon()->format('j M Y');
 
-        $message = new MailMessage()
+        $message = new BrandedMailMessage()
+            ->sentBy($team->getNameOnInvoices())
             ->subject(__('Invoice :reference from :team', ['reference' => $invoice->getReference(), 'team' => $team->getNameOnInvoices()]))
+            ->highlight(
+                $owing > 0 ? __('Amount due') : __('Paid in full'),
+                $this->document->money($owing > 0 ? $owing : $this->document->totals->totalInCents),
+                $owing > 0
+                    ? __('Due :date · :reference', ['date' => $dueOn, 'reference' => $invoice->getReference()])
+                    : $invoice->getReference(),
+            )
             ->greeting(__('Hello :customer', ['customer' => $this->document->customer->getName()->toString()]))
             ->line($owing > 0
                 ? __('Invoice :reference for :amount is due on :date.', [
                     'reference' => $invoice->getReference(),
                     'amount' => $this->document->money($owing),
-                    'date' => $invoice->getDueOn()->toCarbon()->format('j M Y'),
+                    'date' => $dueOn,
                 ])
                 : __('Invoice :reference is paid. Thank you.', ['reference' => $invoice->getReference()]));
 
