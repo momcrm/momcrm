@@ -15,6 +15,7 @@ enum InboxKindEnum: string
 {
     use Enum;
 
+    case NewTicket = 'new_ticket';
     case Assignment = 'assignment';
     case Comment = 'comment';
     case Mention = 'mention';

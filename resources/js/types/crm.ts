@@ -580,6 +580,7 @@ export type AttachmentItem = {
 };
 
 export type InboxKind =
+    | 'new_ticket'
     | 'mention'
     | 'assignment'
     | 'comment'

@@ -10,6 +10,12 @@ import type { InboxKind } from '@/types';
 
 const kinds: { value: InboxKind; label: string; description: string }[] = [
     {
+        value: 'new_ticket',
+        label: 'New tickets',
+        description:
+            'A customer raises a ticket by email or in the portal, and nobody is assigned it yet. Sent to its group, or to the whole team when it has none.',
+    },
+    {
         value: 'mention',
         label: 'Mentions',
         description: 'Someone @mentions you in a comment.',
@@ -24,7 +30,7 @@ const kinds: { value: InboxKind; label: string; description: string }[] = [
         value: 'comment',
         label: 'Comments',
         description:
-            'Someone comments on, or a customer replies to, a ticket you are assigned or have starred.',
+            'Someone comments on, or a customer replies to, a ticket you are assigned or have starred. Customer replies to a ticket nobody is assigned go to its group too.',
     },
     {
         value: 'update',

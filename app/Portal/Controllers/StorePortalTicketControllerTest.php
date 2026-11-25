@@ -5,7 +5,7 @@ declare(strict_types=1);
 use App\AccessRule\AccessRuleEloquentModel;
 use App\Attachment\AttachmentEloquentModel;
 use App\Favorite\FavoriteEloquentModel;
-use App\Ticket\Notifications\TicketRaisedInPortalNotification;
+use App\Ticket\Notifications\TicketRaisedNotification;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
 use Illuminate\Http\UploadedFile;
@@ -46,13 +46,16 @@ it('raises a ticket for the customer with the contact as requester and their fil
         ->shared_with_customer->toBeTrue();
 });
 
-it("tells staff who starred the customer, or else the team's owners and admins", function (): void {
+it('tells staff who starred the customer, or else everyone in the team', function (): void {
     $contact = portalContact();
     $owner = UserEloquentModel::query()->where('current_team_id', $contact->team_id)->sole();
+    $member = UserEloquentModel::factory()->inTeam($contact->team_id)->create();
 
     actingAs($contact, 'portal')->post(route('tickets.store'), ['title' => 'Printer jam']);
 
-    Notification::assertSentTo($owner, TicketRaisedInPortalNotification::class);
+    Notification::assertSentTo([$owner, $member], TicketRaisedNotification::class, fn (TicketRaisedNotification $notification): bool => $notification->toArray($owner)['message'] === 'raised it in the portal'
+        && $notification->toArray($owner)['kind'] === 'new_ticket'
+        && $notification->toArray($owner)['actor_name'] === 'Mark Ellis');
 
     $watcher = UserEloquentModel::factory()->inTeam($contact->team_id)->create();
     FavoriteEloquentModel::query()->create(['team_id' => $contact->team_id, 'user_id' => $watcher->id, 'favoritable_type' => 'customer', 'favoritable_id' => $contact->customer_id]);
@@ -60,8 +63,8 @@ it("tells staff who starred the customer, or else the team's owners and admins",
 
     actingAs($contact, 'portal')->post(route('tickets.store'), ['title' => 'Another']);
 
-    Notification::assertSentTo($watcher, TicketRaisedInPortalNotification::class);
-    Notification::assertNotSentTo($owner, TicketRaisedInPortalNotification::class);
+    Notification::assertSentTo($watcher, TicketRaisedNotification::class);
+    Notification::assertNotSentTo([$owner, $member], TicketRaisedNotification::class);
 });
 
 it('refuses files when contacts may not add them, and tickets when they may not raise them', function (): void {

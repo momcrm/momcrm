@@ -3,6 +3,7 @@ import {
     Bell,
     MessageSquare,
     MessagesSquare,
+    TicketPlus,
     UserPlus,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -11,6 +12,7 @@ import { cn } from '@/lib/utils';
 import type { InboxKind, NotificationItem } from '@/types';
 
 export const kindIcons: Record<InboxKind, LucideIcon> = {
+    new_ticket: TicketPlus,
     mention: AtSign,
     assignment: UserPlus,
     comment: MessageSquare,
