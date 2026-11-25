@@ -5,21 +5,17 @@ declare(strict_types=1);
 namespace App\LeaveRequest\Notifications;
 
 use App\Inbox\InboxKindEnum;
+use App\Inbox\InboxNotification;
 use App\Inbox\InboxPayload;
 use App\LeaveRequest\LeaveRequestEloquentModel;
 use App\LeaveRequest\LeaveStatusEnum;
 use App\User\UserEloquentModel;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueueAfterCommit;
-use Illuminate\Notifications\Notification;
 
 /**
  * Tells a member their leave was approved or declined, with the note.
  */
-final class LeaveReviewedNotification extends Notification implements ShouldQueueAfterCommit
+final class LeaveReviewedNotification extends InboxNotification
 {
-    use Queueable;
-
     /**
      * @param  string  $leaveType  the type's name, such as "Annual leave"
      * @param  string  $days  the days in words
@@ -30,14 +26,6 @@ final class LeaveReviewedNotification extends Notification implements ShouldQueu
         public readonly string $leaveType,
         public readonly string $days,
     ) {}
-
-    /**
-     * @return array<int, string>
-     */
-    public function via(object $notifiable): array
-    {
-        return ['database'];
-    }
 
     /**
      * @return array<string, mixed>

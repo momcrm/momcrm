@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Inbox\Actions;
 
 use App\Inbox\InboxKindEnum;
+use App\Inbox\InboxLink;
 use App\Inbox\InboxNotifications;
 use App\Shared\Types;
 use App\User\UserEloquentModel;
@@ -77,14 +78,7 @@ final class FindNotifications
             'id' => $notification->id,
             'read_at' => $notification->read_at?->toIso8601String(),
             'created_at' => $notification->created_at?->toIso8601String(),
-            'url' => match ($data['subject_type'] ?? null) {
-                'project' => route('projects.show', Types::string($data['subject_id'])),
-                'shift' => route('attendance.time'),
-                'leave' => route('attendance.leave'),
-                'timesheet' => route('attendance.timesheet', [Types::string($data['member_id'] ?? ''), mb_substr(Types::string($data['starts_on'] ?? ''), 0, 10)]),
-                'record' => route('records.show', [Types::string($data['object_id'] ?? ''), Types::string($data['subject_id'])]),
-                default => route('tickets.index', ['ticket' => Types::string($data['subject_id'] ?? '')]),
-            },
+            'url' => InboxLink::for($data),
         ];
     }
 }

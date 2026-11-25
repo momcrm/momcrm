@@ -5,20 +5,16 @@ declare(strict_types=1);
 namespace App\Timesheet\Notifications;
 
 use App\Inbox\InboxKindEnum;
+use App\Inbox\InboxNotification;
 use App\Inbox\InboxPayload;
 use App\Timesheet\TimesheetEloquentModel;
 use App\User\UserEloquentModel;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueueAfterCommit;
-use Illuminate\Notifications\Notification;
 
 /**
  * Tells an owner or admin that a timesheet is waiting for approval.
  */
-final class TimesheetSubmittedNotification extends Notification implements ShouldQueueAfterCommit
+final class TimesheetSubmittedNotification extends InboxNotification
 {
-    use Queueable;
-
     /**
      * @param  string  $period  the period in words
      */
@@ -27,14 +23,6 @@ final class TimesheetSubmittedNotification extends Notification implements Shoul
         public readonly UserEloquentModel $member,
         public readonly string $period,
     ) {}
-
-    /**
-     * @return array<int, string>
-     */
-    public function via(object $notifiable): array
-    {
-        return ['database'];
-    }
 
     /**
      * @return array<string, mixed>

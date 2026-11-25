@@ -5,30 +5,18 @@ declare(strict_types=1);
 namespace App\Ticket\Notifications;
 
 use App\Inbox\InboxKindEnum;
+use App\Inbox\InboxNotification;
 use App\Inbox\InboxPayload;
 use App\Ticket\TicketEloquentModel;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueueAfterCommit;
-use Illuminate\Notifications\Notification;
 
 /**
  * Reminds the assignee that an open ticket is due tomorrow.
  */
-final class TicketDueSoonNotification extends Notification implements ShouldQueueAfterCommit
+final class TicketDueSoonNotification extends InboxNotification
 {
-    use Queueable;
-
     public function __construct(
         public readonly TicketEloquentModel $ticket,
     ) {}
-
-    /**
-     * @return array<int, string>
-     */
-    public function via(object $notifiable): array
-    {
-        return ['database'];
-    }
 
     /**
      * @return array<string, mixed>

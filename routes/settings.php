@@ -53,6 +53,8 @@ use App\Environment\Controllers\StoreEnvironmentVariableController;
 use App\Environment\Controllers\UpdateEnvironmentVariableController;
 use App\Holiday\Controllers\DeleteHolidayController;
 use App\Holiday\Controllers\StoreHolidayController;
+use App\Inbox\Controllers\EditNotificationEmailsController;
+use App\Inbox\Controllers\UpdateNotificationEmailsController;
 use App\Mailbox\Controllers\DeleteMailboxController;
 use App\Mailbox\Controllers\ShowEmailSettingsController;
 use App\Mailbox\Controllers\StoreMailboxController;
@@ -104,6 +106,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('settings/security', EditSecurityController::class)
         ->middleware(RequirePassword::class)
         ->name('security.edit');
+
+    Route::get('settings/notifications', EditNotificationEmailsController::class)->name('notification-settings.edit');
+    Route::put('settings/notifications', UpdateNotificationEmailsController::class)->name('notification-settings.update');
 
     Route::put('settings/password', UpdatePasswordController::class)
         ->middleware('throttle:6,1')
