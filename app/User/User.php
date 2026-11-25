@@ -9,6 +9,7 @@ use App\User\Factories\UserFactory;
 use App\User\Properties\CreatedAt;
 use App\User\Properties\CurrentTeamId;
 use App\User\Properties\Email;
+use App\User\Properties\EmailedNotifications;
 use App\User\Properties\EmailVerifiedAt;
 use App\User\Properties\FirstName;
 use App\User\Properties\GettingStartedDismissedAt;
@@ -41,6 +42,7 @@ final class User extends AbstractData
         public CreatedAt $createdAt,
         public CurrentTeamId $currentTeamId,
         public Email $email,
+        public EmailedNotifications $emailedNotifications,
         public EmailVerifiedAt $emailVerifiedAt,
         public FirstName $firstName,
         public GettingStartedDismissedAt $gettingStartedDismissedAt,
@@ -129,6 +131,18 @@ final class User extends AbstractData
         }
 
         $this->email = Email::fromNullableString($email->toNullableString());
+
+        return $this;
+    }
+
+    public function getEmailedNotifications(): EmailedNotifications
+    {
+        return $this->emailedNotifications;
+    }
+
+    public function setEmailedNotifications(mixed $emailedNotifications): self
+    {
+        $this->emailedNotifications = new EmailedNotifications($emailedNotifications instanceof AbstractValue ? $emailedNotifications->toValue() : $emailedNotifications);
 
         return $this;
     }

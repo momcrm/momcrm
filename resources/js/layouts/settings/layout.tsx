@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
     Activity,
+    Bell,
     BookOpen,
     Boxes,
     Building2,
@@ -34,6 +35,7 @@ import { index as connectorsIndex } from '@/routes/connectors';
 import { edit as editCustomObjects } from '@/routes/custom-objects';
 import { edit as editEnvironment } from '@/routes/environment';
 import { index as mailboxesIndex } from '@/routes/mailboxes';
+import { edit as editNotificationSettings } from '@/routes/notification-settings';
 import { index as productsIndex } from '@/routes/products';
 import { edit } from '@/routes/profile';
 import { index as ratesIndex } from '@/routes/rates';
@@ -138,7 +140,14 @@ const sections: { title: string; items: NavItem[] }[] = [
     },
     {
         title: 'Preferences',
-        items: [{ title: 'Appearance', href: editAppearance(), icon: Palette }],
+        items: [
+            {
+                title: 'Notifications',
+                href: editNotificationSettings(),
+                icon: Bell,
+            },
+            { title: 'Appearance', href: editAppearance(), icon: Palette },
+        ],
     },
 ];
 

@@ -14,6 +14,7 @@ use App\TeamUser\Properties\TeamId;
 use App\TeamUser\Properties\UserId;
 use App\User\Factories\UserFactory;
 use App\User\Properties\CurrentTeamId;
+use App\User\Properties\EmailedNotifications;
 use App\User\Properties\EmailVerifiedAt;
 use App\User\Properties\GettingStartedDismissedAt;
 use App\User\Properties\Id;
@@ -44,6 +45,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property string|null $timezone
  * @property bool $is_platform_admin
  * @property string $email
+ * @property array<int, string>|null $emailed_notifications
  * @property CarbonImmutable|null $email_verified_at
  * @property string|null $current_team_id
  * @property string|null $onboarding_use_case
@@ -157,6 +159,7 @@ final class UserEloquentModel extends Authenticatable implements Auditable, Must
     protected function casts(): array
     {
         return [
+            EmailedNotifications::getDatabaseTableColumnName() => 'array',
             EmailVerifiedAt::getDatabaseTableColumnName() => 'datetime',
             GettingStartedDismissedAt::getDatabaseTableColumnName() => 'datetime',
             IsPlatformAdmin::getDatabaseTableColumnName() => 'boolean',

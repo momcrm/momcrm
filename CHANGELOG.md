@@ -38,6 +38,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Structured logging: every request gets an `X-Request-Id`, and log lines carry the request, user and team ids. Logs default to daily-rotated JSON files.
 - Audit and activity retention (365 and 180 days by default, `AUDIT_LOG_RETENTION_DAYS` / `ACTIVITY_RETENTION_DAYS`), pruned daily by the scheduler.
 - Team-based tenancy: every user gets a personal team, can switch their current team from the sidebar, and owners can rename it under Settings → Team. Team-owned models are isolated with `CurrentTeamScope`.
+- Notification emails: inbox notifications can also be emailed, with who did what, the comment it came with and a link to open it. Under Settings → Notifications each person chooses which kinds (mentions, assignments, comments, updates) they are emailed; mentions and assignments until they choose.
 
 ### Changed
 
