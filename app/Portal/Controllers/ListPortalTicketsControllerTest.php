@@ -59,3 +59,11 @@ it('is forbidden when no rule lets the contact see tickets', function (): void {
 
     actingAs($contact, 'portal')->get(route('tickets.index'))->assertForbidden();
 });
+
+it("reloads the list when any of the customer's tickets change", function (): void {
+    $contact = portalContact();
+
+    $response = actingAs($contact, 'portal')->get(route('tickets.index'))->assertOk();
+
+    expect(liveListeners($response, 'tickets'))->toBe(["private-portal.customers.{$contact->customer_id}.tickets ticket.changed"]);
+});
