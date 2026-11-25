@@ -31,6 +31,7 @@ use App\Environment\EnvironmentPolicy;
 use App\Environment\EnvironmentVariables;
 use App\Group\Group;
 use App\Group\GroupPolicy;
+use App\Inbox\Listeners\AnnounceInboxNotification;
 use App\Invoice\Invoice;
 use App\Invoice\InvoicePolicy;
 use App\Location\Location;
@@ -66,6 +67,7 @@ use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Hashing\Hasher;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Notifications\Events\NotificationSent;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Date;
@@ -191,6 +193,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Event::listen(RecordAccountActivity::EVENTS, RecordAccountActivity::class);
         Event::listen(Verified::class, SendWelcomeNotification::class);
+        Event::listen(NotificationSent::class, AnnounceInboxNotification::class);
         Event::listen(AcceptPendingTeamInvitation::EVENTS, AcceptPendingTeamInvitation::class);
         Event::listen(fn (SocialiteWasCalled $event) => $event->extendSocialite('microsoft', MicrosoftProvider::class));
     }

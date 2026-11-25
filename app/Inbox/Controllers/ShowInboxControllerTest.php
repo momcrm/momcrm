@@ -47,3 +47,12 @@ it('filters by kind and unread, and shows the selected ticket', function (): voi
             ->has('selected.comments'),
         );
 });
+
+it('reloads the notifications and their counts when the inbox changes', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+
+    $response = actingAs($user)->get(route('inbox'))->assertOk();
+
+    expect(liveListeners($response, 'notifications'))->toBe(["private-inbox.{$user->id} inbox.changed"])
+        ->and(liveListeners($response, 'counts'))->toBe(["private-inbox.{$user->id} inbox.changed"]);
+});

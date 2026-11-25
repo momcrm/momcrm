@@ -176,3 +176,12 @@ it('shows who a reply would go to and how the replies already sent fared', funct
             ->where('drawer.comments.1.delivery', ['status' => 'sent', 'error' => null])
             ->where('drawer.comments.2.delivery', ['status' => 'failed', 'error' => 'Access is denied.']));
 });
+
+it('reloads the ticket when it changes', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $ticket = TicketEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
+
+    $response = actingAs($user)->get(route('tickets.show', $ticket->id))->assertOk();
+
+    expect(liveListeners($response, 'drawer'))->toBe(["private-tickets.{$ticket->id} ticket.changed"]);
+});

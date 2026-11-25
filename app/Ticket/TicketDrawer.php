@@ -40,11 +40,13 @@ use App\Project\Actions\FindProject;
 use App\Shared\MorphMapKeyEnum;
 use App\Team\Scopes\CurrentTeamScope;
 use App\TeamUser\Actions\FindTeamMembers;
+use App\Ticket\Events\TicketChanged;
 use App\Ticket\Properties\Number;
 use App\Ticket\Properties\TeamId;
 use App\User\UserEloquentModel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Inertia\LiveProp;
 
 /**
  * What the ticket side drawer shows: the ticket with everything around it, and
@@ -56,11 +58,10 @@ final class TicketDrawer
     public const string QUERY_KEY = 'ticket';
 
     /**
-     * The opened ticket, or null when none is open or it isn't the team's.
-     *
-     * @return array<string, mixed>|null
+     * The opened ticket as a page prop, or null when none is open. It reloads
+     * whenever the ticket changes, and is null when it isn't the team's.
      */
-    public static function forRequest(Request $request): ?array
+    public static function forRequest(Request $request): ?LiveProp
     {
         $id = $request->query(self::QUERY_KEY);
 
@@ -71,7 +72,7 @@ final class TicketDrawer
         /** @var UserEloquentModel $user */
         $user = $request->user();
 
-        return self::forTicket($id, $user);
+        return TicketChanged::liveForTicket($id, fn (): ?array => self::forTicket($id, $user));
     }
 
     /**

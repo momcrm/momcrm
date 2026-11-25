@@ -146,6 +146,17 @@ final class FindConversation
     }
 
     /**
+     * Whether others sent the person messages in one conversation that they
+     * haven't read yet.
+     */
+    public static function hasUnreadMessagesIn(string $conversationId, string $userId): bool
+    {
+        return self::unreadAcrossTeams($userId)
+            ->where(MessageConversationId::getDatabaseTableColumnNameWithTable(Table::Messages), $conversationId)
+            ->exists();
+    }
+
+    /**
      * @return Builder<ConversationEloquentModel>
      */
     private static function forParticipant(string $teamId, string $userId): Builder
@@ -161,6 +172,15 @@ final class FindConversation
      */
     private static function unread(string $teamId, string $userId): Builder
     {
+        return self::unreadAcrossTeams($userId)
+            ->where(MessageTeamId::getDatabaseTableColumnNameWithTable(Table::Messages), $teamId);
+    }
+
+    /**
+     * @return Builder<MessageEloquentModel>
+     */
+    private static function unreadAcrossTeams(string $userId): Builder
+    {
         $messages = Table::Messages;
         $lastReadAt = 'me.'.LastReadAt::getDatabaseTableColumnName();
 
@@ -169,7 +189,6 @@ final class FindConversation
             ->join(Table::ConversationParticipants->value.' as me', fn (JoinClause $join) => $join
                 ->on('me.'.ConversationId::getDatabaseTableColumnName(), '=', MessageConversationId::getDatabaseTableColumnNameWithTable($messages))
                 ->where('me.'.UserId::getDatabaseTableColumnName(), '=', $userId))
-            ->where(MessageTeamId::getDatabaseTableColumnNameWithTable($messages), $teamId)
             ->where(fn (Builder $query) => $query
                 ->whereNull(MessageUserId::getDatabaseTableColumnNameWithTable($messages))
                 ->orWhere(MessageUserId::getDatabaseTableColumnNameWithTable($messages), '!=', $userId))

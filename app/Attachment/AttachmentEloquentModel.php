@@ -13,8 +13,11 @@ use App\Attachment\Properties\Size;
 use App\Attachment\Properties\UploadedById;
 use App\AuditLog\AuditObserver;
 use App\AuditLog\Contracts\Auditable;
+use App\Shared\MorphMapKeyEnum;
 use App\Shared\Table;
 use App\Team\Scopes\CurrentTeamScope;
+use App\Ticket\Contracts\ChangesTicket;
+use App\Ticket\TicketChangeObserver;
 use App\User\UserEloquentModel;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
@@ -42,9 +45,9 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
  * @property string|null $uploaded_by_contact_id
  * @property string|null $uploaded_by_id
  */
-#[ObservedBy(AuditObserver::class)]
+#[ObservedBy([AuditObserver::class, TicketChangeObserver::class])]
 #[ScopedBy(CurrentTeamScope::class)]
-final class AttachmentEloquentModel extends Model implements Auditable
+final class AttachmentEloquentModel extends Model implements Auditable, ChangesTicket
 {
     /** @use HasFactory<AttachmentFactory> */
     use HasFactory;
@@ -56,6 +59,19 @@ final class AttachmentEloquentModel extends Model implements Auditable
     public function auditTeamId(): string
     {
         return $this->team_id;
+    }
+
+    public function changedTicketTeamId(): string
+    {
+        return $this->team_id;
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function changedTicketIds(): array
+    {
+        return $this->attachable_type === MorphMapKeyEnum::Ticket->value ? [$this->attachable_id] : [];
     }
 
     public function getTable(): string

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Ticket\Actions;
 
+use App\Ticket\Events\TicketChanged;
 use App\Ticket\Properties\ArchivedAt;
 use App\Ticket\Properties\Id;
 use App\Ticket\Properties\Position;
@@ -58,6 +59,9 @@ final readonly class MoveTicket
                         ->update([Position::getDatabaseTableColumnName() => $index]);
                 }
             }
+
+            // Positions are saved with query updates, which fire no model events.
+            TicketChanged::later($this->ticket->getTeamId()->toString(), $this->ticket->getId()->toString());
 
             return $this->ticket->setPosition($position);
         });

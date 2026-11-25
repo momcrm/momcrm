@@ -92,3 +92,14 @@ it("shares the team's live custom objects, in order, for the sidebar", function 
             ->where('sidebarCounts.objects.1.name_plural', 'Licences'),
         );
 });
+
+it("reloads the sidebar counts when the person's inbox or the team's tickets change", function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create(['onboarded_at' => now()]);
+
+    $response = actingAs($user)->get(route('dashboard'))->assertOk();
+
+    expect(liveListeners($response, 'sidebarCounts'))->toBe([
+        "private-inbox.{$user->id} inbox.changed",
+        "private-teams.{$user->current_team_id}.tickets ticket.changed",
+    ]);
+});

@@ -11,6 +11,7 @@ use App\CustomField\Properties\CustomFieldValues;
 use App\Shared\Types;
 use App\Ticket\Actions\FindTicket;
 use App\Ticket\Actions\UpdateTicket;
+use App\Ticket\Events\TicketChanged;
 use App\Ticket\Exceptions\CouldNotFindTicket;
 use App\Ticket\Properties\ContactId;
 use App\Ticket\Properties\CustomerId;
@@ -111,6 +112,9 @@ final class PatchTicketFormRequest extends FormRequest
                 ->findOrFail($this->ticket->getId()->toString())
                 ->labels()
                 ->sync(Types::stringList($validated[self::LABEL_IDS]));
+
+            // Labels are saved apart from the ticket's row, which fires no model event.
+            TicketChanged::later($this->ticket->getTeamId()->toString(), $this->ticket->getId()->toString());
         }
 
         return back();

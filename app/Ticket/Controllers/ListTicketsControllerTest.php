@@ -272,3 +272,13 @@ it('sends each listed ticket the names of the records its custom fields link to'
             ->where('tickets.data.1.custom_field_labels', []),
         );
 });
+
+it("reloads the list when any of the team's tickets change, and the open ticket when it does", function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $ticket = TicketEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
+
+    $response = actingAs($user)->get(route('tickets.index', ['ticket' => $ticket->id]))->assertOk();
+
+    expect(liveListeners($response, 'tickets'))->toBe(["private-teams.{$user->current_team_id}.tickets ticket.changed"])
+        ->and(liveListeners($response, 'drawer'))->toBe(["private-tickets.{$ticket->id} ticket.changed"]);
+});

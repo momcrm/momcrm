@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { timeAgo } from '@/lib/format';
+import { isLive } from '@/lib/live';
 import { visitWithQuery } from '@/lib/query';
 import { cn } from '@/lib/utils';
 import { inbox } from '@/routes';
@@ -27,7 +28,7 @@ import type {
 
 const RELOAD = ['conversations', 'selected', 'sidebarCounts'];
 
-/** How often an open inbox checks for new messages. */
+/** How often an open inbox checks for new messages without live updates. */
 const POLL_MS = 5000;
 
 const names = (people: CustomerOption[]): string =>
@@ -51,7 +52,7 @@ export default function Messages({
     const [isComposing, setIsComposing] = useState(false);
     const isRightPaneOpen = isComposing || selected !== null;
 
-    usePoll(POLL_MS, { only: RELOAD });
+    usePoll(POLL_MS, { only: RELOAD }, { autoStart: !isLive });
 
     const open = (id: string | null) => {
         setIsComposing(false);

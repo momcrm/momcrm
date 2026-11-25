@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 use App\Conversation\ConversationEloquentModel;
 use App\ConversationParticipant\ConversationParticipantEloquentModel;
+use App\Inbox\Events\InboxChanged;
 use App\Message\MessageEloquentModel;
 use App\Message\Notifications\MessageReceivedNotification;
 use App\User\UserEloquentModel;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Notification;
 
+use function Illuminate\Support\defer;
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\travelTo;
 
@@ -51,4 +54,17 @@ it('refuses an empty message', function (): void {
     actingAs($user)
         ->post(route('messages.store', $conversation->id), ['body' => ''])
         ->assertSessionHasErrors(['body' => 'Write a message first.']);
+});
+
+it("tells every participant's open pages about the new message", function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $sam = messagingTeammate($user);
+    $conversation = ConversationEloquentModel::factory()->between($user, $sam)->create();
+    defer()->invoke();
+    Event::fake([InboxChanged::class]);
+
+    actingAs($user)->post(route('messages.store', $conversation->id), ['body' => 'On my way']);
+
+    $userIds = Event::dispatched(InboxChanged::class)->map(fn (array $dispatch): string => $dispatch[0]->userId)->sort()->values()->all();
+    expect($userIds)->toBe(collect([$user->id, $sam->id])->sort()->values()->all());
 });

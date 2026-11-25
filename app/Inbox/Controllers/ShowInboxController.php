@@ -5,16 +5,18 @@ declare(strict_types=1);
 namespace App\Inbox\Controllers;
 
 use App\Inbox\Actions\FindNotifications;
+use App\Inbox\Events\InboxChanged;
 use App\Inbox\InboxKindEnum;
 use App\Ticket\TicketDrawer;
 use App\User\UserEloquentModel;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Inertia\Response;
 
 /**
  * The inbox: notifications on the left, by kind, and the conversation on the
- * selected ticket (`?ticket=`) on the right.
+ * selected ticket (`?ticket=`) on the right. Both reload as they change.
  */
 final class ShowInboxController
 {
@@ -26,8 +28,8 @@ final class ShowInboxController
         $unreadOnly = $request->boolean('unread');
 
         return Inertia::render('inbox', [
-            'notifications' => FindNotifications::forUser($user, $kind, $unreadOnly),
-            'counts' => FindNotifications::unreadCounts($user),
+            'notifications' => InboxChanged::liveFor($user->id, fn (): Collection => FindNotifications::forUser($user, $kind, $unreadOnly)),
+            'counts' => InboxChanged::liveFor($user->id, fn (): array => FindNotifications::unreadCounts($user)),
             'filters' => ['kind' => $kind?->value, 'unread' => $unreadOnly],
             ...TicketDrawer::options((string) $user->current_team_id, $user->id),
             'selected' => TicketDrawer::forRequest($request),

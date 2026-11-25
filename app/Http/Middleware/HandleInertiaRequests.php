@@ -15,6 +15,7 @@ use App\Favorite\Actions\FindFavorite;
 use App\Favorite\FavoritableTypeEnum;
 use App\Group\Actions\FindGroup;
 use App\Inbox\Actions\FindNotifications;
+use App\Inbox\Events\InboxChanged;
 use App\Onboarding\Actions\GetGettingStartedProgress;
 use App\Onboarding\Actions\RemoveSampleData;
 use App\Portal\Actions\FindPortalContacts;
@@ -26,9 +27,12 @@ use App\Team\Actions\FindTeam;
 use App\Team\SuspendedTeamAction;
 use App\Team\Team;
 use App\Ticket\Actions\FindTicket;
+use App\Ticket\Events\TicketChanged;
+use App\Ticket\TeamTicketsChannel;
 use App\User\UserEloquentModel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Inertia\LiveProp;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -41,6 +45,12 @@ class HandleInertiaRequests extends Middleware
      * @var string
      */
     protected $rootView = 'app';
+
+    /**
+     * Every open page shows the sidebar, so a busy team's ticket changes
+     * reload its counts at most this often.
+     */
+    private const int SIDEBAR_COUNTS_THROTTLE_MS = 2000;
 
     public function __construct(
         private readonly SettingsNavigation $settingsNavigation,
@@ -95,7 +105,7 @@ class HandleInertiaRequests extends Middleware
                 && Gate::forUser($request->user())->allows('manage', EnvironmentVariables::class),
             'settingsNavigation' => fn (): array => $this->settingsNavigation->for($request),
             'suspendedTeamAction' => fn (): ?array => $this->suspendedTeamAction($request),
-            'sidebarCounts' => fn (): ?array => $this->sidebarCounts($request),
+            'sidebarCounts' => $this->liveSidebarCounts($request),
             'choices' => fn (): ?array => $this->choices($request),
             'attendanceClock' => fn (): ?array => $this->attendanceClock($request),
             'customFields' => fn (): ?array => $this->customFields($request),
@@ -205,6 +215,22 @@ class HandleInertiaRequests extends Middleware
         return collect(CustomFieldTargetEnum::builtIn())
             ->mapWithKeys(fn (CustomFieldTargetEnum $target): array => [$target->value => FindCustomField::listForTeam($teamId, $target)->toSummaries()])
             ->all();
+    }
+
+    /**
+     * The sidebar's numbers, reloaded when the person's inbox or any of the
+     * team's tickets change.
+     */
+    private function liveSidebarCounts(Request $request): ?LiveProp
+    {
+        $user = $request->user();
+
+        if (! $user instanceof UserEloquentModel || ! is_string($user->current_team_id)) {
+            return null;
+        }
+
+        return InboxChanged::liveFor($user->id, fn (): ?array => $this->sidebarCounts($request), throttle: self::SIDEBAR_COUNTS_THROTTLE_MS)
+            ->live(on: TicketChanged::class, channel: TeamTicketsChannel::for($user->current_team_id));
     }
 
     /**

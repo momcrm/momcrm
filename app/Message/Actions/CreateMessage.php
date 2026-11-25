@@ -10,10 +10,12 @@ use App\ConversationParticipant\Actions\MarkConversationRead;
 use App\ConversationParticipant\ConversationParticipantEloquentModel;
 use App\ConversationParticipant\Properties\ConversationId;
 use App\ConversationParticipant\Properties\UserId;
+use App\Inbox\Events\InboxChanged;
 use App\Message\Message;
 use App\Message\MessageEloquentModel;
 use App\Message\Notifications\MessageReceivedNotification;
 use App\Message\Properties\Id;
+use App\Shared\Types;
 use App\User\UserEloquentModel;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
@@ -63,6 +65,11 @@ final readonly class CreateMessage
                     body: $model->body,
                 ));
             }
+
+            ConversationParticipantEloquentModel::query()
+                ->where(ConversationId::getDatabaseTableColumnName(), $model->conversation_id)
+                ->pluck(UserId::getDatabaseTableColumnName())
+                ->each(fn (mixed $userId) => InboxChanged::later(Types::string($userId)));
 
             return Message::fromEloquentModel($model->refresh());
         });

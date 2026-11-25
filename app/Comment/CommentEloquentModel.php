@@ -13,6 +13,8 @@ use App\Comment\Properties\TicketId;
 use App\Comment\Properties\UserId;
 use App\Shared\Table;
 use App\Team\Scopes\CurrentTeamScope;
+use App\Ticket\Contracts\ChangesTicket;
+use App\Ticket\TicketChangeObserver;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
 use Carbon\CarbonImmutable;
@@ -38,9 +40,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $user_id
  * @property string $visibility
  */
-#[ObservedBy(AuditObserver::class)]
+#[ObservedBy([AuditObserver::class, TicketChangeObserver::class])]
 #[ScopedBy(CurrentTeamScope::class)]
-final class CommentEloquentModel extends Model implements Auditable
+final class CommentEloquentModel extends Model implements Auditable, ChangesTicket
 {
     /** @use HasFactory<CommentFactory> */
     use HasFactory;
@@ -52,6 +54,19 @@ final class CommentEloquentModel extends Model implements Auditable
     public function auditTeamId(): string
     {
         return $this->team_id;
+    }
+
+    public function changedTicketTeamId(): string
+    {
+        return $this->team_id;
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function changedTicketIds(): array
+    {
+        return $this->ticket_id === null ? [] : [$this->ticket_id];
     }
 
     public function getTable(): string

@@ -18,9 +18,12 @@ use App\CustomObject\CustomObjectEloquentModel;
 use App\Group\GroupEloquentModel;
 use App\Project\ProjectEloquentModel;
 use App\Record\RecordEloquentModel;
+use App\Ticket\Events\TicketChanged;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
+use Illuminate\Support\Facades\Event;
 
+use function Illuminate\Support\defer;
 use function Pest\Laravel\actingAs;
 
 function teamPriorityId(UserEloquentModel $user, string $name): string
@@ -391,4 +394,16 @@ it("links a ticket to a record of the field's custom object, and not of another"
         ->assertSessionHasNoErrors();
 
     expect($ticket->fresh()->custom_fields)->toBe([$field->id => $van->id]);
+});
+
+it('tells open pages when only the labels change', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $ticket = patchableTicket($user);
+    $label = ChoiceEloquentModel::factory()->label()->create(['team_id' => $user->current_team_id]);
+    defer()->invoke();
+    Event::fake([TicketChanged::class]);
+
+    actingAs($user)->patch(route('tickets.patch', $ticket->id), ['label_ids' => [$label->id]]);
+
+    Event::assertDispatched(TicketChanged::class, fn (TicketChanged $event): bool => $event->ticketId === $ticket->id);
 });

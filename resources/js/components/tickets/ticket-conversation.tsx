@@ -8,6 +8,7 @@ import { AssigneeAvatar } from '@/components/tickets/ticket-meta';
 import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { timeAgo } from '@/lib/format';
+import { isLive } from '@/lib/live';
 import { cn } from '@/lib/utils';
 import { destroy as destroyComment } from '@/routes/comments';
 import type {
@@ -42,7 +43,8 @@ export default function TicketConversation({
 }) {
     const [tab, setTab] = useState<Tab>('comments');
 
-    // A reply being emailed shows as "Sending" until the page hears how it went.
+    // A reply being emailed shows as "Sending" until the page hears how it
+    // went: live updates tell it, otherwise it checks every few seconds.
     const isSending = comments.some(
         (comment) => comment.delivery?.status === 'pending',
     );
@@ -53,7 +55,7 @@ export default function TicketConversation({
     );
 
     useEffect(() => {
-        if (!isSending) {
+        if (!isSending || isLive) {
             return;
         }
 
