@@ -16,6 +16,7 @@ use App\MailboxMessage\MailboxMessage;
 use App\MailboxMessage\MailboxMessageDirectionEnum;
 use App\MailboxMessage\MailboxMessageStatusEnum;
 use App\MailboxMessage\Properties\InternetMessageId;
+use App\Shared\Types;
 use App\Ticket\Actions\CreateTicket;
 use App\Ticket\Actions\FindTicket;
 use App\Ticket\Actions\UpdateTicket;
@@ -73,9 +74,10 @@ final readonly class ProcessInboundMessage
 
             $from = $this->message->getFromAddress()->toNullableString();
 
-            // Mail with no sender cannot be answered, and mail the mailbox sent
-            // itself would open a ticket for every message it sends.
-            if ($from === null || $from === $this->mailbox->getAddress()->toString()) {
+            // Mail with no sender cannot be answered, and mail the mailbox or
+            // this app sent would open a ticket for every message it sends,
+            // and the app's notification about that ticket would open another.
+            if ($from === null || $from === $this->mailbox->getAddress()->toString() || $from === self::appAddress()) {
                 return CreateMailboxMessage::fromMessage($this->message);
             }
 
@@ -210,6 +212,16 @@ final readonly class ProcessInboundMessage
         NotifyTicketWatchers::sendFromCustomer($model, new TicketRaisedNotification($model, $ticket->getRequesterName()->toNullableString() ?? $from));
 
         return $ticket;
+    }
+
+    /**
+     * The address this app sends its own email from, such as notifications.
+     */
+    private static function appAddress(): ?string
+    {
+        $address = Types::nullableString(config('mail.from.address'));
+
+        return $address === null ? null : mb_strtolower($address);
     }
 
     private static function description(?string $text): ?string

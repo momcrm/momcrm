@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Inbox;
 
+use App\Mailbox\Actions\FindMailbox;
 use App\User\User;
 use App\User\UserEloquentModel;
 
@@ -11,6 +12,9 @@ use App\User\UserEloquentModel;
  * Which kinds of inbox notification someone is also emailed. Until they
  * choose, it is the ones that ask something of them: new tickets, mentions,
  * assignments and direct messages.
+ *
+ * Someone whose address is one of the mailboxes we read is never emailed:
+ * the email would come back in as a ticket, which would notify them again.
  */
 final class NotificationEmails
 {
@@ -41,6 +45,7 @@ final class NotificationEmails
 
     public static function isWantedBy(UserEloquentModel $user, InboxKindEnum $kind): bool
     {
-        return in_array($kind, self::kindsFor(User::fromEloquentModel($user)), true);
+        return in_array($kind, self::kindsFor(User::fromEloquentModel($user)), true)
+            && FindMailbox::byAddress($user->email)->isNull();
     }
 }
