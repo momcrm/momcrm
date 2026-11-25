@@ -11,6 +11,7 @@ use App\Mailbox\Actions\ResolveMailClient;
 use App\Mailbox\Mailbox;
 use App\Mailbox\MailboxEloquentModel;
 use App\MailboxMessage\MailboxMessage;
+use App\TeamUser\TeamUserEloquentModel;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -68,6 +69,20 @@ expect()->extend('toBeOne', function () {
 function something()
 {
     // ..
+}
+
+/**
+ * Someone else in the user's current team, as a member, whose current team
+ * it is too.
+ *
+ * @param  array<string, mixed>  $attributes
+ */
+function messagingTeammate(UserEloquentModel $user, array $attributes = []): UserEloquentModel
+{
+    $teammate = UserEloquentModel::factory()->create(['current_team_id' => $user->current_team_id, ...$attributes]);
+    TeamUserEloquentModel::query()->create(['team_id' => $user->current_team_id, 'user_id' => $teammate->id, 'role' => 'member']);
+
+    return $teammate;
 }
 
 /**

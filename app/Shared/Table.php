@@ -23,6 +23,8 @@ enum Table: string
     case Comments = 'comments';
     case Connectors = 'connectors';
     case Contacts = 'contacts';
+    case ConversationParticipants = 'conversation_participants';
+    case Conversations = 'conversations';
     case Contracts = 'contracts';
     case CustomFields = 'custom_fields';
     case CustomObjects = 'custom_objects';
@@ -43,6 +45,7 @@ enum Table: string
     case Locations = 'locations';
     case MailboxMessages = 'mailbox_messages';
     case Mailboxes = 'mailboxes';
+    case Messages = 'messages';
     case Milestones = 'milestones';
     case Notifications = 'notifications';
     case Passkeys = 'passkeys';

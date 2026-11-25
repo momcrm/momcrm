@@ -53,7 +53,7 @@ final class InboxMail
      * Text someone typed, shown as written: its Markdown characters are
      * escaped so it can't add links or headings to the email.
      */
-    private static function plain(string $text): string
+    public static function plain(string $text): string
     {
         $escaped = (string) preg_replace('/[\\\\`*_\[\]!<>]/', '\\\\$0', $text);
 

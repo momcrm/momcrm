@@ -59,6 +59,8 @@ use App\Contact\Controllers\UpdateContactController;
 use App\Contract\Controllers\DeleteContractController;
 use App\Contract\Controllers\StoreContractController;
 use App\Contract\Controllers\UpdateContractController;
+use App\Conversation\Controllers\ShowMessagesController;
+use App\Conversation\Controllers\StartConversationController;
 use App\Customer\Controllers\BulkUpdateCustomersController;
 use App\Customer\Controllers\DeleteCustomerController;
 use App\Customer\Controllers\DownloadCustomerStatementController;
@@ -127,6 +129,7 @@ use App\Location\Controllers\DeleteLocationController;
 use App\Location\Controllers\EditLocationController;
 use App\Location\Controllers\StoreLocationController;
 use App\Location\Controllers\UpdateLocationController;
+use App\Message\Controllers\StoreMessageController;
 use App\Milestone\Controllers\DeleteMilestoneController;
 use App\Milestone\Controllers\StoreMilestoneController;
 use App\Milestone\Controllers\ToggleMilestoneController;
@@ -363,6 +366,9 @@ Route::middleware(StaffOrContact::STAFF_MIDDLEWARE)->group(function () {
     Route::delete('attachments/{attachment}', DeleteAttachmentController::class)->whereUuid('attachment')->name('attachments.destroy');
 
     Route::get('inbox', ShowInboxController::class)->name('inbox');
+    Route::get('inbox/messages', ShowMessagesController::class)->name('messages.index');
+    Route::post('inbox/messages', StartConversationController::class)->name('conversations.store');
+    Route::post('inbox/messages/{conversation}', StoreMessageController::class)->whereUuid('conversation')->name('messages.store');
     Route::get('notifications', ListNotificationsController::class)->name('notifications.index');
     Route::post('notifications/read-all', MarkAllNotificationsReadController::class)->name('notifications.read-all');
     Route::post('notifications/{notification}/read', MarkNotificationReadController::class)->whereUuid('notification')->name('notifications.read');

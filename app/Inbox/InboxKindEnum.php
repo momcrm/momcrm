@@ -7,7 +7,9 @@ namespace App\Inbox;
 use App\Shared\Traits\Enum;
 
 /**
- * The inbox's tabs: what a notification is about.
+ * What a notification is about, which is also what someone can choose to be
+ * emailed about. A direct message is not listed among the notifications; it
+ * is its own tab in the inbox.
  */
 enum InboxKindEnum: string
 {
@@ -17,4 +19,5 @@ enum InboxKindEnum: string
     case Comment = 'comment';
     case Mention = 'mention';
     case Update = 'update';
+    case Message = 'message';
 }
