@@ -10,6 +10,10 @@ use Illuminate\Http\Request;
 
 use function Pest\Laravel\actingAs;
 
+// Start with nothing on offer, whatever packages this installation has: one
+// that suspends teams would otherwise answer in place of the tests.
+beforeEach(fn () => app()->instance(SuspendedTeamAction::class, new SuspendedTeamAction));
+
 it('shares what a member can do about their suspended team', function (): void {
     $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
     TeamEloquentModel::query()->whereKey($owner->current_team_id)->update(['suspended_at' => now()]);
