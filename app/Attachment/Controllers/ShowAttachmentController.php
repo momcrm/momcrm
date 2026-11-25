@@ -26,11 +26,11 @@ final class ShowAttachmentController
 
         $path = $found->getPath()->toString();
 
-        if ($found->isNull() || ! Storage::disk(CreateAttachment::DISK)->exists($path)) {
+        if ($found->isNull() || ! Storage::disk(CreateAttachment::disk())->exists($path)) {
             throw CouldNotFindAttachment::notFound();
         }
 
-        $response = Storage::disk(CreateAttachment::DISK)->download($path, $found->getName()->toString());
+        $response = Storage::disk(CreateAttachment::disk())->download($path, $found->getName()->toString());
         $response->headers->set('X-Content-Type-Options', 'nosniff');
 
         return $response;

@@ -13,15 +13,24 @@ use App\Shared\MorphMapKeyEnum;
 use App\Shared\Types;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Storage;
 
 /**
- * Stores an uploaded file on the private disk under its team's folder and
+ * Stores an uploaded file on the files disk under its team's folder and
  * attaches it to a ticket, project or customer (into one of its folders).
  */
 final readonly class CreateAttachment
 {
-    public const string DISK = 'local';
+    /**
+     * The disk every uploaded file is kept on: the application's default
+     * one. That is the server's own private folder unless the installation
+     * says otherwise, such as a bucket where the server's disk does not last.
+     */
+    public static function disk(): string
+    {
+        return Config::string('filesystems.default');
+    }
 
     public function __construct(
         private UploadedFile $file,
@@ -34,7 +43,7 @@ final readonly class CreateAttachment
     {
         $teamId = Types::string($this->attachable->getAttribute('team_id'));
         $id = Id::generate();
-        $path = $this->file->storeAs("attachments/{$teamId}", $id->toString().'.'.($this->file->guessExtension() ?? 'bin'), self::DISK);
+        $path = $this->file->storeAs("attachments/{$teamId}", $id->toString().'.'.($this->file->guessExtension() ?? 'bin'), self::disk());
 
         return self::record(
             Attachment::new()
@@ -66,7 +75,7 @@ final readonly class CreateAttachment
         $extension = mb_strtolower(pathinfo($name, PATHINFO_EXTENSION));
         $path = "attachments/{$teamId}/{$id->toString()}.".(preg_match('/^[a-z0-9]{1,10}$/', $extension) === 1 ? $extension : 'bin');
 
-        Storage::disk(self::DISK)->put($path, $contents);
+        Storage::disk(self::disk())->put($path, $contents);
 
         return self::record(
             Attachment::new()
@@ -90,7 +99,7 @@ final readonly class CreateAttachment
     {
         $teamId = Types::string($attachable->getAttribute('team_id'));
         $id = Id::generate();
-        $path = $file->storeAs("attachments/{$teamId}", $id->toString().'.'.($file->guessExtension() ?? 'bin'), self::DISK);
+        $path = $file->storeAs("attachments/{$teamId}", $id->toString().'.'.($file->guessExtension() ?? 'bin'), self::disk());
 
         return self::record(
             Attachment::new()

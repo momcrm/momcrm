@@ -51,3 +51,15 @@ it('tidies the name and type a sender gave a file', function (string $name, ?str
     'an extension that is not one' => ['notes.tar gz!', '', 'notes.tar gz!', 'bin', 'application/octet-stream'],
     'a name longer than fits' => [str_repeat('a', 300).'.txt', 'text/plain', str_repeat('a', 255), 'bin', 'text/plain'],
 ]);
+
+it('keeps files on whichever disk the installation made its default', function (): void {
+    Storage::fake('local');
+    Storage::fake('bucket');
+    config(['filesystems.default' => 'bucket']);
+    $ticket = TicketEloquentModel::factory()->create();
+
+    $attachment = CreateAttachment::fromContents('quote.pdf', 'pdf-bytes', 'application/pdf', $ticket);
+
+    Storage::disk('bucket')->assertExists($attachment->getPath()->toString());
+    Storage::disk('local')->assertMissing($attachment->getPath()->toString());
+});

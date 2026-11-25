@@ -19,7 +19,7 @@ final readonly class DeleteAttachment
 
     public function __invoke(): void
     {
-        Storage::disk(CreateAttachment::DISK)->delete($this->attachment->getPath()->toString());
+        Storage::disk(CreateAttachment::disk())->delete($this->attachment->getPath()->toString());
 
         AttachmentEloquentModel::query()
             ->withoutGlobalScopes()
