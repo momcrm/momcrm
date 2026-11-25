@@ -5,10 +5,13 @@ declare(strict_types=1);
 use App\Activity\ActivityEloquentModel;
 use App\Activity\ActivityTypeEnum;
 use App\Choice\ChoiceEloquentModel;
+use App\Ticket\Events\TicketChanged;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
+use Illuminate\Support\Facades\Event;
 use Inertia\Testing\AssertableInertia as Assert;
 
+use function Illuminate\Support\defer;
 use function Pest\Laravel\actingAs;
 
 it('moves a ticket to another column at the given place', function (): void {
@@ -78,4 +81,17 @@ it("treats a team's own closed status as closed", function (): void {
     actingAs($user)
         ->get(route('tickets.index'))
         ->assertInertia(fn (Assert $page) => $page->where('tickets.total', 0)->where('sidebarCounts.openTickets', 0));
+});
+
+it('tells open pages when a ticket is reordered within its column', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $team = ['team_id' => $user->current_team_id];
+    TicketEloquentModel::factory()->create([...$team, 'position' => 0]);
+    $moving = TicketEloquentModel::factory()->create([...$team, 'position' => 1]);
+    defer()->invoke();
+    Event::fake([TicketChanged::class]);
+
+    actingAs($user)->put(route('tickets.move', $moving->id), ['status_id' => ticketStatusId($user->current_team_id, 'New'), 'position' => 0]);
+
+    Event::assertDispatched(TicketChanged::class, fn (TicketChanged $event): bool => $event->ticketId === $moving->id);
 });

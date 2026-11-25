@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Inbox\Actions;
 
+use App\Inbox\Events\InboxChanged;
 use App\Inbox\InboxNotifications;
 use App\User\UserEloquentModel;
 
@@ -15,5 +16,7 @@ final class DeleteNotification
     public static function for(UserEloquentModel $user, string $id): void
     {
         InboxNotifications::query($user)->whereKey($id)->delete();
+
+        InboxChanged::later($user->id);
     }
 }

@@ -16,6 +16,7 @@ use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
+use Illuminate\Testing\TestResponse;
 use Mom\Connectors\Mail\MailClient;
 use Mom\Microsoft\MicrosoftMailClient;
 use Tests\TestCase;
@@ -229,4 +230,24 @@ function ownerAndPerthMember(): array
     $member = UserEloquentModel::factory()->inTeam($owner->current_team_id)->create(['timezone' => 'Australia/Perth']);
 
     return [$owner, $member];
+}
+
+/**
+ * What reloads a page's live prop, one "channel event" line per listener,
+ * channel names prefixed as Echo subscribes to them.
+ *
+ * @return list<string>
+ */
+function liveListeners(TestResponse $response, string $prop): array
+{
+    /** @var array{liveProps?: array<string, array{listeners: list<array{channel: array{name: string, type: string}, events: list<string>}>}>} $page */
+    $page = $response->viewData('page');
+
+    return collect($page['liveProps'][$prop]['listeners'] ?? [])
+        ->flatMap(fn (array $listener): array => array_map(
+            fn (string $event): string => ($listener['channel']['type'] === 'private' ? 'private-' : '').$listener['channel']['name'].' '.$event,
+            $listener['events'],
+        ))
+        ->values()
+        ->all();
 }

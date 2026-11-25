@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Ticket\Controllers;
 
+use App\Ticket\Events\TicketChanged;
 use App\Ticket\Exceptions\CouldNotFindTicket;
 use App\Ticket\TicketDrawer;
 use App\User\UserEloquentModel;
@@ -32,7 +33,7 @@ final class ShowTicketController
         }
 
         return Inertia::render('tickets/show', [
-            'drawer' => $drawer,
+            'drawer' => TicketChanged::liveForTicket($ticket, fn (): array => $drawer),
             ...TicketDrawer::options((string) $user->current_team_id, $user->id),
         ]);
     }

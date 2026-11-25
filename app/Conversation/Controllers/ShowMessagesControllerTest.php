@@ -81,3 +81,12 @@ it("doesn't open a conversation the person isn't in", function (): void {
 it('asks a guest to sign in', function (): void {
     get(route('messages.index'))->assertRedirectToRoute('login');
 });
+
+it('reloads the conversations and the open one when the inbox changes', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+
+    $response = actingAs($user)->get(route('messages.index'))->assertOk();
+
+    expect(liveListeners($response, 'conversations'))->toBe(["private-inbox.{$user->id} inbox.changed"])
+        ->and(liveListeners($response, 'selected'))->toBe(["private-inbox.{$user->id} inbox.changed"]);
+});

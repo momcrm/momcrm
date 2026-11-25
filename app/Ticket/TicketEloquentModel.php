@@ -14,6 +14,7 @@ use App\CustomField\Properties\CustomFieldValues;
 use App\Project\ProjectEloquentModel;
 use App\Shared\Table;
 use App\Team\Scopes\CurrentTeamScope;
+use App\Ticket\Contracts\ChangesTicket;
 use App\Ticket\Factories\TicketFactory;
 use App\Ticket\Properties\ArchivedAt;
 use App\Ticket\Properties\AssigneeId;
@@ -65,9 +66,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $title
  * @property CarbonImmutable|null $updated_at
  */
-#[ObservedBy(AuditObserver::class)]
+#[ObservedBy([AuditObserver::class, TicketChangeObserver::class])]
 #[ScopedBy([CurrentTeamScope::class, VisibleTicketScope::class])]
-final class TicketEloquentModel extends Model implements Auditable
+final class TicketEloquentModel extends Model implements Auditable, ChangesTicket
 {
     /** @use HasFactory<TicketFactory> */
     use HasFactory;
@@ -80,6 +81,27 @@ final class TicketEloquentModel extends Model implements Auditable
     public function auditTeamId(): string
     {
         return $this->team_id;
+    }
+
+    public function changedTicketTeamId(): string
+    {
+        return $this->team_id;
+    }
+
+    /**
+     * A subtask is listed on its parent, so the parent it left or joined
+     * changes too.
+     *
+     * @return list<string>
+     */
+    public function changedTicketIds(): array
+    {
+        $previousParentId = $this->getOriginal(ParentId::getDatabaseTableColumnName());
+
+        return array_values(array_unique(array_filter(
+            [$this->id, $this->parent_id, is_string($previousParentId) ? $previousParentId : null],
+            fn (?string $id): bool => $id !== null,
+        )));
     }
 
     public function getTable(): string

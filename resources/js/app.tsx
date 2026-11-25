@@ -10,6 +10,7 @@ import OnboardingLayout from '@/layouts/onboarding-layout';
 import PortalLayout from '@/layouts/portal-layout';
 import ServiceLayout from '@/layouts/service/layout';
 import SettingsLayout from '@/layouts/settings/layout';
+import { liveUpdates } from '@/lib/live';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -52,6 +53,7 @@ void createInertiaApp({
     progress: {
         color: '#4b5bd6',
     },
+    live: liveUpdates(),
 });
 
 // This will set light / dark mode on load...

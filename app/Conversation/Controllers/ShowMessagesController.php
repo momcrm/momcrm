@@ -6,6 +6,7 @@ namespace App\Conversation\Controllers;
 
 use App\Conversation\Actions\FindConversation;
 use App\ConversationParticipant\Actions\MarkConversationRead;
+use App\Inbox\Events\InboxChanged;
 use App\Message\Actions\FindMessage;
 use App\TeamUser\Actions\FindTeamMembers;
 use App\User\UserEloquentModel;
@@ -16,6 +17,7 @@ use Inertia\Response;
 /**
  * The inbox's Messages tab: the person's conversations on the left, and the
  * one they opened (`?conversation=`) on the right, which counts as reading it.
+ * Both reload when a message arrives.
  */
 final class ShowMessagesController
 {
@@ -31,12 +33,12 @@ final class ShowMessagesController
         }
 
         return Inertia::render('messages', [
-            'conversations' => FindConversation::listForUser($teamId, $user->id),
-            'selected' => $conversation->isNull() ? null : [
+            'conversations' => InboxChanged::liveFor($user->id, fn (): array => FindConversation::listForUser($teamId, $user->id)),
+            'selected' => InboxChanged::liveFor($user->id, fn (): ?array => $conversation->isNull() ? null : [
                 'id' => $conversation->getId()->toString(),
                 'participants' => FindConversation::othersIn($conversation->getId()->toString(), $user->id),
                 'messages' => FindMessage::listForConversation($conversation->getId()->toString()),
-            ],
+            ]),
             'members' => FindTeamMembers::optionsForTeam($teamId)
                 ->reject(fn (array $member): bool => $member['id'] === $user->id)
                 ->values(),
