@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Comment\Notifications;
 
+use App\Shared\BrandedMailMessage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueueAfterCommit;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -37,7 +38,8 @@ final class TicketReplyInPortalNotification extends Notification implements Shou
 
     public function toMail(object $notifiable): MailMessage
     {
-        return new MailMessage()
+        return new BrandedMailMessage()
+            ->sentBy($this->teamName)
             ->subject(__('Re: [#:number] :title', ['number' => $this->number, 'title' => $this->title]))
             ->greeting(__(':name replied to your ticket', ['name' => $this->authorName]))
             ->line($this->body)

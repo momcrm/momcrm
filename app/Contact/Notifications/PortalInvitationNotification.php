@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Contact\Notifications;
 
+use App\Shared\BrandedMailMessage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -33,7 +34,8 @@ final class PortalInvitationNotification extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
-        return new MailMessage()
+        return new BrandedMailMessage()
+            ->sentBy($this->teamName)
             ->subject(__(':team has invited you to their customer portal', ['team' => $this->teamName]))
             ->greeting(__('Hi,'))
             ->line($this->invitedByName === null

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Payment\Notifications;
 
 use App\Payment\PaymentDocument;
+use App\Shared\BrandedMailMessage;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -35,9 +36,15 @@ final class PaymentReceiptNotification extends Notification
         $payment = $this->document->payment;
         $team = $this->document->team;
 
-        $message = new MailMessage()
+        $message = new BrandedMailMessage()
+            ->sentBy($team->getNameOnInvoices())
             ->subject(__('Receipt :reference from :team', ['reference' => $payment->getReferenceNumber(), 'team' => $team->getNameOnInvoices()]))
             ->greeting(__('Thank you for your payment'))
+            ->highlight(
+                __('Amount received'),
+                $this->document->money($payment->getAmountInCents()->toInteger()),
+                __(':date · Receipt :reference', ['date' => $payment->getPaidOn()->toCarbon()->format('j M Y'), 'reference' => $payment->getReferenceNumber()]),
+            )
             ->line(__('We received :amount from :customer on :date.', [
                 'amount' => $this->document->money($payment->getAmountInCents()->toInteger()),
                 'customer' => $this->document->customer->getName()->toString(),

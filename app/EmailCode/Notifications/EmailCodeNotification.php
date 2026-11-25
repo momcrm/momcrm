@@ -6,6 +6,7 @@ namespace App\EmailCode\Notifications;
 
 use App\EmailCode\Actions\CreateEmailCode;
 use App\EmailCode\EmailCodePurposeEnum;
+use App\Shared\BrandedMailMessage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -34,14 +35,22 @@ final class EmailCodeNotification extends Notification
     {
         $minutes = CreateEmailCode::MINUTES_VALID;
 
-        return new MailMessage()
+        return new BrandedMailMessage()
             ->subject(__('Your MomCRM code is :code', ['code' => $this->code]))
-            ->greeting(__('Your code is :code', ['code' => $this->code]))
+            ->greeting(match ($this->purpose) {
+                EmailCodePurposeEnum::Confirm => __('Confirm it\'s you'),
+                EmailCodePurposeEnum::SignIn => __('Your sign-in code'),
+            })
+            ->highlight(
+                __('Your code'),
+                $this->code,
+                __('Works for :minutes minutes, and only once.', ['minutes' => $minutes]),
+                isCode: true,
+            )
             ->line(match ($this->purpose) {
                 EmailCodePurposeEnum::Confirm => __('Enter it in MomCRM to confirm it\'s you.'),
                 EmailCodePurposeEnum::SignIn => __('Enter it in MomCRM to continue.'),
             })
-            ->line(__('It works for :minutes minutes and only once.', ['minutes' => $minutes]))
             ->line(__("Didn't ask for a code? You can ignore this email. Nobody can sign in without it."));
     }
 }
