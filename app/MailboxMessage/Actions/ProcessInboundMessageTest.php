@@ -162,6 +162,14 @@ it('keeps the mail without opening a ticket', function (Closure $mailbox, array 
         ['from' => ['emailAddress' => ['address' => 'Support@Helpdesk.test']]],
     ],
     'when it has no sender' => [fn () => MailboxEloquentModel::factory()->create(), ['from' => null]],
+    'when this app sent it' => [
+        function () {
+            config(['mail.from.address' => 'Hello@momcrm.test']);
+
+            return MailboxEloquentModel::factory()->create();
+        },
+        ['from' => ['emailAddress' => ['address' => 'hello@momcrm.test']], 'subject' => 'Sam Lee raised a ticket: [#1] Printer offline'],
+    ],
 ]);
 
 it('fits the subject and text into the ticket', function (): void {

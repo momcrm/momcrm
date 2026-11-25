@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Comment\Notifications\TicketCommentedNotification;
+use App\Mailbox\MailboxEloquentModel;
 use App\Project\ProjectEloquentModel;
 use App\Shift\Notifications\ShiftStillOpenNotification;
 use App\Shift\ShiftEloquentModel;
@@ -26,6 +27,14 @@ it('emails only the kinds the person chose', function (): void {
 
     expect(new TicketAssignedNotification($ticket, null)->via($user))->toBe(['database'])
         ->and(new TicketCommentedNotification($ticket, null, 'Hi')->via($user))->toBe(['database', 'mail']);
+});
+
+it('does not email someone whose address is a mailbox we read', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create(['email' => 'Support@Helpdesk.test']);
+    MailboxEloquentModel::factory()->create(['address' => 'support@helpdesk.test']);
+    $ticket = TicketEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
+
+    expect(new TicketAssignedNotification($ticket, null)->via($user))->toBe(['database']);
 });
 
 it('says who did what to which ticket, with the comment and a link to it', function (): void {
