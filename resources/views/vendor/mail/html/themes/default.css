@@ -5,7 +5,9 @@
 body,
 body *:not(html):not(style):not(br):not(tr):not(code) {
     box-sizing: border-box;
-    font-family: Geist, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+    font-family:
+        Geist, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica,
+        Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
     position: relative;
 }
 
@@ -375,7 +377,8 @@ img {
 }
 
 .highlight-code {
-    font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-family:
+        'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     letter-spacing: 6px;
 }
 
