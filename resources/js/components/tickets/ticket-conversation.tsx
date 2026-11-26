@@ -1,8 +1,9 @@
 import { router, usePage, usePoll } from '@inertiajs/react';
 import { Trash2 } from 'lucide-react';
-import { Fragment, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { KeyboardEvent, ReactNode } from 'react';
 import { toast } from 'sonner';
+import LinkedText from '@/components/linked-text';
 import SoftBadge from '@/components/soft-badge';
 import { AssigneeAvatar } from '@/components/tickets/ticket-meta';
 import { Button } from '@/components/ui/button';
@@ -230,7 +231,7 @@ function CommentBody({
         .map((member) => member.name);
 
     if (names.length === 0) {
-        return <>{comment.body}</>;
+        return <LinkedText text={comment.body} />;
     }
 
     const pattern = new RegExp(
@@ -249,7 +250,7 @@ function CommentBody({
                         {part}
                     </span>
                 ) : (
-                    <Fragment key={index}>{part}</Fragment>
+                    <LinkedText key={index} text={part} />
                 ),
             )}
         </>

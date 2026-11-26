@@ -5,6 +5,7 @@ import type { KeyboardEvent } from 'react';
 import { toast } from 'sonner';
 import EmptyState from '@/components/empty-state';
 import InboxViews from '@/components/inbox/inbox-views';
+import LinkedText from '@/components/linked-text';
 import { AssigneeAvatar } from '@/components/tickets/ticket-meta';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -266,7 +267,7 @@ function MessageItem({ message }: { message: DirectMessage }) {
                     </span>
                 </p>
                 <p className="text-sm break-words whitespace-pre-line">
-                    {message.body}
+                    <LinkedText text={message.body} />
                 </p>
             </div>
         </li>
