@@ -117,7 +117,7 @@ it('connects nothing when the token may not put the Worker in the account', func
 
     actingAs($owner)
         ->post(route('connectors.store', 'cloudflare-token'), cloudflareInput())
-        ->assertSessionHasErrors(['api_token' => 'MomCRM could not put its Worker in the account. Check that the token has Workers Scripts (Edit).']);
+        ->assertSessionHasErrors(['api_token' => 'MomCRM could not put its Worker in the account. Check that the token has Workers Admin, which creating a Worker needs.']);
 
     expect(ConnectorEloquentModel::query()->withoutGlobalScopes()->count())->toBe(0);
 });

@@ -61,7 +61,7 @@ describe('signing in', function (): void {
                 'client_id' => 'client-id',
                 'redirect_uri' => route('connectors.callback', 'cloudflare'),
                 'response_type' => 'code',
-                'scope' => 'workers-scripts.edit email-routing-account-rule.read email-routing-rule.read email-routing-rule.write email-sending.write zone.read zone-settings.read offline_access',
+                'scope' => 'workers-scripts.admin email-routing-rule.read email-routing-rule.write email-sending.write zone.read zone-settings.read offline_access',
                 'code_challenge_method' => 'S256',
             ])
             ->and($query)->toHaveKeys(['state', 'code_challenge']);
