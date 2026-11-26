@@ -1,6 +1,5 @@
 import { Mail } from 'lucide-react';
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import EmailFrame from '@/components/tickets/email-frame';
 import {
     Dialog,
     DialogContent,
@@ -9,12 +8,10 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
-import { original } from '@/routes/emails';
 
 /**
- * A small button that opens an email as its sender laid it out. The email is
- * shown in a frame that can run nothing and reach nothing in the app, and
- * pictures from the web stay out until asked for.
+ * A small button that opens an email as its sender laid it out, for an
+ * email that is not shown in place, such as a reply among the comments.
  */
 export default function OriginalEmail({
     messageId,
@@ -25,10 +22,8 @@ export default function OriginalEmail({
     label?: string;
     className?: string;
 }) {
-    const [showsPictures, setShowsPictures] = useState(false);
-
     return (
-        <Dialog onOpenChange={(open) => !open && setShowsPictures(false)}>
+        <Dialog>
             <DialogTrigger asChild>
                 <button
                     type="button"
@@ -47,31 +42,8 @@ export default function OriginalEmail({
                 <DialogDescription>
                     The email as it was sent. Links open in a new tab.
                 </DialogDescription>
-                <iframe
-                    key={String(showsPictures)}
-                    title="Original email"
-                    src={original.url(
-                        messageId,
-                        showsPictures ? { query: { pictures: 1 } } : undefined,
-                    )}
-                    sandbox="allow-popups allow-popups-to-escape-sandbox"
-                    referrerPolicy="no-referrer"
-                    className="h-[65vh] w-full rounded-md border bg-white"
-                />
-                <div className="flex items-center justify-between gap-3">
-                    <p className="text-xs text-muted-foreground">
-                        {showsPictures
-                            ? 'Pictures from the web are showing.'
-                            : 'Pictures from the web are left out: loading one tells the sender the email was opened.'}
-                    </p>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowsPictures(!showsPictures)}
-                    >
-                        {showsPictures ? 'Hide pictures' : 'Show pictures'}
-                    </Button>
+                <div className="max-h-[70vh] overflow-y-auto">
+                    <EmailFrame messageId={messageId} />
                 </div>
             </DialogContent>
         </Dialog>

@@ -7,6 +7,7 @@ use App\Project\ProjectEloquentModel;
 use App\TeamUser\TeamUserEloquentModel;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
+use Illuminate\Testing\TestResponse;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\get;
@@ -39,8 +40,25 @@ it('shows an email as it was sent, cleaned and boxed in', function (): void {
         ->assertDontSee('alert(1)', false);
 
     expect($response->headers->get('Content-Security-Policy'))
-        ->toContain("default-src 'none'", 'img-src data:;', 'sandbox allow-popups allow-popups-to-escape-sandbox')
-        ->not->toContain('https:');
+        ->toContain("default-src 'none'", 'img-src data:;', 'sandbox allow-scripts allow-popups allow-popups-to-escape-sandbox')
+        ->not->toContain('https:', 'allow-same-origin', "'unsafe-inline'; img");
+});
+
+it('lets only its own script run, under a word that is new for every page', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $email = htmlEmailOnTicket($user);
+    $wordIn = function (TestResponse $response): string {
+        preg_match("/script-src 'nonce-([^']+)'/", (string) $response->headers->get('Content-Security-Policy'), $matches);
+
+        return $matches[1] ?? '';
+    };
+
+    $first = actingAs($user)->get(route('emails.original', $email->id));
+    $second = actingAs($user)->get(route('emails.original', $email->id));
+
+    expect($wordIn($first))->not->toBe('')->not->toBe($wordIn($second));
+    $first->assertSee('<script nonce="'.$wordIn($first).'">', false);
+    expect(substr_count((string) $first->getContent(), '<script'))->toBe(1);
 });
 
 it('lets pictures from the web load only when asked', function (): void {

@@ -15,7 +15,8 @@ use Symfony\Component\HtmlSanitizer\HtmlSanitizerConfig;
  *
  * Cleaning is only half of it. The page must also be served boxed in, with
  * the rules from policy(), so that whatever slips through still cannot run,
- * reach the app, or load anything from elsewhere.
+ * reach the app, or load anything from elsewhere. The page does run one
+ * script, which is ours and only measures it.
  */
 final class EmailHtml
 {
@@ -24,31 +25,67 @@ final class EmailHtml
      * mail programs show it, with pictures no wider than the frame.
      */
     private const string BASE_STYLES = 'html{background:#fff;color:#1f2328}'
-        .'body{margin:16px;font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;overflow-wrap:anywhere}'
+        .'body{display:flow-root;margin:12px;font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;overflow-wrap:anywhere}'
         .'img{max-width:100%;height:auto}';
 
-    public static function toPage(string $html): string
+    /**
+     * The one script the page runs, and it is ours. An email laid out wider
+     * than the frame is shrunk to fit, though never below 60%, where it
+     * scrolls sideways instead. The page that frames it is told how tall the
+     * email is, so the frame can be made to fit, and how many pictures from
+     * the web it has, so they can be offered. Shown in a frame, the page
+     * leaves the scrolling up and down to whatever frames it.
+     */
+    private const string SCRIPT = '(function(){'
+        .'var root=document.documentElement;'
+        .'function fit(body){'
+        .'body.style.transformOrigin="0 0";body.style.transform="";'
+        .'var style=getComputedStyle(body),left=parseFloat(style.marginLeft),right=parseFloat(style.marginRight);'
+        .'var natural=root.scrollWidth,room=root.clientWidth;'
+        .'if(natural>room+1){body.style.transform="scale("+Math.max((room-left-right)/(natural-left),0.6)+")";}'
+        .'}'
+        .'function report(){'
+        .'var body=document.body;if(!body){return;}'
+        .'fit(body);'
+        .'var style=getComputedStyle(body);'
+        .'var height=body.getBoundingClientRect().height+parseFloat(style.marginTop)+parseFloat(style.marginBottom)+(window.innerHeight-root.clientHeight);'
+        .'parent.postMessage({type:"momcrm:email",height:Math.ceil(height),pictures:document.querySelectorAll("img[src^=http]").length},"*");'
+        .'}'
+        .'if(parent===window){return;}'
+        .'root.style.overflowY="hidden";'
+        .'document.addEventListener("DOMContentLoaded",function(){report();new ResizeObserver(report).observe(document.body);});'
+        .'window.addEventListener("load",report);'
+        .'})();';
+
+    /**
+     * @param  string  $nonce  the word that lets the page's own script run, which must be the one given to policy() and new for every page
+     */
+    public static function toPage(string $html, string $nonce): string
     {
-        return '<!DOCTYPE html><html><head><meta charset="utf-8"><style>'.self::BASE_STYLES.'</style>'
+        return '<!DOCTYPE html><html><head><meta charset="utf-8">'
+            .'<script nonce="'.e($nonce).'">'.self::SCRIPT.'</script>'
+            .'<style>'.self::BASE_STYLES.'</style>'
             .self::styles($html)
             .'</head><body>'.self::sanitizer()->sanitize($html).'</body></html>';
     }
 
     /**
      * What the browser is told about the page, as a Content-Security-Policy.
-     * Nothing runs and nothing is loaded from elsewhere, so reading an email
-     * does not tell its sender it was opened. Pictures from the web load
-     * only when asked for.
+     * Only the page's own script runs, in a box that cannot reach the app,
+     * and nothing is loaded from elsewhere, so reading an email does not
+     * tell its sender it was opened. Pictures from the web load only when
+     * asked for.
      */
-    public static function policy(bool $withPictures = false): string
+    public static function policy(string $nonce, bool $withPictures = false): string
     {
         return implode('; ', [
             "default-src 'none'",
+            "script-src 'nonce-{$nonce}'",
             "style-src 'unsafe-inline'",
             'img-src data:'.($withPictures ? ' https:' : ''),
             "form-action 'none'",
             "frame-ancestors 'self'",
-            'sandbox allow-popups allow-popups-to-escape-sandbox',
+            'sandbox allow-scripts allow-popups allow-popups-to-escape-sandbox',
         ]);
     }
 

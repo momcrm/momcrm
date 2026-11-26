@@ -9,14 +9,15 @@ use App\MailboxMessage\EmailHtml;
 use App\MailboxMessage\Exceptions\CouldNotFindMailboxMessage;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Str;
 
 /**
  * An email on a ticket as its sender laid it out, for the frame the ticket
  * shows it in. Only people who can see the ticket get it.
  *
- * The sender wrote this page, so it is cleaned and served boxed in: it runs
- * nothing, cannot reach the app even when opened on its own, and loads
- * nothing from elsewhere. Pictures from the web load only with `?pictures=1`,
+ * The sender wrote this page, so it is cleaned and served boxed in: nothing
+ * of theirs runs, it cannot reach the app even when opened on its own, and
+ * it loads nothing from elsewhere. Pictures from the web load only with `?pictures=1`,
  * because fetching one tells the sender their email was opened.
  */
 final class ShowOriginalEmailController
@@ -32,9 +33,11 @@ final class ShowOriginalEmailController
             throw CouldNotFindMailboxMessage::notFound();
         }
 
-        return response(EmailHtml::toPage($html), 200, [
+        $nonce = Str::random(32);
+
+        return response(EmailHtml::toPage($html, $nonce), 200, [
             'Content-Type' => 'text/html; charset=utf-8',
-            'Content-Security-Policy' => EmailHtml::policy($request->boolean('pictures')),
+            'Content-Security-Policy' => EmailHtml::policy($nonce, $request->boolean('pictures')),
             'X-Content-Type-Options' => 'nosniff',
             'Referrer-Policy' => 'no-referrer',
             'Cache-Control' => 'private, no-store',
