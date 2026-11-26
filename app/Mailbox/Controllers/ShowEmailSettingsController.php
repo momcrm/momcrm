@@ -53,6 +53,7 @@ final class ShowEmailSettingsController
                     'account' => $connector->getAccount()->toString(),
                     'type_label' => $connector->connectorType()->label(),
                     'shared_mailboxes' => self::opensSharedMailboxes($connector),
+                    'has_own_mailbox' => $connector->hasOwnMailbox(),
                 ])
                 ->values()
                 ->all(),

@@ -16,6 +16,7 @@ use App\Charge\ChargePolicy;
 use App\Comment\Comment;
 use App\Comment\CommentPolicy;
 use App\Connector\ConnectorCapabilityEnum;
+use App\Connector\Types\Cloudflare\CloudflareConnector;
 use App\Connector\Types\Google\GoogleConnector;
 use App\Connector\Types\Imap\ImapConnector;
 use App\Connector\Types\Imap\MailServers;
@@ -101,7 +102,7 @@ class AppServiceProvider extends ServiceProvider
                     fn (ConnectorCapabilityEnum $capability): Capability => new Capability($capability->value, $capability->label(), $capability->contract()),
                     ConnectorCapabilityEnum::cases(),
                 ))
-                ->register(new MicrosoftConnector, new GoogleConnector, new ImapConnector);
+                ->register(new MicrosoftConnector, new GoogleConnector, new CloudflareConnector, new ImapConnector);
         });
         $this->app->singleton(SettingsNavigation::class);
         $this->app->singleton(SuspendedTeamAction::class);

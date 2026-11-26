@@ -12,6 +12,7 @@ use App\Connector\Properties\Settings;
 use App\Connector\Properties\Status;
 use App\Connector\Properties\TeamId;
 use App\Connector\Properties\Type;
+use App\Connector\Types\Cloudflare\CloudflareConnector;
 use App\Connector\Types\Google\GoogleConnector;
 use App\Connector\Types\Imap\ImapConnector;
 use App\Team\TeamEloquentModel;
@@ -66,6 +67,21 @@ final class ConnectorFactory extends Factory
                 'smtp_username' => 'help',
             ],
             ConnectorEloquentModel::CREDENTIALS => ['imap_password' => 'imap-secret', 'smtp_password' => 'smtp-secret'],
+        ]);
+    }
+
+    /**
+     * A Cloudflare account, connected by its id and an API token.
+     */
+    public function cloudflare(): static
+    {
+        $accountId = fake()->unique()->regexify('[a-f0-9]{32}');
+
+        return $this->state([
+            Type::getDatabaseTableColumnName() => CloudflareConnector::KEY,
+            Account::getDatabaseTableColumnName() => $accountId,
+            Settings::getDatabaseTableColumnName() => ['account_id' => $accountId],
+            ConnectorEloquentModel::CREDENTIALS => [CloudflareConnector::API_TOKEN => 'cloudflare-token'],
         ]);
     }
 

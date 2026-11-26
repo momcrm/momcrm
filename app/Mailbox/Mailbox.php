@@ -71,7 +71,8 @@ final class Mailbox extends AbstractData
 
     /**
      * The fields the email settings page shows. Whether the mailbox works
-     * depends on the connector it goes through.
+     * depends on the connector it goes through, and it is only called shared
+     * when that account has a mailbox of its own to tell it from.
      *
      * @return array{id: string, address: string, display_name: ?string, is_shared: bool, status: string, connector_id: string, connector_name: string, connector_type: ?string, group_id: ?string, auto_create_tickets: bool, last_synced_at: ?string, last_error: ?string}
      */
@@ -81,7 +82,7 @@ final class Mailbox extends AbstractData
             'id' => $this->getId()->toString(),
             'address' => $this->getAddress()->toString(),
             'display_name' => $this->getDisplayName()->toNullableString(),
-            'is_shared' => $this->getIsShared()->toBoolean(),
+            'is_shared' => $this->getIsShared()->toBoolean() && $connector->hasOwnMailbox(),
             'status' => $connector->getStatus()->toEnum()->value,
             'connector_id' => $this->getConnectorId()->toString(),
             'connector_name' => $connector->getName()->toString(),

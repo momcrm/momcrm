@@ -4,6 +4,7 @@ use App\Choice\Actions\FindChoice;
 use App\Choice\ChoiceListEnum;
 use App\Connector\Actions\FindConnector;
 use App\Connector\Actions\GetConnectorAccessToken;
+use App\Connector\ConnectorEloquentModel;
 use App\Contact\ContactEloquentModel;
 use App\Customer\CustomerEloquentModel;
 use App\Environment\EnvironmentFile;
@@ -183,6 +184,88 @@ function graphMessage(array $overrides = []): array
         ],
         ...$overrides,
     ];
+}
+
+/**
+ * An email as it travels between mail servers, which is how a mail service
+ * that passes mail on hands one over: headers, the text, and a file named
+ * log.txt when asked for one.
+ *
+ * @param  array<string, string>  $headers
+ */
+function emailSource(array $headers = [], string $text = 'The printer on level 2 is offline.', bool $withFile = false): string
+{
+    $headers = [
+        'From' => 'Sam Lee <Sam@Acme.test>',
+        'To' => 'Support <Support@Helpdesk.test>',
+        'Subject' => 'Printer offline',
+        'Message-ID' => '<message-1@acme.test>',
+        'Date' => 'Wed, 18 Nov 2026 01:15:00 +0000',
+        'MIME-Version' => '1.0',
+        ...$headers,
+        'Content-Type' => $withFile ? 'multipart/mixed; boundary="parts"' : 'text/plain; charset=utf-8',
+    ];
+
+    $lines = array_map(fn (string $name, string $value): string => "{$name}: {$value}", array_keys($headers), $headers);
+
+    $body = $withFile
+        ? implode("\r\n", [
+            '--parts',
+            'Content-Type: text/plain; charset=utf-8',
+            '',
+            $text,
+            '--parts',
+            'Content-Type: text/plain; name="log.txt"',
+            'Content-Disposition: attachment; filename="log.txt"',
+            'Content-Transfer-Encoding: base64',
+            '',
+            base64_encode('paper jam'),
+            '--parts--',
+        ])
+        : $text;
+
+    return implode("\r\n", $lines)."\r\n\r\n".$body."\r\n";
+}
+
+const CLOUDFLARE_API = 'api.cloudflare.com/client/v4';
+
+/**
+ * What Cloudflare answers when a request worked.
+ *
+ * @return array{success: true, errors: array{}, messages: array{}, result: mixed}
+ */
+function cloudflareResult(mixed $result): array
+{
+    return ['success' => true, 'errors' => [], 'messages' => [], 'result' => $result];
+}
+
+/**
+ * What Cloudflare answers when it refuses a request.
+ *
+ * @return array{success: false, errors: list<array{code: int, message: string}>, result: null}
+ */
+function cloudflareRefusal(int $code, string $message): array
+{
+    return ['success' => false, 'errors' => [['code' => $code, 'message' => $message]], 'result' => null];
+}
+
+/**
+ * A mailbox at support@helpdesk.test that goes through a connected
+ * Cloudflare account.
+ *
+ * @param  array<string, mixed>  $attributes
+ */
+function cloudflareMailbox(array $attributes = []): Mailbox
+{
+    $connector = ConnectorEloquentModel::factory()->cloudflare()->create();
+
+    return Mailbox::fromEloquentModel(MailboxEloquentModel::factory()->create([
+        'team_id' => $connector->team_id,
+        'connector_id' => $connector->id,
+        'address' => 'support@helpdesk.test',
+        'is_shared' => true,
+        ...$attributes,
+    ]));
 }
 
 /**

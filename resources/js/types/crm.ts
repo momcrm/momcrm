@@ -989,6 +989,8 @@ export type MailConnector = {
     account: string;
     type_label: string;
     shared_mailboxes: boolean;
+    /** False for an account that is not an address, such as a Cloudflare account: every mailbox is added by its address. */
+    has_own_mailbox: boolean;
 };
 
 /** Something a person may tick before signing in to connect an account. */
