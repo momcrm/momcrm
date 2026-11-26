@@ -82,7 +82,7 @@ final class ImapMailClient implements MailClient
 
         $text = $message['text'] ?? ($message['html'] === null ? null : HtmlToText::convert($message['html']));
 
-        return MailHeaders::toInboundMail($message['headers'], $id, $text, $message['received_at'], $message['attachments'] !== []);
+        return MailHeaders::toInboundMail($message['headers'], $id, $text, $message['received_at'], $message['attachments'] !== [], $message['html']);
     }
 
     /**

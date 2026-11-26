@@ -17,8 +17,9 @@ final class MailHeaders
 {
     /**
      * @param  array<string, string>  $headers  by lower-cased name
+     * @param  ?string  $bodyHtml  the email as its sender laid it out, when it came with HTML
      */
-    public static function toInboundMail(array $headers, ?string $externalId, ?string $bodyText, ?CarbonImmutable $receivedAt, bool $hasAttachments = false): InboundMail
+    public static function toInboundMail(array $headers, ?string $externalId, ?string $bodyText, ?CarbonImmutable $receivedAt, bool $hasAttachments = false, ?string $bodyHtml = null): InboundMail
     {
         $headers = array_map(self::decode(...), $headers);
         $from = self::sender($headers['from'] ?? '');
@@ -37,6 +38,7 @@ final class MailHeaders
             replyText: QuotedReply::strip($bodyText),
             receivedAt: $receivedAt?->utc(),
             hasAttachments: $hasAttachments,
+            bodyHtml: self::text($bodyHtml) === null ? null : $bodyHtml,
         );
     }
 

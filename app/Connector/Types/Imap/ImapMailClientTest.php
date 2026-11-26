@@ -93,10 +93,23 @@ it('reads a message from its headers and text, once', function (): void {
         ->and($this->servers->fetched)->toBe([5]);
 });
 
-it('turns a message with only HTML into text', function (): void {
+it('turns a message with only HTML into text, and keeps it as its sender laid it out', function (): void {
     $this->servers->deliver(5, '2026-11-18 01:00:00', text: null, html: '<p>The printer is <b>offline</b>.</p>');
 
-    expect(ResolveMailClient::forMailbox(imapMailbox())->message('7:5')?->bodyText)->toBe('The printer is offline.');
+    expect(ResolveMailClient::forMailbox(imapMailbox())->message('7:5'))
+        ->bodyText->toBe('The printer is offline.')
+        ->bodyHtml->toBe('<p>The printer is <b>offline</b>.</p>');
+});
+
+it('reads a message that came as text and HTML as each, and one that came as text with no HTML', function (): void {
+    $this->servers->deliver(5, '2026-11-18 01:00:00', text: 'Sign in https://acme.test/in', html: '<p><a href="https://acme.test/in">Sign in</a></p>');
+    $this->servers->deliver(6, '2026-11-18 01:05:00', text: 'The printer is offline.');
+    $client = ResolveMailClient::forMailbox(imapMailbox());
+
+    expect($client->message('7:5'))
+        ->bodyText->toBe('Sign in https://acme.test/in')
+        ->bodyHtml->toBe('<p><a href="https://acme.test/in">Sign in</a></p>')
+        ->and($client->message('7:6')?->bodyHtml)->toBeNull();
 });
 
 it('has no message for a draft, one that has gone, or one numbered in an inbox that was rebuilt', function (): void {

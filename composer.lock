@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f0f9abe63493d9964463584185e4314a",
+    "content-hash": "441faa1fdf9b8056a3f682c855d1c51d",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -3615,16 +3615,16 @@
         },
         {
             "name": "mom/connectors",
-            "version": "v6.4.0",
+            "version": "v6.5.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/momphp/connectors.git",
-                "reference": "8b7df85b7d7b5784bd8097165ed8313d935af2a3"
+                "reference": "c78cc7673fd84d3648ebe5eb83b1bf60a5c54623"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/momphp/connectors/zipball/8b7df85b7d7b5784bd8097165ed8313d935af2a3",
-                "reference": "8b7df85b7d7b5784bd8097165ed8313d935af2a3",
+                "url": "https://api.github.com/repos/momphp/connectors/zipball/c78cc7673fd84d3648ebe5eb83b1bf60a5c54623",
+                "reference": "c78cc7673fd84d3648ebe5eb83b1bf60a5c54623",
                 "shasum": ""
             },
             "require": {
@@ -3662,14 +3662,14 @@
             "description": "A small SDK for describing the outside accounts a Laravel app connects.",
             "support": {
                 "issues": "https://github.com/momphp/connectors/issues",
-                "source": "https://github.com/momphp/connectors/tree/v6.4.0"
+                "source": "https://github.com/momphp/connectors/tree/v6.5.0"
             },
-            "time": "2026-11-18T10:42:06+00:00",
-            "published-time": "2026-11-18T10:43:12+00:00"
+            "time": "2026-11-26T09:21:48+00:00",
+            "published-time": "2026-11-26T09:22:39+00:00"
         },
         {
             "name": "mom/data",
-            "version": "v6.4.0",
+            "version": "v6.5.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/momphp/data.git",
@@ -3710,28 +3710,28 @@
             "description": "A simple DTO package.",
             "support": {
                 "issues": "https://github.com/momphp/data/issues",
-                "source": "https://github.com/momphp/data/tree/v6.4.0"
+                "source": "https://github.com/momphp/data/tree/v6.5.0"
             },
             "time": "2026-11-14T04:46:49+00:00",
-            "published-time": "2026-11-18T10:43:12+00:00"
+            "published-time": "2026-11-26T09:22:37+00:00"
         },
         {
             "name": "mom/microsoft",
-            "version": "v6.4.0",
+            "version": "v6.5.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/momphp/microsoft.git",
-                "reference": "7f0b2d65d732f1b4bf68651ee601092ea7b5e51b"
+                "reference": "f1da40c07e0e948d3f22144f31717365e4da0517"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/momphp/microsoft/zipball/7f0b2d65d732f1b4bf68651ee601092ea7b5e51b",
-                "reference": "7f0b2d65d732f1b4bf68651ee601092ea7b5e51b",
+                "url": "https://api.github.com/repos/momphp/microsoft/zipball/f1da40c07e0e948d3f22144f31717365e4da0517",
+                "reference": "f1da40c07e0e948d3f22144f31717365e4da0517",
                 "shasum": ""
             },
             "require": {
                 "laravel/framework": "^13.30",
-                "mom/connectors": "^6.4",
+                "mom/connectors": "^6.5",
                 "php": "^8.4"
             },
             "require-dev": {
@@ -3761,10 +3761,10 @@
             "description": "A Microsoft 365 connector for mom/connectors: sign in with Microsoft and read and send mail through Microsoft Graph.",
             "support": {
                 "issues": "https://github.com/momphp/microsoft/issues",
-                "source": "https://github.com/momphp/microsoft/tree/v6.4.0"
+                "source": "https://github.com/momphp/microsoft/tree/v6.5.0"
             },
-            "time": "2026-11-18T10:42:17+00:00",
-            "published-time": "2026-11-18T10:45:15+00:00"
+            "time": "2026-11-26T09:21:50+00:00",
+            "published-time": "2026-11-26T09:22:40+00:00"
         },
         {
             "name": "monolog/monolog",

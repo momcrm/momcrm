@@ -525,6 +525,8 @@ export type TicketDrawerData = Omit<
         /** Whether they wrote in by email or raised it in the customer portal. */
         via: 'email' | 'portal';
     } | null;
+    /** The email that opened the ticket, when it can be shown as it was sent. */
+    original_email_id: string | null;
     location_name: string | null;
     can: Abilities;
     attachment_can: Abilities;
@@ -560,6 +562,8 @@ export type TicketComment = {
         status: 'pending' | 'sent' | 'failed' | 'portal';
         error: string | null;
     } | null;
+    /** The email it came in, when that can be shown as it was sent. */
+    original_email_id?: string | null;
     mentions: string[];
     created_at: string | null;
     can_delete: boolean;

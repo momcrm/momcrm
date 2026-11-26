@@ -21,6 +21,7 @@ use App\Ticket\Ticket;
 use App\Ticket\TicketEloquentModel;
 use App\User\UserEloquentModel;
 use Illuminate\Support\Facades\Notification;
+use Mom\Microsoft\MicrosoftMailClient;
 
 /**
  * Takes in an email from Microsoft for a mailbox.
@@ -72,6 +73,18 @@ it('opens a ticket for mail from someone who is not a contact, keeping who wrote
         ->to_recipients->toBe(['support@helpdesk.test'])
         ->subject->toBe('Printer offline')
         ->body_text->toBe('The printer on level 2 is offline.');
+});
+
+it('opens the ticket from the text of an email and keeps how it was laid out beside it', function (): void {
+    $mailbox = MailboxEloquentModel::factory()->create();
+
+    $kept = ProcessInboundMessage::fromMessage(
+        Mailbox::fromEloquentModel($mailbox),
+        MailboxMessage::fromInboundMail(MicrosoftMailClient::toInboundMail(graphMessage(), '<p>The printer on level 2 is <b>offline</b>.</p>')),
+    );
+
+    expect(TicketEloquentModel::query()->withoutGlobalScopes()->sole()->description)->toBe('The printer on level 2 is offline.')
+        ->and(MailboxMessageEloquentModel::query()->withoutGlobalScopes()->findOrFail($kept->getId()->toString())->body_html)->toBe('<p>The printer on level 2 is <b>offline</b>.</p>');
 });
 
 it("tells the mailbox group's members a ticket arrived, and nobody else", function (): void {

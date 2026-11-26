@@ -7,6 +7,7 @@ namespace App\MailboxMessage\Actions;
 use App\MailboxMessage\MailboxMessage;
 use App\MailboxMessage\MailboxMessageDirectionEnum;
 use App\MailboxMessage\MailboxMessageEloquentModel;
+use App\MailboxMessage\Properties\BodyHtml;
 use App\MailboxMessage\Properties\CommentId;
 use App\MailboxMessage\Properties\Direction;
 use App\MailboxMessage\Properties\ExternalId;
@@ -17,8 +18,13 @@ use App\MailboxMessage\Properties\MailboxId;
 use App\MailboxMessage\Properties\ReceivedAt;
 use App\MailboxMessage\Properties\TeamId;
 use App\MailboxMessage\Properties\TicketId;
+use App\Project\ProjectVisibility;
+use App\Shared\Table;
 use App\Shared\Types;
 use App\Team\Scopes\CurrentTeamScope;
+use App\Ticket\Properties\Id as TicketKey;
+use App\Ticket\Properties\TeamId as TicketTeamId;
+use App\Ticket\TicketEloquentModel;
 use Illuminate\Database\Eloquent\Builder;
 
 final class FindMailboxMessage
@@ -129,6 +135,67 @@ final class FindMailboxMessage
         }
 
         return $deliveries;
+    }
+
+    /**
+     * The emails on a ticket that can be shown as their sender laid them
+     * out: the one that opened the ticket, and the one each reply came in.
+     *
+     * @return array{ticket: ?string, comments: array<string, string>}
+     */
+    public static function originalsOnTicket(string $ticketId, string $teamId): array
+    {
+        $originals = ['ticket' => null, 'comments' => []];
+
+        $messages = self::query($teamId)
+            ->where(TicketId::getDatabaseTableColumnName(), $ticketId)
+            ->where(Direction::getDatabaseTableColumnName(), MailboxMessageDirectionEnum::Inbound->value)
+            ->whereNotNull(BodyHtml::getDatabaseTableColumnName())
+            ->oldest(ReceivedAt::getDatabaseTableColumnName())
+            ->oldest(Id::getDatabaseTableColumnName())
+            ->get([Id::getDatabaseTableColumnName(), CommentId::getDatabaseTableColumnName()]);
+
+        foreach ($messages as $message) {
+            if ($message->comment_id === null) {
+                $originals['ticket'] ??= $message->id;
+            } else {
+                $originals['comments'][$message->comment_id] = $message->id;
+            }
+        }
+
+        return $originals;
+    }
+
+    /**
+     * An email's HTML, as it arrived, for someone who may see the ticket it
+     * is on. Null when there is none for them: no such email in the team, no
+     * HTML with it, or a ticket in a members-only project they are not in.
+     */
+    public static function htmlVisibleOnTicket(string $id, ?string $teamId, string $userId): ?string
+    {
+        if ($teamId === null) {
+            return null;
+        }
+
+        $message = self::query($teamId)
+            ->where(Id::getDatabaseTableColumnName(), $id)
+            ->where(Direction::getDatabaseTableColumnName(), MailboxMessageDirectionEnum::Inbound->value)
+            ->whereNotNull(TicketId::getDatabaseTableColumnName())
+            ->whereNotNull(BodyHtml::getDatabaseTableColumnName())
+            ->first();
+
+        if ($message === null) {
+            return null;
+        }
+
+        $tickets = TicketEloquentModel::query()
+            ->withoutGlobalScopes()
+            ->where(TicketTeamId::getDatabaseTableColumnName(), $teamId)
+            ->where(TicketKey::getDatabaseTableColumnName(), $message->ticket_id);
+
+        ProjectVisibility::constrainTickets($tickets->getQuery(), $userId, Table::Tickets->value);
+
+        return $tickets->exists() ? $message->body_html : null;
     }
 
     /**

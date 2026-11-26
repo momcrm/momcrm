@@ -78,7 +78,35 @@ describe('reading', function (): void {
             ->subject->toBe('Printer offline')
             ->replyText->toBe('Still offline.')
             ->hasAttachments->toBeTrue()
+            ->bodyHtml->toBeNull()
             ->and(ResolveMailClient::forMailbox(cloudflareMailbox(['address' => 'other@helpdesk.test']))->message($id))->toBeNull();
+    });
+
+    it('reads an email that came with HTML as its text and, apart from it, as its sender laid it out', function (): void {
+        Storage::fake();
+        $id = DeliveredMail::forAddress('support@helpdesk.test')->keep(implode("\r\n", [
+            'From: Sam Lee <sam@acme.test>',
+            'To: support@helpdesk.test',
+            'Subject: Welcome',
+            'Message-ID: <message-2@acme.test>',
+            'MIME-Version: 1.0',
+            'Content-Type: multipart/alternative; boundary="parts"',
+            '',
+            '--parts',
+            'Content-Type: text/plain; charset=utf-8',
+            '',
+            'Sign in https://acme.test/in',
+            '--parts',
+            'Content-Type: text/html; charset=utf-8',
+            '',
+            '<p><a href="https://acme.test/in">Sign in</a></p>',
+            '--parts--',
+            '',
+        ]));
+
+        expect(ResolveMailClient::forMailbox(cloudflareMailbox())->message($id))
+            ->bodyText->toBe('Sign in https://acme.test/in')
+            ->bodyHtml->toContain('<p><a href="https://acme.test/in">Sign in</a></p>');
     });
 
     it('opens a ticket with its file for mail the job that takes it in as it arrives missed', function (): void {

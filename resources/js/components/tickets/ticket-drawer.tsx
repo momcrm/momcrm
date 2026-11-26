@@ -44,6 +44,7 @@ import {
     OptionalChoicePicker,
     Picker,
 } from '@/components/tickets/property-editors';
+import OriginalEmail from '@/components/tickets/original-email';
 import TicketConversation from '@/components/tickets/ticket-conversation';
 import SoftBadge from '@/components/soft-badge';
 import { Button } from '@/components/ui/button';
@@ -566,9 +567,16 @@ export function TicketDetails({
                 </dl>
 
                 <section className="space-y-2">
-                    <h3 className="text-xs font-medium tracking-wide text-subtle-foreground uppercase">
-                        Description
-                    </h3>
+                    <div className="flex items-center justify-between gap-3">
+                        <h3 className="text-xs font-medium tracking-wide text-subtle-foreground uppercase">
+                            Description
+                        </h3>
+                        {ticket.original_email_id && (
+                            <OriginalEmail
+                                messageId={ticket.original_email_id}
+                            />
+                        )}
+                    </div>
                     <Description
                         value={ticket.description}
                         onSave={(description) => save({ description })}
