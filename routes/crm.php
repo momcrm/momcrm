@@ -98,7 +98,6 @@ use App\Group\Controllers\ShowGroupController;
 use App\Group\Controllers\StoreGroupController;
 use App\Group\Controllers\UpdateGroupController;
 use App\Inbox\Controllers\DeleteNotificationController;
-use App\Inbox\Controllers\ListNotificationsController;
 use App\Inbox\Controllers\MarkAllNotificationsReadController;
 use App\Inbox\Controllers\MarkNotificationReadController;
 use App\Inbox\Controllers\ShowInboxController;
@@ -369,7 +368,7 @@ Route::middleware(StaffOrContact::STAFF_MIDDLEWARE)->group(function () {
     Route::get('inbox/messages', ShowMessagesController::class)->name('messages.index');
     Route::post('inbox/messages', StartConversationController::class)->name('conversations.store');
     Route::post('inbox/messages/{conversation}', StoreMessageController::class)->whereUuid('conversation')->name('messages.store');
-    Route::get('notifications', ListNotificationsController::class)->name('notifications.index');
+    Route::redirect('notifications', '/inbox');
     Route::post('notifications/read-all', MarkAllNotificationsReadController::class)->name('notifications.read-all');
     Route::post('notifications/{notification}/read', MarkNotificationReadController::class)->whereUuid('notification')->name('notifications.read');
     Route::delete('notifications/{notification}', DeleteNotificationController::class)->whereUuid('notification')->name('notifications.destroy');

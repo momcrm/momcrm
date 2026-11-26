@@ -1,5 +1,13 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { CheckCheck, ChevronLeft, Maximize2 } from 'lucide-react';
+import {
+    Check,
+    CheckCheck,
+    ChevronLeft,
+    Mail,
+    Maximize2,
+    Trash2,
+} from 'lucide-react';
+import type { ReactNode } from 'react';
 import EmptyState from '@/components/empty-state';
 import InboxViews from '@/components/inbox/inbox-views';
 import NotificationLine from '@/components/inbox/notification-line';
@@ -12,11 +20,16 @@ import {
 } from '@/components/tickets/ticket-meta';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { visitWithQuery } from '@/lib/query';
 import { cn } from '@/lib/utils';
 import { store as storeComment } from '@/routes/comments';
 import { inbox } from '@/routes';
-import { read, readAll } from '@/routes/notifications';
+import { destroy, read, readAll } from '@/routes/notifications';
 import { index as ticketsIndex } from '@/routes/tickets';
 import type {
     InboxKind,
@@ -35,6 +48,38 @@ const tabs: { value: InboxKind | null; label: string; count: string }[] = [
 ];
 
 const RELOAD = ['notifications', 'counts', 'selected', 'sidebarCounts'];
+
+const inPlace = { only: RELOAD, preserveScroll: true, preserveState: true };
+
+/**
+ * One of the small buttons that appear over a notification's row.
+ */
+function RowAction({
+    label,
+    onClick,
+    children,
+}: {
+    label: string;
+    onClick: () => void;
+    children: ReactNode;
+}) {
+    return (
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-7"
+                    aria-label={label}
+                    onClick={onClick}
+                >
+                    {children}
+                </Button>
+            </TooltipTrigger>
+            <TooltipContent>{label}</TooltipContent>
+        </Tooltip>
+    );
+}
 
 export default function Inbox({
     notifications,
@@ -111,15 +156,7 @@ export default function Inbox({
                             aria-label="Mark all read"
                             disabled={counts.all === 0}
                             onClick={() =>
-                                router.post(
-                                    readAll.url(),
-                                    {},
-                                    {
-                                        only: RELOAD,
-                                        preserveScroll: true,
-                                        preserveState: true,
-                                    },
-                                )
+                                router.post(readAll.url(), {}, inPlace)
                             }
                         >
                             <CheckCheck />
@@ -165,7 +202,10 @@ export default function Inbox({
                             </li>
                         )}
                         {notifications.map((notification) => (
-                            <li key={notification.id}>
+                            <li
+                                key={notification.id}
+                                className="group relative"
+                            >
                                 <button
                                     type="button"
                                     onClick={() => open(notification)}
@@ -181,6 +221,43 @@ export default function Inbox({
                                         compact
                                     />
                                 </button>
+                                <div className="pointer-events-none absolute top-2 right-2 flex gap-0.5 rounded-md border bg-card p-0.5 opacity-0 shadow-xs group-hover:pointer-events-auto group-hover:opacity-100 focus-within:pointer-events-auto focus-within:opacity-100">
+                                    <RowAction
+                                        label={
+                                            notification.read_at
+                                                ? 'Mark unread'
+                                                : 'Mark read'
+                                        }
+                                        onClick={() =>
+                                            router.post(
+                                                read.url(notification.id),
+                                                {
+                                                    read:
+                                                        notification.read_at ===
+                                                        null,
+                                                },
+                                                inPlace,
+                                            )
+                                        }
+                                    >
+                                        {notification.read_at ? (
+                                            <Mail />
+                                        ) : (
+                                            <Check />
+                                        )}
+                                    </RowAction>
+                                    <RowAction
+                                        label="Clear"
+                                        onClick={() =>
+                                            router.delete(
+                                                destroy.url(notification.id),
+                                                inPlace,
+                                            )
+                                        }
+                                    >
+                                        <Trash2 />
+                                    </RowAction>
+                                </div>
                             </li>
                         ))}
                     </ul>

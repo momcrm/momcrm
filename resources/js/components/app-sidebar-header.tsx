@@ -30,8 +30,8 @@ import { useCreateContact } from '@/components/contacts/create-contact-dialog';
 import { useCreateCustomer } from '@/components/customers/create-customer-dialog';
 import { useCreateTicket } from '@/components/tickets/create-ticket-dialog';
 import { useInitials } from '@/hooks/use-initials';
+import { inbox } from '@/routes';
 import { create as createInvoice } from '@/routes/invoices';
-import { index as notificationsIndex } from '@/routes/notifications';
 import { index as projectsIndex } from '@/routes/projects';
 import { edit as teamEdit } from '@/routes/team';
 import type { BreadcrumbItem as BreadcrumbItemType } from '@/types';
@@ -98,19 +98,22 @@ function NewMenu() {
     );
 }
 
-function Bell() {
+/**
+ * Takes you to the inbox and says whether anything in it is unread, counting
+ * what the sidebar's Inbox link counts. It stands in for that link's badge
+ * wherever the badge can't be seen.
+ */
+function InboxBell() {
     const { sidebarCounts } = usePage().props;
-    const unread = sidebarCounts?.unreadNotifications ?? 0;
+    const unread =
+        (sidebarCounts?.unreadNotifications ?? 0) +
+        (sidebarCounts?.unreadMessages ?? 0);
 
     return (
         <Button variant="ghost" size="icon" className="relative size-7" asChild>
             <Link
-                href={notificationsIndex()}
-                aria-label={
-                    unread > 0
-                        ? `Notifications, ${unread} unread`
-                        : 'Notifications'
-                }
+                href={inbox()}
+                aria-label={unread > 0 ? `Inbox, ${unread} unread` : 'Inbox'}
             >
                 <BellIcon />
                 {unread > 0 && (
@@ -160,12 +163,11 @@ export function AppSidebarHeader({
 }) {
     const { open: openPalette } = useCommandPalette();
     const { state, isMobile } = useSidebar();
+    const isSidebarOutOfSight = state === 'collapsed' || isMobile;
 
     return (
         <header className="sticky top-0 z-20 flex h-[46px] shrink-0 items-center gap-2 border-b bg-background/90 px-4 backdrop-blur">
-            {(state === 'collapsed' || isMobile) && (
-                <SidebarTrigger className="-ml-1 size-7" />
-            )}
+            {isSidebarOutOfSight && <SidebarTrigger className="-ml-1 size-7" />}
             <Breadcrumbs breadcrumbs={breadcrumbs} />
 
             <div className="ml-auto flex items-center gap-2">
@@ -180,7 +182,7 @@ export function AppSidebarHeader({
                         {isMac ? '⌘K' : 'Ctrl K'}
                     </kbd>
                 </button>
-                <Bell />
+                {isSidebarOutOfSight && <InboxBell />}
                 <NewMenu />
                 <ClockControl />
                 <AccountMenu />
