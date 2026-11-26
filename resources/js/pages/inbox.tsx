@@ -47,7 +47,13 @@ const tabs: { value: InboxKind | null; label: string; count: string }[] = [
     { value: 'update', label: 'Updates', count: 'update' },
 ];
 
-const RELOAD = ['notifications', 'counts', 'selected', 'sidebarCounts'];
+const RELOAD = [
+    'notifications',
+    'counts',
+    'filters',
+    'selected',
+    'sidebarCounts',
+];
 
 const inPlace = { only: RELOAD, preserveScroll: true, preserveState: true };
 
