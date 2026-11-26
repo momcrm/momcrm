@@ -11,15 +11,9 @@ use App\Mailbox\Properties\LastError;
 use App\Mailbox\Properties\LastSyncedAt;
 use App\Mailbox\Properties\SyncedThrough;
 use App\MailboxMessage\Actions\FindMailboxMessage;
-use App\MailboxMessage\Actions\ProcessInboundMessage;
-use App\MailboxMessage\Actions\SaveMessageAttachments;
-use App\MailboxMessage\MailboxMessage;
 use App\Team\Scopes\CurrentTeamScope;
 use Carbon\CarbonImmutable;
 use Mom\Connectors\CouldNotReachConnector;
-use Mom\Connectors\Mail\InboundMail;
-use Mom\Connectors\Mail\MailClient;
-use Throwable;
 
 /**
  * Reads the mail that reached a mailbox's inbox since it was last read, and
@@ -27,8 +21,7 @@ use Throwable;
  *
  * Trouble reaching the mail service stops the read where it is: the mailbox
  * keeps its place and the error, and the next read starts over from there. A
- * message we cannot make sense of is our fault, not the service's, so it is
- * reported and skipped and the read carries on.
+ * message we cannot make sense of is skipped and the read carries on.
  */
 final readonly class SyncMailbox
 {
@@ -76,7 +69,7 @@ final readonly class SyncMailbox
 
                 $message = $client->message($item['id']);
 
-                if ($message !== null && $this->takeIn($client, $message)) {
+                if ($message !== null && TakeInMail::fromMail($this->mailbox, $client, $message)) {
                     $taken++;
                 }
             }
@@ -123,33 +116,6 @@ final readonly class SyncMailbox
         $since = ($this->mailbox->getSyncedThrough()->toNullableCarbon() ?? $connectedAt)->subMinutes(self::OVERLAP_IN_MINUTES);
 
         return $since->max($connectedAt);
-    }
-
-    /**
-     * Whether the message was new and has been kept. Its attachments are
-     * saved on its ticket afterwards, and are the one thing not tried again:
-     * if they cannot be fetched the ticket still stands, and the failure is
-     * reported.
-     */
-    private function takeIn(MailClient $client, InboundMail $mail): bool
-    {
-        try {
-            $kept = ProcessInboundMessage::fromMessage($this->mailbox, MailboxMessage::fromInboundMail($mail));
-        } catch (Throwable $exception) {
-            report($exception);
-
-            return false;
-        }
-
-        if ($kept->isNotNull() && $kept->getTicketId()->isNotNull() && $mail->hasAttachments) {
-            try {
-                SaveMessageAttachments::fromMessage($client, $kept);
-            } catch (Throwable $exception) {
-                report($exception);
-            }
-        }
-
-        return $kept->isNotNull();
     }
 
     /**

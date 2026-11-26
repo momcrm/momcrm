@@ -10,6 +10,7 @@ use App\Connector\ConnectorCapabilityEnum;
 use App\Mailbox\Actions\CreateMailbox;
 use App\Mailbox\Actions\FindMailbox;
 use App\Mailbox\Actions\ResolveMailClient;
+use App\Mailbox\Contracts\SetsUpMailboxes;
 use App\Mailbox\Mailbox;
 use App\Team\Actions\FindTeam;
 use App\Team\Exceptions\CouldNotViewTeam;
@@ -65,7 +66,8 @@ final class StoreMailboxFormRequest extends FormRequest
     /**
      * Adds the connected account's own mailbox, or a shared mailbox it can
      * open when an address is given. The mailbox is saved only once its inbox
-     * has opened, so one that cannot be read is never listed.
+     * has opened, or its mail service has been told to hand its mail over, so
+     * one that cannot be read is never listed.
      *
      * @throws ValidationException
      */
@@ -86,6 +88,12 @@ final class StoreMailboxFormRequest extends FormRequest
             ]);
         }
 
+        if ($sharedAddress === null && ! $connector->hasOwnMailbox()) {
+            throw ValidationException::withMessages([
+                'address' => __('Enter the address to take mail for, such as support@yourcompany.com.'),
+            ]);
+        }
+
         $address = $sharedAddress ?? $account;
         $existing = FindMailbox::byAddress($address);
 
@@ -98,12 +106,19 @@ final class StoreMailboxFormRequest extends FormRequest
         }
 
         try {
-            ResolveMailClient::forConnector($connector, $sharedAddress)->checkInbox();
-        } catch (CouldNotReachConnector) {
+            if ($type instanceof SetsUpMailboxes) {
+                $type->setUpMailbox($connector, $address);
+            } else {
+                ResolveMailClient::forConnector($connector, $sharedAddress)->checkInbox();
+            }
+        } catch (CouldNotReachConnector $exception) {
             throw ValidationException::withMessages([
-                'address' => $sharedAddress === null
-                    ? __("We couldn't open the inbox of :address. Check that the account has a mailbox.", ['address' => $address])
-                    : __("We couldn't open the inbox of :address. Check the address, and that :account has access to it.", ['address' => $address, 'account' => $account]),
+                'address' => match (true) {
+                    $type instanceof SetsUpMailboxes && $exception->isTemporary => __(':company could not be reached. Try again in a moment.', ['company' => $type->company()]),
+                    $type instanceof SetsUpMailboxes => $exception->getMessage(),
+                    $sharedAddress === null => __("We couldn't open the inbox of :address. Check that the account has a mailbox.", ['address' => $address]),
+                    default => __("We couldn't open the inbox of :address. Check the address, and that :account has access to it.", ['address' => $address, 'account' => $account]),
+                },
             ]);
         }
 

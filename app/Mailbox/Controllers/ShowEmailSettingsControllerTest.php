@@ -69,7 +69,29 @@ it('offers the team\'s working mail connectors to add a mailbox through', functi
             'account' => 'sam@acme.test',
             'type_label' => 'Microsoft 365',
             'shared_mailboxes' => true,
+            'has_own_mailbox' => true,
         ]]));
+});
+
+it('says an account that is not an address has no mailbox of its own, and does not call its mailboxes shared', function (): void {
+    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $connector = ConnectorEloquentModel::factory()->cloudflare()->create(['team_id' => $owner->current_team_id, 'name' => 'Acme']);
+    MailboxEloquentModel::factory()->create([
+        'team_id' => $owner->current_team_id,
+        'connector_id' => $connector->id,
+        'address' => 'support@acme.test',
+        'is_shared' => true,
+    ]);
+
+    actingAs($owner)
+        ->get(route('mailboxes.index'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('connectors.0.type_label', 'Cloudflare')
+            ->where('connectors.0.shared_mailboxes', true)
+            ->where('connectors.0.has_own_mailbox', false)
+            ->where('mailboxes.0.address', 'support@acme.test')
+            ->where('mailboxes.0.is_shared', false),
+        );
 });
 
 it('forbids members', function (): void {

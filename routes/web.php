@@ -1,5 +1,6 @@
 <?php
 
+use App\Connector\Controllers\ReceiveCloudflareMailController;
 use App\Dashboard\Controllers\ShowDashboardController;
 use App\Dashboard\Controllers\ShowWelcomeController;
 use App\Onboarding\Controllers\DismissGettingStartedController;
@@ -30,6 +31,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('design-system', fn (): Response => Inertia::render('design-system'))->name('design-system');
     Route::get('search', SearchWorkspaceController::class)->name('search');
 });
+
+/**
+ * Where the Worker in a connected Cloudflare account hands mail over. It
+ * proves itself with a secret of its own, so it has no session to keep and
+ * no form token to send.
+ */
+Route::post('connectors/cloudflare/mail', ReceiveCloudflareMailController::class)
+    ->withoutMiddleware('web')
+    ->name('connectors.cloudflare.mail');
 
 require __DIR__.'/auth.php';
 require __DIR__.'/crm.php';

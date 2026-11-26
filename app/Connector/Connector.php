@@ -99,6 +99,16 @@ final class Connector extends AbstractData implements Connection
         return $this->connectorType()->provides($capability->contract());
     }
 
+    /**
+     * Whether the account is itself a mailbox. One known by its address is;
+     * one known by an id, such as a Cloudflare account, only has the
+     * addresses that are added through it.
+     */
+    public function hasOwnMailbox(): bool
+    {
+        return filter_var($this->getAccount()->toString(), FILTER_VALIDATE_EMAIL) !== false;
+    }
+
     public function connectionId(): string
     {
         return $this->getId()->toString();

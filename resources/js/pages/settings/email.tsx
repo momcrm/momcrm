@@ -273,8 +273,10 @@ export default function Email({
                                                 key={item.id}
                                                 value={item.id}
                                             >
-                                                {item.account} (
-                                                {item.type_label})
+                                                {item.has_own_mailbox
+                                                    ? item.account
+                                                    : item.name}{' '}
+                                                ({item.type_label})
                                             </option>
                                         ))}
                                     </NativeSelect>
@@ -282,15 +284,30 @@ export default function Email({
                                 {connector?.shared_mailboxes ? (
                                     <FormField
                                         id="mailbox-address"
-                                        label="Shared mailbox address"
-                                        hint={`Leave empty to add ${connector.account} itself. For a shared mailbox, such as support@yourcompany.com, the account must be able to open it.`}
+                                        label={
+                                            connector.has_own_mailbox
+                                                ? 'Shared mailbox address'
+                                                : 'Address'
+                                        }
+                                        hint={
+                                            connector.has_own_mailbox
+                                                ? `Leave empty to add ${connector.account} itself. For a shared mailbox, such as support@yourcompany.com, the account must be able to open it.`
+                                                : `An address on one of ${connector.name}'s domains, such as support@yourcompany.com. Mail sent to it becomes tickets.`
+                                        }
                                         error={errors.address}
                                     >
                                         <Input
                                             id="mailbox-address"
                                             name="address"
                                             type="email"
-                                            placeholder="Optional"
+                                            placeholder={
+                                                connector.has_own_mailbox
+                                                    ? 'Optional'
+                                                    : 'support@yourcompany.com'
+                                            }
+                                            required={
+                                                !connector.has_own_mailbox
+                                            }
                                             autoComplete="off"
                                         />
                                     </FormField>
