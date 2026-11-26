@@ -44,7 +44,7 @@ import {
     OptionalChoicePicker,
     Picker,
 } from '@/components/tickets/property-editors';
-import OriginalEmail from '@/components/tickets/original-email';
+import EmailFrame from '@/components/tickets/email-frame';
 import TicketConversation from '@/components/tickets/ticket-conversation';
 import SoftBadge from '@/components/soft-badge';
 import { Button } from '@/components/ui/button';
@@ -56,6 +56,7 @@ import {
     SheetTitle,
 } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import {
     Tooltip,
     TooltipContent,
@@ -566,22 +567,11 @@ export function TicketDetails({
                     ))}
                 </dl>
 
-                <section className="space-y-2">
-                    <div className="flex items-center justify-between gap-3">
-                        <h3 className="text-xs font-medium tracking-wide text-subtle-foreground uppercase">
-                            Description
-                        </h3>
-                        {ticket.original_email_id && (
-                            <OriginalEmail
-                                messageId={ticket.original_email_id}
-                            />
-                        )}
-                    </div>
-                    <Description
-                        value={ticket.description}
-                        onSave={(description) => save({ description })}
-                    />
-                </section>
+                <DescriptionSection
+                    description={ticket.description}
+                    emailId={ticket.original_email_id}
+                    onSave={(description) => save({ description })}
+                />
 
                 {!ticket.parent && (
                     <Subtasks ticket={ticket} onOpen={openTicket} />
@@ -686,7 +676,53 @@ function InlineTitle({
 }
 
 /**
- * A ticket's description. It reads as text, with the web addresses in it as
+ * A ticket's description. A ticket opened by an email shows that email as it
+ * was sent, and its text on request: the text is what can be edited, and
+ * what search, notifications and the customer portal use.
+ */
+function DescriptionSection({
+    description,
+    emailId,
+    onSave,
+}: {
+    description: string | null;
+    emailId: string | null;
+    onSave: (description: string | null) => void;
+}) {
+    const [view, setView] = useState<'email' | 'text'>('email');
+
+    return (
+        <section className="space-y-2">
+            <div className="flex min-h-7 items-center justify-between gap-3">
+                <h3 className="text-xs font-medium tracking-wide text-subtle-foreground uppercase">
+                    Description
+                </h3>
+                {emailId && (
+                    <ToggleGroup
+                        type="single"
+                        variant="segmented"
+                        value={view}
+                        onValueChange={(value) =>
+                            value && setView(value as 'email' | 'text')
+                        }
+                        aria-label="How the description is shown"
+                    >
+                        <ToggleGroupItem value="email">Email</ToggleGroupItem>
+                        <ToggleGroupItem value="text">Text</ToggleGroupItem>
+                    </ToggleGroup>
+                )}
+            </div>
+            {emailId && view === 'email' ? (
+                <EmailFrame messageId={emailId} canFold />
+            ) : (
+                <Description value={description} onSave={onSave} />
+            )}
+        </section>
+    );
+}
+
+/**
+ * A ticket's description as text. It reads as text, with the web addresses in it as
  * links, and turns into a text box when clicked; leaving the box saves it.
  */
 function Description({
