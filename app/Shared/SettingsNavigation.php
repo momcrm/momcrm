@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 
 /**
  * Items that a package adds to the Settings menu, beside the app's own. The
- * app's items are built into the settings layout; a package has no place
+ * app's items are built into the Settings menu; a package has no place
  * there, so it registers a contributor from its service provider:
  *
  *     $this->callAfterResolving(SettingsNavigation::class, fn (SettingsNavigation $navigation) => $navigation
@@ -20,7 +20,7 @@ use Illuminate\Http\Request;
  * A contributor decides per request what to show, so it can leave an item
  * out for someone who may not open it. An item joins the section with that
  * title, or starts a new one. Its optional icon is one of the names the
- * settings layout knows (`credit-card`, `users-round`); without one it gets
+ * Settings menu knows (`credit-card`, `users-round`); without one it gets
  * a puzzle piece.
  */
 final class SettingsNavigation

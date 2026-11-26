@@ -211,8 +211,20 @@ export function workspaceNavigation(
 }
 
 /**
- * Destinations kept out of the sidebar but still reachable from the ⌘K
- * palette and the "G then key" shortcuts.
+ * The way into Settings, at the foot of the sidebar.
+ */
+export function settingsDestination(): NavItem {
+    return {
+        title: 'Settings',
+        href: profileEdit(),
+        icon: Settings,
+        shortcut: 's',
+    };
+}
+
+/**
+ * Destinations outside the sidebar's sections that the ⌘K palette and the
+ * "G then key" shortcuts also reach.
  */
 export function footerNavigation(): NavItem[] {
     return [
@@ -222,12 +234,7 @@ export function footerNavigation(): NavItem[] {
             icon: Palette,
             shortcut: 'd',
         },
-        {
-            title: 'Settings',
-            href: profileEdit(),
-            icon: Settings,
-            shortcut: 's',
-        },
+        settingsDestination(),
     ];
 }
 
