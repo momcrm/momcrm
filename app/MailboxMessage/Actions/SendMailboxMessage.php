@@ -20,9 +20,12 @@ use Throwable;
  * Emails a waiting reply to the customer from its mailbox.
  *
  * When the customer has written in on the ticket, the email is a reply to
- * their last message, so it threads under it in their mail. Otherwise it
- * starts a thread. Either way its subject carries the ticket number, and the
- * id the mail service gives it is kept, so the customer's answer finds the ticket.
+ * their last message and keeps the subject they wrote, so it stays in the
+ * same conversation in their mail: a mail program such as Gmail starts a new
+ * conversation when the subject changes. Otherwise it starts a thread, and
+ * its subject carries the ticket number. Either way the id the mail service
+ * gives it is kept, which is how the customer's answer finds the ticket; the
+ * number is for an answer whose mail program lost what it was answering.
  *
  * It is tried once. Whatever goes wrong is kept on the message, where the
  * ticket shows it, and the reply is not sent again by itself: a second attempt
@@ -105,7 +108,7 @@ final readonly class SendMailboxMessage
             to: $to,
             bodyText: $this->message->getBodyText()->toString(),
             subject: $ticket->getTitle()->toString(),
-            subjectTag: "[#{$ticket->getNumber()->toInteger()}]",
+            subjectTag: $answered->isNull() ? "[#{$ticket->getNumber()->toInteger()}]" : '',
             answered: $answered->isNull() ? null : $answered->toInboundMail(),
         ));
 
