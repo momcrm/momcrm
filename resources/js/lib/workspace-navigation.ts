@@ -152,18 +152,6 @@ export function workspaceNavigation(
                     icon: UsersRound,
                     shortcut: 'u',
                 },
-                {
-                    title: 'Activity',
-                    href: activity(),
-                    icon: Activity,
-                    shortcut: 'y',
-                },
-                {
-                    title: 'Archive',
-                    href: archive(),
-                    icon: Archive,
-                    shortcut: 'a',
-                },
             ],
         },
         {
@@ -187,6 +175,11 @@ export function workspaceNavigation(
                     icon: Server,
                     shortcut: 'e',
                 },
+            ],
+        },
+        {
+            title: 'Billing',
+            items: [
                 {
                     title: 'Invoices',
                     href: invoicesIndex(),
@@ -224,10 +217,23 @@ export function settingsDestination(): NavItem {
 
 /**
  * Destinations outside the sidebar's sections that the ⌘K palette and the
- * "G then key" shortcuts also reach.
+ * "G then key" shortcuts also reach. Activity is a tab of the Overview, and
+ * the Archive is opened from the Tickets and Projects pages.
  */
 export function footerNavigation(): NavItem[] {
     return [
+        {
+            title: 'Activity',
+            href: activity(),
+            icon: Activity,
+            shortcut: 'y',
+        },
+        {
+            title: 'Archive',
+            href: archive(),
+            icon: Archive,
+            shortcut: 'a',
+        },
         {
             title: 'Design system',
             href: designSystem(),

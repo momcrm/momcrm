@@ -60,3 +60,9 @@ it("links a record's activity to its page under its object", function (): void {
             ->where('activities.data.0.url', route('records.show', [$vehicles->id, $van->id])),
         );
 });
+
+it('sends the old activity address to the Overview’s Activity tab', function (): void {
+    actingAs(UserEloquentModel::factory()->withPersonalTeam()->create())
+        ->get('/activity')
+        ->assertRedirect(route('activity'));
+});

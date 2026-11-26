@@ -1,10 +1,11 @@
-import { Head } from '@inertiajs/react';
-import { Plus } from 'lucide-react';
+import { Head, Link } from '@inertiajs/react';
+import { Archive, Plus } from 'lucide-react';
 import EmptyState from '@/components/empty-state';
 import PageHeader from '@/components/page-header';
 import { useCreateTicket } from '@/components/tickets/create-ticket-dialog';
 import TicketViews from '@/components/tickets/ticket-views';
 import { Button } from '@/components/ui/button';
+import { archive } from '@/routes';
 import { index } from '@/routes/tickets';
 import type {
     Paginated,
@@ -33,10 +34,18 @@ export default function TicketsIndex(props: {
                         title="Tickets"
                         description="Every request and job, for customers and your own projects."
                         actions={
-                            <Button onClick={() => openCreateTicket()}>
-                                <Plus />
-                                New ticket
-                            </Button>
+                            <>
+                                <Button variant="outline" asChild>
+                                    <Link href={archive()}>
+                                        <Archive />
+                                        Archived
+                                    </Link>
+                                </Button>
+                                <Button onClick={() => openCreateTicket()}>
+                                    <Plus />
+                                    New ticket
+                                </Button>
+                            </>
                         }
                     />
                 </div>

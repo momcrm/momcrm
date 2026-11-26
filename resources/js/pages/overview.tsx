@@ -1,6 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
+import OverviewViews from '@/components/overview-views';
 import PageHeader from '@/components/page-header';
 import ProjectTable from '@/components/projects/project-table';
 import {
@@ -90,6 +91,7 @@ export default function Overview({
                     title="Overview"
                     description="How the workspace is doing, across every project and person."
                 />
+                <OverviewViews current="summary" />
 
                 <div className="grid overflow-hidden rounded-xl border bg-card shadow-xs sm:grid-cols-2 lg:grid-cols-4">
                     <Figure
