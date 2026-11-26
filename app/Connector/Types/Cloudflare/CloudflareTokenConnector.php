@@ -42,7 +42,7 @@ final class CloudflareTokenConnector extends CloudflareAccount implements Connec
 
     public function formIntroduction(): string
     {
-        return 'MomCRM puts a small Worker in your Cloudflare account that hands it the mail Email Routing receives, and sends replies through Email Sending. It needs an API token with these permissions: Workers Scripts (Edit), Email Sending (Edit), Email Routing Rules (Edit), Email Routing Account Rules (Read), Zone (Read) and Zone Settings (Read).';
+        return 'MomCRM puts a small Worker in your Cloudflare account that hands it the mail Email Routing receives, and sends replies through Email Sending. It needs an API token with these permissions: Workers Admin, Email Sending (Edit), Email Routing Rules (Edit), Zone (Read) and Zone Settings (Read). Workers Admin is what lets it create the Worker.';
     }
 
     public function fields(): array
@@ -100,7 +100,7 @@ final class CloudflareTokenConnector extends CloudflareAccount implements Connec
         } catch (CouldNotReachConnector $exception) {
             throw CouldNotConnect::because(self::API_TOKEN, $exception->isTemporary
                 ? $exception->getMessage()
-                : (string) __('MomCRM could not put its Worker in the account. Check that the token has Workers Scripts (Edit).'));
+                : (string) __('MomCRM could not put its Worker in the account. Check that the token has Workers Admin, which creating a Worker needs.'));
         }
 
         return new ConnectedAccount(
