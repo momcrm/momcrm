@@ -90,7 +90,9 @@ it('looks a little way back past the last read, and fetches only what it has not
 
     expect(SyncMailbox::fromMailbox($mailbox))->toBe(1);
 
-    Http::assertSentCount(2);
+    // The list, then the one new message: once for its text and once as it was laid out.
+    Http::assertSentCount(3);
+    Http::assertNotSent(fn (Request $request): bool => str_contains($request->url(), 'messages/graph-1'));
     Http::assertSent(fn (Request $request): bool => ($request['$filter'] ?? null) === 'receivedDateTime ge 2026-11-18T00:50:00Z');
 });
 
@@ -132,7 +134,7 @@ it('carries on from the last message when a read is full', function (): void {
     expect($model->synced_through?->toIso8601ZuluString())->toBe('2026-11-18T02:49:00Z')
         ->and($model->last_synced_at?->toIso8601ZuluString())->toBe('2026-11-18T03:00:00Z');
 
-    Http::assertSentCount(SyncMailbox::MAX_MESSAGES + 1);
+    Http::assertSentCount(SyncMailbox::MAX_MESSAGES * 2 + 1);
 });
 
 it('keeps its place and says why when Microsoft cannot be reached', function (): void {

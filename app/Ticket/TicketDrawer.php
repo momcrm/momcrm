@@ -109,6 +109,7 @@ final class TicketDrawer
         $location = FindLocation::byIdForTeam($ticket->getLocationId()->toNullableString(), $teamId);
 
         $deliveries = FindMailboxMessage::deliveriesForTicket($model->id, $teamId);
+        $originals = FindMailboxMessage::originalsOnTicket($model->id, $teamId);
         $repliesShowInPortal = FindPortalReplyRecipient::forTicket($ticket)->isNotNull();
 
         return [
@@ -133,6 +134,7 @@ final class TicketDrawer
                 'email' => $ticket->getRequesterEmail()->toString(),
                 'via' => $ticket->getMailboxId()->isNull() ? 'portal' : 'email',
             ],
+            'original_email_id' => $originals['ticket'],
             'location_name' => $location->isNull() ? null : $location->getName()->toString(),
             'labels' => Choice::collect($model->labels->all(), 'fromEloquentModel')->toTags(),
             'parent' => $parent instanceof TicketEloquentModel ? ['id' => $parent->id, 'number' => $parent->number, 'title' => $parent->title] : null,
@@ -156,6 +158,7 @@ final class TicketDrawer
                     'from_portal' => $comment->contact_id !== null,
                     'visibility' => $comment->visibility,
                     'delivery' => $deliveries[$comment->id] ?? ($repliesShowInPortal && $comment->user_id !== null ? ['status' => 'portal', 'error' => null] : null),
+                    'original_email_id' => $originals['comments'][$comment->id] ?? null,
                     'mentions' => $comment->mentions ?? [],
                     'created_at' => $comment->created_at?->toIso8601String(),
                     'can_delete' => $comment->user_id === $userId

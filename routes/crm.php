@@ -128,6 +128,7 @@ use App\Location\Controllers\DeleteLocationController;
 use App\Location\Controllers\EditLocationController;
 use App\Location\Controllers\StoreLocationController;
 use App\Location\Controllers\UpdateLocationController;
+use App\MailboxMessage\Controllers\ShowOriginalEmailController;
 use App\Message\Controllers\StoreMessageController;
 use App\Milestone\Controllers\DeleteMilestoneController;
 use App\Milestone\Controllers\StoreMilestoneController;
@@ -356,6 +357,7 @@ Route::middleware(StaffOrContact::STAFF_MIDDLEWARE)->group(function () {
 
     Route::delete('tickets/{ticket}', DeleteTicketController::class)->whereUuid('ticket')->name('tickets.destroy');
 
+    Route::get('emails/{message}/original', ShowOriginalEmailController::class)->whereUuid('message')->name('emails.original');
     Route::post('tickets/{ticket}/comments', StoreCommentController::class)->whereUuid('ticket')->name('comments.store');
     Route::delete('comments/{comment}', DeleteCommentController::class)->whereUuid('comment')->name('comments.destroy');
     Route::post('tickets/{ticket}/attachments', StoreTicketAttachmentController::class)->whereUuid('ticket')->name('tickets.attachments.store');

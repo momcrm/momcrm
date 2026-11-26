@@ -24,6 +24,7 @@ use Illuminate\Database\Eloquent\Model;
  * Not audited: these rows are a record of mail, written by the mailbox sync
  * and never edited by people.
  *
+ * @property string|null $body_html
  * @property string|null $body_text
  * @property string|null $comment_id
  * @property CarbonImmutable|null $created_at

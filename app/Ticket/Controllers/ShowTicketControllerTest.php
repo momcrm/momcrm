@@ -156,6 +156,33 @@ it('shows a reply that arrived by email as part of the conversation, under its s
             ->where('drawer.activity.0.actor', 'Sam Lee'));
 });
 
+it('names the emails on a ticket that can be shown as they were sent', function (): void {
+    $user = UserEloquentModel::factory()->withPersonalTeam()->create();
+    $ticket = TicketEloquentModel::factory()->create(['team_id' => $user->current_team_id]);
+    $typed = CommentEloquentModel::factory()->create(['ticket_id' => $ticket->id, 'user_id' => $user->id, 'created_at' => now()->subHours(2)]);
+    $inText = CommentEloquentModel::factory()->fromCustomer('sam@acme.test', 'Sam Lee')->create(['ticket_id' => $ticket->id, 'created_at' => now()->subHour()]);
+    $laidOut = CommentEloquentModel::factory()->fromCustomer('sam@acme.test', 'Sam Lee')->create(['ticket_id' => $ticket->id]);
+    $email = fn (array $attributes): MailboxMessageEloquentModel => MailboxMessageEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'ticket_id' => $ticket->id, ...$attributes]);
+    $opening = $email(['body_html' => '<p>The printer is offline.</p>', 'received_at' => now()->subDay()]);
+    $email(['comment_id' => $inText->id]);
+    $answer = $email(['comment_id' => $laidOut->id, 'body_html' => '<p>Still offline.</p>']);
+    $email(['comment_id' => $typed->id, 'direction' => 'outbound', 'body_html' => '<p>Checking.</p>']);
+
+    actingAs($user)
+        ->get(route('tickets.show', $ticket->id))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('drawer.original_email_id', $opening->id)
+            ->where('drawer.comments.0.original_email_id', null)
+            ->where('drawer.comments.1.original_email_id', null)
+            ->where('drawer.comments.2.original_email_id', $answer->id)
+            ->missing('drawer.comments.2.body_html'));
+
+    actingAs($user)
+        ->get(route('tickets.show', TicketEloquentModel::factory()->create(['team_id' => $user->current_team_id])->id))
+        ->assertInertia(fn (Assert $page) => $page->where('drawer.original_email_id', null));
+});
+
 it('shows who a reply would go to and how the replies already sent fared', function (): void {
     $user = UserEloquentModel::factory()->withPersonalTeam()->create();
     $mailbox = MailboxEloquentModel::factory()->create(['team_id' => $user->current_team_id, 'address' => 'support@helpdesk.test']);

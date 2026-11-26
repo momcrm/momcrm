@@ -182,15 +182,29 @@ it('reads a message from its headers, taking the plain text and leaving out quot
         ->and($message?->bodyText)->toStartWith('It is the one on level 2.')->toContain('> Which printer is it?')
         ->and($message?->replyText)->toBe('It is the one on level 2.')
         ->and($message?->receivedAt?->toIso8601String())->toBe('2026-11-18T01:00:00+00:00')
-        ->and($message?->hasAttachments)->toBeFalse();
+        ->and($message?->hasAttachments)->toBeFalse()
+        ->and($message?->bodyHtml)->toBeNull();
 });
 
-it('turns an HTML-only message into text, whatever its character set', function (): void {
+it('reads a message that came as text and HTML as each', function (): void {
+    Http::fake([GMAIL.'/messages/gmail-1?format=full' => Http::response(gmailMessage(parts: [
+        gmailPart('0', 'text/plain', 'Sign in https://acme.test/in'),
+        gmailPart('1', 'text/html', '<p><a href="https://acme.test/in">Sign in</a></p>'),
+    ]))]);
+
+    expect(googleMailClient()->message('gmail-1'))
+        ->bodyText->toBe('Sign in https://acme.test/in')
+        ->bodyHtml->toBe('<p><a href="https://acme.test/in">Sign in</a></p>');
+});
+
+it('turns an HTML-only message into text, whatever its character set, and keeps it as its sender laid it out', function (): void {
     Http::fake([GMAIL.'/messages/gmail-1?format=full' => Http::response(gmailMessage(parts: [
         gmailPart('0', 'text/html', mb_convert_encoding('<p>Caf&eacute; printer is <b>offline</b>.<br>Señor Kim</p>', 'ISO-8859-1', 'UTF-8'), 'ISO-8859-1'),
     ]))]);
 
-    expect(googleMailClient()->message('gmail-1')?->bodyText)->toBe("Café printer is offline.\nSeñor Kim");
+    expect(googleMailClient()->message('gmail-1'))
+        ->bodyText->toBe("Café printer is offline.\nSeñor Kim")
+        ->bodyHtml->toBe('<p>Caf&eacute; printer is <b>offline</b>.<br>Señor Kim</p>');
 });
 
 it('has no message for a draft or one that has gone', function (): void {

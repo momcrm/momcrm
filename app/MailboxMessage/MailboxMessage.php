@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\MailboxMessage;
 
 use App\MailboxMessage\Factories\MailboxMessageFactory;
+use App\MailboxMessage\Properties\BodyHtml;
 use App\MailboxMessage\Properties\BodyText;
 use App\MailboxMessage\Properties\CommentId;
 use App\MailboxMessage\Properties\CreatedAt;
@@ -40,6 +41,7 @@ use Mom\Data\AbstractValue;
 final class MailboxMessage extends AbstractData
 {
     public function __construct(
+        public BodyHtml $bodyHtml,
         public BodyText $bodyText,
         public CommentId $commentId,
         public CreatedAt $createdAt,
@@ -101,6 +103,7 @@ final class MailboxMessage extends AbstractData
             ->setToRecipients($mail->to === [] ? null : $mail->to)
             ->setSubject($mail->subject)
             ->setBodyText($mail->bodyText)
+            ->setBodyHtml(BodyHtml::keepable($mail->bodyHtml))
             ->setReplyText($mail->replyText ?? $mail->bodyText)
             ->setReceivedAt($mail->receivedAt);
     }
@@ -141,6 +144,18 @@ final class MailboxMessage extends AbstractData
         }
 
         return array_values(array_unique(array_filter($ids, is_string(...))));
+    }
+
+    public function getBodyHtml(): BodyHtml
+    {
+        return $this->bodyHtml;
+    }
+
+    public function setBodyHtml(mixed $bodyHtml): self
+    {
+        $this->bodyHtml = new BodyHtml($bodyHtml instanceof AbstractValue ? $bodyHtml->toValue() : $bodyHtml);
+
+        return $this;
     }
 
     public function getBodyText(): BodyText

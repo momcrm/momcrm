@@ -5,6 +5,7 @@ import type { KeyboardEvent, ReactNode } from 'react';
 import { toast } from 'sonner';
 import LinkedText from '@/components/linked-text';
 import SoftBadge from '@/components/soft-badge';
+import OriginalEmail from '@/components/tickets/original-email';
 import { AssigneeAvatar } from '@/components/tickets/ticket-meta';
 import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
@@ -122,6 +123,15 @@ export default function TicketConversation({
                                         <span className="text-xs text-subtle-foreground">
                                             {timeAgo(comment.created_at)}
                                         </span>
+                                        {comment.original_email_id && (
+                                            <OriginalEmail
+                                                messageId={
+                                                    comment.original_email_id
+                                                }
+                                                label="Original"
+                                                className="ml-auto self-center"
+                                            />
+                                        )}
                                         {comment.can_delete && (
                                             <button
                                                 type="button"

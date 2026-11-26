@@ -122,7 +122,16 @@ final class GoogleMailClient implements MailClient
 
         $payload = self::map($raw['payload'] ?? []);
 
-        return MailHeaders::toInboundMail(self::headers($payload), $id, $this->bodyText($id, $payload), self::receivedAt($raw), self::fileParts($payload) !== []);
+        $body = $this->body($id, $payload);
+
+        return MailHeaders::toInboundMail(
+            self::headers($payload),
+            $id,
+            $body['text'] ?? ($body['html'] === null ? null : HtmlToText::convert($body['html'])),
+            self::receivedAt($raw),
+            self::fileParts($payload) !== [],
+            $body['html'],
+        );
     }
 
     public function attachments(string $messageId): array
@@ -249,34 +258,35 @@ final class GoogleMailClient implements MailClient
     }
 
     /**
-     * The message as plain text: its plain-text part, or its HTML part turned
-     * into text when it has no other.
+     * The message's plain-text part and its HTML part, each when it has one:
+     * the first of each that is not a file.
      *
      * @param  array<string, mixed>  $payload
+     * @return array{text: ?string, html: ?string}
      *
      * @throws CouldNotReachConnector
      */
-    private function bodyText(string $messageId, array $payload): ?string
+    private function body(string $messageId, array $payload): array
     {
-        $html = null;
+        $body = ['text' => null, 'html' => null];
 
         foreach (self::parts($payload) as $part) {
             if (self::str($part['filename'] ?? null) !== '') {
                 continue;
             }
 
-            $type = mb_strtolower(self::str($part['mimeType'] ?? null));
+            $kind = match (mb_strtolower(self::str($part['mimeType'] ?? null))) {
+                'text/plain' => 'text',
+                'text/html' => 'html',
+                default => null,
+            };
 
-            if ($type === 'text/plain') {
-                return $this->partText($messageId, $part);
-            }
-
-            if ($type === 'text/html') {
-                $html ??= $this->partText($messageId, $part);
+            if ($kind !== null) {
+                $body[$kind] ??= $this->partText($messageId, $part);
             }
         }
 
-        return $html === null ? null : HtmlToText::convert($html);
+        return $body;
     }
 
     /**

@@ -139,7 +139,7 @@ final class CloudflareMailClient implements MailClient
 
         return $mail === null
             ? null
-            : MailHeaders::toInboundMail($mail->headers, $id, $mail->bodyText(), DeliveredMail::receivedAt($id), $mail->attachments !== []);
+            : MailHeaders::toInboundMail($mail->headers, $id, $mail->bodyText(), DeliveredMail::receivedAt($id), $mail->attachments !== [], $mail->html);
     }
 
     /**

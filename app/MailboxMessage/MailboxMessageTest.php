@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\MailboxMessage\MailboxMessage;
 use App\MailboxMessage\MailboxMessageEloquentModel;
+use Mom\Connectors\Mail\InboundMail;
 
 it('keeps an email from Microsoft with addresses in lower case and ids without brackets', function (): void {
     $message = messageFromGraph(graphMessage([
@@ -28,6 +29,26 @@ it('keeps an email from Microsoft with addresses in lower case and ids without b
         ->and($message->getReceivedAt()->toCarbon()->toIso8601ZuluString())->toBe('2026-11-18T01:15:00Z')
         ->and($message->getDirection()->toEnum()->value)->toBe('inbound');
 });
+
+it('keeps an email as its sender laid it out, as it arrived', function (): void {
+    $html = '<p>The printer is <b>offline</b>.</p><script>alert(1)</script>';
+
+    expect(MailboxMessage::fromInboundMail(new InboundMail('graph-1', 'message-1@acme.test', bodyText: 'The printer is offline.', bodyHtml: $html)))
+        ->getBodyHtml()->toNullableString()->toBe($html)
+        ->toArray()->not->toHaveKey('body_html');
+});
+
+it('keeps only the text of an email whose HTML is not worth keeping', function (?string $html): void {
+    $message = MailboxMessage::fromInboundMail(new InboundMail('graph-1', 'message-1@acme.test', bodyText: 'The printer is offline.', bodyHtml: $html));
+
+    expect($message->getBodyHtml()->isNull())->toBeTrue()
+        ->and($message->getBodyText()->toString())->toBe('The printer is offline.');
+})->with([
+    'none' => [null],
+    'empty' => ["  \r\n"],
+    'too long' => [str_repeat('<p>Hello</p>', 100_000)],
+    'not text the database can hold' => ["<p>Caf\xE9</p>"],
+]);
 
 it('lists the thread a message follows, the message it answers first', function (): void {
     $message = messageFromGraph(graphMessage(['internetMessageHeaders' => [
