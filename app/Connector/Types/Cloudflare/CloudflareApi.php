@@ -15,9 +15,9 @@ use Mom\Connectors\CouldNotReachConnector;
 use Throwable;
 
 /**
- * Cloudflare's API for one account, with the API token that was pasted in
- * when the account was connected. Only this class knows Cloudflare's
- * addresses and the shape of what it answers.
+ * Cloudflare's API for one account, with what the account was connected
+ * with: an API token that was pasted in, or the access a sign-in gave. Only
+ * this class knows Cloudflare's addresses and the shape of what it answers.
  */
 final readonly class CloudflareApi
 {
@@ -44,6 +44,7 @@ final readonly class CloudflareApi
     public function __construct(
         private string $accountId,
         private string $token,
+        private bool $isApiToken = true,
     ) {}
 
     /**
@@ -51,13 +52,11 @@ final readonly class CloudflareApi
      */
     public static function forConnection(Connection $connection): self
     {
-        $token = $connection->credentials()[CloudflareConnector::API_TOKEN] ?? null;
+        $apiToken = $connection->credentials()[CloudflareTokenConnector::API_TOKEN] ?? null;
 
-        if (! is_string($token) || $token === '') {
-            throw CouldNotReachConnector::needsReconnect(CloudflareConnector::COMPANY);
-        }
-
-        return new self($connection->account(), $token);
+        return is_string($apiToken) && $apiToken !== ''
+            ? new self($connection->account(), $apiToken)
+            : new self($connection->account(), $connection->accessToken(), isApiToken: false);
     }
 
     /**
@@ -72,7 +71,7 @@ final readonly class CloudflareApi
             $response = $this->get($path);
 
             if ($response->status() === 429 || $response->serverError()) {
-                throw CouldNotReachConnector::unavailable(CloudflareConnector::COMPANY);
+                throw CouldNotReachConnector::unavailable(CloudflareAccount::COMPANY);
             }
 
             if ($response->successful() && $response->json('result.status') === 'active') {
@@ -241,7 +240,7 @@ final readonly class CloudflareApi
                 ->attach(self::WORKER_FILE, $script, self::WORKER_FILE, ['Content-Type' => 'application/javascript+module'])
                 ->put("accounts/{$this->accountId}/workers/scripts/{$name}");
         } catch (ConnectionException $exception) {
-            throw CouldNotReachConnector::unavailable(CloudflareConnector::COMPANY, $exception);
+            throw CouldNotReachConnector::unavailable(CloudflareAccount::COMPANY, $exception);
         }
 
         $this->result($response);
@@ -337,16 +336,18 @@ final readonly class CloudflareApi
 
     /**
      * Why Cloudflare refused, in the terms the rest of the app understands.
-     * Cloudflare answers a token it no longer accepts and a token that lacks
-     * a permission in the same way, so the token is asked about to tell them
-     * apart: only the first is fixed by connecting again.
+     * Cloudflare answers an API token it no longer accepts and one that
+     * lacks a permission in the same way, so the token is asked about to
+     * tell them apart: only the first is fixed by connecting again. Access
+     * from a sign-in is fresh each time, so there a refusal to know us at
+     * all means the sign-in was withdrawn.
      *
      * @param  array<int, string>  $refusals
      */
     private function failure(Response $response, array $refusals): CouldNotReachConnector
     {
         if ($response->status() === 429 || $response->serverError()) {
-            return CouldNotReachConnector::unavailable(CloudflareConnector::COMPANY);
+            return CouldNotReachConnector::unavailable(CloudflareAccount::COMPANY);
         }
 
         $code = $response->json('errors.0.code');
@@ -354,6 +355,12 @@ final readonly class CloudflareApi
 
         if (is_int($code) && isset($refusals[$code])) {
             return CouldNotReachConnector::refused($refusals[$code]);
+        }
+
+        if (! $this->isApiToken && in_array($response->status(), [401, 403], true)) {
+            return $response->status() === 401
+                ? CouldNotReachConnector::needsReconnect(CloudflareAccount::COMPANY)
+                : CouldNotReachConnector::refused((string) __('Cloudflare did not allow that. Connect the account again and agree to everything MomCRM asks for.'));
         }
 
         if (in_array($response->status(), [401, 403], true)) {
@@ -365,7 +372,7 @@ final readonly class CloudflareApi
 
             return $isActive
                 ? CouldNotReachConnector::refused((string) __('Cloudflare did not allow that. Check that the API token has every permission MomCRM asks for, and that it covers this domain.'))
-                : CouldNotReachConnector::needsReconnect(CloudflareConnector::COMPANY);
+                : CouldNotReachConnector::needsReconnect(CloudflareAccount::COMPANY);
         }
 
         return CouldNotReachConnector::refused(is_string($reason) && $reason !== ''
@@ -386,7 +393,7 @@ final readonly class CloudflareApi
         try {
             return $this->request()->send($method, $path, $body === [] ? [] : ['json' => $body]);
         } catch (ConnectionException $exception) {
-            throw CouldNotReachConnector::unavailable(CloudflareConnector::COMPANY, $exception);
+            throw CouldNotReachConnector::unavailable(CloudflareAccount::COMPANY, $exception);
         }
     }
 
@@ -402,7 +409,7 @@ final readonly class CloudflareApi
                 ->retry([200, 1000], when: self::isTransient(...), throw: false)
                 ->get($path, $query);
         } catch (ConnectionException $exception) {
-            throw CouldNotReachConnector::unavailable(CloudflareConnector::COMPANY, $exception);
+            throw CouldNotReachConnector::unavailable(CloudflareAccount::COMPANY, $exception);
         }
     }
 

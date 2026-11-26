@@ -90,14 +90,21 @@ final class HandleConnectorCallbackController
     }
 
     /**
-     * The signed-in account's address: its mail address when the service
-     * gives one, otherwise the name it signs in with.
+     * What the signed-in account is known by: its mail address when the
+     * service gives one, otherwise the name it signs in with. A sign-in that
+     * connects something other than a person's own account, such as a
+     * Cloudflare account, says which under "account".
      */
     private static function account(SignedInUser $signedIn): string
     {
+        $account = $signedIn->getRaw()['account'] ?? null;
         $mail = $signedIn->getRaw()['mail'] ?? null;
 
-        return mb_strtolower(mb_trim(is_string($mail) && $mail !== '' ? $mail : (string) $signedIn->getEmail()));
+        return mb_strtolower(mb_trim(match (true) {
+            is_string($account) && $account !== '' => $account,
+            is_string($mail) && $mail !== '' => $mail,
+            default => (string) $signedIn->getEmail(),
+        }));
     }
 
     private static function failed(string $message): RedirectResponse

@@ -70,9 +70,10 @@ final class CloudflareMailClient implements MailClient
     }
 
     /**
-     * Adds the routing rule that hands the address's mail to the Worker. An
-     * address that already goes somewhere else is left as it is: taking it
-     * over would cut off whoever gets that mail now.
+     * Puts the Worker in the account, so it is there and up to date however
+     * the account was connected, then adds the routing rule that hands the
+     * address's mail to it. An address that already goes somewhere else is
+     * left as it is: taking it over would cut off whoever gets that mail now.
      *
      * @throws CouldNotReachConnector
      */
@@ -85,7 +86,7 @@ final class CloudflareMailClient implements MailClient
             $zone = $api->zoneFor($domain);
 
             if ($zone === null) {
-                throw CouldNotReachConnector::refused((string) __(':domain is not one of the domains the API token covers in this Cloudflare account.', ['domain' => $domain]));
+                throw CouldNotReachConnector::refused((string) __(':domain is not one of the domains MomCRM can see in this Cloudflare account.', ['domain' => $domain]));
             }
 
             if ($api->routingIsOn($zone['id']) === false) {
@@ -94,10 +95,14 @@ final class CloudflareMailClient implements MailClient
 
             $rule = $api->ruleFor($zone['id'], $address);
 
+            if ($rule !== null && $rule['worker'] !== $this->worker()) {
+                throw CouldNotReachConnector::refused((string) __("Cloudflare already sends :address's mail somewhere else. Remove that routing rule in Cloudflare, then add the mailbox again.", ['address' => $address]));
+            }
+
+            CloudflareAccount::deployWorker($api, $this->connection->account());
+
             if ($rule === null) {
                 $api->createRule($zone['id'], $address, $this->worker());
-            } elseif ($rule['worker'] !== $this->worker()) {
-                throw CouldNotReachConnector::refused((string) __("Cloudflare already sends :address's mail somewhere else. Remove that routing rule in Cloudflare, then add the mailbox again.", ['address' => $address]));
             }
         });
     }
@@ -255,7 +260,7 @@ final class CloudflareMailClient implements MailClient
 
     private function worker(): string
     {
-        return CloudflareConnector::workerName($this->connection->account());
+        return CloudflareAccount::workerName($this->connection->account());
     }
 
     private static function domain(string $address): string

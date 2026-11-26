@@ -250,14 +250,14 @@ function cloudflareRefusal(int $code, string $message): array
 }
 
 /**
- * A mailbox at support@helpdesk.test that goes through a connected
- * Cloudflare account.
+ * A mailbox at support@helpdesk.test that goes through a Cloudflare account
+ * connected with an API token.
  *
  * @param  array<string, mixed>  $attributes
  */
 function cloudflareMailbox(array $attributes = []): Mailbox
 {
-    $connector = ConnectorEloquentModel::factory()->cloudflare()->create();
+    $connector = ConnectorEloquentModel::factory()->cloudflareToken()->create();
 
     return Mailbox::fromEloquentModel(MailboxEloquentModel::factory()->create([
         'team_id' => $connector->team_id,

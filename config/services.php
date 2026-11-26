@@ -41,6 +41,11 @@ return [
         'redirect' => '/auth/google/callback',
     ],
 
+    'cloudflare' => [
+        'client_id' => env('CLOUDFLARE_CLIENT_ID'),
+        'client_secret' => env('CLOUDFLARE_CLIENT_SECRET'),
+    ],
+
     'microsoft' => [
         'client_id' => env('MICROSOFT_CLIENT_ID'),
         'client_secret' => env('MICROSOFT_CLIENT_SECRET'),

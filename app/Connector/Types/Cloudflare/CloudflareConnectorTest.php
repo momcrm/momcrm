@@ -2,156 +2,219 @@
 
 declare(strict_types=1);
 
+use App\Connector\Actions\GetConnectorAccessToken;
+use App\Connector\Connector;
 use App\Connector\ConnectorEloquentModel;
-use App\Connector\Types\Cloudflare\CloudflareConnector;
+use App\Connector\Types\Cloudflare\CloudflareAccount;
+use App\Mailbox\Actions\ResolveMailClient;
+use App\Mailbox\Mailbox;
+use App\Mailbox\MailboxEloquentModel;
+use App\TeamUser\TeamRoleEnum;
 use App\User\UserEloquentModel;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+use Laravel\Socialite\Socialite;
+use Laravel\Socialite\Two\User as SignedInUser;
+use Mom\Connectors\CouldNotReachConnector;
+use Mom\Connectors\Mail\OutgoingMail;
 
 use function Pest\Laravel\actingAs;
 
-const CLOUDFLARE_ACCOUNT = '0123456789abcdef0123456789abcdef';
-
-/**
- * What an admin types in to connect a Cloudflare account.
- *
- * @return array{account_id: string, api_token: string}
- */
-function cloudflareInput(): array
-{
-    return ['account_id' => strtoupper(CLOUDFLARE_ACCOUNT), 'api_token' => 'cloudflare-token'];
-}
+const SIGNED_IN_ACCOUNT = 'fedcba9876543210fedcba9876543210';
 
 beforeEach(function (): void {
+    config(['services.cloudflare.client_id' => 'client-id', 'services.cloudflare.client_secret' => 'client-secret']);
     Http::preventStrayRequests();
-    config(['connectors.allow_private_hosts' => true]);
 });
 
-it('connects an account once its token works and the Worker is in place, keeping the token encrypted', function (): void {
-    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
-    $worker = CloudflareConnector::workerName(CLOUDFLARE_ACCOUNT);
-    Http::fake([
-        CLOUDFLARE_API.'/user/tokens/verify' => Http::response(cloudflareResult(['status' => 'active'])),
-        CLOUDFLARE_API.'/zones?*' => Http::response(cloudflareResult([
-            ['id' => 'zone-1', 'name' => 'Acme.test', 'account' => ['id' => CLOUDFLARE_ACCOUNT, 'name' => 'Acme Pty Ltd']],
-        ])),
-        CLOUDFLARE_API.'/accounts/'.CLOUDFLARE_ACCOUNT."/workers/scripts/{$worker}" => Http::response(cloudflareResult(['id' => $worker])),
+/**
+ * A mailbox at support@helpdesk.test through a Cloudflare account that was
+ * signed in to, with access that is still good.
+ */
+function signedInCloudflareMailbox(): Mailbox
+{
+    $connector = ConnectorEloquentModel::factory()->cloudflare()->create(['account' => SIGNED_IN_ACCOUNT]);
+    $mailbox = MailboxEloquentModel::factory()->create([
+        'team_id' => $connector->team_id,
+        'connector_id' => $connector->id,
+        'address' => 'support@helpdesk.test',
+        'is_shared' => true,
     ]);
+    rememberMailboxToken($mailbox, 'signed-in-token');
 
-    actingAs($owner)
-        ->post(route('connectors.store', 'cloudflare'), cloudflareInput())
-        ->assertSessionHasNoErrors()
-        ->assertRedirectToRoute('connectors.index')
-        ->assertInertiaFlash('toast', ['type' => 'success', 'message' => CLOUDFLARE_ACCOUNT.' connected.']);
+    return Mailbox::fromEloquentModel($mailbox);
+}
 
-    $connector = ConnectorEloquentModel::query()->withoutGlobalScopes()->sole();
+describe('signing in', function (): void {
+    it('sends an admin to Cloudflare, asking only for what handing mail over and replying need', function (): void {
+        $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
 
-    expect($connector)
-        ->team_id->toBe($owner->current_team_id)
-        ->type->toBe('cloudflare')
-        ->account->toBe(CLOUDFLARE_ACCOUNT)
-        ->name->toBe('Acme Pty Ltd')
-        ->status->toBe('connected')
-        ->settings->toBe(['account_id' => CLOUDFLARE_ACCOUNT])
-        ->credentials->toBe(['api_token' => 'cloudflare-token'])
-        ->and($connector->getRawOriginal('credentials'))->not->toContain('cloudflare-token');
+        $location = (string) actingAs($owner)
+            ->get(route('connectors.connect', 'cloudflare'))
+            ->assertRedirect()
+            ->headers->get('Location');
 
-    Http::assertSent(fn (Request $request): bool => $request->method() === 'PUT'
-        && str_ends_with($request->url(), "/workers/scripts/{$worker}")
-        && $request->hasHeader('Authorization', 'Bearer cloudflare-token')
-        && str_contains($request->body(), '"main_module":"worker.js"')
-        && str_contains($request->body(), '{"type":"plain_text","name":"MOMCRM_URL","text":'.json_encode(route('connectors.cloudflare.mail')).'}')
-        && str_contains($request->body(), '{"type":"secret_text","name":"MOMCRM_SECRET","text":"'.CloudflareConnector::deliverySecret(CLOUDFLARE_ACCOUNT).'"}')
-        && str_contains($request->body(), 'application/javascript+module')
-        && str_contains($request->body(), 'async email(message, env)'));
-});
+        parse_str((string) parse_url($location, PHP_URL_QUERY), $query);
 
-it('accepts a token that belongs to the account instead of a person', function (): void {
-    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
-    Http::fake([
-        CLOUDFLARE_API.'/user/tokens/verify' => Http::response(cloudflareRefusal(1000, 'Invalid API Token'), 401),
-        CLOUDFLARE_API.'/accounts/'.CLOUDFLARE_ACCOUNT.'/tokens/verify' => Http::response(cloudflareResult(['status' => 'active'])),
-        CLOUDFLARE_API.'/zones?*' => Http::response(cloudflareResult([['id' => 'zone-1', 'name' => 'acme.test']])),
-        CLOUDFLARE_API.'/accounts/'.CLOUDFLARE_ACCOUNT.'/workers/scripts/*' => Http::response(cloudflareResult([])),
+        expect($location)->toStartWith('https://dash.cloudflare.com/oauth2/auth?')
+            ->and($query)->toMatchArray([
+                'client_id' => 'client-id',
+                'redirect_uri' => route('connectors.callback', 'cloudflare'),
+                'response_type' => 'code',
+                'scope' => 'workers-scripts.edit email-routing-rule.read email-routing-rule.write email-sending.write zone.read zone-settings.read offline_access',
+                'code_challenge_method' => 'S256',
+            ])
+            ->and($query)->toHaveKeys(['state', 'code_challenge']);
+    });
+
+    it('is not offered on an installation with no OAuth client at Cloudflare', function (): void {
+        $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+        config(['services.cloudflare.client_secret' => null]);
+
+        actingAs($owner)->get(route('connectors.connect', 'cloudflare'))->assertNotFound();
+        actingAs($owner)->get(route('connectors.callback', 'cloudflare'))->assertNotFound();
+    });
+
+    it('connects the Cloudflare account that was picked, known by its id', function (): void {
+        $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
+        Socialite::fake('cloudflare', SignedInUser::fake([
+            'id' => SIGNED_IN_ACCOUNT,
+            'name' => 'Acme Pty Ltd',
+            'account' => strtoupper(SIGNED_IN_ACCOUNT),
+            'token' => 'signed-in-token',
+            'refreshToken' => 'refresh-token',
+            'expiresIn' => 3600,
+        ]));
+
+        actingAs($owner)
+            ->get(route('connectors.callback', 'cloudflare'))
+            ->assertRedirectToRoute('connectors.index')
+            ->assertInertiaFlash('toast', ['type' => 'success', 'message' => SIGNED_IN_ACCOUNT.' connected.']);
+
+        $connector = ConnectorEloquentModel::query()->withoutGlobalScopes()->sole();
+
+        expect($connector)
+            ->team_id->toBe($owner->current_team_id)
+            ->type->toBe('cloudflare')
+            ->account->toBe(SIGNED_IN_ACCOUNT)
+            ->name->toBe('Acme Pty Ltd')
+            ->status->toBe('connected')
+            ->credentials->toBe(['refresh_token' => 'refresh-token'])
+            ->and(Connector::fromEloquentModel($connector)->hasOwnMailbox())->toBeFalse()
+            ->and(GetConnectorAccessToken::forConnector(Connector::fromEloquentModel($connector)))->toBe('signed-in-token');
+    });
+
+    it('takes the account from what the sign-in can see', function (array $accounts, array $zones, ?string $account, ?string $name): void {
+        Http::fake([
+            CLOUDFLARE_API.'/accounts?*' => Http::response($accounts['status'] === 200 ? cloudflareResult($accounts['result']) : cloudflareRefusal(10000, 'Authentication error'), $accounts['status']),
+            CLOUDFLARE_API.'/zones?*' => Http::response(cloudflareResult($zones)),
+        ]);
+
+        $signIn = fn () => Socialite::driver('cloudflare')->userFromToken('signed-in-token');
+
+        if ($account === null) {
+            expect($signIn)->toThrow(RuntimeException::class);
+
+            return;
+        }
+
+        expect($signIn())
+            ->getId()->toBe($account)
+            ->getName()->toBe($name)
+            ->getEmail()->toBeNull()
+            ->getRaw()->toBe(['account' => $account, 'name' => $name]);
+
+        Http::assertSent(fn (Request $request): bool => $request->hasHeader('Authorization', 'Bearer signed-in-token'));
+    })->with([
+        'the first account it lists' => [
+            ['status' => 200, 'result' => [['id' => SIGNED_IN_ACCOUNT, 'name' => 'Acme Pty Ltd'], ['id' => str_repeat('b', 32), 'name' => 'Other']]],
+            [],
+            SIGNED_IN_ACCOUNT,
+            'Acme Pty Ltd',
+        ],
+        'the account of a domain, when it may not list accounts' => [
+            ['status' => 403, 'result' => []],
+            [['id' => 'zone-1', 'name' => 'helpdesk.test', 'account' => ['id' => SIGNED_IN_ACCOUNT, 'name' => 'Acme Pty Ltd']]],
+            SIGNED_IN_ACCOUNT,
+            'Acme Pty Ltd',
+        ],
+        'no account at all' => [['status' => 200, 'result' => []], [], null, null],
     ]);
-
-    actingAs($owner)->post(route('connectors.store', 'cloudflare'), cloudflareInput())->assertSessionHasNoErrors();
-
-    expect(ConnectorEloquentModel::query()->withoutGlobalScopes()->sole()->name)->toBe('Cloudflare');
 });
 
-it('connects nothing when Cloudflare does not accept the token', function (): void {
-    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
-    Http::fake([
-        CLOUDFLARE_API.'/*/tokens/verify' => Http::response(cloudflareRefusal(1000, 'Invalid API Token'), 401),
-    ]);
+describe('working through the sign-in', function (): void {
+    it('asks Cloudflare with the access the sign-in gave', function (): void {
+        $mailbox = signedInCloudflareMailbox();
+        Http::fake([
+            CLOUDFLARE_API.'/accounts/'.SIGNED_IN_ACCOUNT.'/email/sending/send' => Http::response(cloudflareResult(['message_id' => '<sent-9@helpdesk.test>', 'delivered' => ['sam@acme.test']])),
+        ]);
 
-    actingAs($owner)
-        ->post(route('connectors.store', 'cloudflare'), cloudflareInput())
-        ->assertSessionHasErrors(['api_token' => 'Cloudflare did not accept that API token.']);
+        ResolveMailClient::forMailbox($mailbox)->send(new OutgoingMail(['sam@acme.test'], 'We are on it.', 'Printer offline', '[#12]'));
 
-    expect(ConnectorEloquentModel::query()->withoutGlobalScopes()->count())->toBe(0);
-});
+        Http::assertSent(fn (Request $request): bool => $request->hasHeader('Authorization', 'Bearer signed-in-token'));
+    });
 
-it('connects nothing when the token sees no domains in the account', function (): void {
-    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
-    Http::fake([
-        CLOUDFLARE_API.'/user/tokens/verify' => Http::response(cloudflareResult(['status' => 'active'])),
-        CLOUDFLARE_API.'/zones?*' => Http::response(cloudflareResult([])),
-    ]);
+    it('asks for the account to be connected again when Cloudflare no longer knows the sign-in', function (): void {
+        $mailbox = signedInCloudflareMailbox();
+        Http::fake([CLOUDFLARE_API.'/accounts/*/email/sending/send' => Http::response(cloudflareRefusal(10101, 'email.sending.error.authentication.unauthorized'), 401)]);
 
-    actingAs($owner)
-        ->post(route('connectors.store', 'cloudflare'), cloudflareInput())
-        ->assertSessionHasErrors(['account_id' => "That token can't see any domains in this account. Check the account ID, and that the token includes the domains whose mail you want."]);
+        expect(fn () => ResolveMailClient::forMailbox($mailbox)->send(new OutgoingMail(['sam@acme.test'], 'We are on it.', 'Printer offline', '[#12]')))
+            ->toThrow(CouldNotReachConnector::class, 'Cloudflare no longer accepts the sign-in for this connector. Connect it again.');
 
-    expect(ConnectorEloquentModel::query()->withoutGlobalScopes()->count())->toBe(0);
-});
+        Http::assertSentCount(1);
+        expect(ConnectorEloquentModel::query()->withoutGlobalScopes()->sole()->status)->toBe('needs_reconnect');
+    });
 
-it('connects nothing when the token may not put the Worker in the account', function (): void {
-    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
-    Http::fake([
-        CLOUDFLARE_API.'/user/tokens/verify' => Http::response(cloudflareResult(['status' => 'active'])),
-        CLOUDFLARE_API.'/zones?*' => Http::response(cloudflareResult([['id' => 'zone-1', 'name' => 'acme.test']])),
-        CLOUDFLARE_API.'/accounts/'.CLOUDFLARE_ACCOUNT.'/workers/scripts/*' => Http::response(cloudflareRefusal(10000, 'Authentication error'), 403),
-    ]);
+    it('says to agree to everything when the sign-in does not cover what was asked', function (): void {
+        $mailbox = signedInCloudflareMailbox();
+        Http::fake([CLOUDFLARE_API.'/zones?*' => Http::response(cloudflareRefusal(10000, 'Authentication error'), 403)]);
 
-    actingAs($owner)
-        ->post(route('connectors.store', 'cloudflare'), cloudflareInput())
-        ->assertSessionHasErrors(['api_token' => 'MomCRM could not put its Worker in the account. Check that the token has Workers Scripts (Edit).']);
+        expect(fn () => ResolveMailClient::forMailbox($mailbox)->checkInbox())
+            ->toThrow(CouldNotReachConnector::class, 'Cloudflare did not allow that. Connect the account again and agree to everything MomCRM asks for.');
 
-    expect(ConnectorEloquentModel::query()->withoutGlobalScopes()->count())->toBe(0);
-});
+        expect(ConnectorEloquentModel::query()->withoutGlobalScopes()->sole()->status)->toBe('connected');
+    });
 
-it('connects nothing when Cloudflare could not reach this installation to hand mail over', function (): void {
-    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
-    config(['connectors.allow_private_hosts' => false]);
-    Http::fake();
+    it('puts the Worker in the account when the first mailbox is added, since signing in does not', function (): void {
+        config(['connectors.allow_private_hosts' => true]);
+        $connector = ConnectorEloquentModel::factory()->cloudflare()->create(['account' => SIGNED_IN_ACCOUNT]);
+        $owner = UserEloquentModel::factory()->inTeam($connector->team_id, TeamRoleEnum::Owner)->create();
+        rememberMailboxToken(MailboxEloquentModel::factory()->make(['connector_id' => $connector->id]), 'signed-in-token');
+        $worker = CloudflareAccount::workerName(SIGNED_IN_ACCOUNT);
+        Http::fake([
+            CLOUDFLARE_API.'/zones?*' => Http::response(cloudflareResult([['id' => 'zone-1', 'name' => 'helpdesk.test']])),
+            CLOUDFLARE_API.'/zones/zone-1/email/routing' => Http::response(cloudflareResult(['enabled' => true])),
+            CLOUDFLARE_API.'/zones/zone-1/email/routing/rules?*' => Http::response(cloudflareResult([])),
+            CLOUDFLARE_API.'/accounts/'.SIGNED_IN_ACCOUNT."/workers/scripts/{$worker}" => Http::response(cloudflareResult(['id' => $worker])),
+            CLOUDFLARE_API.'/zones/zone-1/email/routing/rules' => Http::response(cloudflareResult(['id' => 'rule-1'])),
+        ]);
 
-    actingAs($owner)
-        ->post(route('connectors.store', 'cloudflare'), cloudflareInput())
-        ->assertSessionHasErrors('account_id');
+        actingAs($owner)
+            ->post(route('mailboxes.store'), ['connector_id' => $connector->id, 'address' => 'support@helpdesk.test'])
+            ->assertSessionHasNoErrors();
 
-    Http::assertNothingSent();
-    expect(ConnectorEloquentModel::query()->withoutGlobalScopes()->count())->toBe(0);
-});
+        expect(MailboxEloquentModel::query()->withoutGlobalScopes()->sole()->address)->toBe('support@helpdesk.test');
+        Http::assertSent(fn (Request $request): bool => $request->method() === 'PUT'
+            && str_ends_with($request->url(), "/workers/scripts/{$worker}")
+            && $request->hasHeader('Authorization', 'Bearer signed-in-token')
+            && str_contains($request->body(), '"name":"MOMCRM_SECRET","text":"'.CloudflareAccount::deliverySecret(SIGNED_IN_ACCOUNT).'"'));
+    });
 
-it('rejects an account ID that is not one', function (): void {
-    $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
-    Http::fake();
+    it('adds no mailbox on an installation Cloudflare could not reach to hand mail over', function (): void {
+        $connector = ConnectorEloquentModel::factory()->cloudflare()->create(['account' => SIGNED_IN_ACCOUNT]);
+        $owner = UserEloquentModel::factory()->inTeam($connector->team_id, TeamRoleEnum::Owner)->create();
+        rememberMailboxToken(MailboxEloquentModel::factory()->make(['connector_id' => $connector->id]), 'signed-in-token');
+        Http::fake([
+            CLOUDFLARE_API.'/zones?*' => Http::response(cloudflareResult([['id' => 'zone-1', 'name' => 'helpdesk.test']])),
+            CLOUDFLARE_API.'/zones/zone-1/email/routing' => Http::response(cloudflareResult(['enabled' => true])),
+            CLOUDFLARE_API.'/zones/zone-1/email/routing/rules?*' => Http::response(cloudflareResult([])),
+        ]);
 
-    actingAs($owner)
-        ->post(route('connectors.store', 'cloudflare'), ['account_id' => 'acme.test', 'api_token' => 'cloudflare-token'])
-        ->assertSessionHasErrors(['account_id' => 'An account ID is 32 letters and numbers, with nothing around it.']);
+        actingAs($owner)
+            ->post(route('mailboxes.store'), ['connector_id' => $connector->id, 'address' => 'support@helpdesk.test'])
+            ->assertSessionHasErrors('address');
 
-    Http::assertNothingSent();
-});
-
-it('names its Worker and its secret after the account, the same every time', function (): void {
-    expect(CloudflareConnector::workerName(CLOUDFLARE_ACCOUNT))
-        ->toMatch('/^momcrm-mail-[a-f0-9]{12}$/')
-        ->toBe(CloudflareConnector::workerName(CLOUDFLARE_ACCOUNT))
-        ->not->toBe(CloudflareConnector::workerName(str_repeat('a', 32)))
-        ->and(CloudflareConnector::deliverySecret(CLOUDFLARE_ACCOUNT))
-        ->toMatch('/^[a-f0-9]{64}$/')
-        ->not->toBe(CloudflareConnector::deliverySecret(str_repeat('a', 32)));
+        expect(MailboxEloquentModel::query()->withoutGlobalScopes()->count())->toBe(0);
+        Http::assertNotSent(fn (Request $request): bool => $request->method() !== 'GET');
+    });
 });

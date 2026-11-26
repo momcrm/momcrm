@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use App\Connector\ConnectorEloquentModel;
-use App\Connector\Types\Cloudflare\CloudflareConnector;
+use App\Connector\Types\Cloudflare\CloudflareAccount;
 use App\Mailbox\MailboxEloquentModel;
 use App\TeamUser\TeamRoleEnum;
 use App\User\UserEloquentModel;
@@ -61,7 +61,7 @@ describe('a mailbox that goes through a Cloudflare account', function (): void {
         $mailbox = cloudflareMailbox();
         $connector = ConnectorEloquentModel::query()->withoutGlobalScopes()->sole();
         $owner = UserEloquentModel::factory()->inTeam($connector->team_id, TeamRoleEnum::Owner)->create();
-        fakeCloudflareRule(CloudflareConnector::workerName($connector->account));
+        fakeCloudflareRule(CloudflareAccount::workerName($connector->account));
 
         actingAs($owner)
             ->delete(route('mailboxes.destroy', $mailbox->getId()->toString()))

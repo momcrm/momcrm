@@ -28,7 +28,7 @@ it('lists the team\'s connectors without their credentials, with their mailboxes
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('settings/connectors')
-            ->has('types', 4)
+            ->has('types', 5)
             ->where('types.0.value', 'microsoft')
             ->where('types.0.label', 'Microsoft 365')
             ->where('types.0.description', 'Outlook and Exchange Online mailboxes, including shared mailboxes.')
@@ -81,9 +81,11 @@ it('lists every type, saying which ones this installation is set up for', functi
             ->where('types.1.value', 'google')
             ->where('types.1.available', true)
             ->where('types.2.value', 'cloudflare')
-            ->where('types.2.available', true)
-            ->where('types.3.value', 'imap')
-            ->where('types.3.available', true),
+            ->where('types.2.available', false)
+            ->where('types.3.value', 'cloudflare-token')
+            ->where('types.3.available', true)
+            ->where('types.4.value', 'imap')
+            ->where('types.4.available', true),
         );
 });
 
@@ -95,12 +97,12 @@ it('can always connect IMAP/SMTP, and shows a mail server connector\'s settings 
     actingAs($owner)
         ->get(route('connectors.index'))
         ->assertInertia(fn (Assert $page) => $page
-            ->where('types.3.value', 'imap')
-            ->where('types.3.connection', 'form')
-            ->where('types.3.account_field', 'from_address')
-            ->where('types.3.form_introduction', fn (string $introduction): bool => str_contains($introduction, 'IMAP'))
-            ->has('types.3.fields', 12)
-            ->where('types.3.fields.2', [
+            ->where('types.4.value', 'imap')
+            ->where('types.4.connection', 'form')
+            ->where('types.4.account_field', 'from_address')
+            ->where('types.4.form_introduction', fn (string $introduction): bool => str_contains($introduction, 'IMAP'))
+            ->has('types.4.fields', 12)
+            ->where('types.4.fields.2', [
                 'name' => 'imap_host',
                 'label' => 'Server',
                 'kind' => 'text',
@@ -112,7 +114,7 @@ it('can always connect IMAP/SMTP, and shows a mail server connector\'s settings 
                 'group' => 'Incoming mail (IMAP)',
                 'span' => 3,
             ])
-            ->where('types.3.fields.4.options', [
+            ->where('types.4.fields.4.options', [
                 ['value' => 'ssl', 'label' => 'SSL/TLS'],
                 ['value' => 'starttls', 'label' => 'STARTTLS'],
                 ['value' => 'none', 'label' => 'None'],
