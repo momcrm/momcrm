@@ -93,7 +93,7 @@ final readonly class CloudflareApi
     {
         $zones = [];
 
-        foreach ($this->listed('zones', ['account.id' => $this->accountId]) as $zone) {
+        foreach ($this->listed('zones', (string) __("list the account's domains"), ['account.id' => $this->accountId]) as $zone) {
             $account = is_array($zone['account'] ?? null) ? $zone['account'] : [];
 
             if (is_string($zone['id'] ?? null) && is_string($zone['name'] ?? null)) {
@@ -123,7 +123,7 @@ final readonly class CloudflareApi
 
         while (count($labels) >= 2) {
             $name = implode('.', $labels);
-            $zone = $this->listed('zones', ['account.id' => $this->accountId, 'name' => $name])[0] ?? null;
+            $zone = $this->listed('zones', (string) __('look up the domain'), ['account.id' => $this->accountId, 'name' => $name])[0] ?? null;
 
             if ($zone !== null && is_string($zone['id'] ?? null)) {
                 return ['id' => $zone['id'], 'name' => $name];
@@ -150,7 +150,7 @@ final readonly class CloudflareApi
             return null;
         }
 
-        return ($this->result($response)['enabled'] ?? null) === true;
+        return ($this->result($response, (string) __("read the domain's Email Routing settings"))['enabled'] ?? null) === true;
     }
 
     /**
@@ -163,7 +163,7 @@ final readonly class CloudflareApi
      */
     public function ruleFor(string $zoneId, string $address): ?array
     {
-        foreach ($this->listed("zones/{$zoneId}/email/routing/rules") as $rule) {
+        foreach ($this->listed("zones/{$zoneId}/email/routing/rules", (string) __("list the domain's routing rules")) as $rule) {
             if (! is_string($rule['id'] ?? null) || ! self::matches($rule, $address)) {
                 continue;
             }
@@ -196,7 +196,7 @@ final readonly class CloudflareApi
             'enabled' => true,
             'matchers' => [['type' => 'literal', 'field' => 'to', 'value' => $address]],
             'actions' => [['type' => 'worker', 'value' => [$worker]]],
-        ]));
+        ]), (string) __('add a routing rule'));
     }
 
     /**
@@ -204,7 +204,7 @@ final readonly class CloudflareApi
      */
     public function deleteRule(string $zoneId, string $ruleId): void
     {
-        $this->result($this->write('DELETE', "zones/{$zoneId}/email/routing/rules/{$ruleId}"));
+        $this->result($this->write('DELETE', "zones/{$zoneId}/email/routing/rules/{$ruleId}"), (string) __('remove the routing rule'));
     }
 
     /**
@@ -243,7 +243,7 @@ final readonly class CloudflareApi
             throw CouldNotReachConnector::unavailable(CloudflareAccount::COMPANY, $exception);
         }
 
-        $this->result($response);
+        $this->result($response, (string) __('put its Worker in the account'));
     }
 
     /**
@@ -257,7 +257,7 @@ final readonly class CloudflareApi
      */
     public function send(array $email): array
     {
-        return $this->result($this->write('POST', "accounts/{$this->accountId}/email/sending/send", $email), [
+        return $this->result($this->write('POST', "accounts/{$this->accountId}/email/sending/send", $email), (string) __('send email'), [
             10102 => (string) __('The API token may not send email. Create one that has Email Sending (Edit), and connect Cloudflare again.'),
             10105 => (string) __('This Cloudflare account cannot use Email Sending yet.'),
             10203 => (string) __('Email Sending is not turned on for this domain. Turn it on in Cloudflare, under Email Service, then send again.'),
@@ -289,12 +289,13 @@ final readonly class CloudflareApi
     /**
      * Everything a listing holds, page after page.
      *
+     * @param  string  $doing  what the listing is for, to finish "Cloudflare did not let MomCRM …"
      * @param  array<string, string>  $query
      * @return list<array<string, mixed>>
      *
      * @throws CouldNotReachConnector
      */
-    private function listed(string $path, array $query = []): array
+    private function listed(string $path, string $doing, array $query = []): array
     {
         $items = [];
         $page = 1;
@@ -302,7 +303,7 @@ final readonly class CloudflareApi
         do {
             $response = $this->get($path, [...$query, 'page' => (string) $page, 'per_page' => (string) self::PAGE_SIZE]);
 
-            foreach ($this->result($response) as $item) {
+            foreach ($this->result($response, $doing) as $item) {
                 if (is_array($item)) {
                     $items[] = Types::stringKeyed($item);
                 }
@@ -318,12 +319,13 @@ final readonly class CloudflareApi
     /**
      * What Cloudflare answered with, once it has said the request worked.
      *
+     * @param  string  $doing  what was being done, to finish "Cloudflare did not let MomCRM …"
      * @param  array<int, string>  $refusals  what to tell people for the error codes this request is known to be refused with
      * @return array<array-key, mixed>
      *
      * @throws CouldNotReachConnector
      */
-    private function result(Response $response, array $refusals = []): array
+    private function result(Response $response, string $doing, array $refusals = []): array
     {
         if ($response->successful() && $response->json('success') === true) {
             $result = $response->json('result');
@@ -331,7 +333,7 @@ final readonly class CloudflareApi
             return is_array($result) ? $result : [];
         }
 
-        throw $this->failure($response, $refusals);
+        throw $this->failure($response, $doing, $refusals);
     }
 
     /**
@@ -340,11 +342,12 @@ final readonly class CloudflareApi
      * lacks a permission in the same way, so the token is asked about to
      * tell them apart: only the first is fixed by connecting again. Access
      * from a sign-in is fresh each time, so there a refusal to know us at
-     * all means the sign-in was withdrawn.
+     * all means the sign-in was withdrawn. A refusal for want of a
+     * permission says what was being done, so it is clear which one is missing.
      *
      * @param  array<int, string>  $refusals
      */
-    private function failure(Response $response, array $refusals): CouldNotReachConnector
+    private function failure(Response $response, string $doing, array $refusals): CouldNotReachConnector
     {
         if ($response->status() === 429 || $response->serverError()) {
             return CouldNotReachConnector::unavailable(CloudflareAccount::COMPANY);
@@ -360,7 +363,7 @@ final readonly class CloudflareApi
         if (! $this->isApiToken && in_array($response->status(), [401, 403], true)) {
             return $response->status() === 401
                 ? CouldNotReachConnector::needsReconnect(CloudflareAccount::COMPANY)
-                : CouldNotReachConnector::refused((string) __('Cloudflare did not allow that. Connect the account again and agree to everything MomCRM asks for.'));
+                : CouldNotReachConnector::refused((string) __('Cloudflare did not let MomCRM :doing. Connect the account again and agree to everything MomCRM asks for.', ['doing' => $doing]));
         }
 
         if (in_array($response->status(), [401, 403], true)) {
@@ -371,7 +374,7 @@ final readonly class CloudflareApi
             }
 
             return $isActive
-                ? CouldNotReachConnector::refused((string) __('Cloudflare did not allow that. Check that the API token has every permission MomCRM asks for, and that it covers this domain.'))
+                ? CouldNotReachConnector::refused((string) __('Cloudflare did not let MomCRM :doing. Check that the API token has every permission MomCRM asks for, and that it covers this domain.', ['doing' => $doing]))
                 : CouldNotReachConnector::needsReconnect(CloudflareAccount::COMPANY);
         }
 

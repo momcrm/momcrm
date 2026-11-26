@@ -61,7 +61,7 @@ describe('signing in', function (): void {
                 'client_id' => 'client-id',
                 'redirect_uri' => route('connectors.callback', 'cloudflare'),
                 'response_type' => 'code',
-                'scope' => 'workers-scripts.edit email-routing-rule.read email-routing-rule.write email-sending.write zone.read zone-settings.read offline_access',
+                'scope' => 'workers-scripts.edit email-routing-account-rule.read email-routing-rule.read email-routing-rule.write email-sending.write zone.read zone-settings.read offline_access',
                 'code_challenge_method' => 'S256',
             ])
             ->and($query)->toHaveKeys(['state', 'code_challenge']);
@@ -165,12 +165,15 @@ describe('working through the sign-in', function (): void {
         expect(ConnectorEloquentModel::query()->withoutGlobalScopes()->sole()->status)->toBe('needs_reconnect');
     });
 
-    it('says to agree to everything when the sign-in does not cover what was asked', function (): void {
+    it('names what Cloudflare refused when the sign-in does not cover it', function (): void {
         $mailbox = signedInCloudflareMailbox();
-        Http::fake([CLOUDFLARE_API.'/zones?*' => Http::response(cloudflareRefusal(10000, 'Authentication error'), 403)]);
+        Http::fake([
+            CLOUDFLARE_API.'/zones?*' => Http::response(cloudflareResult([['id' => 'zone-1', 'name' => 'helpdesk.test']])),
+            CLOUDFLARE_API.'/zones/zone-1/email/routing/rules?*' => Http::response(cloudflareRefusal(10000, 'Authentication error'), 403),
+        ]);
 
         expect(fn () => ResolveMailClient::forMailbox($mailbox)->checkInbox())
-            ->toThrow(CouldNotReachConnector::class, 'Cloudflare did not allow that. Connect the account again and agree to everything MomCRM asks for.');
+            ->toThrow(CouldNotReachConnector::class, "Cloudflare did not let MomCRM list the domain's routing rules. Connect the account again and agree to everything MomCRM asks for.");
 
         expect(ConnectorEloquentModel::query()->withoutGlobalScopes()->sole()->status)->toBe('connected');
     });

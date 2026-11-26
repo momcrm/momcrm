@@ -259,3 +259,18 @@ it('can read a mailbox only while Cloudflare hands its mail to this installation
     'the rule hands mail to another Worker' => ['someone-elses-worker', false],
     'the address has no rule' => [null, false],
 ]);
+
+it('names what Cloudflare refused when a working API token lacks a permission', function (): void {
+    Http::preventStrayRequests();
+    $mailbox = cloudflareMailbox();
+    Http::fake([
+        CLOUDFLARE_API.'/zones?*' => Http::response(cloudflareResult([['id' => 'zone-1', 'name' => 'helpdesk.test']])),
+        CLOUDFLARE_API.'/zones/zone-1/email/routing/rules*' => Http::response(cloudflareRefusal(10000, 'Authentication error'), 403),
+        CLOUDFLARE_API.'/user/tokens/verify' => Http::response(cloudflareResult(['status' => 'active'])),
+    ]);
+
+    expect(fn () => ResolveMailClient::forMailbox($mailbox)->checkInbox())
+        ->toThrow(CouldNotReachConnector::class, "Cloudflare did not let MomCRM list the domain's routing rules. Check that the API token has every permission MomCRM asks for, and that it covers this domain.");
+
+    expect(ConnectorEloquentModel::query()->withoutGlobalScopes()->sole()->status)->toBe('connected');
+});
