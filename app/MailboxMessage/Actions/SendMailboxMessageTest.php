@@ -46,7 +46,7 @@ function sendReply(MailboxMessageEloquentModel $message): MailboxMessage
     return SendMailboxMessage::fromMessage(MailboxMessage::fromEloquentModel($message));
 }
 
-it('answers the customer\'s last message so the reply threads under it', function (): void {
+it('answers the customer\'s last message under the subject they wrote, so the reply stays in their conversation', function (): void {
     Http::preventStrayRequests();
     $now = freezeSecond();
     $message = waitingReply();
@@ -55,7 +55,7 @@ it('answers the customer\'s last message so the reply threads under it', functio
     Http::fake([
         'graph.microsoft.com/v1.0/me/messages/graph-latest/createReply' => Http::response(['id' => 'draft-1', 'subject' => 'RE: Printer offline', 'internetMessageId' => '<draft-1@helpdesk.test>'], 201),
         'graph.microsoft.com/v1.0/me/messages/draft-1/send' => Http::response(null, 202),
-        'graph.microsoft.com/v1.0/me/messages/draft-1' => Http::response(['id' => 'draft-1', 'subject' => 'RE: Printer offline [#42]', 'internetMessageId' => '<draft-1@helpdesk.test>']),
+        'graph.microsoft.com/v1.0/me/messages/draft-1' => Http::response(['id' => 'draft-1', 'subject' => 'RE: Printer offline', 'internetMessageId' => '<draft-1@helpdesk.test>']),
     ]);
 
     sendReply($message);
@@ -65,27 +65,27 @@ it('answers the customer\'s last message so the reply threads under it', functio
         ->error->toBeNull()
         ->external_id->toBe('draft-1')
         ->internet_message_id->toBe('draft-1@helpdesk.test')
-        ->subject->toBe('RE: Printer offline [#42]')
+        ->subject->toBe('RE: Printer offline')
         ->and($message->received_at?->equalTo($now))->toBeTrue();
 
     Http::assertSentCount(3);
     Http::assertSent(fn (Request $request): bool => $request->method() === 'PATCH'
         && $request->data() === [
-            'subject' => 'RE: Printer offline [#42]',
+            'subject' => 'RE: Printer offline',
             'body' => ['contentType' => 'html', 'content' => "A new toner arrives tomorrow.<br>\nSorry for the wait."],
             'toRecipients' => [['emailAddress' => ['address' => 'sam@acme.test']]],
         ]);
     Http::assertSent(fn (Request $request): bool => $request->method() === 'POST' && str_ends_with($request->url(), '/messages/draft-1/send'));
 });
 
-it('starts a thread, with the ticket number in the subject, when the customer has not written in', function (Closure $arrange): void {
+it('starts a thread when there is no message of the customer\'s to answer, with the ticket number when they never wrote in', function (Closure $arrange, string $subject): void {
     Http::preventStrayRequests();
     $message = waitingReply();
     $arrange($message);
     Http::fake([
         'graph.microsoft.com/v1.0/me/messages/graph-gone/createReply' => Http::response(['error' => ['code' => 'ErrorItemNotFound']], 404),
         'graph.microsoft.com/v1.0/me/messages/draft-2/send' => Http::response(null, 202),
-        'graph.microsoft.com/v1.0/me/messages' => Http::response(['id' => 'draft-2', 'subject' => 'Printer offline [#42]', 'internetMessageId' => '<draft-2@helpdesk.test>'], 201),
+        'graph.microsoft.com/v1.0/me/messages' => Http::response(['id' => 'draft-2', 'subject' => $subject, 'internetMessageId' => '<draft-2@helpdesk.test>'], 201),
     ]);
 
     sendReply($message);
@@ -93,20 +93,49 @@ it('starts a thread, with the ticket number in the subject, when the customer ha
     expect($message->refresh())
         ->status->toBe('sent')
         ->internet_message_id->toBe('draft-2@helpdesk.test')
-        ->subject->toBe('Printer offline [#42]');
+        ->subject->toBe($subject);
 
     Http::assertSent(fn (Request $request): bool => $request->method() === 'POST'
         && str_ends_with($request->url(), '/me/messages')
-        && $request['subject'] === 'Printer offline [#42]'
+        && $request['subject'] === $subject
         && $request['toRecipients'] === [['emailAddress' => ['address' => 'sam@acme.test']]]);
 })->with([
-    'at all' => [fn () => null],
-    'in a message still in the mailbox' => [fn (MailboxMessageEloquentModel $message) => MailboxMessageEloquentModel::factory()->create([
+    'the customer never wrote in' => [fn () => null, 'Printer offline [#42]'],
+    'their message is no longer in the mailbox' => [fn (MailboxMessageEloquentModel $message) => MailboxMessageEloquentModel::factory()->create([
         'mailbox_id' => $message->mailbox_id,
         'ticket_id' => $message->ticket_id,
         'external_id' => 'graph-gone',
-    ])],
+    ]), 'Printer offline'],
 ]);
+
+it('keeps the customer\'s subject and names their message when the mail service is handed a whole reply', function (): void {
+    Http::preventStrayRequests();
+    $mailbox = cloudflareMailbox();
+    $ticket = TicketEloquentModel::factory()->create(['team_id' => $mailbox->getTeamId()->toString(), 'title' => 'Inquiry', 'number' => 1]);
+    MailboxMessageEloquentModel::factory()->create([
+        'team_id' => $ticket->team_id,
+        'mailbox_id' => $mailbox->getId()->toString(),
+        'ticket_id' => $ticket->id,
+        'internet_message_id' => 'asked@mail.gmail.test',
+        'subject' => 'Inquiry',
+    ]);
+    $message = MailboxMessageEloquentModel::factory()->outbound()->create([
+        'team_id' => $ticket->team_id,
+        'mailbox_id' => $mailbox->getId()->toString(),
+        'ticket_id' => $ticket->id,
+        'status' => 'pending',
+        'to_recipients' => ['sam@acme.test'],
+        'body_text' => 'yes we do.',
+    ]);
+    Http::fake([CLOUDFLARE_API.'/accounts/*/email/sending/send' => Http::response(cloudflareResult(['message_id' => '<sent-1@momcrm.test>', 'delivered' => ['sam@acme.test']]))]);
+
+    sendReply($message);
+
+    expect($message->refresh())->status->toBe('sent')->subject->toBe('Re: Inquiry');
+
+    Http::assertSent(fn (Request $request): bool => $request['subject'] === 'Re: Inquiry'
+        && $request['headers'] === ['In-Reply-To' => '<asked@mail.gmail.test>', 'References' => '<asked@mail.gmail.test>']);
+});
 
 it('sends what was typed as text, not as markup', function (): void {
     Http::preventStrayRequests();
