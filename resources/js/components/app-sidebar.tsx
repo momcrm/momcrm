@@ -6,7 +6,6 @@ import { NavObjects } from '@/components/nav-objects';
 import { NavProjects } from '@/components/nav-projects';
 import { NavSection } from '@/components/nav-section';
 import { NavSettings } from '@/components/nav-settings';
-import { NavUser } from '@/components/nav-user';
 import { TeamSwitcher } from '@/components/team-switcher';
 import {
     Sidebar,
@@ -29,7 +28,8 @@ import { dashboard } from '@/routes';
  * menu instead of the workspace's, with a way back to the page you left.
  * Each menu is keyed so it starts at the top rather than where the other one
  * was scrolled to. On a phone the sidebar is a sheet over the page, so it
- * closes once a link in it has been followed.
+ * closes once a link in it has been followed. Your account menu is the
+ * avatar in the bar above the page, so the sidebar doesn't repeat it.
  */
 export function AppSidebar() {
     const { props, url } = usePage();
@@ -84,15 +84,14 @@ export function AppSidebar() {
                 )}
             </SidebarContent>
 
-            <SidebarFooter className="gap-1 border-t border-sidebar-border p-2">
-                {!isInSettings && (
+            {!isInSettings && (
+                <SidebarFooter className="border-t border-sidebar-border p-2">
                     <NavSection
                         section={{ items: [settingsDestination()] }}
                         className="p-0"
                     />
-                )}
-                <NavUser />
-            </SidebarFooter>
+                </SidebarFooter>
+            )}
         </Sidebar>
     );
 }
