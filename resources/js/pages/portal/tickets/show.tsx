@@ -3,6 +3,7 @@ import { ArrowLeft, FileText, Image, Paperclip, Upload } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import InputError from '@/components/input-error';
+import LinkedText from '@/components/linked-text';
 import SoftBadge from '@/components/soft-badge';
 import StatusPill from '@/components/status-pill';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -61,7 +62,9 @@ function Message({
                         {timeAgo(createdAt)}
                     </span>
                 </p>
-                <p className="mt-1 text-sm whitespace-pre-wrap">{body}</p>
+                <p className="mt-1 text-sm break-words whitespace-pre-wrap">
+                    <LinkedText text={body} />
+                </p>
             </div>
         </li>
     );

@@ -1,6 +1,7 @@
 import { Link, router } from '@inertiajs/react';
 import LinkedArticles from '@/components/articles/linked-articles';
 import LinkedRecords from '@/components/custom-fields/linked-records';
+import LinkedText from '@/components/linked-text';
 import {
     AlertTriangle,
     Archive,
@@ -13,7 +14,7 @@ import {
     RotateCcw,
     Star,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { toast } from 'sonner';
 import {
@@ -568,18 +569,9 @@ export function TicketDetails({
                     <h3 className="text-xs font-medium tracking-wide text-subtle-foreground uppercase">
                         Description
                     </h3>
-                    <Textarea
-                        defaultValue={ticket.description ?? ''}
-                        placeholder="Add more detail…"
-                        rows={4}
-                        className="resize-y border-transparent bg-transparent px-2 shadow-none hover:border-border focus-visible:border-input"
-                        onBlur={(event) => {
-                            const description = event.target.value.trim();
-
-                            if (description !== (ticket.description ?? '')) {
-                                save({ description: description || null });
-                            }
-                        }}
+                    <Description
+                        value={ticket.description}
+                        onSave={(description) => save({ description })}
                     />
                 </section>
 
@@ -682,6 +674,94 @@ function InlineTitle({
                 }}
             />
         </h2>
+    );
+}
+
+/**
+ * A ticket's description. It reads as text, with the web addresses in it as
+ * links, and turns into a text box when clicked; leaving the box saves it.
+ */
+function Description({
+    value,
+    onSave,
+}: {
+    value: string | null;
+    onSave: (description: string | null) => void;
+}) {
+    const [text, setText] = useState(value ?? '');
+    const [savedValue, setSavedValue] = useState(value);
+    const [isEditing, setIsEditing] = useState(false);
+    const textarea = useRef<HTMLTextAreaElement>(null);
+
+    if (value !== savedValue) {
+        setSavedValue(value);
+        setText(value ?? '');
+    }
+
+    useEffect(() => {
+        if (isEditing) {
+            const element = textarea.current;
+
+            element?.focus();
+            element?.setSelectionRange(
+                element.value.length,
+                element.value.length,
+            );
+        }
+    }, [isEditing]);
+
+    if (text !== '' && !isEditing) {
+        return (
+            <div
+                role="group"
+                aria-label="Description. Press Enter to edit."
+                tabIndex={0}
+                className="min-h-18 cursor-text rounded-md border border-transparent px-2 py-2 text-sm leading-normal break-words whitespace-pre-wrap outline-none hover:border-border focus-visible:border-input"
+                onClick={(event) => {
+                    const clickedLink =
+                        event.target instanceof Element &&
+                        event.target.closest('a') !== null;
+                    const isSelecting =
+                        (window.getSelection()?.toString() ?? '') !== '';
+
+                    if (!clickedLink && !isSelecting) {
+                        setIsEditing(true);
+                    }
+                }}
+                onKeyDown={(event) => {
+                    if (
+                        event.key === 'Enter' &&
+                        event.target === event.currentTarget
+                    ) {
+                        event.preventDefault();
+                        setIsEditing(true);
+                    }
+                }}
+            >
+                <LinkedText text={text} />
+            </div>
+        );
+    }
+
+    return (
+        <Textarea
+            ref={textarea}
+            defaultValue={text}
+            placeholder="Add more detail…"
+            rows={4}
+            className="resize-y border-transparent bg-transparent px-2 shadow-none hover:border-border focus-visible:border-input"
+            onFocus={() => setIsEditing(true)}
+            onBlur={(event) => {
+                const description = event.target.value.trim();
+
+                setText(description);
+                setIsEditing(false);
+
+                if (description !== (value ?? '')) {
+                    onSave(description || null);
+                }
+            }}
+        />
     );
 }
 
