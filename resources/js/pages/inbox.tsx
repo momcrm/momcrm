@@ -163,36 +163,38 @@ export default function Inbox({
                         </Button>
                     </div>
                     <InboxViews current="notifications" />
-                    <nav
-                        aria-label="Kinds"
-                        className="flex gap-3 overflow-x-auto border-b px-4 text-sm"
-                    >
-                        {tabs.map((tab) => (
-                            <button
-                                key={tab.label}
-                                type="button"
-                                onClick={() =>
-                                    visitWithQuery(
-                                        { kind: tab.value },
-                                        { only: RELOAD },
-                                    )
-                                }
-                                className={cn(
-                                    '-mb-px flex shrink-0 items-center gap-1.5 border-b-2 py-2',
-                                    filters.kind === tab.value
-                                        ? 'border-foreground font-medium'
-                                        : 'border-transparent text-muted-foreground hover:text-foreground',
-                                )}
-                            >
-                                {tab.label}
-                                {(counts[tab.count] ?? 0) > 0 && (
-                                    <span className="rounded-full bg-primary/10 px-1.5 text-[11px] text-primary tabular-nums">
-                                        {counts[tab.count]}
-                                    </span>
-                                )}
-                            </button>
-                        ))}
-                    </nav>
+                    <div className="border-b">
+                        <nav
+                            aria-label="Kinds"
+                            className="-mb-px flex [scrollbar-width:none] gap-3 overflow-x-auto px-4 text-sm"
+                        >
+                            {tabs.map((tab) => (
+                                <button
+                                    key={tab.label}
+                                    type="button"
+                                    onClick={() =>
+                                        visitWithQuery(
+                                            { kind: tab.value },
+                                            { only: RELOAD },
+                                        )
+                                    }
+                                    className={cn(
+                                        'flex shrink-0 items-center gap-1.5 border-b-2 py-2',
+                                        filters.kind === tab.value
+                                            ? 'border-foreground font-medium'
+                                            : 'border-transparent text-muted-foreground hover:text-foreground',
+                                    )}
+                                >
+                                    {tab.label}
+                                    {(counts[tab.count] ?? 0) > 0 && (
+                                        <span className="rounded-full bg-primary/10 px-1.5 text-[11px] text-primary tabular-nums">
+                                            {counts[tab.count]}
+                                        </span>
+                                    )}
+                                </button>
+                            ))}
+                        </nav>
+                    </div>
                     <ul className="flex-1 divide-y overflow-y-auto">
                         {notifications.length === 0 && (
                             <li className="px-4 py-12 text-center text-sm text-muted-foreground">
