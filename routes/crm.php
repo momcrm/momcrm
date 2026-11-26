@@ -372,8 +372,9 @@ Route::middleware(StaffOrContact::STAFF_MIDDLEWARE)->group(function () {
     Route::post('notifications/read-all', MarkAllNotificationsReadController::class)->name('notifications.read-all');
     Route::post('notifications/{notification}/read', MarkNotificationReadController::class)->whereUuid('notification')->name('notifications.read');
     Route::delete('notifications/{notification}', DeleteNotificationController::class)->whereUuid('notification')->name('notifications.destroy');
-    Route::get('activity', ListWorkspaceActivityController::class)->name('activity');
     Route::get('overview', ShowOverviewController::class)->name('overview');
+    Route::get('overview/activity', ListWorkspaceActivityController::class)->name('activity');
+    Route::redirect('activity', '/overview/activity');
     Route::get('members', ListMembersController::class)->name('members');
     Route::get('members/{member}', ShowMemberController::class)->whereUuid('member')->name('members.show');
     Route::patch('members/{member}', UpdateMemberRoleController::class)->whereUuid('member')->name('members.update');

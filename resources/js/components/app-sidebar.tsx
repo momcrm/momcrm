@@ -72,6 +72,7 @@ export function AppSidebar() {
                                 <NavSection
                                     key={section.title ?? index}
                                     section={section}
+                                    foldable
                                 />
                             ),
                         )}

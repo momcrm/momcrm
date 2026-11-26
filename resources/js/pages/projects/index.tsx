@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import { LayoutGrid, List, Plus, Table2 } from 'lucide-react';
+import { Archive, LayoutGrid, List, Plus, Table2 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useState } from 'react';
 import EmptyState from '@/components/empty-state';
@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { LabelChips, useLabels } from '@/components/labels';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { visitWithQuery } from '@/lib/query';
+import { archive } from '@/routes';
 import { index, show } from '@/routes/projects';
 import type { ProjectFormOptions, ProjectListItem } from '@/types';
 
@@ -75,10 +76,22 @@ export default function ProjectsIndex({
                     title="Projects"
                     description="Customer jobs and your own work, with the tickets to get them done."
                     actions={
-                        <Button onClick={() => setCreating(true)}>
-                            <Plus />
-                            New project
-                        </Button>
+                        <>
+                            <Button variant="outline" asChild>
+                                <Link
+                                    href={archive({
+                                        query: { tab: 'projects' },
+                                    })}
+                                >
+                                    <Archive />
+                                    Archived
+                                </Link>
+                            </Button>
+                            <Button onClick={() => setCreating(true)}>
+                                <Plus />
+                                New project
+                            </Button>
+                        </>
                     }
                 />
 

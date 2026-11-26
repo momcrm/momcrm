@@ -8,11 +8,14 @@ import {
     Star,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import {
+    NavSectionLabel,
+    useNavSectionFold,
+} from '@/components/nav-section-label';
 import { projectStatusOf } from '@/components/projects/project-meta';
 import {
     SidebarGroup,
     SidebarGroupAction,
-    SidebarGroupLabel,
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
@@ -44,29 +47,33 @@ const views: { value: string; label: string; icon: LucideIcon }[] = [
 
 /**
  * The sidebar's Projects section: starred projects first, then recent ones,
- * each with its status. The project you're in opens out into its views.
+ * each with its status. The project you're in opens out into its views, and
+ * stays when the section is folded away.
  */
 export function NavProjects({ projects }: { projects: SidebarProject[] }) {
     const { isCurrentOrParentUrl } = useCurrentUrl();
+    const fold = useNavSectionFold('Projects');
 
     return (
         <SidebarGroup className="px-2 py-1 group-data-[collapsible=icon]:hidden">
-            <SidebarGroupLabel className="h-7 px-2 text-[11px] font-medium tracking-wide text-subtle-foreground uppercase">
-                Projects
-            </SidebarGroupLabel>
+            <NavSectionLabel title="Projects" fold={fold} />
             <SidebarGroupAction asChild title="New project" className="top-1.5">
                 <Link href={index({ query: { new: 1 } })}>
                     <Plus />
                 </Link>
             </SidebarGroupAction>
             <SidebarMenu className="gap-px">
-                {projects.length === 0 && (
+                {projects.length === 0 && !fold.isFolded && (
                     <p className="px-2 py-1 text-xs text-subtle-foreground">
                         No projects yet.
                     </p>
                 )}
                 {projects.map((project) => {
                     const isCurrent = isCurrentOrParentUrl(show(project.id));
+
+                    if (fold.isFolded && !isCurrent) {
+                        return null;
+                    }
 
                     return (
                         <SidebarMenuItem key={project.id}>

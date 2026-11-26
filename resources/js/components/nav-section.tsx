@@ -1,7 +1,10 @@
 import { Link } from '@inertiajs/react';
 import {
+    NavSectionLabel,
+    useNavSectionFold,
+} from '@/components/nav-section-label';
+import {
     SidebarGroup,
-    SidebarGroupLabel,
     SidebarMenu,
     SidebarMenuBadge,
     SidebarMenuButton,
@@ -13,27 +16,38 @@ import { cn } from '@/lib/utils';
 
 /**
  * One labelled group of sidebar links. The current page's link is lifted onto
- * a card, and counts sit on the right.
+ * a card, and counts sit on the right. A foldable group folds away from its
+ * heading, down to the link for the page you're on.
  */
 export function NavSection({
     section,
+    foldable = false,
     className,
 }: {
     section: NavSectionType;
+    foldable?: boolean;
     className?: string;
 }) {
     const { isCurrentOrParentUrl } = useCurrentUrl();
+    const fold = useNavSectionFold(section.title ?? '');
+    const canFold = foldable && section.title !== undefined;
+    const isFolded = canFold && fold.isFolded;
 
     return (
         <SidebarGroup className={cn('px-2 py-1', className)}>
             {section.title && (
-                <SidebarGroupLabel className="h-7 px-2 text-[11px] font-medium tracking-wide text-subtle-foreground uppercase">
-                    {section.title}
-                </SidebarGroupLabel>
+                <NavSectionLabel
+                    title={section.title}
+                    fold={canFold ? fold : undefined}
+                />
             )}
             <SidebarMenu className="gap-px">
                 {section.items.map((item) => {
                     const isActive = isCurrentOrParentUrl(item.href);
+
+                    if (isFolded && !isActive) {
+                        return null;
+                    }
 
                     return (
                         <SidebarMenuItem key={item.title}>
