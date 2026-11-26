@@ -49,12 +49,15 @@ final class CloudflareConnector extends CloudflareAccount implements ConnectsByS
     /**
      * Only what handing mail over and sending replies need: the Worker, the
      * routing rules, sending, and finding a domain and whether its Email
-     * Routing is on. The last one is what gives lasting access.
+     * Routing is on. Cloudflare lists a domain's rules under the account
+     * permission and reads or changes one rule under the other, so both are
+     * asked for. The last one is what gives lasting access.
      */
     public function scopes(array $options): array
     {
         return [
             'workers-scripts.edit',
+            'email-routing-account-rule.read',
             'email-routing-rule.read',
             'email-routing-rule.write',
             'email-sending.write',

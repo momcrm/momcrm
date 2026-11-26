@@ -42,7 +42,7 @@ final class CloudflareTokenConnector extends CloudflareAccount implements Connec
 
     public function formIntroduction(): string
     {
-        return 'MomCRM puts a small Worker in your Cloudflare account that hands it the mail Email Routing receives, and sends replies through Email Sending. It needs an API token with these permissions: Workers Scripts (Edit), Email Sending (Edit), Email Routing Rules (Edit), Zone (Read) and Zone Settings (Read).';
+        return 'MomCRM puts a small Worker in your Cloudflare account that hands it the mail Email Routing receives, and sends replies through Email Sending. It needs an API token with these permissions: Workers Scripts (Edit), Email Sending (Edit), Email Routing Rules (Edit), Email Routing Account Rules (Read), Zone (Read) and Zone Settings (Read).';
     }
 
     public function fields(): array
