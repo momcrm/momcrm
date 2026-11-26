@@ -13,6 +13,7 @@ use App\Connector\Properties\Status;
 use App\Connector\Properties\TeamId;
 use App\Connector\Properties\Type;
 use App\Connector\Types\Cloudflare\CloudflareConnector;
+use App\Connector\Types\Cloudflare\CloudflareTokenConnector;
 use App\Connector\Types\Google\GoogleConnector;
 use App\Connector\Types\Imap\ImapConnector;
 use App\Team\TeamEloquentModel;
@@ -71,17 +72,28 @@ final class ConnectorFactory extends Factory
     }
 
     /**
-     * A Cloudflare account, connected by its id and an API token.
+     * A Cloudflare account, connected by signing in at Cloudflare.
      */
     public function cloudflare(): static
+    {
+        return $this->state([
+            Type::getDatabaseTableColumnName() => CloudflareConnector::KEY,
+            Account::getDatabaseTableColumnName() => fake()->unique()->regexify('[a-f0-9]{32}'),
+        ]);
+    }
+
+    /**
+     * A Cloudflare account, connected by its id and an API token.
+     */
+    public function cloudflareToken(): static
     {
         $accountId = fake()->unique()->regexify('[a-f0-9]{32}');
 
         return $this->state([
-            Type::getDatabaseTableColumnName() => CloudflareConnector::KEY,
+            Type::getDatabaseTableColumnName() => CloudflareTokenConnector::KEY,
             Account::getDatabaseTableColumnName() => $accountId,
             Settings::getDatabaseTableColumnName() => ['account_id' => $accountId],
-            ConnectorEloquentModel::CREDENTIALS => [CloudflareConnector::API_TOKEN => 'cloudflare-token'],
+            ConnectorEloquentModel::CREDENTIALS => [CloudflareTokenConnector::API_TOKEN => 'cloudflare-token'],
         ]);
     }
 

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use App\Connector\ConnectorEloquentModel;
-use App\Connector\Types\Cloudflare\CloudflareConnector;
+use App\Connector\Types\Cloudflare\CloudflareAccount;
 use App\Connector\Types\Cloudflare\DeliveredMail;
 use App\Mailbox\Jobs\TakeInDeliveredMailJob;
 use App\Mailbox\Mailbox;
@@ -33,7 +33,7 @@ function handOver(string $address, ?string $secret, string $source): TestRespons
  */
 function workerSecret(Mailbox $mailbox): string
 {
-    return CloudflareConnector::deliverySecret(
+    return CloudflareAccount::deliverySecret(
         ConnectorEloquentModel::query()->withoutGlobalScopes()->findOrFail($mailbox->getConnectorId()->toString())->account,
     );
 }

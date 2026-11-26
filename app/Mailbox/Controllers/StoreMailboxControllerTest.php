@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use App\Connector\ConnectorEloquentModel;
-use App\Connector\Types\Cloudflare\CloudflareConnector;
+use App\Connector\Types\Cloudflare\CloudflareAccount;
 use App\Mailbox\MailboxEloquentModel;
 use App\User\UserEloquentModel;
 use Illuminate\Http\Client\Request;
@@ -157,23 +157,26 @@ it('forbids members', function (): void {
 
 describe('through a Cloudflare account', function (): void {
     /**
-     * A connected Cloudflare account in the owner's team, whose token covers helpdesk.test.
+     * A Cloudflare account in the owner's team, connected with a token that covers helpdesk.test.
      */
     function cloudflareConnector(UserEloquentModel $owner): ConnectorEloquentModel
     {
-        return ConnectorEloquentModel::factory()->cloudflare()->create(['team_id' => $owner->current_team_id, 'name' => 'Acme Pty Ltd']);
+        return ConnectorEloquentModel::factory()->cloudflareToken()->create(['team_id' => $owner->current_team_id, 'name' => 'Acme Pty Ltd']);
     }
 
     /**
-     * Cloudflare with the domain helpdesk.test in the account, and the
-     * routing rules it has for it.
+     * Cloudflare with the domain helpdesk.test in the account and the
+     * routing rules it has for it, reachable from this installation.
      *
      * @param  list<array<string, mixed>>  $rules
      * @param  array<string, mixed>  $more
      */
     function fakeCloudflareRouting(array $rules = [], array $more = []): void
     {
+        config(['connectors.allow_private_hosts' => true]);
+
         Http::fake([
+            CLOUDFLARE_API.'/accounts/*/workers/scripts/*' => Http::response(cloudflareResult(['id' => 'worker'])),
             CLOUDFLARE_API.'/zones?*name=helpdesk.test*' => Http::response(cloudflareResult([['id' => 'zone-1', 'name' => 'helpdesk.test']])),
             CLOUDFLARE_API.'/zones?*' => Http::response(cloudflareResult([])),
             CLOUDFLARE_API.'/zones/zone-1/email/routing' => Http::response(cloudflareResult(['enabled' => true, 'status' => 'ready'])),
@@ -183,7 +186,7 @@ describe('through a Cloudflare account', function (): void {
         ]);
     }
 
-    it('adds an address once Cloudflare hands its mail to the Worker', function (): void {
+    it('adds an address once the Worker is in the account and Cloudflare hands the address\'s mail to it', function (): void {
         $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
         $connector = cloudflareConnector($owner);
         fakeCloudflareRouting();
@@ -198,6 +201,16 @@ describe('through a Cloudflare account', function (): void {
             ->address->toBe('support@mail.helpdesk.test')
             ->auto_create_tickets->toBeTrue();
 
+        $worker = CloudflareAccount::workerName($connector->account);
+
+        Http::assertSentInOrder([
+            fn (Request $request): bool => str_contains($request->url(), '/zones?'),
+            fn (Request $request): bool => str_contains($request->url(), '/zones?'),
+            fn (Request $request): bool => str_ends_with($request->url(), '/zones/zone-1/email/routing'),
+            fn (Request $request): bool => str_contains($request->url(), '/zones/zone-1/email/routing/rules?'),
+            fn (Request $request): bool => $request->method() === 'PUT' && str_ends_with($request->url(), "/accounts/{$connector->account}/workers/scripts/{$worker}"),
+            fn (Request $request): bool => $request->method() === 'POST' && str_ends_with($request->url(), '/zones/zone-1/email/routing/rules'),
+        ]);
         Http::assertSent(fn (Request $request): bool => $request->method() === 'POST'
             && str_ends_with($request->url(), '/zones/zone-1/email/routing/rules')
             && $request->hasHeader('Authorization', 'Bearer cloudflare-token')
@@ -205,17 +218,17 @@ describe('through a Cloudflare account', function (): void {
                 'name' => 'MomCRM: support@mail.helpdesk.test',
                 'enabled' => true,
                 'matchers' => [['type' => 'literal', 'field' => 'to', 'value' => 'support@mail.helpdesk.test']],
-                'actions' => [['type' => 'worker', 'value' => [CloudflareConnector::workerName($connector->account)]]],
+                'actions' => [['type' => 'worker', 'value' => [$worker]]],
             ]);
     });
 
-    it('adds an address that Cloudflare already hands to the Worker without another rule', function (): void {
+    it('adds an address that Cloudflare already hands to the Worker without another rule, putting the Worker there again', function (): void {
         $owner = UserEloquentModel::factory()->withPersonalTeam()->create();
         $connector = cloudflareConnector($owner);
         fakeCloudflareRouting([[
             'id' => 'rule-1',
             'matchers' => [['type' => 'literal', 'field' => 'to', 'value' => 'support@helpdesk.test']],
-            'actions' => [['type' => 'worker', 'value' => [CloudflareConnector::workerName($connector->account)]]],
+            'actions' => [['type' => 'worker', 'value' => [CloudflareAccount::workerName($connector->account)]]],
         ]]);
 
         actingAs($owner)
@@ -223,7 +236,7 @@ describe('through a Cloudflare account', function (): void {
             ->assertSessionHasNoErrors();
 
         expect(MailboxEloquentModel::query()->withoutGlobalScopes()->count())->toBe(1);
-        Http::assertNotSent(fn (Request $request): bool => $request->method() !== 'GET');
+        Http::assertNotSent(fn (Request $request): bool => $request->method() === 'POST');
     });
 
     it('asks for an address, because the account has no mailbox of its own', function (): void {
@@ -263,7 +276,7 @@ describe('through a Cloudflare account', function (): void {
 
         actingAs($owner)
             ->post(route('mailboxes.store'), ['connector_id' => $connector->id, 'address' => 'support@elsewhere.test'])
-            ->assertSessionHasErrors(['address' => 'elsewhere.test is not one of the domains the API token covers in this Cloudflare account.']);
+            ->assertSessionHasErrors(['address' => 'elsewhere.test is not one of the domains MomCRM can see in this Cloudflare account.']);
 
         expect(MailboxEloquentModel::query()->withoutGlobalScopes()->count())->toBe(0);
     });

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Connector\Controllers;
 
 use App\Connector\Actions\FindConnector;
-use App\Connector\Types\Cloudflare\CloudflareConnector;
+use App\Connector\Types\Cloudflare\CloudflareAccount;
 use App\Connector\Types\Cloudflare\DeliveredMail;
 use App\Mailbox\Actions\FindMailbox;
 use App\Mailbox\Jobs\TakeInDeliveredMailJob;
@@ -33,8 +33,8 @@ final class ReceiveCloudflareMailController
         $mailbox = FindMailbox::byAddress($address);
         $connector = FindConnector::byId($mailbox->getConnectorId()->toNullableString());
 
-        abort_if($mailbox->isNull() || ! $connector->connectorType() instanceof CloudflareConnector, 404);
-        abort_unless(hash_equals(CloudflareConnector::deliverySecret($connector->account()), $request->bearerToken() ?? ''), 404);
+        abort_if($mailbox->isNull() || ! $connector->connectorType() instanceof CloudflareAccount, 404);
+        abort_unless(hash_equals(CloudflareAccount::deliverySecret($connector->account()), $request->bearerToken() ?? ''), 404);
 
         $source = $request->getContent();
 

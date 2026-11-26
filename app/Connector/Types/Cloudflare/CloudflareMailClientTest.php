@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use App\Attachment\AttachmentEloquentModel;
 use App\Connector\ConnectorEloquentModel;
-use App\Connector\Types\Cloudflare\CloudflareConnector;
+use App\Connector\Types\Cloudflare\CloudflareAccount;
 use App\Connector\Types\Cloudflare\DeliveredMail;
 use App\Mailbox\Actions\ResolveMailClient;
 use App\Mailbox\Actions\SyncMailbox;
@@ -239,7 +239,7 @@ describe('sending', function (): void {
 it('can read a mailbox only while Cloudflare hands its mail to this installation\'s Worker', function (?string $worker, bool $opens): void {
     Http::preventStrayRequests();
     $mailbox = cloudflareMailbox();
-    $ours = CloudflareConnector::workerName(cloudflareAccountOf($mailbox));
+    $ours = CloudflareAccount::workerName(cloudflareAccountOf($mailbox));
     Http::fake([
         CLOUDFLARE_API.'/zones?*' => Http::response(cloudflareResult([['id' => 'zone-1', 'name' => 'helpdesk.test']])),
         CLOUDFLARE_API.'/zones/zone-1/email/routing/rules*' => Http::response(cloudflareResult($worker === null ? [] : [[

@@ -17,6 +17,8 @@ use App\Comment\Comment;
 use App\Comment\CommentPolicy;
 use App\Connector\ConnectorCapabilityEnum;
 use App\Connector\Types\Cloudflare\CloudflareConnector;
+use App\Connector\Types\Cloudflare\CloudflareSignIn;
+use App\Connector\Types\Cloudflare\CloudflareTokenConnector;
 use App\Connector\Types\Google\GoogleConnector;
 use App\Connector\Types\Imap\ImapConnector;
 use App\Connector\Types\Imap\MailServers;
@@ -54,6 +56,7 @@ use App\Service\Service;
 use App\Service\ServicePolicy;
 use App\Shared\MorphMapKeyEnum;
 use App\Shared\SettingsNavigation;
+use App\Shared\Types;
 use App\Team\SuspendedTeamAction;
 use App\Team\Team;
 use App\Team\TeamPolicy;
@@ -68,6 +71,7 @@ use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Hashing\Hasher;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Http\Request;
 use Illuminate\Notifications\Events\NotificationSent;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\Auth;
@@ -81,6 +85,7 @@ use Inertia\ExceptionResponse;
 use Inertia\Inertia;
 use Laravel\Passkeys\Http\Requests\PasskeyVerificationRequest;
 use Laravel\Passkeys\Passkeys;
+use Laravel\Socialite\Socialite;
 use Mom\Connectors\Capability;
 use Mom\Connectors\ConnectorRegistry;
 use Mom\Microsoft\MicrosoftConnector;
@@ -102,7 +107,7 @@ class AppServiceProvider extends ServiceProvider
                     fn (ConnectorCapabilityEnum $capability): Capability => new Capability($capability->value, $capability->label(), $capability->contract()),
                     ConnectorCapabilityEnum::cases(),
                 ))
-                ->register(new MicrosoftConnector, new GoogleConnector, new CloudflareConnector, new ImapConnector);
+                ->register(new MicrosoftConnector, new GoogleConnector, new CloudflareConnector, new CloudflareTokenConnector, new ImapConnector);
         });
         $this->app->singleton(SettingsNavigation::class);
         $this->app->singleton(SuspendedTeamAction::class);
@@ -197,6 +202,13 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(NotificationSent::class, AnnounceInboxNotification::class);
         Event::listen(AcceptPendingTeamInvitation::EVENTS, AcceptPendingTeamInvitation::class);
         Event::listen(fn (SocialiteWasCalled $event) => $event->extendSocialite('microsoft', MicrosoftProvider::class));
+
+        Socialite::extend(CloudflareConnector::SIGN_IN_DRIVER, fn (Application $app): CloudflareSignIn => new CloudflareSignIn(
+            $app->make(Request::class),
+            Types::nullableString(config('services.cloudflare.client_id')) ?? '',
+            Types::nullableString(config('services.cloudflare.client_secret')) ?? '',
+            route('connectors.callback', ['type' => CloudflareConnector::KEY]),
+        ));
     }
 
     /**
