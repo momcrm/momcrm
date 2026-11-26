@@ -1,11 +1,11 @@
 import { router, usePage, usePoll } from '@inertiajs/react';
-import { Trash2 } from 'lucide-react';
+import { AlignLeft, Mail, Trash2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { KeyboardEvent, ReactNode } from 'react';
 import { toast } from 'sonner';
 import LinkedText from '@/components/linked-text';
 import SoftBadge from '@/components/soft-badge';
-import OriginalEmail from '@/components/tickets/original-email';
+import EmailFrame from '@/components/tickets/email-frame';
 import { AssigneeAvatar } from '@/components/tickets/ticket-meta';
 import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
@@ -100,68 +100,12 @@ export default function TicketConversation({
                     )}
                     <ol className="space-y-4">
                         {comments.map((comment) => (
-                            <li key={comment.id} className="group flex gap-2.5">
-                                <AssigneeAvatar
-                                    name={comment.author_name}
-                                    className="mt-0.5 size-6 text-[10px]"
-                                />
-                                <div className="min-w-0 flex-1">
-                                    <p className="flex items-baseline gap-2 text-sm">
-                                        <span className="font-medium">
-                                            {comment.author_name ?? 'Someone'}
-                                        </span>
-                                        {comment.sender_email && (
-                                            <span title={comment.sender_email}>
-                                                <SoftBadge tone="info">
-                                                    {comment.from_portal
-                                                        ? 'Customer · portal'
-                                                        : 'Customer'}
-                                                </SoftBadge>
-                                            </span>
-                                        )}
-                                        <Delivery comment={comment} />
-                                        <span className="text-xs text-subtle-foreground">
-                                            {timeAgo(comment.created_at)}
-                                        </span>
-                                        {comment.original_email_id && (
-                                            <OriginalEmail
-                                                messageId={
-                                                    comment.original_email_id
-                                                }
-                                                label="Original"
-                                                className="ml-auto self-center"
-                                            />
-                                        )}
-                                        {comment.can_delete && (
-                                            <button
-                                                type="button"
-                                                aria-label="Delete comment"
-                                                onClick={() =>
-                                                    router.delete(
-                                                        destroyComment.url(
-                                                            comment.id,
-                                                        ),
-                                                        {
-                                                            only: reload,
-                                                            preserveScroll: true,
-                                                            preserveState: true,
-                                                        },
-                                                    )
-                                                }
-                                                className="ml-auto text-subtle-foreground opacity-0 group-hover:opacity-100 hover:text-destructive focus-visible:opacity-100"
-                                            >
-                                                <Trash2 className="size-3.5" />
-                                            </button>
-                                        )}
-                                    </p>
-                                    <p className="mt-0.5 text-sm break-words whitespace-pre-line">
-                                        <CommentBody
-                                            comment={comment}
-                                            members={members}
-                                        />
-                                    </p>
-                                </div>
-                            </li>
+                            <Comment
+                                key={comment.id}
+                                comment={comment}
+                                members={members}
+                                reload={reload}
+                            />
                         ))}
                     </ol>
                     <Composer
@@ -197,6 +141,105 @@ export default function TicketConversation({
                 </ol>
             )}
         </section>
+    );
+}
+
+/**
+ * One comment. A reply that came in by email is shown as its sender laid
+ * it out, and can be read as plain text instead.
+ */
+function Comment({
+    comment,
+    members,
+    reload,
+}: {
+    comment: TicketComment;
+    members: CustomerOption[];
+    reload: string[];
+}) {
+    const emailId = comment.original_email_id ?? null;
+    const [showsEmail, setShowsEmail] = useState(true);
+
+    return (
+        <li className="group flex gap-2.5">
+            <AssigneeAvatar
+                name={comment.author_name}
+                className="mt-0.5 size-6 text-[10px]"
+            />
+            <div className="min-w-0 flex-1">
+                <p className="flex items-baseline gap-2 text-sm">
+                    <span className="font-medium">
+                        {comment.author_name ?? 'Someone'}
+                    </span>
+                    {comment.sender_email && (
+                        <span title={comment.sender_email}>
+                            <SoftBadge tone="info">
+                                {comment.from_portal
+                                    ? 'Customer · portal'
+                                    : 'Customer'}
+                            </SoftBadge>
+                        </span>
+                    )}
+                    <Delivery comment={comment} />
+                    <span className="text-xs text-subtle-foreground">
+                        {timeAgo(comment.created_at)}
+                    </span>
+                    {(emailId || comment.can_delete) && (
+                        <span className="ml-auto flex items-center gap-2 self-center">
+                            {emailId && (
+                                <button
+                                    type="button"
+                                    title={
+                                        showsEmail
+                                            ? 'Read this reply as plain text'
+                                            : 'See the email as it was sent'
+                                    }
+                                    onClick={() => setShowsEmail(!showsEmail)}
+                                    className="inline-flex items-center gap-1 rounded-sm text-xs text-subtle-foreground outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                >
+                                    {showsEmail ? (
+                                        <AlignLeft className="size-3.5" />
+                                    ) : (
+                                        <Mail className="size-3.5" />
+                                    )}
+                                    {showsEmail ? 'Show text' : 'Show email'}
+                                </button>
+                            )}
+                            {comment.can_delete && (
+                                <button
+                                    type="button"
+                                    aria-label="Delete comment"
+                                    onClick={() =>
+                                        router.delete(
+                                            destroyComment.url(comment.id),
+                                            {
+                                                only: reload,
+                                                preserveScroll: true,
+                                                preserveState: true,
+                                            },
+                                        )
+                                    }
+                                    className="text-subtle-foreground opacity-0 group-hover:opacity-100 hover:text-destructive focus-visible:opacity-100"
+                                >
+                                    <Trash2 className="size-3.5" />
+                                </button>
+                            )}
+                        </span>
+                    )}
+                </p>
+                {emailId && showsEmail ? (
+                    <EmailFrame
+                        messageId={emailId}
+                        canFold
+                        className="mt-1.5"
+                    />
+                ) : (
+                    <p className="mt-0.5 text-sm break-words whitespace-pre-line">
+                        <CommentBody comment={comment} members={members} />
+                    </p>
+                )}
+            </div>
+        </li>
     );
 }
 
