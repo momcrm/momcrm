@@ -79,6 +79,7 @@ export default function EmailFrame({
                     )}
                     sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"
                     referrerPolicy="no-referrer"
+                    loading="lazy"
                     className={cn(
                         'block w-full',
                         height === null && 'animate-pulse',
