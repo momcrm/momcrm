@@ -1,13 +1,14 @@
 import { Head, Link } from '@inertiajs/react';
-import { AddLink, TabHeader } from '@/components/customers/workspace-tab';
+import { TabHeader } from '@/components/customers/workspace-tab';
 import EmptyState from '@/components/empty-state';
+import { useCreateInvoice } from '@/components/invoices/create-invoice-dialog';
 import InvoiceTable from '@/components/invoices/invoice-table';
 import Pager from '@/components/pager';
 import RecordPaymentButton from '@/components/payments/record-payment-button';
+import { Button } from '@/components/ui/button';
 import { useWorkspaceBreadcrumbs } from '@/layouts/customer/layout';
 import { cn } from '@/lib/utils';
 import { invoices as invoicesTab } from '@/routes/customers';
-import { create } from '@/routes/invoices';
 import type {
     CustomerWorkspace,
     InvoiceListItem,
@@ -32,11 +33,15 @@ export default function CustomerInvoices({
         href: invoicesTab(customer.id),
     });
     const tabs = [{ value: null, label: 'All' }, ...statuses];
+    const { openCreateInvoice } = useCreateInvoice();
     const add = (
-        <AddLink
-            href={create({ query: { customer: customer.id } }).url}
-            label="Create invoice"
-        />
+        <Button
+            variant="outline"
+            size="sm"
+            onClick={() => openCreateInvoice({ customerId: customer.id })}
+        >
+            Create invoice
+        </Button>
     );
     const actions = (
         <div className="flex flex-wrap gap-2">

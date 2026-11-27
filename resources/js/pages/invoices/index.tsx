@@ -1,5 +1,7 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
+import { useEffect } from 'react';
 import EmptyState from '@/components/empty-state';
+import { useCreateInvoice } from '@/components/invoices/create-invoice-dialog';
 import { InvoiceBulkBar } from '@/components/invoices/invoice-bulk';
 import InvoiceTable from '@/components/invoices/invoice-table';
 import PageHeader from '@/components/page-header';
@@ -8,7 +10,7 @@ import SearchInput from '@/components/search-input';
 import { useTicketSelection } from '@/components/tickets/ticket-bulk';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { create, index, run } from '@/routes/invoices';
+import { index, run } from '@/routes/invoices';
 import type { InvoiceListItem, Option, Paginated } from '@/types';
 
 export default function InvoicesIndex({
@@ -24,6 +26,28 @@ export default function InvoicesIndex({
     const selection = useTicketSelection(
         invoices.data.map((invoice) => invoice.id),
     );
+    const { openCreateInvoice } = useCreateInvoice();
+
+    /**
+     * A link that asks for a new invoice (?new, as the old Create invoice
+     * page now sends you) opens the dialog, for the customer it names.
+     */
+    useEffect(() => {
+        const url = new URL(window.location.href);
+
+        if (!url.searchParams.has('new')) {
+            return;
+        }
+
+        openCreateInvoice({ customerId: url.searchParams.get('customer') });
+        url.searchParams.delete('new');
+        url.searchParams.delete('customer');
+        router.replace({
+            url: `${url.pathname}${url.search}`,
+            preserveScroll: true,
+            preserveState: true,
+        });
+    }, [openCreateInvoice]);
 
     return (
         <>
@@ -38,8 +62,8 @@ export default function InvoicesIndex({
                             <Button variant="outline" asChild>
                                 <Link href={run()}>Billing run</Link>
                             </Button>
-                            <Button asChild>
-                                <Link href={create()}>Create invoice</Link>
+                            <Button onClick={() => openCreateInvoice()}>
+                                Create invoice
                             </Button>
                         </>
                     }
@@ -83,8 +107,8 @@ export default function InvoicesIndex({
                             title="No invoices yet"
                             description="Bill a customer for their services or a job, then mark it sent and paid."
                             action={
-                                <Button asChild>
-                                    <Link href={create()}>Create invoice</Link>
+                                <Button onClick={() => openCreateInvoice()}>
+                                    Create invoice
                                 </Button>
                             }
                         />
