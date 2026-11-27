@@ -105,6 +105,7 @@ use App\Invoice\Controllers\BillCustomerController;
 use App\Invoice\Controllers\CreateInvoiceController;
 use App\Invoice\Controllers\DownloadInvoicePdfController;
 use App\Invoice\Controllers\EditInvoiceController;
+use App\Invoice\Controllers\ListInvoiceFormOptionsController;
 use App\Invoice\Controllers\ListInvoicesController;
 use App\Invoice\Controllers\MarkInvoiceSentController;
 use App\Invoice\Controllers\RunBillingController;
@@ -426,6 +427,7 @@ Route::middleware(StaffOrContact::STAFF_MIDDLEWARE)->group(function () {
 
     Route::get('invoices', StaffOrContact::serve(ListInvoicesController::class, contact: ListPortalInvoicesController::class))->name('invoices.index');
     Route::get('invoices/create', CreateInvoiceController::class)->name('invoices.create');
+    Route::get('invoices/form-options', ListInvoiceFormOptionsController::class)->name('invoices.form-options');
     Route::get('invoices/run', ShowBillingRunController::class)->name('invoices.run');
     Route::post('invoices/run', RunBillingController::class)->name('invoices.run.store');
     Route::post('invoices', StoreInvoiceController::class)->name('invoices.store');

@@ -4,32 +4,21 @@ declare(strict_types=1);
 
 namespace App\Invoice\Controllers;
 
-use App\Customer\Actions\FindCustomer;
-use App\Invoice\InvoiceFormOptions;
-use App\Invoice\PaymentTerms;
-use App\Team\Actions\FindTeam;
-use Carbon\CarbonImmutable;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response;
 
+/**
+ * An invoice is created in a dialog over the page it was asked for from, so
+ * a link to the old page opens that dialog over the invoices, for the
+ * customer it named.
+ */
 final class CreateInvoiceController
 {
-    public function __invoke(Request $request): Response
+    public function __invoke(Request $request): RedirectResponse
     {
-        $today = CarbonImmutable::today();
-        $teamId = (string) $request->user()?->current_team_id;
-        $customer = FindCustomer::byIdForTeam($request->string('customer')->toString() ?: null, $teamId);
-        $team = FindTeam::byId($teamId);
-
-        return Inertia::render('invoices/create', [
-            ...InvoiceFormOptions::forTeam($teamId),
-            'customerId' => $request->string('customer')->toString() ?: null,
-            'defaults' => [
-                'issued_on' => $today->toDateString(),
-                'due_on' => PaymentTerms::dueOn($today, $customer, $team)->toDateString(),
-                'tax_rate_basis_points' => 1000,
-            ],
-        ]);
+        return to_route('invoices.index', array_filter([
+            'new' => 1,
+            'customer' => $request->string('customer')->toString() ?: null,
+        ]));
     }
 }
