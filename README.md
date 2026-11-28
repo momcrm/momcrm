@@ -33,6 +33,18 @@ php artisan momcrm:install --no-interaction \
 
 The app runs at http://localhost:8000.
 
+## Deploy on Railway
+
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/Kb5B1S?utm_medium=integration&utm_source=button&utm_campaign=momcrm)
+
+The template sets up the app, a queue worker, the scheduler, MySQL and a bucket for uploaded files. It asks for one thing: the email address of the first account.
+
+- **Signing in.** The first account's password is generated. Copy `ADMIN_PASSWORD` from the MomCRM service's variables, sign in with it, then change it in the app.
+- **Email.** Emails are only written to the logs until you set `MAIL_MAILER` to `smtp` and fill in the `MAIL_*` variables. Sign-in codes and invitations need it.
+- **Your own domain.** Add it to the MomCRM service and set `APP_URL` to it.
+
+Anywhere else behind a load balancer or a host's proxy, set `TRUSTED_PROXIES` so MomCRM knows requests arrive over HTTPS. See `.env.example`.
+
 ## Testing
 
 ```bash
